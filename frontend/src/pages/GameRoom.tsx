@@ -9,6 +9,7 @@ import { joinRoom as joinSocketRoom, leaveRoom } from '../services/socket';
 import { useSocket } from '../hooks/useSocket';
 import { CharacterCreation } from '../components/room/CharacterCreation';
 import { GameplayScreen } from '../components/game/GameplayScreen';
+import { Layout } from '../components/layout/Layout';
 import type { Room, Player } from '../types/shared';
 
 /**
@@ -105,26 +106,30 @@ export function GameRoomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-cyan-400"></div>
-      </div>
+      <Layout showNavbar={false}>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-aurora-300"></div>
+        </div>
+      </Layout>
     );
   }
 
   if (error || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-        <div className="max-w-md p-6 bg-slate-800 rounded-xl">
-          <h2 className="text-2xl font-bold text-red-400 mb-2">Error</h2>
-          <p className="text-slate-300 mb-4">{error || 'Room not found'}</p>
-          <button
-            onClick={() => navigate('/lobby')}
-            className="px-6 py-2 bg-cyan-600 text-white font-bold rounded-lg hover:bg-cyan-700"
-          >
-            Back to Lobby
-          </button>
+      <Layout showRoomInfo={false}>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="max-w-md p-6 card">
+            <h2 className="text-2xl font-bold text-red-400 mb-2">Error</h2>
+            <p className="text-shadow-200 mb-4">{error || 'Room not found'}</p>
+            <button
+              onClick={() => navigate('/lobby')}
+              className="btn-primary"
+            >
+              Back to Lobby
+            </button>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -132,13 +137,27 @@ export function GameRoomPage() {
   switch (room.phase) {
     case 'SETUP':
     case 'CHARACTER_CREATION':
-      return <CharacterCreation room={room} players={players} />;
+      return (
+        <Layout room={room} playerCount={players.length} showRoomInfo>
+          <CharacterCreation room={room} players={players} />
+        </Layout>
+      );
 
     case 'GAMEPLAY':
-      return <GameplayScreen room={room} players={players} />;
+      return (
+        <Layout room={room} playerCount={players.length} showRoomInfo>
+          <GameplayScreen room={room} players={players} />
+        </Layout>
+      );
 
     default:
-      return <div>Unknown game phase</div>;
+      return (
+        <Layout room={room} playerCount={players.length} showRoomInfo>
+          <div className="min-h-screen flex items-center justify-center">
+            <p className="text-shadow-300">Unknown game phase</p>
+          </div>
+        </Layout>
+      );
   }
 }
 

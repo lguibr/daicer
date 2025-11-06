@@ -26,12 +26,12 @@ export function ChatArea({ messages, worldDescription }: ChatAreaProps) {
   );
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-3 md:p-4 space-y-4">
       {/* World Description */}
       {worldDescription && (
-        <div className="p-4 bg-slate-800 rounded-lg border border-cyan-500/30">
-          <h3 className="text-lg font-bold text-cyan-400 mb-2">The World</h3>
-          <div className="text-slate-300">
+        <div className="p-4 card border border-shadow-700/50">
+          <h3 className="text-lg font-bold text-aurora-300 mb-2">The World</h3>
+          <div className="text-shadow-200">
             <MarkdownMessage content={worldDescription} />
           </div>
         </div>
@@ -44,42 +44,42 @@ export function ChatArea({ messages, worldDescription }: ChatAreaProps) {
           className={`flex flex-col ${msg.sender === 'DM' ? 'items-start' : 'items-end'}`}
         >
           <div
-            className={`max-w-3xl p-4 rounded-lg ${
+            className={`max-w-full md:max-w-3xl p-3 md:p-4 rounded-xl shadow-lg ${
               msg.sender === 'DM'
-                ? 'bg-slate-700 border border-slate-600'
-                : 'bg-cyan-800/50 border border-cyan-600/50'
+                ? 'bg-shadow-900/85 border border-shadow-700'
+                : 'bg-midnight-500/80 border border-shadow-700/80'
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <p className="font-bold text-sm text-cyan-300">{msg.sender}</p>
+              <p className="font-bold text-sm text-aurora-300">{msg.sender}</p>
               {msg.targetPlayer && (
                 <span className="text-xs text-yellow-400 flex items-center gap-1">
                   🔒 Private
                 </span>
               )}
             </div>
-            {msg.sender === 'DM' ? (
-              <div className="prose prose-invert max-w-none">
+            <div className="prose prose-invert max-w-none text-shadow-50">
+              {msg.sender === 'DM' ? (
                 <MarkdownMessage content={msg.text} />
-              </div>
-            ) : (
-              <p className="text-white whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-            )}
+              ) : (
+                <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+              )}
+            </div>
 
             {msg.images && msg.images.length > 0 && (
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {msg.images.map((img, idx) => (
                   <img
                     key={idx}
                     src={`data:image/png;base64,${img}`}
-                    className="rounded-lg shadow-lg"
+                    className="rounded-lg shadow-lg w-full"
                     alt="Generated scene"
                   />
                 ))}
               </div>
             )}
 
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-shadow-400 mt-2">
               {new Date(msg.timestamp).toLocaleTimeString()}
             </p>
           </div>
@@ -87,7 +87,7 @@ export function ChatArea({ messages, worldDescription }: ChatAreaProps) {
       ))}
 
       {messages.length === 0 && (
-        <div className="text-center p-12 text-slate-500">
+        <div className="text-center p-8 md:p-12 text-shadow-500">
           <p>The adventure begins...</p>
         </div>
       )}

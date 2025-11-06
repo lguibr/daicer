@@ -52,52 +52,52 @@ export function GameplayScreen({ room, players }: GameplayScreenProps) {
   };
 
   return (
-    <div className="h-screen w-screen grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-0 bg-slate-900">
-      {/* Sidebar */}
-      <div className="md:col-span-1 lg:col-span-1 border-r border-slate-700">
+    <div className="flex flex-col lg:grid lg:grid-cols-5 h-[calc(100vh-4rem)] lg:h-screen w-full gap-0">
+      {/* Sidebar - Collapsed on mobile, visible on desktop */}
+      <div className="hidden lg:block lg:col-span-1 border-r border-shadow-800/70 overflow-y-auto">
         <PlayerSidebar room={room} players={players} creatures={socket.creatures} />
       </div>
 
       {/* Main Chat Area */}
-      <div className="md:col-span-3 lg:col-span-4 flex flex-col">
+      <div className="lg:col-span-4 flex flex-col h-full">
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto">
           <ChatArea messages={socket.messages} worldDescription={room.worldDescription} />
         </div>
 
         {/* Action Input */}
-        <div className="border-t border-slate-700 bg-slate-800 p-4">
+        <div className="border-t border-shadow-800/70 bg-midnight-300/85 p-3 md:p-5 backdrop-blur">
           {/* Turn Status */}
-          <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="text-slate-400">
-              Actions submitted: {submittedCount} / {players.length}
+          <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+            <span className="text-shadow-400">
+              Actions: {submittedCount} / {players.length}
             </span>
             {!hasSubmitted && (
-              <span className="text-yellow-400 font-semibold">Your turn - submit an action</span>
+              <span className="text-aurora-200 font-semibold">Your turn - submit an action</span>
             )}
             {hasSubmitted && !allSubmitted && (
-              <span className="text-green-400 font-semibold">✓ Waiting for others...</span>
+              <span className="text-nebula-200 font-semibold">✓ Waiting for others...</span>
             )}
             {allSubmitted && (
-              <span className="text-cyan-400 font-semibold animate-pulse">Ready to process turn!</span>
+              <span className="text-aurora-200 font-semibold animate-pulse">Ready to process turn!</span>
             )}
           </div>
 
           {/* Action Input */}
           {!hasSubmitted ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <textarea
                 value={action}
                 onChange={(e) => setAction(e.target.value)}
                 placeholder="What do you do? (e.g., 'I search the room for traps', 'I attack the goblin with my sword')"
-                className="flex-1 bg-slate-700 border border-slate-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+                className="flex-1 bg-shadow-900/85 border border-shadow-700 text-shadow-50 placeholder:text-shadow-400 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-aurora-400 resize-none min-h-[80px] sm:min-h-0"
                 rows={2}
                 disabled={submitting}
               />
               <button
                 onClick={handleSubmitAction}
                 disabled={!action.trim() || submitting}
-                className="px-6 py-2 bg-cyan-600 text-white font-bold rounded-lg hover:bg-cyan-700 transition-colors disabled:bg-slate-500 disabled:cursor-not-allowed"
+                className="btn-primary sm:px-6 sm:py-2 whitespace-nowrap"
               >
                 {submitting ? 'Sending...' : 'Submit'}
               </button>
@@ -105,13 +105,13 @@ export function GameplayScreen({ room, players }: GameplayScreenProps) {
           ) : allSubmitted && room.ownerId === user?.uid ? (
             <button
               onClick={handleProcessTurn}
-              className="w-full px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors"
+              className="w-full px-6 py-3 bg-nebula-500 text-shadow-50 font-bold rounded-lg hover:bg-nebula-400 transition-colors shadow-lg"
             >
               Process Turn
             </button>
           ) : (
-            <div className="text-center p-4 bg-slate-700 rounded-lg">
-              <p className="text-slate-300">Action submitted. Waiting for turn to process...</p>
+            <div className="text-center p-4 bg-shadow-900/80 rounded-lg border border-shadow-700">
+              <p className="text-shadow-400">Action submitted. Waiting for turn to process...</p>
             </div>
           )}
         </div>
