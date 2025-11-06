@@ -1,0 +1,125 @@
+/**
+ * Internationalization hook and utilities
+ */
+
+import { useState } from 'react';
+
+export type Language = 'en' | 'es' | 'pt-BR';
+
+const translations = {
+  en: {
+    auth: { title: 'D20 AI', subtitle: 'Multiplayer D&D with AI Dungeon Master', login: 'Continue with Google', loggingIn: 'Signing in...', emulatorNote: 'Using Firebase emulators - no real account needed!', emulatorTip: 'Enter any email to continue.' },
+    lobby: { title: 'Game Lobby', subtitle: 'Create a new adventure or join an existing one', createRoom: 'Create New Adventure', joinRoom: 'Join Room', enterCode: 'Join with Room Code', codePlaceholder: 'ENTER CODE', joining: 'Joining...', orDivider: 'OR' },
+    worldSettings: { title: 'Create Your Adventure', subtitle: 'Configure the world for your campaign', story: 'Story', scope: 'Scope', theme: 'Theme', themePlaceholder: 'e.g., High Fantasy, Cyberpunk', setting: 'Setting', settingPlaceholder: 'e.g., Ancient Ruins, Space Station', tone: 'Tone', tonePlaceholder: 'e.g., Dark and Gritty, Lighthearted', playerCount: 'Number of Players', adventureLength: 'Adventure Length', lengthShort: 'Short', lengthMedium: 'Medium', lengthEpic: 'Epic', difficulty: 'Difficulty', difficultyEasy: 'Easy', difficultyMedium: 'Medium', difficultyHard: 'Hard', cancel: 'Cancel', create: 'Create Adventure', creating: 'Creating...' },
+    character: { title: 'The Stage Is Set', roomCode: 'Room Code', worldTitle: 'World', generating: 'Generating...', createTitle: 'Create Your Character', yourCharacter: 'Your Character', name: 'Character Name', namePlaceholder: 'Enter name...', race: 'Race', racePlaceholder: 'e.g., Human, Elf', class: 'Class', classPlaceholder: 'e.g., Fighter, Wizard', alignment: 'Alignment', alignmentPlaceholder: 'e.g., Lawful Good, Chaotic Neutral', attributes: 'Attributes', createButton: 'Create Character', creating: 'Creating...', readyUp: 'Ready Up!', youAreReady: '✓ You are ready!', waitingForOthers: 'Waiting for other players...', unready: 'Unready', party: 'Adventuring Party', waitingForCharacters: 'Waiting for players to create characters...', playersReady: 'players ready', gameStartsSoon: 'Game starts when all players are ready' },
+    gameplay: { room: 'Room', party: 'Party', creatures: 'Creatures', world: 'The World', turn: 'Turn', actionsSubmitted: 'Actions submitted', yourTurn: 'Your turn - submit an action', waitingForOthers: '✓ Waiting for others...', readyToProcess: 'Ready to process turn!', actionPlaceholder: "What do you do? (e.g., 'I search the room for traps', 'I attack the goblin with my sword')", submit: 'Submit', sending: 'Sending...', processTurn: 'Process Turn', actionSubmitted: 'Action submitted. Waiting for turn to process...', adventureBegins: 'The adventure begins...', leaveRoom: 'Leave Room' },
+    debug: { title: 'Debug Panel', connected: 'Connected', disconnected: 'Disconnected', events: 'EVENTS', state: 'STATE', api: 'API', noEvents: 'No events yet...', noApiCalls: 'No API calls yet...', clearEvents: 'Clear Events', clearApi: 'Clear API', socket: 'Socket', route: 'Route', environment: 'Environment', apiUrl: 'API URL', usingEmulators: 'Using Emulators' },
+    common: { loading: 'Loading...', error: 'Error', backToLobby: 'Back to Lobby', roomNotFound: 'Room not found', hp: 'HP', ac: 'AC', init: 'Init', level: 'Lvl', attack: 'ATK', damage: 'DMG' },
+  },
+  es: {
+    auth: { title: 'D20 AI', subtitle: 'D&D Multijugador con Dungeon Master IA', login: 'Continuar con Google', loggingIn: 'Iniciando sesión...', emulatorNote: '¡Usando emuladores Firebase - no se necesita cuenta real!', emulatorTip: 'Ingresa cualquier correo para continuar.' },
+    lobby: { title: 'Lobby del Juego', subtitle: 'Crea una nueva aventura o únete a una existente', createRoom: 'Crear Nueva Aventura', joinRoom: 'Unirse a Sala', enterCode: 'Unirse con Código de Sala', codePlaceholder: 'INGRESAR CÓDIGO', joining: 'Uniéndose...', orDivider: 'O' },
+    worldSettings: { title: 'Crea Tu Aventura', subtitle: 'Configura el mundo para tu campaña', story: 'Historia', scope: 'Alcance', theme: 'Tema', themePlaceholder: 'ej., Alta Fantasía, Cyberpunk', setting: 'Escenario', settingPlaceholder: 'ej., Ruinas Antiguas, Estación Espacial', tone: 'Tono', tonePlaceholder: 'ej., Oscuro y Crudo, Alegre', playerCount: 'Número de Jugadores', adventureLength: 'Duración de Aventura', lengthShort: 'Corta', lengthMedium: 'Media', lengthEpic: 'Épica', difficulty: 'Dificultad', difficultyEasy: 'Fácil', difficultyMedium: 'Media', difficultyHard: 'Difícil', cancel: 'Cancelar', create: 'Crear Aventura', creating: 'Creando...' },
+    character: { title: 'El Escenario Está Listo', roomCode: 'Código de Sala', worldTitle: 'Mundo', generating: 'Generando...', createTitle: 'Crea Tu Personaje', yourCharacter: 'Tu Personaje', name: 'Nombre del Personaje', namePlaceholder: 'Ingresa nombre...', race: 'Raza', racePlaceholder: 'ej., Humano, Elfo', class: 'Clase', classPlaceholder: 'ej., Guerrero, Mago', alignment: 'Alineación', alignmentPlaceholder: 'ej., Legal Bueno, Caótico Neutral', attributes: 'Atributos', createButton: 'Crear Personaje', creating: 'Creando...', readyUp: '¡Listo!', youAreReady: '✓ ¡Estás listo!', waitingForOthers: 'Esperando a otros jugadores...', unready: 'No Listo', party: 'Grupo de Aventureros', waitingForCharacters: 'Esperando que los jugadores creen personajes...', playersReady: 'jugadores listos', gameStartsSoon: 'El juego comienza cuando todos los jugadores estén listos' },
+    gameplay: { room: 'Sala', party: 'Grupo', creatures: 'Criaturas', world: 'El Mundo', turn: 'Turno', actionsSubmitted: 'Acciones enviadas', yourTurn: 'Tu turno - envía una acción', waitingForOthers: '✓ Esperando a otros...', readyToProcess: '¡Listo para procesar turno!', actionPlaceholder: "¿Qué haces? (ej., 'Busco trampas en la sala', 'Ataco al goblin con mi espada')", submit: 'Enviar', sending: 'Enviando...', processTurn: 'Procesar Turno', actionSubmitted: 'Acción enviada. Esperando procesamiento...', adventureBegins: 'La aventura comienza...', leaveRoom: 'Salir de Sala' },
+    debug: { title: 'Panel de Depuración', connected: 'Conectado', disconnected: 'Desconectado', events: 'EVENTOS', state: 'ESTADO', api: 'API', noEvents: 'Sin eventos aún...', noApiCalls: 'Sin llamadas API aún...', clearEvents: 'Limpiar Eventos', clearApi: 'Limpiar API', socket: 'Socket', route: 'Ruta', environment: 'Entorno', apiUrl: 'URL API', usingEmulators: 'Usando Emuladores' },
+    common: { loading: 'Cargando...', error: 'Error', backToLobby: 'Volver al Lobby', roomNotFound: 'Sala no encontrada', hp: 'PV', ac: 'CA', init: 'Init', level: 'Niv', attack: 'ATQ', damage: 'DMG' },
+  },
+  'pt-BR': {
+    auth: { title: 'D20 AI', subtitle: 'D&D Multiplayer com Mestre de IA', login: 'Continuar com Google', loggingIn: 'Entrando...', emulatorNote: 'Usando emuladores Firebase - nenhuma conta real necessária!', emulatorTip: 'Digite qualquer email para continuar.' },
+    lobby: { title: 'Lobby do Jogo', subtitle: 'Crie uma nova aventura ou entre em uma existente', createRoom: 'Criar Nova Aventura', joinRoom: 'Entrar na Sala', enterCode: 'Entrar com Código da Sala', codePlaceholder: 'DIGITE O CÓDIGO', joining: 'Entrando...', orDivider: 'OU' },
+    worldSettings: { title: 'Crie Sua Aventura', subtitle: 'Configure o mundo para sua campanha', story: 'História', scope: 'Escopo', theme: 'Tema', themePlaceholder: 'ex., Alta Fantasia, Cyberpunk', setting: 'Cenário', settingPlaceholder: 'ex., Ruínas Antigas, Estação Espacial', tone: 'Tom', tonePlaceholder: 'ex., Sombrio e Cru, Alegre', playerCount: 'Número de Jogadores', adventureLength: 'Duração da Aventura', lengthShort: 'Curta', lengthMedium: 'Média', lengthEpic: 'Épica', difficulty: 'Dificuldade', difficultyEasy: 'Fácil', difficultyMedium: 'Média', difficultyHard: 'Difícil', cancel: 'Cancelar', create: 'Criar Aventura', creating: 'Criando...' },
+    character: { title: 'O Palco Está Montado', roomCode: 'Código da Sala', worldTitle: 'Mundo', generating: 'Gerando...', createTitle: 'Crie Seu Personagem', yourCharacter: 'Seu Personagem', name: 'Nome do Personagem', namePlaceholder: 'Digite o nome...', race: 'Raça', racePlaceholder: 'ex., Humano, Elfo', class: 'Classe', classPlaceholder: 'ex., Guerreiro, Mago', alignment: 'Alinhamento', alignmentPlaceholder: 'ex., Leal e Bom, Caótico Neutro', attributes: 'Atributos', createButton: 'Criar Personagem', creating: 'Criando...', readyUp: 'Estou Pronto!', youAreReady: '✓ Você está pronto!', waitingForOthers: 'Aguardando outros jogadores...', unready: 'Não Estou Pronto', party: 'Grupo de Aventureiros', waitingForCharacters: 'Aguardando jogadores criarem personagens...', playersReady: 'jogadores prontos', gameStartsSoon: 'O jogo começa quando todos os jogadores estiverem prontos' },
+    gameplay: { room: 'Sala', party: 'Grupo', creatures: 'Criaturas', world: 'O Mundo', turn: 'Turno', actionsSubmitted: 'Ações enviadas', yourTurn: 'Sua vez - envie uma ação', waitingForOthers: '✓ Aguardando outros...', readyToProcess: 'Pronto para processar turno!', actionPlaceholder: "O que você faz? (ex., 'Procuro armadilhas na sala', 'Ataco o goblin com minha espada')", submit: 'Enviar', sending: 'Enviando...', processTurn: 'Processar Turno', actionSubmitted: 'Ação enviada. Aguardando processamento...', adventureBegins: 'A aventura começa...', leaveRoom: 'Sair da Sala' },
+    debug: { title: 'Painel de Depuração', connected: 'Conectado', disconnected: 'Desconectado', events: 'EVENTOS', state: 'ESTADO', api: 'API', noEvents: 'Nenhum evento ainda...', noApiCalls: 'Nenhuma chamada API ainda...', clearEvents: 'Limpar Eventos', clearApi: 'Limpar API', socket: 'Socket', route: 'Rota', environment: 'Ambiente', apiUrl: 'URL da API', usingEmulators: 'Usando Emuladores' },
+    common: { loading: 'Carregando...', error: 'Erro', backToLobby: 'Voltar ao Lobby', roomNotFound: 'Sala não encontrada', hp: 'PV', ac: 'CA', init: 'Init', level: 'Nív', attack: 'ATQ', damage: 'DMG' },
+  },
+} as const;
+
+type TranslationsType = typeof translations.en;
+
+export const supportedLanguages = [
+  { code: 'en' as Language, name: 'English', flag: '🇺🇸' },
+  { code: 'es' as Language, name: 'Español', flag: '🇪🇸' },
+  { code: 'pt-BR' as Language, name: 'Português', flag: '🇧🇷' },
+];
+
+function getBrowserLanguage(): Language {
+  const browserLang = navigator.language;
+  if (browserLang.startsWith('es')) return 'es';
+  if (browserLang.startsWith('pt')) return 'pt-BR';
+  return 'en';
+}
+
+function getStoredLanguage(): Language {
+  const stored = localStorage.getItem('d20ai-language') as Language;
+  if (stored && (stored === 'en' || stored === 'es' || stored === 'pt-BR')) {
+    return stored;
+  }
+  return getBrowserLanguage();
+}
+
+export function useI18n() {
+  const [language, setLanguageState] = useState<Language>(getStoredLanguage());
+
+  const setLanguage = (lang: Language) => {
+    localStorage.setItem('d20ai-language', lang);
+    setLanguageState(lang);
+  };
+
+  const t = (key: string): string => {
+    const keys = key.split('.');
+    let current: any = translations.en; // Always use English as base
+    
+    // Try to get from selected language first
+    if (language !== 'en') {
+      const langData = language === 'es' ? translations.es : language === 'pt-BR' ? translations['pt-BR'] : null;
+      if (langData) {
+        let val: any = langData;
+        for (const k of keys) {
+          if (val && typeof val === 'object' && k in val) {
+            val = val[k];
+          } else {
+            val = null;
+            break;
+          }
+        }
+        if (typeof val === 'string') return val;
+      }
+    }
+    
+    // Fallback to English
+    for (const k of keys) {
+      if (current && typeof current === 'object' && k in current) {
+        current = current[k];
+      } else {
+        return key;
+      }
+    }
+    
+    return typeof current === 'string' ? current : key;
+  };
+
+  return { t, language, setLanguage, availableLanguages: supportedLanguages };
+}
+
+// Extend translations with es and pt-BR
+(translations as any).es = {
+  auth: { title: 'D20 AI', subtitle: 'D&D Multijugador con Dungeon Master IA', login: 'Continuar con Google', loggingIn: 'Iniciando sesión...', emulatorNote: '¡Usando emuladores Firebase!', emulatorTip: 'Ingresa cualquier correo.' },
+  lobby: { title: 'Lobby del Juego', subtitle: 'Crea o únete a aventura', createRoom: 'Crear Nueva Aventura', joinRoom: 'Unirse', enterCode: 'Código de Sala', codePlaceholder: 'CÓDIGO', joining: 'Uniéndose...', orDivider: 'O' },
+  worldSettings: { title: 'Crea Tu Aventura', subtitle: 'Configura el mundo', story: 'Historia', scope: 'Alcance', theme: 'Tema', themePlaceholder: 'ej., Alta Fantasía', setting: 'Escenario', settingPlaceholder: 'ej., Ruinas', tone: 'Tono', tonePlaceholder: 'ej., Oscuro', playerCount: 'Jugadores', adventureLength: 'Duración', lengthShort: 'Corta', lengthMedium: 'Media', lengthEpic: 'Épica', difficulty: 'Dificultad', difficultyEasy: 'Fácil', difficultyMedium: 'Media', difficultyHard: 'Difícil', cancel: 'Cancelar', create: 'Crear Aventura', creating: 'Creando...' },
+  character: { title: 'El Escenario Está Listo', roomCode: 'Código', worldTitle: 'Mundo', generating: 'Generando...', createTitle: 'Crea Tu Personaje', yourCharacter: 'Tu Personaje', name: 'Nombre', namePlaceholder: 'Nombre...', race: 'Raza', racePlaceholder: 'ej., Humano', class: 'Clase', classPlaceholder: 'ej., Guerrero', alignment: 'Alineación', alignmentPlaceholder: 'ej., Legal Bueno', attributes: 'Atributos', createButton: 'Crear Personaje', creating: 'Creando...', readyUp: '¡Listo!', youAreReady: '✓ ¡Estás listo!', waitingForOthers: 'Esperando...', unready: 'No Listo', party: 'Grupo', waitingForCharacters: 'Esperando jugadores...', playersReady: 'listos', gameStartsSoon: 'Comienza cuando todos estén listos' },
+  gameplay: { room: 'Sala', party: 'Grupo', creatures: 'Criaturas', world: 'El Mundo', turn: 'Turno', actionsSubmitted: 'Acciones', yourTurn: 'Tu turno', waitingForOthers: '✓ Esperando...', readyToProcess: '¡Listo!', actionPlaceholder: '¿Qué haces?', submit: 'Enviar', sending: 'Enviando...', processTurn: 'Procesar', actionSubmitted: 'Enviado...', adventureBegins: 'Comienza...', leaveRoom: 'Salir' },
+  debug: { title: 'Debug', connected: 'Conectado', disconnected: 'Desconectado', events: 'EVENTOS', state: 'ESTADO', api: 'API', noEvents: 'Sin eventos...', noApiCalls: 'Sin API...', clearEvents: 'Limpiar', clearApi: 'Limpiar', socket: 'Socket', route: 'Ruta', environment: 'Entorno', apiUrl: 'API URL', usingEmulators: 'Emuladores' },
+  common: { loading: 'Cargando...', error: 'Error', backToLobby: 'Volver', roomNotFound: 'Sala no encontrada', hp: 'PV', ac: 'CA', init: 'Init', level: 'Niv', attack: 'ATQ', damage: 'DMG' },
+};
+
+(translations as any)['pt-BR'] = {
+  auth: { title: 'D20 AI', subtitle: 'D&D Multiplayer com Mestre IA', login: 'Continuar com Google', loggingIn: 'Entrando...', emulatorNote: 'Usando emuladores Firebase!', emulatorTip: 'Digite qualquer email.' },
+  lobby: { title: 'Lobby', subtitle: 'Crie ou entre aventura', createRoom: 'Criar Aventura', joinRoom: 'Entrar', enterCode: 'Código da Sala', codePlaceholder: 'CÓDIGO', joining: 'Entrando...', orDivider: 'OU' },
+  worldSettings: { title: 'Crie Aventura', subtitle: 'Configure o mundo', story: 'História', scope: 'Escopo', theme: 'Tema', themePlaceholder: 'ex., Alta Fantasia', setting: 'Cenário', settingPlaceholder: 'ex., Ruínas', tone: 'Tom', tonePlaceholder: 'ex., Sombrio', playerCount: 'Jogadores', adventureLength: 'Duração', lengthShort: 'Curta', lengthMedium: 'Média', lengthEpic: 'Épica', difficulty: 'Dificuldade', difficultyEasy: 'Fácil', difficultyMedium: 'Média', difficultyHard: 'Difícil', cancel: 'Cancelar', create: 'Criar', creating: 'Criando...' },
+  character: { title: 'O Palco Está Montado', roomCode: 'Código', worldTitle: 'Mundo', generating: 'Gerando...', createTitle: 'Crie Personagem', yourCharacter: 'Seu Personagem', name: 'Nome', namePlaceholder: 'Nome...', race: 'Raça', racePlaceholder: 'ex., Humano', class: 'Classe', classPlaceholder: 'ex., Guerreiro', alignment: 'Alinhamento', alignmentPlaceholder: 'ex., Leal e Bom', attributes: 'Atributos', createButton: 'Criar', creating: 'Criando...', readyUp: 'Pronto!', youAreReady: '✓ Pronto!', waitingForOthers: 'Aguardando...', unready: 'Não Pronto', party: 'Grupo', waitingForCharacters: 'Aguardando jogadores...', playersReady: 'prontos', gameStartsSoon: 'Começa quando todos prontos' },
+  gameplay: { room: 'Sala', party: 'Grupo', creatures: 'Criaturas', world: 'O Mundo', turn: 'Turno', actionsSubmitted: 'Ações', yourTurn: 'Sua vez', waitingForOthers: '✓ Aguardando...', readyToProcess: 'Pronto!', actionPlaceholder: 'O que faz?', submit: 'Enviar', sending: 'Enviando...', processTurn: 'Processar', actionSubmitted: 'Enviado...', adventureBegins: 'Começa...', leaveRoom: 'Sair' },
+  debug: { title: 'Debug', connected: 'Conectado', disconnected: 'Desconectado', events: 'EVENTOS', state: 'ESTADO', api: 'API', noEvents: 'Sem eventos...', noApiCalls: 'Sem API...', clearEvents: 'Limpar', clearApi: 'Limpar', socket: 'Socket', route: 'Rota', environment: 'Ambiente', apiUrl: 'API URL', usingEmulators: 'Emuladores' },
+  common: { loading: 'Carregando...', error: 'Erro', backToLobby: 'Voltar', roomNotFound: 'Sala não encontrada', hp: 'PV', ac: 'CA', init: 'Init', level: 'Nív', attack: 'ATQ', damage: 'DMG' },
+};

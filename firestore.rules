@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(roomId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/rooms/$(roomId)).data.ownerId == request.auth.uid;
+    }
+    
+    function isRoomMember(roomId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/rooms/$(roomId)/players/$(request.auth.uid));
+    }
+    
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Rooms
+    match /rooms/{roomId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isOwner(roomId) || isRoomMember(roomId);
+      allow delete: if isOwner(roomId);
+      
+      // Players in room
+      match /players/{playerId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated() && request.auth.uid == playerId;
+        allow delete: if isAuthenticated() && request.auth.uid == playerId;
+      }
+      
+      // Messages
+      match /messages/{messageId} {
+        allow read: if isRoomMember(roomId);
+        allow create: if isRoomMember(roomId);
+      }
+      
+      // Creatures
+      match /creatures/{creatureId} {
+        allow read: if isRoomMember(roomId);
+        allow write: if false; // Only server can write
+      }
+    }
+  }
+}
+

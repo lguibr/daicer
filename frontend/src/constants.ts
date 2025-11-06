@@ -1,0 +1,48 @@
+import { Attribute, CharacterSheet } from './types';
+
+export const ATTRIBUTES: Attribute[] = [
+  Attribute.STR,
+  Attribute.DEX,
+  Attribute.CON,
+  Attribute.INT,
+  Attribute.WIS,
+  Attribute.CHA,
+];
+
+export const SKILLS_LIST = [
+  'Acrobatics', 'Appraise', 'Bluff', 'Climb', 'Craft', 'Diplomacy',
+  'Disable Device', 'Disguise', 'Escape Artist', 'Fly', 'Handle Animal',
+  'Heal', 'Intimidate', 'Knowledge (Arcana)', 'Knowledge (Dungeoneering)',
+  'Knowledge (Engineering)', 'Knowledge (Geography)', 'Knowledge (History)',
+  'Knowledge (Local)', 'Knowledge (Nature)', 'Knowledge (Nobility)',
+  'Knowledge (Planes)', 'Knowledge (Religion)', 'Linguistics',
+  'Perception', 'Perform', 'Profession', 'Ride', 'Sense Motive',
+  'Sleight of Hand', 'Spellcraft', 'Stealth', 'Survival', 'Swim', 'Use Magic Device'
+];
+
+
+export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'characterClass'> = {
+  level: 1,
+  xp: 0,
+  alignment: 'True Neutral',
+  hp: 10,
+  maxHp: 10,
+  armorClass: 10,
+  initiative: 0,
+  baseAttackBonus: 0,
+  attributes: {
+    [Attribute.STR]: 10,
+    [Attribute.DEX]: 10,
+    [Attribute.CON]: 10,
+    [Attribute.INT]: 10,
+    [Attribute.WIS]: 10,
+    [Attribute.CHA]: 10,
+  },
+  savingThrows: {
+    fortitude: 0,
+    reflex: 0,
+    will: 0,
+  },
+  skills: SKILLS_LIST.reduce((acc, skill) => ({...acc, [skill]: 0}), {}),
+  equipment: 'Standard adventurer\'s pack, a weapon, and 10 gold pieces.',
+};

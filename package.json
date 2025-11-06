@@ -1,0 +1,38 @@
+{
+  "name": "d20ai",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"emulators,backend,frontend\" -c \"yellow,blue,green\" \"yarn dev:emulators\" \"yarn dev:backend\" \"yarn dev:frontend\"",
+    "dev:emulators": "firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data",
+    "dev:frontend": "cd frontend && yarn dev",
+    "dev:backend": "cd backend && yarn dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "install:all": "yarn install && cd frontend && yarn install && cd ../backend && yarn install",
+    "emulators": "firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "lint": "yarn lint:frontend && yarn lint:backend",
+    "lint:frontend": "eslint . --ext .ts,.tsx",
+    "lint:backend": "cd backend && yarn lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "test": "yarn test:frontend && yarn test:backend",
+    "test:frontend": "vitest",
+    "test:backend": "cd backend && yarn test",
+    "typecheck": "tsc --noEmit && cd backend && yarn typecheck"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "firebase-tools": "^13.1.0",
+    "concurrently": "^8.2.2"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

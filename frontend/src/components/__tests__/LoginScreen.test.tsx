@@ -1,0 +1,72 @@
+/**
+ * LoginScreen component tests
+ */
+
+import { describe, test, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { LoginScreen } from '../LoginScreen';
+import * as authHook from '../../hooks/useAuth';
+
+vi.mock('../../hooks/useAuth');
+
+describe('LoginScreen', () => {
+  test('renders login button', () => {
+    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+      user: null,
+      loading: false,
+      error: null,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+    });
+
+    render(<LoginScreen />);
+    expect(screen.getByText(/Continue with Google/i)).toBeInTheDocument();
+  });
+
+  test('calls signInWithGoogle on button click', async () => {
+    const mockSignIn = vi.fn();
+
+    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+      user: null,
+      loading: false,
+      error: null,
+      signInWithGoogle: mockSignIn,
+      signOut: vi.fn(),
+    });
+
+    render(<LoginScreen />);
+    const button = screen.getByText(/Continue with Google/i);
+    fireEvent.click(button);
+
+    expect(mockSignIn).toHaveBeenCalled();
+  });
+
+  test('shows loading state', () => {
+    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+      user: null,
+      loading: true,
+      error: null,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+    });
+
+    render(<LoginScreen />);
+    expect(screen.getByText(/Signing in.../i)).toBeInTheDocument();
+  });
+
+  test('displays error message', () => {
+    const errorMessage = 'Authentication failed';
+
+    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+      user: null,
+      loading: false,
+      error: errorMessage,
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+    });
+
+    render(<LoginScreen />);
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
+  });
+});
+
