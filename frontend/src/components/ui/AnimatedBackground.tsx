@@ -1,6 +1,4 @@
-import React from 'react';
-
-export function AnimatedBackground() {
+export default function AnimatedBackground() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Base midnight gradient */}
@@ -57,4 +55,3 @@ export function AnimatedBackground() {
     </div>
   );
 }
-

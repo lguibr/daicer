@@ -53,7 +53,8 @@ const nebula = {
 };
 
 const config = {
-  content: [
+    darkMode: ["class"],
+    content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./App.tsx",
@@ -69,39 +70,96 @@ const config = {
     },
   ],
   theme: {
-    extend: {
-      colors: {
-        midnight,
-        shadow,
-        aurora,
-        nebula,
-        obsidian: midnight,
-        ash: shadow,
-        ember: aurora,
-      },
-      animation: {
-        'aurora-wave': 'auroraWave 12s ease-in-out infinite alternate',
-        'aurora-pulse': 'auroraPulse 8s ease-in-out infinite',
-        'stars-twinkle': 'starsTwinkle 6s linear infinite',
-      },
-      keyframes: {
-        auroraWave: {
-          '0%': { transform: 'translateX(-20%) skewX(-6deg)' },
-          '50%': { transform: 'translateX(10%) skewX(4deg)' },
-          '100%': { transform: 'translateX(30%) skewX(-2deg)' },
-        },
-        auroraPulse: {
-          '0%, 100%': { opacity: '0.45', filter: 'blur(12px)' },
-          '50%': { opacity: '0.7', filter: 'blur(16px)' },
-        },
-        starsTwinkle: {
-          '0%, 100%': { opacity: '0.35' },
-          '50%': { opacity: '0.8' },
-        },
-      },
-    },
+  	extend: {
+  		colors: {
+  			obsidian: 'midnight',
+  			ash: 'shadow',
+  			ember: 'aurora',
+  			background: 'hsl(var(--background))',
+  			foreground: 'hsl(var(--foreground))',
+  			card: {
+  				DEFAULT: 'hsl(var(--card))',
+  				foreground: 'hsl(var(--card-foreground))'
+  			},
+  			popover: {
+  				DEFAULT: 'hsl(var(--popover))',
+  				foreground: 'hsl(var(--popover-foreground))'
+  			},
+  			primary: {
+  				DEFAULT: 'hsl(var(--primary))',
+  				foreground: 'hsl(var(--primary-foreground))'
+  			},
+  			secondary: {
+  				DEFAULT: 'hsl(var(--secondary))',
+  				foreground: 'hsl(var(--secondary-foreground))'
+  			},
+  			muted: {
+  				DEFAULT: 'hsl(var(--muted))',
+  				foreground: 'hsl(var(--muted-foreground))'
+  			},
+  			accent: {
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
+  			},
+  			destructive: {
+  				DEFAULT: 'hsl(var(--destructive))',
+  				foreground: 'hsl(var(--destructive-foreground))'
+  			},
+  			border: 'hsl(var(--border))',
+  			input: 'hsl(var(--input))',
+  			ring: 'hsl(var(--ring))',
+  			chart: {
+  				'1': 'hsl(var(--chart-1))',
+  				'2': 'hsl(var(--chart-2))',
+  				'3': 'hsl(var(--chart-3))',
+  				'4': 'hsl(var(--chart-4))',
+  				'5': 'hsl(var(--chart-5))'
+  			}
+  		},
+  		animation: {
+  			'aurora-wave': 'auroraWave 12s ease-in-out infinite alternate',
+  			'aurora-pulse': 'auroraPulse 8s ease-in-out infinite',
+  			'stars-twinkle': 'starsTwinkle 6s linear infinite'
+  		},
+  		keyframes: {
+  			auroraWave: {
+  				'0%': {
+  					transform: 'translateX(-20%) skewX(-6deg)'
+  				},
+  				'50%': {
+  					transform: 'translateX(10%) skewX(4deg)'
+  				},
+  				'100%': {
+  					transform: 'translateX(30%) skewX(-2deg)'
+  				}
+  			},
+  			auroraPulse: {
+  				'0%, 100%': {
+  					opacity: '0.45',
+  					filter: 'blur(12px)'
+  				},
+  				'50%': {
+  					opacity: '0.7',
+  					filter: 'blur(16px)'
+  				}
+  			},
+  			starsTwinkle: {
+  				'0%, 100%': {
+  					opacity: '0.35'
+  				},
+  				'50%': {
+  					opacity: '0.8'
+  				}
+  			}
+  		},
+  		borderRadius: {
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 4px)'
+  		}
+  	}
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

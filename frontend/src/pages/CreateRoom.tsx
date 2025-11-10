@@ -1,20 +1,40 @@
-/**
- * Create room page with world settings form
- */
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRoom, updateRoomSettings, generateWorld } from '../services/api';
 import { useI18n } from '../i18n';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
-import { Layout } from '../components/layout/Layout';
+import LanguageSelector from '../components/ui/LanguageSelector';
+import Layout from '../components/layout/Layout';
 import type { WorldSettings, AdventureLength, Difficulty } from '../types/shared';
+
+function OptionButton({
+  onClick,
+  isActive,
+  children,
+}: {
+  onClick: () => void;
+  isActive: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 p-2 rounded-md text-sm transition-colors ${
+        isActive
+          ? 'bg-aurora-500 text-midnight-100 font-bold shadow-md'
+          : 'bg-midnight-500/60 text-shadow-200 hover:bg-midnight-400/60'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 /**
  * Create room page component
  * @returns Create room UI
  */
-export function CreateRoomPage() {
+export default function CreateRoomPage() {
   const navigate = useNavigate();
   const { t, language } = useI18n();
   const [loading, setLoading] = useState(false);
@@ -26,6 +46,8 @@ export function CreateRoomPage() {
     playerCount: 4,
     adventureLength: 'medium' as AdventureLength,
     difficulty: 'medium' as Difficulty,
+    startingLevel: 1,
+    attributePointBudget: 27,
   });
 
   const updateSetting = <K extends keyof WorldSettings>(key: K, value: WorldSettings[K]) => {
@@ -57,24 +79,6 @@ export function CreateRoomPage() {
     }
   };
 
-  const OptionButton: React.FC<{ onClick: () => void; isActive: boolean; children: React.ReactNode }> = ({
-    onClick,
-    isActive,
-    children,
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 p-2 rounded-md text-sm transition-colors ${
-        isActive
-          ? 'bg-aurora-500 text-midnight-100 font-bold shadow-md'
-          : 'bg-midnight-500/60 text-shadow-200 hover:bg-midnight-400/60'
-      }`}
-    >
-      {children}
-    </button>
-  );
-
   return (
     <Layout showRoomInfo={false}>
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -82,7 +86,7 @@ export function CreateRoomPage() {
           <div className="absolute top-4 right-4">
             <LanguageSelector />
           </div>
-          
+
           <div className="text-center">
             <h1 className="text-4xl font-bold text-aurora-300 mb-2">{t('worldSettings.title')}</h1>
             <p className="text-shadow-200">{t('worldSettings.subtitle')}</p>
@@ -95,8 +99,11 @@ export function CreateRoomPage() {
                 <h3 className="text-lg text-aurora-300 font-semibold">{t('worldSettings.story')}</h3>
 
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-1">{t('worldSettings.theme')}</label>
+                  <label htmlFor="theme-input" className="block text-sm font-medium text-shadow-300 mb-1">
+                    {t('worldSettings.theme')}
+                  </label>
                   <input
+                    id="theme-input"
                     type="text"
                     value={settings.theme}
                     onChange={(e) => updateSetting('theme', e.target.value)}
@@ -106,8 +113,11 @@ export function CreateRoomPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-1">{t('worldSettings.setting')}</label>
+                  <label htmlFor="setting-input" className="block text-sm font-medium text-shadow-300 mb-1">
+                    {t('worldSettings.setting')}
+                  </label>
                   <input
+                    id="setting-input"
                     type="text"
                     value={settings.setting}
                     onChange={(e) => updateSetting('setting', e.target.value)}
@@ -117,8 +127,11 @@ export function CreateRoomPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-1">{t('worldSettings.tone')}</label>
+                  <label htmlFor="tone-input" className="block text-sm font-medium text-shadow-300 mb-1">
+                    {t('worldSettings.tone')}
+                  </label>
                   <input
+                    id="tone-input"
                     type="text"
                     value={settings.tone}
                     onChange={(e) => updateSetting('tone', e.target.value)}
@@ -133,8 +146,11 @@ export function CreateRoomPage() {
                 <h3 className="text-lg text-aurora-300 font-semibold">{t('worldSettings.scope')}</h3>
 
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-1">{t('worldSettings.playerCount')}</label>
+                  <label htmlFor="player-count-input" className="block text-sm font-medium text-shadow-300 mb-1">
+                    {t('worldSettings.playerCount')}
+                  </label>
                   <input
+                    id="player-count-input"
                     type="number"
                     min="1"
                     max="8"
@@ -145,7 +161,9 @@ export function CreateRoomPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-2">{t('worldSettings.adventureLength')}</label>
+                  <span className="block text-sm font-medium text-shadow-300 mb-2">
+                    {t('worldSettings.adventureLength')}
+                  </span>
                   <div className="flex space-x-2">
                     <OptionButton
                       onClick={() => updateSetting('adventureLength', 'short')}
@@ -169,9 +187,14 @@ export function CreateRoomPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-2">{t('worldSettings.difficulty')}</label>
+                  <span className="block text-sm font-medium text-shadow-300 mb-2">
+                    {t('worldSettings.difficulty')}
+                  </span>
                   <div className="flex space-x-2">
-                    <OptionButton onClick={() => updateSetting('difficulty', 'easy')} isActive={settings.difficulty === 'easy'}>
+                    <OptionButton
+                      onClick={() => updateSetting('difficulty', 'easy')}
+                      isActive={settings.difficulty === 'easy'}
+                    >
                       {t('worldSettings.difficultyEasy')}
                     </OptionButton>
                     <OptionButton
@@ -180,7 +203,10 @@ export function CreateRoomPage() {
                     >
                       {t('worldSettings.difficultyMedium')}
                     </OptionButton>
-                    <OptionButton onClick={() => updateSetting('difficulty', 'hard')} isActive={settings.difficulty === 'hard'}>
+                    <OptionButton
+                      onClick={() => updateSetting('difficulty', 'hard')}
+                      isActive={settings.difficulty === 'hard'}
+                    >
                       {t('worldSettings.difficultyHard')}
                     </OptionButton>
                   </div>
@@ -203,11 +229,7 @@ export function CreateRoomPage() {
               >
                 {t('worldSettings.cancel')}
               </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary flex-1"
-              >
+              <button type="submit" disabled={loading} className="btn-primary flex-1">
                 {loading ? t('worldSettings.creating') : t('worldSettings.create')}
               </button>
             </div>
@@ -217,4 +239,3 @@ export function CreateRoomPage() {
     </Layout>
   );
 }
-

@@ -1,9 +1,5 @@
-/**
- * Socket.io hook for real-time updates
- */
-
 import { useState, useEffect, useCallback } from 'react';
-import { initSocket, disconnectSocket, isConnected, getSocket } from '../services/socket';
+import { initSocket, disconnectSocket, getSocket } from '../services/socket';
 import type { Room, Player, Message, Creature } from '../types/shared';
 
 /**
@@ -23,7 +19,7 @@ interface SocketState {
  * @param roomId - Room ID to join
  * @returns Socket state and utilities
  */
-export function useSocket(roomId?: string) {
+export default function useSocket(roomId?: string) {
   const [state, setState] = useState<SocketState>({
     connected: false,
     error: null,
@@ -43,6 +39,13 @@ export function useSocket(roomId?: string) {
         await initSocket({
           onConnect: () => {
             updateState({ connected: true, error: null });
+            // Rejoin room if we have a roomId
+            if (roomId) {
+              const socket = getSocket();
+              if (socket) {
+                socket.emit('room:join', { roomId });
+              }
+            }
           },
           onDisconnect: () => {
             updateState({ connected: false });
@@ -55,23 +58,50 @@ export function useSocket(roomId?: string) {
               creatures: data.creatures,
             });
           },
-          onRoomUpdated: (data) => {
-            // Handle room updates
-            console.log('Room updated:', data);
+          onRoomUpdated: () => {
+            // Room updated - state will refresh via game:state event
           },
-          onPlayerJoined: (data) => {
-            console.log('Player joined:', data.userId);
+          onPlayerJoined: () => {
+            // Player joined - handled by player:created event
           },
-          onPlayerLeft: (data) => {
-            console.log('Player left:', data.userId);
+          onPlayerLeft: () => {
+            // Player left - remove from local state
+            // Note: backend should emit updated game state
+          },
+          onPlayerCreated: (player) => {
+            // Add new player to state
+            setState((prev) => {
+              const exists = prev.players.some((p) => p.id === player.id);
+              if (exists) {
+                return prev;
+              }
+              return {
+                ...prev,
+                players: [...prev.players, player],
+              };
+            });
+          },
+          onPlayerReadyUpdated: (data) => {
+            // Update player ready status
+            setState((prev) => ({
+              ...prev,
+              players: prev.players.map((p) =>
+                p.userId === data.userId ? { ...p, isReady: data.isReady } : p
+              ),
+            }));
+          },
+          onPhaseChanged: (data) => {
+            // Update room phase
+            setState((prev) => ({
+              ...prev,
+              room: prev.room ? { ...prev.room, phase: data.phase as Room['phase'] } : null,
+            }));
           },
           onTurnProcessing: () => {
-            console.log('Turn processing...');
+            // Turn processing
           },
-          onTurnComplete: (data) => {
-            updateState({
-              messages: [...state.messages, ...data.messages],
-            });
+          onTurnComplete: () => {
+            // Turn complete - messages will arrive via message:new events
           },
           onError: (data) => {
             updateState({ error: data.message });
@@ -89,7 +119,7 @@ export function useSocket(roomId?: string) {
     return () => {
       disconnectSocket();
     };
-  }, [updateState]);
+  }, [updateState, roomId]);
 
   return {
     connected: state.connected,
@@ -101,4 +131,3 @@ export function useSocket(roomId?: string) {
     socket: getSocket(),
   };
 }
-

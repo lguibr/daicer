@@ -1,14 +1,10 @@
-/**
- * Responsive navbar with room info and user menu
- */
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 import type { Room } from '../../types/shared';
 
 interface NavbarProps {
-  room?: Room;
+  room?: Room | null;
   playerCount?: number;
   showRoomInfo?: boolean;
 }
@@ -18,7 +14,7 @@ interface NavbarProps {
  * @param props - Navbar props
  * @returns Navbar UI
  */
-export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps) {
+export default function Navbar({ room = null, playerCount = 0, showRoomInfo = false }: NavbarProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -53,10 +49,11 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
           {/* Logo/Title */}
           <div className="flex items-center flex-shrink-0">
             <button
+              type="button"
               onClick={() => navigate('/lobby')}
-              className="text-2xl font-bold text-aurora-300 hover:text-aurora-200 transition-colors"
+              className="flex items-center  text-2xl font-bold text-aurora-300 hover:text-aurora-200 transition-colors"
             >
-              🎲 D20 AI
+              <img src="/logo.png" alt="D20 AI Logo" className="h-8 w-auto" />
             </button>
           </div>
 
@@ -74,18 +71,14 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
               {/* Phase Indicator */}
               <div className="flex items-center gap-2">
                 <span className="text-shadow-300 text-sm">Phase:</span>
-                <span className="text-aurora-200 font-semibold">
-                  {getPhaseLabel(room.phase)}
-                </span>
+                <span className="text-aurora-200 font-semibold">{getPhaseLabel(room.phase)}</span>
               </div>
 
               {/* Player Count */}
               {playerCount !== undefined && (
                 <div className="flex items-center gap-2">
                   <span className="text-shadow-300 text-sm">Players:</span>
-                  <span className="text-nebula-300 font-semibold">
-                    {playerCount}
-                  </span>
+                  <span className="text-nebula-300 font-semibold">{playerCount}</span>
                 </div>
               )}
             </div>
@@ -103,21 +96,21 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
                       className="w-8 h-8 rounded-full border-2 border-aurora-400/60"
                     />
                   )}
-                  <span className="text-shadow-100 text-sm font-medium">
-                    {user.displayName || user.email}
-                  </span>
+                  <span className="text-shadow-100 text-sm font-medium">{user.displayName || user.email}</span>
                 </div>
-                
+
                 {showRoomInfo && (
                   <button
+                    type="button"
                     onClick={handleLeaveRoom}
                     className="px-4 py-2 bg-midnight-500 text-shadow-100 rounded-lg hover:bg-midnight-400 transition-colors text-sm font-medium"
                   >
                     Leave Room
                   </button>
                 )}
-                
+
                 <button
+                  type="button"
                   onClick={handleLogout}
                   className="px-4 py-2 bg-aurora-500 text-midnight-100 rounded-lg hover:bg-aurora-400 transition-colors text-sm font-medium"
                 >
@@ -130,6 +123,7 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-shadow-300 hover:text-shadow-50 hover:bg-midnight-500/60 transition-colors"
             >
@@ -160,16 +154,12 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-shadow-300 text-sm">Phase:</span>
-                  <span className="text-aurora-200 font-semibold">
-                    {getPhaseLabel(room.phase)}
-                  </span>
+                  <span className="text-aurora-200 font-semibold">{getPhaseLabel(room.phase)}</span>
                 </div>
                 {playerCount !== undefined && (
                   <div className="flex items-center justify-between">
                     <span className="text-shadow-300 text-sm">Players:</span>
-                    <span className="text-nebula-300 font-semibold">
-                      {playerCount}
-                    </span>
+                    <span className="text-nebula-300 font-semibold">{playerCount}</span>
                   </div>
                 )}
               </div>
@@ -186,13 +176,12 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
                       className="w-10 h-10 rounded-full border-2 border-aurora-400/60"
                     />
                   )}
-                  <span className="text-shadow-100 font-medium">
-                    {user.displayName || user.email}
-                  </span>
+                  <span className="text-shadow-100 font-medium">{user.displayName || user.email}</span>
                 </div>
 
                 {showRoomInfo && (
                   <button
+                    type="button"
                     onClick={() => {
                       handleLeaveRoom();
                       setMobileMenuOpen(false);
@@ -204,6 +193,7 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
                 )}
 
                 <button
+                  type="button"
                   onClick={() => {
                     handleLogout();
                     setMobileMenuOpen(false);
@@ -220,4 +210,3 @@ export function Navbar({ room, playerCount, showRoomInfo = false }: NavbarProps)
     </nav>
   );
 }
-

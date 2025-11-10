@@ -2,14 +2,13 @@
  * Language selector component
  */
 
-import React from 'react';
 import { useI18n } from '../../i18n';
 
 /**
  * Language selector dropdown
  * @returns Language selector UI
  */
-export function LanguageSelector() {
+export default function LanguageSelector() {
   const { language, setLanguage, availableLanguages } = useI18n();
 
   return (
@@ -26,4 +25,3 @@ export function LanguageSelector() {
     </select>
   );
 }
-

@@ -3,7 +3,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { getFirebaseAuth } from '@/config/firebase.js';
+import { getFirebaseAuth } from '@/config/firebase';
 import { ApiError } from './error.js';
 
 /**
@@ -23,11 +23,7 @@ export interface AuthRequest extends Request {
  * @param res - Express response
  * @param next - Next function
  */
-export async function authenticate(
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
+export async function authenticate(req: AuthRequest, _res: Response, next: NextFunction): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
 
@@ -50,4 +46,3 @@ export async function authenticate(
     next(new ApiError(401, 'Invalid authentication token'));
   }
 }
-

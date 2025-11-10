@@ -1,4 +1,4 @@
-import { GamePhase, Player, Message, WorldSettings, Creature, Attribute } from '../types';
+import { Player, Message, WorldSettings, Creature } from '../types';
 import { Language } from '../i18n';
 
 export const ActionType = {
@@ -20,16 +20,18 @@ export const ActionType = {
   SET_ERROR: 'SET_ERROR',
 } as const;
 
-
 export type AppAction =
   | { type: typeof ActionType.SET_LANGUAGE; payload: Language }
   | { type: typeof ActionType.CREATE_WORLD_START }
-  | { type: typeof ActionType.CREATE_WORLD_SUCCESS; payload: { settings: WorldSettings, description: string } }
+  | { type: typeof ActionType.CREATE_WORLD_SUCCESS; payload: { settings: WorldSettings; description: string } }
   | { type: typeof ActionType.ADD_CHARACTER; payload: Player }
   | { type: typeof ActionType.START_GAME }
   | { type: typeof ActionType.PROCESS_TURN_START }
-  | { type: typeof ActionType.PROCESS_TURN_SUCCESS; payload: { messages: Message[], updates: any[] } }
-  | { type: typeof ActionType.SET_PLAYER_ACTION; payload: { playerId: string, action: string } }
-  | { type: typeof ActionType.UPDATE_CHARACTER_ATTRIBUTE; payload: { characterName: string, attribute: keyof Creature | keyof Player['character'], value: number } }
+  | { type: typeof ActionType.PROCESS_TURN_SUCCESS; payload: { messages: Message[]; updates: unknown[] } }
+  | { type: typeof ActionType.SET_PLAYER_ACTION; payload: { playerId: string; action: string } }
+  | {
+      type: typeof ActionType.UPDATE_CHARACTER_ATTRIBUTE;
+      payload: { characterName: string; attribute: keyof Creature | keyof Player['character']; value: number };
+    }
   | { type: typeof ActionType.CREATE_CREATURE; payload: Creature }
   | { type: typeof ActionType.SET_ERROR; payload: string | null };

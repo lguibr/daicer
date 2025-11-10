@@ -4,16 +4,16 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import useAuth from '../hooks/useAuth';
 import { useI18n } from '../i18n';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
-import { Layout } from '../components/layout/Layout';
+import LanguageSelector from '../components/ui/LanguageSelector';
+import Layout from '../components/layout/Layout';
 
 /**
  * Landing/Login page
  * @returns Landing page UI
  */
-export function LandingPage() {
+export default function LandingPage() {
   const { user, loading, signInWithGoogle, error } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -31,12 +31,13 @@ export function LandingPage() {
           <div className="absolute top-4 right-4">
             <LanguageSelector />
           </div>
-          
+
           <div className="text-center">
             <h1 className="text-5xl font-bold text-aurora-300 mb-2">{t('auth.title')}</h1>
             <p className="text-shadow-200 mb-8">{t('auth.subtitle')}</p>
 
             <button
+              type="button"
               onClick={signInWithGoogle}
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -63,7 +64,7 @@ export function LandingPage() {
             </button>
 
             {error && <p className="mt-4 text-red-400 text-sm">{error}</p>}
-            
+
             <div className="mt-8 text-xs text-shadow-500">
               <p>{t('auth.emulatorNote')}</p>
               <p>{t('auth.emulatorTip')}</p>
@@ -74,4 +75,3 @@ export function LandingPage() {
     </Layout>
   );
 }
-

@@ -11,15 +11,15 @@ graph TB
     Auth -->|Yes| Lobby{In Room?}
     Lobby -->|No| LobbyScreen
     Lobby -->|Yes| Room{Room Phase?}
-    
+
     Room -->|SETUP| SetupWizard
     Room -->|CHARACTER_CREATION| CharCreator[CharacterCreator]
     Room -->|GAMEPLAY| GameScreen
-    
+
     GameScreen --> CharSheet[CharacterSheetDisplay]
     GameScreen --> ChatBox[ChatBox]
     GameScreen --> Actions[ActionInput]
-    
+
     App --> Debug[DebugPanel]
 ```
 
@@ -39,4 +39,3 @@ graph TB
 - Props are fully typed
 - JSDoc comments for complex logic
 - Tailwind CSS for styling
-

@@ -43,10 +43,10 @@ All keys use dot notation:
 
 ```typescript
 // Translation: "Room Code: {code}"
-t('character.roomCode') + ': ' + roomCode
+t('character.roomCode') + ': ' + roomCode;
 
 // Or with params:
-t('character.playersReady', { count: 3, total: 4 })
+t('character.playersReady', { count: 3, total: 4 });
 // Result: "3 / 4 players ready"
 ```
 
@@ -74,4 +74,3 @@ await processTurn(roomId, language);
 ```
 
 LLM generates responses in the same language.
-

@@ -2,12 +2,12 @@
  * Game logic service - world generation and turn processing
  */
 
-import { generateText, generateWithHistory } from './llm.js';
-import { getLLMModel } from '@/config/langchain.js';
-import { getGameTools } from './tools.js';
-import { getModifier } from '@/utils/game-mechanics.js';
-import type { WorldSettings, Player, Creature, Message, Language, Attribute } from '@/types/index.js';
-import { logger } from '@/utils/logger.js';
+import { getLLMModel } from '@/config/langchain';
+import type { WorldSettings, Player, Creature, Message, Language, CharacterSheet } from '@/types/index';
+import { logger } from '@/utils/logger';
+import { z } from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import { generateText } from './llm';
 
 /**
  * Generate world description from settings
@@ -53,12 +53,7 @@ Provide a rich 2-3 paragraph world description that sets the scene and hints at 
  * @param language - Game language
  * @returns System instruction for DM
  */
-function buildDMSystemInstruction(
-  worldDescription: string,
-  players: Player[],
-  creatures: Creature[],
-  language: Language
-): string {
+function buildDMSystemInstruction(worldDescription: string, players: Player[], creatures: Creature[]): string {
   const playerSummaries = players
     .map((p) => {
       const char = p.character;
@@ -78,6 +73,61 @@ ${playerSummaries}
 
 ACTIVE CREATURES/NPCs:
 ${creatureSummaries || 'None currently active.'}
+
+CRITICAL: TEAMWORK & PARTY COHESION:
+- This is a TEAM adventure - the party works TOGETHER
+- Create situations that require cooperation and reward working as a group
+- Encourage players to combine their unique abilities and support each other
+- NPCs should recognize and respond to party dynamics and teamwork
+- Challenges should be balanced for the full party, not solo play
+- Highlight moments when players help each other or coordinate strategies
+- The adventure succeeds through UNITY, not individual glory
+
+D&D 5E MECHANICS REFERENCE:
+
+**Advantage/Disadvantage:**
+- Advantage: Roll 2d20, take higher result
+- Disadvantage: Roll 2d20, take lower result
+- Never stack (multiple sources = still just 1 advantage/disadvantage)
+
+**Common DCs:**
+- Very Easy: 5
+- Easy: 10
+- Medium: 15
+- Hard: 20
+- Very Hard: 25
+- Nearly Impossible: 30
+
+**Death Saves:**
+- Unconscious at 0 HP
+- Each turn: DC 10 death save
+- 3 successes = stabilized
+- 3 failures = dead
+- Natural 20 = regain 1 HP
+- Natural 1 = 2 failures
+
+**Critical Hits:**
+- Natural 20 on attack = critical hit
+- Double all damage dice (not modifiers)
+
+**Conditions (common):**
+- Blinded: Can't see, attacks have Disadvantage, attacks against have Advantage
+- Charmed: Can't attack charmer, charmer has Advantage on social checks
+- Frightened: Disadvantage on checks/attacks while source in sight, can't move closer
+- Poisoned: Disadvantage on attack rolls and ability checks
+- Prone: Disadvantage on attacks, melee attacks against have Advantage
+- Restrained: Speed 0, Disadvantage on Dex saves, attacks against have Advantage
+- Stunned: Incapacitated, can't move, auto-fail Str/Dex saves
+- Unconscious: Incapacitated, can't move/speak, drops items, auto-fail Str/Dex saves
+
+**Spellcasting Basics:**
+- Spell Save DC = 8 + proficiency bonus + spellcasting ability modifier
+- Spell Attack Bonus = proficiency bonus + spellcasting ability modifier
+- Concentration: Some spells require concentration, broken by damage (DC 10 or half damage, whichever is higher)
+
+**Ability Checks:**
+- d20 + ability modifier + proficiency bonus (if proficient) vs DC
+- Skills use associated ability scores
 
 FORMATTING RULES - EXTREMELY IMPORTANT:
 You MUST use rich markdown formatting in your narrative:
@@ -113,6 +163,8 @@ What do you do?
 
 GUIDELINES:
 - Use tools for ALL dice rolls and checks
+- Reference D&D 5e mechanics above when relevant
+- Use lookup tools if you need details about conditions, skills, equipment, etc.
 - Be dramatic and vivid
 - Use markdown generously
 - React to player actions realistically
@@ -134,20 +186,34 @@ export async function processTurn(
   players: Player[],
   creatures: Creature[],
   language: Language = 'en'
-): Promise<string> {
+): Promise<{ overall_summary: string; player_perspectives: Array<{ playerName: string; perspective: string }> }> {
   const languageMap: Record<Language, string> = {
     en: 'English',
     es: 'Spanish',
     'pt-BR': 'Brazilian Portuguese',
   };
 
-  const systemPrompt = buildDMSystemInstruction(worldDescription, players, creatures, language);
+  const systemPrompt = buildDMSystemInstruction(worldDescription, players, creatures);
   const languageName = languageMap[language] || 'English';
 
-  // Get LLM model with tools
-  const model = getLLMModel();
-  const tools = getGameTools();
-  const modelWithTools = model.bindTools(tools);
+  // Define the structured output schema
+  const TurnResponseSchema = z.object({
+    overall_summary: z.string().describe('An overall summary of what happened this turn for everyone in the party.'),
+    player_perspectives: z
+      .array(
+        z.object({
+          playerName: z.string().describe("The character's name."),
+          perspective: z
+            .string()
+            .describe("A personalized, immersive description of events from this character's point of view."),
+        })
+      )
+      .describe('An array of personalized perspectives for each player.'),
+  });
+
+  // Get LLM model with the structured output schema
+  const model = await getLLMModel();
+  const structuredModel = model.withStructuredOutput(TurnResponseSchema);
 
   // Build conversation
   const conversationHistory = messages.map((msg) => `${msg.sender}: ${msg.text}`).join('\n\n');
@@ -159,25 +225,26 @@ export async function processTurn(
 
   const fullPrompt = `${systemPrompt}
 
+You MUST respond with a JSON object that matches this schema:
+${JSON.stringify(zodToJsonSchema(TurnResponseSchema))}
+
 PREVIOUS STORY:
 ${conversationHistory}
 
 CURRENT TURN ACTIONS:
 ${currentActions}
 
-As the Dungeon Master, narrate what happens. Use the provided tools (roll_dice, attribute_check, saving_throw, attack_roll, deal_damage) to determine outcomes fairly. Then provide a vivid narrative response.
+As the Dungeon Master, narrate what happens. First, provide an 'overall_summary' of the events that unfold. Then, provide a personalized 'player_perspectives' for each character involved in the current actions, describing what they see, feel, and experience from their unique point of view. Use the provided tools (roll_dice, attribute_check, saving_throw, attack_roll, deal_damage) to determine outcomes fairly.
 
 Respond entirely in ${languageName}.`;
 
-  logger.info('Processing turn with LLM tools');
+  logger.info('Processing turn with LLM and structured output');
 
-  const response = await modelWithTools.invoke(fullPrompt, {
-    metadata: { players, creatures },
-  });
+  const response = await structuredModel.invoke(fullPrompt);
 
   logger.info('Turn processed successfully');
 
-  return response.content.toString();
+  return response;
 }
 
 /**
@@ -239,14 +306,23 @@ REMEMBER: NO meta-text. Start directly with ### header.`;
  * @param worldDescription - World background
  * @param players - All players
  * @param language - Game language
- * @returns Array of personalized messages
+ * @returns Array of personalized messages and a main opening message
  */
 export async function generateCharacterOpenings(
   worldDescription: string,
   players: Player[],
   language: Language = 'en'
-): Promise<Array<{ playerId: string; message: string }>> {
+): Promise<{ openings: Array<{ playerId: string; message: string }>; mainMessage: string }> {
   logger.info(`Generating personalized openings for ${players.length} characters`);
+
+  const openingSystemPrompt =
+    'You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.';
+  const openingUserPrompt = `Based on the world description below, write a 2-3 paragraph opening narration for the entire party. Introduce the immediate surroundings and hint at the brewing conflict or adventure.
+
+WORLD:
+${worldDescription}`;
+
+  const mainMessage = await generateText(openingSystemPrompt, openingUserPrompt, language);
 
   const openings = await Promise.all(
     players.map(async (player) => {
@@ -259,6 +335,5 @@ export async function generateCharacterOpenings(
   );
 
   logger.info('All character openings generated');
-  return openings;
+  return { openings, mainMessage };
 }
-

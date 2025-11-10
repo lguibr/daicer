@@ -3,7 +3,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { logger } from '@/utils/logger.js';
+import { logger } from '@/utils/logger';
 
 /**
  * Custom API error class
@@ -31,7 +31,7 @@ export function errorHandler(
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  next: NextFunction
+  _next: NextFunction
 ): void {
   const statusCode = err instanceof ApiError ? err.statusCode : 500;
   const message = err.message || 'Internal server error';
@@ -65,4 +65,3 @@ export function notFoundHandler(req: Request, res: Response): void {
     },
   });
 }
-

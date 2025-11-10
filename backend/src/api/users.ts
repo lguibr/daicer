@@ -4,9 +4,8 @@
 
 import { Router } from 'express';
 import type { Response } from 'express';
-import { authenticate, type AuthRequest } from '@/middleware/auth.js';
-import { createUser, getUser } from '@/services/firestore.js';
-import { ApiError } from '@/middleware/error.js';
+import { authenticate, type AuthRequest } from '@/middleware/auth';
+import { createUser, getUser } from '@/services/firestore';
 
 const router = Router();
 
@@ -28,4 +27,3 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 export default router;
-

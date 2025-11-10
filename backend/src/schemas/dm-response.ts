@@ -32,4 +32,3 @@ export const DMResponseSchema = z.object({
 });
 
 export type DMResponse = z.infer<typeof DMResponseSchema>;
-

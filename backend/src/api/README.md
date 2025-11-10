@@ -10,11 +10,11 @@ graph LR
     Router --> Rooms[Rooms API]
     Router --> Game[Game API]
     Router --> Users[Users API]
-    
+
     Rooms --> Auth[Auth Middleware]
     Game --> Auth
     Users --> Auth
-    
+
     Auth --> Firestore[(Firestore)]
 ```
 
@@ -27,6 +27,7 @@ graph LR
 ## Endpoint Patterns
 
 All endpoints follow RESTful conventions:
+
 - `POST` - Create resources
 - `GET` - Read resources
 - `PATCH` - Update resources
@@ -52,4 +53,3 @@ All endpoints follow RESTful conventions:
   data: T
 }
 ```
-

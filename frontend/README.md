@@ -73,4 +73,3 @@ VITE_API_URL=http://localhost:3001
 - Prettier formatting
 - Max function length: 25 lines
 - All exports have JSDoc
-

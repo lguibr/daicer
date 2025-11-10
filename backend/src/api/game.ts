@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import type { Response } from 'express';
 import { z } from 'zod';
-import { authenticate, type AuthRequest } from '@/middleware/auth.js';
+import { authenticate, type AuthRequest } from '@/middleware/auth';
 import {
   getRoom,
   updateRoomWorld,
@@ -15,12 +15,12 @@ import {
   getMessages,
   getCreatures,
   updatePlayerAction,
-} from '@/services/firestore.js';
-import { generateWorld, generateCharacterOpenings, processTurn } from '@/services/game.js';
-import { ApiError } from '@/middleware/error.js';
-import { NEW_CHARACTER_TEMPLATE } from '@/constants.js';
-import type { Player, Message, CharacterSheet } from '@/types/index.js';
-import { io } from '@/server.js';
+} from '@/services/firestore';
+import { generateWorld, generateCharacterOpenings, processTurn } from '@/services/game';
+import { ApiError } from '@/middleware/error';
+import { NEW_CHARACTER_TEMPLATE } from '@/constants';
+import { GamePhase, type Player, type Message, type CharacterSheet } from '@/types/index';
+import { io } from '@/server';
 
 const router = Router();
 
@@ -64,7 +64,7 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
   }
 
   const worldDescription = await generateWorld(room.settings, req.body.language || 'en');
-  const updatedRoom = await updateRoomWorld(roomId, worldDescription, 'CHARACTER_CREATION');
+  const updatedRoom = await updateRoomWorld(roomId, worldDescription, GamePhase.CHARACTER_CREATION);
 
   res.json({ success: true, data: updatedRoom });
 });
@@ -81,7 +81,7 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
     throw new ApiError(404, 'Room not found');
   }
 
-  if (room.phase !== 'CHARACTER_CREATION') {
+  if (room.phase !== GamePhase.CHARACTER_CREATION) {
     throw new ApiError(400, 'Not in character creation phase');
   }
 
@@ -135,7 +135,7 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
 
   const messages: Message[] = [];
 
-  for (const { playerId, message: opening } of openings) {
+  for (const { playerId, message: opening } of openings.openings) {
     const msg: Message = {
       id: `msg-${Date.now()}-${playerId}`,
       sender: 'DM',
@@ -148,7 +148,7 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
     messages.push(msg);
   }
 
-  await updateRoomWorld(roomId, room.worldDescription, 'GAMEPLAY');
+  await updateRoomWorld(roomId, room.worldDescription, GamePhase.GAMEPLAY);
 
   res.json({ success: true, data: messages });
 });
@@ -165,7 +165,7 @@ router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Respons
     throw new ApiError(404, 'Room not found');
   }
 
-  if (room.phase !== 'GAMEPLAY') {
+  if (room.phase !== GamePhase.GAMEPLAY) {
     throw new ApiError(400, 'Game not started');
   }
 
@@ -192,7 +192,7 @@ router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Respons
   const dmMessage: Message = {
     id: `msg-${Date.now()}-dm`,
     sender: 'DM',
-    text: dmResponse,
+    text: dmResponse.overall_summary,
     timestamp: Date.now(),
   };
 
@@ -207,4 +207,3 @@ router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Respons
 });
 
 export default router;
-

@@ -1,18 +1,3 @@
-export enum GamePhase {
-  SETUP = 'SETUP',
-  CHARACTER_CREATION = 'CHARACTER_CREATION',
-  GAMEPLAY = 'GAMEPLAY',
-}
-
-export enum Attribute {
-  STR = 'Strength',
-  DEX = 'Dexterity',
-  CON = 'Constitution',
-  INT = 'Intelligence',
-  WIS = 'Wisdom',
-  CHA = 'Charisma',
-}
-
 export interface CharacterSheet {
   name: string;
   race: string;
@@ -25,7 +10,7 @@ export interface CharacterSheet {
   armorClass: number;
   initiative: number;
   baseAttackBonus: number;
-  attributes: Record<Attribute, number>;
+  attributes: Record<string, number>;
   savingThrows: {
     fortitude: number;
     reflex: number;
@@ -62,9 +47,9 @@ export interface WorldSettings {
 }
 
 export interface Creature {
-    name: string;
-    hp: number;
-    maxHp: number;
-    attackBonus: number;
-    damage: string;
+  name: string;
+  hp: number;
+  maxHp: number;
+  attackBonus: number;
+  damage: string;
 }

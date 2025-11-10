@@ -128,7 +128,7 @@ export const supportedLanguages = [
 export function useI18n() {
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem('d20ai-language');
-    return (stored === 'es' || stored === 'pt-BR') ? stored : 'en';
+    return stored === 'es' || stored === 'pt-BR' ? stored : 'en';
   });
 
   const setLanguage = (lang: Language) => {
@@ -136,9 +136,12 @@ export function useI18n() {
     setLanguageState(lang);
   };
 
-  const t = (key: string): string => {
-    return T[language][key as keyof typeof T.en] || key;
-  };
+  const t = (key: string): string => T[language][key as keyof typeof T.en] || key;
 
-  return { t, language, setLanguage, availableLanguages: supportedLanguages };
+  return {
+    t,
+    language,
+    setLanguage,
+    availableLanguages: supportedLanguages,
+  };
 }

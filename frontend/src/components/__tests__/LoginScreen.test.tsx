@@ -2,9 +2,10 @@
  * LoginScreen component tests
  */
 
+import React from 'react';
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { LoginScreen } from '../LoginScreen';
+import LoginScreen from '../LoginScreen';
 import * as authHook from '../../hooks/useAuth';
 
 vi.mock('../../hooks/useAuth');
@@ -69,4 +70,3 @@ describe('LoginScreen', () => {
     expect(screen.getByText(errorMessage)).toBeInTheDocument();
   });
 });
-

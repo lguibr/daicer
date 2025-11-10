@@ -12,6 +12,7 @@ Helper functions and shared utilities.
 ## Principles
 
 All utilities:
+
 1. Are pure functions (where possible)
 2. Have comprehensive JSDoc
 3. Include input validation
@@ -25,4 +26,3 @@ import { generateRoomCode } from '@/utils/room-code.js';
 
 const code = generateRoomCode(); // "ABC123"
 ```
-

@@ -2,7 +2,7 @@
  * Shared constants
  */
 
-import type { CharacterSheet } from '@/types/index.js';
+import type { CharacterSheet, WorldSettings } from '@/types/index';
 
 /**
  * New character template with default values
@@ -11,13 +11,20 @@ export const NEW_CHARACTER_TEMPLATE: CharacterSheet = {
   name: '',
   race: 'Human',
   characterClass: 'Fighter',
-  alignment: 'True Neutral',
+  background: 'Folk Hero',
+  alignment: 'Neutral Good',
   level: 1,
   xp: 0,
   hp: 10,
   maxHp: 10,
+  temporaryHp: 0,
+  hitDice: { total: 1, current: 1 },
+  deathSaves: { successes: 0, failures: 0 },
   armorClass: 10,
   initiative: 0,
+  speed: 30,
+  proficiencyBonus: 2,
+  inspiration: false,
   baseAttackBonus: 1,
   attributes: {
     Strength: 10,
@@ -33,7 +40,44 @@ export const NEW_CHARACTER_TEMPLATE: CharacterSheet = {
     will: 0,
   },
   skills: {},
+  attacks: [],
   equipment: '',
+  currency: {
+    cp: 0,
+    sp: 0,
+    ep: 0,
+    gp: 0,
+    pp: 0,
+  },
+  proficienciesAndLanguages: '',
+  features: '',
+  appearance: {
+    age: '',
+    height: '',
+    weight: '',
+    eyes: '',
+    skin: '',
+    hair: '',
+    description: '',
+  },
+  personality: {
+    traits: '',
+    ideals: '',
+    bonds: '',
+    flaws: '',
+  },
+  backstory: '',
+  alliesAndOrganizations: '',
+  treasure: '',
+  spellcasting: {
+    class: '',
+    ability: '',
+    saveDC: 0,
+    attackBonus: 0,
+    cantrips: [],
+    spellsKnown: [],
+    slots: [],
+  },
 };
 
 /**
@@ -41,3 +85,30 @@ export const NEW_CHARACTER_TEMPLATE: CharacterSheet = {
  */
 export const ATTRIBUTES = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'] as const;
 
+/**
+ * Default world settings
+ */
+export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
+  theme: 'High Fantasy',
+  setting: 'Medieval',
+  tone: 'Heroic',
+  playerCount: 4,
+  adventureLength: 'medium',
+  difficulty: 'medium',
+  startingLevel: 1,
+  attributePointBudget: 27,
+};
+
+/**
+ * D&D point-buy costs for attributes (score -> point cost)
+ */
+export const POINT_BUY_COSTS: Record<number, number> = {
+  8: 0,
+  9: 1,
+  10: 2,
+  11: 3,
+  12: 4,
+  13: 5,
+  14: 7,
+  15: 9,
+};

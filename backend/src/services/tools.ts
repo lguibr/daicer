@@ -2,11 +2,12 @@
  * Game mechanic tools for LLM function calling
  */
 
-import { DynamicStructuredTool } from '@langchain/core/tools';
+import { DynamicStructuredTool } from 'langchain';
 import { z } from 'zod';
-import { rollD20, rollDice, parseDiceRoll, getModifier } from '@/utils/game-mechanics.js';
-import type { Player, Creature, Attribute } from '@/types/index.js';
-import { logger } from '@/utils/logger.js';
+import { rollD20, parseDiceRoll, getModifier } from '@/utils/game-mechanics';
+import type { Player, Creature, Attribute } from '@/types/index';
+import { logger } from '@/utils/logger';
+import { getSRDTools } from './srd-tools';
 
 /**
  * Roll dice tool
@@ -18,7 +19,7 @@ export const rollDiceTool = new DynamicStructuredTool({
     notation: z.string().describe('Dice notation like "1d20", "2d6+3", "4d8-2"'),
     reason: z.string().describe('Why this roll is being made'),
   }),
-  func: async ({ notation, reason }) => {
+  func: async ({ notation, reason }: { notation: string; reason: string }) => {
     const total = parseDiceRoll(notation);
     logger.info(`Dice roll: ${notation} = ${total} (${reason})`);
     return JSON.stringify({ notation, total, reason });
@@ -37,9 +38,20 @@ export const attributeCheckTool = new DynamicStructuredTool({
     dc: z.number().describe('Difficulty Class to beat'),
     reason: z.string().describe('What the check is for'),
   }),
-  func: async ({ characterName, attribute, dc, reason }, config) => {
-    // Get character from context (passed via config.metadata)
-    const players = (config?.metadata?.players as Player[]) || [];
+  func: async ({
+    characterName,
+    attribute,
+    dc,
+    reason,
+  }: {
+    characterName: string;
+    attribute: string;
+    dc: number;
+    reason: string;
+  }) => {
+    // TODO: Pass game state through proper tool context
+    // For now, return a placeholder response
+    const players: Player[] = [];
     const character = players.find((p) => p.character.name === characterName);
 
     if (!character) {
@@ -52,7 +64,9 @@ export const attributeCheckTool = new DynamicStructuredTool({
     const total = roll + modifier;
     const success = total >= dc;
 
-    logger.info(`${characterName} ${attribute} check: d20(${roll}) + ${modifier} = ${total} vs DC ${dc} - ${success ? 'SUCCESS' : 'FAIL'}`);
+    logger.info(
+      `${characterName} ${attribute} check: d20(${roll}) + ${modifier} = ${total} vs DC ${dc} - ${success ? 'SUCCESS' : 'FAIL'}`
+    );
 
     return JSON.stringify({
       character: characterName,
@@ -79,8 +93,19 @@ export const savingThrowTool = new DynamicStructuredTool({
     dc: z.number().describe('Difficulty Class to beat'),
     reason: z.string().describe('What caused the saving throw'),
   }),
-  func: async ({ characterName, saveType, dc, reason }, config) => {
-    const players = (config?.metadata?.players as Player[]) || [];
+  func: async ({
+    characterName,
+    saveType,
+    dc,
+    reason,
+  }: {
+    characterName: string;
+    saveType: 'fortitude' | 'reflex' | 'will';
+    dc: number;
+    reason: string;
+  }) => {
+    // TODO: Pass game state through proper tool context
+    const players: Player[] = [];
     const character = players.find((p) => p.character.name === characterName);
 
     if (!character) {
@@ -92,7 +117,9 @@ export const savingThrowTool = new DynamicStructuredTool({
     const total = roll + saveBonus;
     const success = total >= dc;
 
-    logger.info(`${characterName} ${saveType} save: d20(${roll}) + ${saveBonus} = ${total} vs DC ${dc} - ${success ? 'SUCCESS' : 'FAIL'}`);
+    logger.info(
+      `${characterName} ${saveType} save: d20(${roll}) + ${saveBonus} = ${total} vs DC ${dc} - ${success ? 'SUCCESS' : 'FAIL'}`
+    );
 
     return JSON.stringify({
       character: characterName,
@@ -118,11 +145,13 @@ export const attackRollTool = new DynamicStructuredTool({
     targetName: z.string().describe('Name of the target'),
     reason: z.string().describe('Description of the attack'),
   }),
-  func: async ({ attackerName, targetName, reason }, config) => {
-    const players = (config?.metadata?.players as Player[]) || [];
-    const creatures = (config?.metadata?.creatures as Creature[]) || [];
+  func: async ({ attackerName, targetName, reason }: { attackerName: string; targetName: string; reason: string }) => {
+    // TODO: Pass game state through proper tool context
+    const players: Player[] = [];
+    const creatures: Creature[] = [];
 
-    const attacker = players.find((p) => p.character.name === attackerName) || creatures.find((c) => c.name === attackerName);
+    const attacker =
+      players.find((p) => p.character.name === attackerName) || creatures.find((c) => c.name === attackerName);
     const target = players.find((p) => p.character.name === targetName) || creatures.find((c) => c.name === targetName);
 
     if (!attacker || !target) {
@@ -144,7 +173,9 @@ export const attackRollTool = new DynamicStructuredTool({
     const total = roll + attackBonus;
     const hit = total >= targetAC;
 
-    logger.info(`${attackerName} attacks ${targetName}: d20(${roll}) + ${attackBonus} = ${total} vs AC ${targetAC} - ${hit ? 'HIT' : 'MISS'}`);
+    logger.info(
+      `${attackerName} attacks ${targetName}: d20(${roll}) + ${attackBonus} = ${total} vs AC ${targetAC} - ${hit ? 'HIT' : 'MISS'}`
+    );
 
     return JSON.stringify({
       attacker: attackerName,
@@ -170,7 +201,15 @@ export const damageRollTool = new DynamicStructuredTool({
     damageNotation: z.string().describe('Damage dice notation like "1d8+3"'),
     damageType: z.string().describe('Type of damage (e.g., slashing, fire)'),
   }),
-  func: async ({ targetName, damageNotation, damageType }) => {
+  func: async ({
+    targetName,
+    damageNotation,
+    damageType,
+  }: {
+    targetName: string;
+    damageNotation: string;
+    damageType: string;
+  }) => {
     const damage = parseDiceRoll(damageNotation);
 
     logger.info(`${targetName} takes ${damage} ${damageType} damage (${damageNotation})`);
@@ -189,6 +228,5 @@ export const damageRollTool = new DynamicStructuredTool({
  * @returns Array of tools
  */
 export function getGameTools() {
-  return [rollDiceTool, attributeCheckTool, savingThrowTool, attackRollTool, damageRollTool];
+  return [rollDiceTool, attributeCheckTool, savingThrowTool, attackRollTool, damageRollTool, ...getSRDTools()];
 }
-

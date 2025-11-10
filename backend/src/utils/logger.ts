@@ -20,18 +20,10 @@ const logFormat = printf(({ level, message, timestamp: ts, stack }) => {
  */
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
-  format: combine(
-    errors({ stack: true }),
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    logFormat
-  ),
+  format: combine(errors({ stack: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
   transports: [
     new winston.transports.Console({
-      format: combine(
-        colorize(),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        logFormat
-      ),
+      format: combine(colorize(), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
     }),
   ],
 });
@@ -43,12 +35,7 @@ export const logger = winston.createLogger({
  * @param statusCode - Response status code
  * @param duration - Request duration in ms
  */
-export function logRequest(
-  method: string,
-  path: string,
-  statusCode: number,
-  duration: number
-): void {
+export function logRequest(method: string, path: string, statusCode: number, duration: number): void {
   logger.info(`${method} ${path} ${statusCode} - ${duration}ms`);
 }
 
@@ -64,4 +51,3 @@ export function logError(error: Error, context?: Record<string, unknown>): void 
     ...context,
   });
 }
-

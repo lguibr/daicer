@@ -25,21 +25,77 @@ export interface SavingThrows {
 }
 
 export interface CharacterSheet {
+  // Basic info
   name: string;
   race: string;
   characterClass: string;
+  background: string;
   alignment: string;
   level: number;
   xp: number;
+
+  // Core stats
   hp: number;
   maxHp: number;
+  temporaryHp: number;
+  hitDice: { total: number; current: number };
+  deathSaves: { successes: number; failures: number };
+
   armorClass: number;
   initiative: number;
-  baseAttackBonus: number;
+  speed: number;
+  proficiencyBonus: number;
+  inspiration: boolean;
+
+  // Attributes & skills
   attributes: Record<Attribute, number>;
   savingThrows: SavingThrows;
   skills: Record<string, number>;
+
+  // Combat & equipment
+  baseAttackBonus: number;
+  attacks: Array<{ name: string; bonus: string; damageType: string }>;
   equipment: string;
+
+  // Currency
+  currency: { cp: number; sp: number; ep: number; gp: number; pp: number };
+
+  // Character details
+  proficienciesAndLanguages: string;
+  features: string;
+
+  // Appearance & personality
+  appearance: {
+    age: string;
+    height: string;
+    weight: string;
+    eyes: string;
+    skin: string;
+    hair: string;
+    description: string;
+  };
+
+  personality: {
+    traits: string;
+    ideals: string;
+    bonds: string;
+    flaws: string;
+  };
+
+  backstory: string;
+  alliesAndOrganizations: string;
+  treasure: string;
+
+  // Spellcasting (all characters, empty for non-casters)
+  spellcasting: {
+    class: string;
+    ability: string;
+    saveDC: number;
+    attackBonus: number;
+    cantrips: string[];
+    spellsKnown: string[];
+    slots: { level: number; total: number; expended: number }[];
+  };
 }
 
 export interface Player {
@@ -55,6 +111,7 @@ export interface Player {
 export interface Message {
   id: string;
   sender: 'DM' | string;
+  recipientId?: string;
   text: string;
   images?: string[];
   timestamp: number;
@@ -71,6 +128,8 @@ export interface WorldSettings {
   playerCount: number;
   adventureLength: AdventureLength;
   difficulty: Difficulty;
+  startingLevel: number;
+  attributePointBudget: number;
 }
 
 export interface Creature {
@@ -101,4 +160,3 @@ export interface User {
 }
 
 export type Language = 'en' | 'es' | 'pt-BR';
-

@@ -16,10 +16,7 @@ describe('Room API', () => {
 
   describe('POST /api/rooms', () => {
     test('creates a new room', async () => {
-      const response = await request(app)
-        .post('/api/rooms')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+      const response = await request(app).post('/api/rooms').set('Authorization', `Bearer ${authToken}`).expect(201);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('id');
@@ -35,10 +32,7 @@ describe('Room API', () => {
   describe('POST /api/rooms/:code/join', () => {
     test('joins existing room', async () => {
       // Create room first
-      const createRes = await request(app)
-        .post('/api/rooms')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(201);
+      const createRes = await request(app).post('/api/rooms').set('Authorization', `Bearer ${authToken}`).expect(201);
 
       const { code } = createRes.body.data;
 
@@ -53,11 +47,7 @@ describe('Room API', () => {
     });
 
     test('returns 404 for non-existent room', async () => {
-      await request(app)
-        .post('/api/rooms/INVALID/join')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(404);
+      await request(app).post('/api/rooms/INVALID/join').set('Authorization', `Bearer ${authToken}`).expect(404);
     });
   });
 });
-

@@ -63,4 +63,3 @@ export function getDb() {
 export function getFirebaseAuth() {
   return getAuth();
 }
-

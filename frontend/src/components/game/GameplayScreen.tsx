@@ -1,14 +1,10 @@
-/**
- * Main gameplay screen with chat and turn system
- */
-
 import React, { useState } from 'react';
 import type { Room, Player } from '../../types/shared';
-import { useSocket } from '../../hooks/useSocket';
+import useSocket from '../../hooks/useSocket';
 import { submitAction, processTurn } from '../../services/socket';
-import { useAuth } from '../../hooks/useAuth';
-import { ChatArea } from './ChatArea';
-import { PlayerSidebar } from './PlayerSidebar';
+import useAuth from '../../hooks/useAuth';
+import ChatArea from './ChatArea';
+import PlayerSidebar from './PlayerSidebar';
 
 interface GameplayScreenProps {
   room: Room;
@@ -20,7 +16,7 @@ interface GameplayScreenProps {
  * @param props - Component props
  * @returns Gameplay UI
  */
-export function GameplayScreen({ room, players }: GameplayScreenProps) {
+export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const { user } = useAuth();
   const socket = useSocket(room.id);
   const [action, setAction] = useState('');
@@ -47,8 +43,51 @@ export function GameplayScreen({ room, players }: GameplayScreenProps) {
 
   const handleProcessTurn = () => {
     if (room.id) {
-      processTurn(room.id, 'en');
+      const language = room.settings?.language || 'en';
+      processTurn(room.id, language);
     }
+  };
+
+  const renderActionInput = () => {
+    if (hasSubmitted) {
+      if (allSubmitted && room.ownerId === user?.uid) {
+        return (
+          <button
+            type="button"
+            onClick={handleProcessTurn}
+            className="w-full px-6 py-3 bg-nebula-500 text-shadow-50 font-bold rounded-lg hover:bg-nebula-400 transition-colors shadow-lg"
+          >
+            Process Turn
+          </button>
+        );
+      }
+      return (
+        <div className="text-center p-4 bg-shadow-900/80 rounded-lg border border-shadow-700">
+          <p className="text-shadow-400">Action submitted. Waiting for turn to process...</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col sm:flex-row gap-2">
+        <textarea
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+          placeholder="What do you do? (e.g., 'I search the room for traps', 'I attack the goblin with my sword')"
+          className="flex-1 bg-shadow-900/85 border border-shadow-700 text-shadow-50 placeholder:text-shadow-400 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-aurora-400 resize-none min-h-[80px] sm:min-h-0"
+          rows={2}
+          disabled={submitting}
+        />
+        <button
+          type="button"
+          onClick={handleSubmitAction}
+          disabled={!action.trim() || submitting}
+          className="btn-primary sm:px-6 sm:py-2 whitespace-nowrap"
+        >
+          {submitting ? 'Sending...' : 'Submit'}
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -72,9 +111,7 @@ export function GameplayScreen({ room, players }: GameplayScreenProps) {
             <span className="text-shadow-400">
               Actions: {submittedCount} / {players.length}
             </span>
-            {!hasSubmitted && (
-              <span className="text-aurora-200 font-semibold">Your turn - submit an action</span>
-            )}
+            {!hasSubmitted && <span className="text-aurora-200 font-semibold">Your turn - submit an action</span>}
             {hasSubmitted && !allSubmitted && (
               <span className="text-nebula-200 font-semibold">✓ Waiting for others...</span>
             )}
@@ -84,39 +121,9 @@ export function GameplayScreen({ room, players }: GameplayScreenProps) {
           </div>
 
           {/* Action Input */}
-          {!hasSubmitted ? (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <textarea
-                value={action}
-                onChange={(e) => setAction(e.target.value)}
-                placeholder="What do you do? (e.g., 'I search the room for traps', 'I attack the goblin with my sword')"
-                className="flex-1 bg-shadow-900/85 border border-shadow-700 text-shadow-50 placeholder:text-shadow-400 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-aurora-400 resize-none min-h-[80px] sm:min-h-0"
-                rows={2}
-                disabled={submitting}
-              />
-              <button
-                onClick={handleSubmitAction}
-                disabled={!action.trim() || submitting}
-                className="btn-primary sm:px-6 sm:py-2 whitespace-nowrap"
-              >
-                {submitting ? 'Sending...' : 'Submit'}
-              </button>
-            </div>
-          ) : allSubmitted && room.ownerId === user?.uid ? (
-            <button
-              onClick={handleProcessTurn}
-              className="w-full px-6 py-3 bg-nebula-500 text-shadow-50 font-bold rounded-lg hover:bg-nebula-400 transition-colors shadow-lg"
-            >
-              Process Turn
-            </button>
-          ) : (
-            <div className="text-center p-4 bg-shadow-900/80 rounded-lg border border-shadow-700">
-              <p className="text-shadow-400">Action submitted. Waiting for turn to process...</p>
-            </div>
-          )}
+          {renderActionInput()}
         </div>
       </div>
     </div>
   );
 }
-

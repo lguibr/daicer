@@ -2,11 +2,10 @@
  * LLM service using LangChain for multi-provider support
  */
 
-import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { getLLMModel, getFallbackChain } from '@/config/langchain.js';
-import { logger } from '@/utils/logger.js';
-import type { Language } from '@/types/index.js';
+import { HumanMessage, SystemMessage, AIMessage } from 'langchain';
+import { getLLMModel, getFallbackChain } from '@/config/langchain';
+import { logger } from '@/utils/logger';
+import type { Language } from '@/types/index';
 
 const languageMap: Record<Language, string> = {
   en: 'English',
@@ -48,7 +47,7 @@ CORRECT approach:
 
   const messages = [new SystemMessage(fullSystemPrompt), new HumanMessage(userPrompt)];
 
-  const models = getFallbackChain();
+  const models = await getFallbackChain();
 
   for (let i = 0; i < models.length; i += 1) {
     try {
@@ -92,9 +91,14 @@ export async function generateWithHistory(
     new HumanMessage(userMessage),
   ];
 
-  const model = getLLMModel();
-  const response = await model.invoke(messages);
-
-  return response.content.toString();
+  const model = await getLLMModel();
+  try {
+    // Generate content
+    const response = await model.invoke([messages]);
+    const { content } = response.generations[0].message;
+    return content.toString();
+  } catch (error) {
+    logger.error('Error generating text with retry:', error);
+    throw new Error('Failed to generate text with history');
+  }
 }
-

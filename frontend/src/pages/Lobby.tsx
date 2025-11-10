@@ -1,21 +1,14 @@
-/**
- * Lobby page - create or join rooms
- */
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { joinRoom } from '../services/api';
-import { useI18n } from '../i18n';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
-import { Layout } from '../components/layout/Layout';
+import Layout from '../components/layout/Layout';
 
 /**
  * Lobby page component
  * @returns Lobby UI
  */
-export function LobbyPage() {
+export default function LobbyPage() {
   const navigate = useNavigate();
-  const { t } = useI18n();
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +48,7 @@ export function LobbyPage() {
 
           <div className="p-6 card space-y-4">
             <button
+              type="button"
               onClick={handleCreateRoom}
               disabled={loading}
               className="btn-primary w-full text-lg py-4"
@@ -64,7 +58,7 @@ export function LobbyPage() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-midnight-600/60"></div>
+                <div className="w-full border-t border-midnight-600/60" />
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-midnight-400/70 text-shadow-400">OR</span>
@@ -72,10 +66,11 @@ export function LobbyPage() {
             </div>
 
             <form onSubmit={handleJoinRoom} className="space-y-3">
-              <label className="block text-sm font-medium text-shadow-300">
+              <label htmlFor="room-code-input" className="block text-sm font-medium text-shadow-300">
                 Join with Room Code
               </label>
               <input
+                id="room-code-input"
                 type="text"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
@@ -83,11 +78,7 @@ export function LobbyPage() {
                 maxLength={6}
                 className="w-full px-4 py-3 bg-midnight-500/60 text-shadow-50 rounded-lg border border-shadow-800 focus:border-aurora-400 focus:outline-none focus:ring-2 focus:ring-aurora-400 text-center text-2xl tracking-widest font-mono uppercase transition-all"
               />
-              <button
-                type="submit"
-                disabled={loading || !roomCode.trim()}
-                className="btn-secondary w-full"
-              >
+              <button type="submit" disabled={loading || !roomCode.trim()} className="btn-secondary w-full">
                 {loading ? 'Joining...' : 'Join Room'}
               </button>
             </form>
@@ -103,4 +94,3 @@ export function LobbyPage() {
     </Layout>
   );
 }
-

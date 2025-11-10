@@ -8,17 +8,17 @@ Business logic layer for D20 AI backend.
 graph TB
     API[API Layer] --> Services[Services Layer]
     Socket[Socket Handlers] --> Services
-    
+
     Services --> FS[Firestore Service]
     Services --> LLM[LLM Service]
     Services --> Game[Game Service]
-    
+
     FS --> Firestore[(Firestore)]
     LLM --> LC[LangChain]
     LC --> Gemini
     LC --> OpenAI
     LC --> Anthropic
-    
+
     Game --> LLM
     Game --> FS
 ```
@@ -32,6 +32,7 @@ graph TB
 ## Service Pattern
 
 Each service:
+
 1. Exports pure functions
 2. Has comprehensive JSDoc
 3. Handles errors gracefully
@@ -41,7 +42,7 @@ Each service:
 ## Testing
 
 Services are fully testable with:
+
 - Firebase emulators
 - LLM mocks
 - Dependency injection
-

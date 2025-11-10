@@ -2,9 +2,9 @@
  * Debug panel for development and troubleshooting
  */
 
-import React, { useState, useEffect } from 'react';
-import { isConnected, getSocket } from '../../services/socket';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { isConnected, getSocket } from '../../services/socket';
 
 interface DebugEvent {
   timestamp: number;
@@ -16,7 +16,7 @@ interface DebugEvent {
  * Debug panel component
  * @returns Debug UI
  */
-export function DebugPanel() {
+export default function DebugPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
   const [events, setEvents] = useState<DebugEvent[]>([]);
@@ -41,10 +41,6 @@ export function DebugPanel() {
     };
 
     socket.onAny((eventName, data) => logEvent(eventName, data));
-
-    return () => {
-      socket.offAny();
-    };
   }, [socketConnected]);
 
   // Keyboard shortcut (Ctrl+D)
@@ -63,6 +59,7 @@ export function DebugPanel() {
   if (!isOpen) {
     return (
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 px-3 py-2 bg-slate-700 text-slate-300 text-xs rounded shadow-lg hover:bg-slate-600 transition-colors z-50"
       >
@@ -78,10 +75,14 @@ export function DebugPanel() {
         <h3 className="font-bold text-sm text-cyan-400">Debug Panel</h3>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
-            <div className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-red-500'}`} />
             <span className="text-xs text-slate-400">{socketConnected ? 'Connected' : 'Disconnected'}</span>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white text-lg leading-none">
+          <button
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="text-slate-400 hover:text-white text-lg leading-none"
+          >
             ✕
           </button>
         </div>
@@ -91,12 +92,11 @@ export function DebugPanel() {
       <div className="flex bg-slate-800 border-b border-slate-700">
         {['events', 'state', 'api'].map((tab) => (
           <button
+            type="button"
             key={tab}
             onClick={() => setSelectedTab(tab as typeof selectedTab)}
             className={`flex-1 px-4 py-2 text-xs font-medium ${
-              selectedTab === tab
-                ? 'text-cyan-400 border-b-2 border-cyan-400'
-                : 'text-slate-400 hover:text-white'
+              selectedTab === tab ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-slate-400 hover:text-white'
             }`}
           >
             {tab.toUpperCase()}
@@ -114,8 +114,8 @@ export function DebugPanel() {
             {events
               .slice()
               .reverse()
-              .map((event, idx) => (
-                <div key={idx} className="p-2 bg-slate-800 rounded">
+              .map((event) => (
+                <div key={`${event.timestamp}-${event.type}`} className="p-2 bg-slate-800 rounded">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-cyan-400">{event.type}</span>
                     <span className="text-slate-500">{new Date(event.timestamp).toLocaleTimeString()}</span>
@@ -157,13 +157,16 @@ export function DebugPanel() {
             {apiCalls
               .slice()
               .reverse()
-              .map((call, idx) => (
-                <div key={idx} className="p-2 bg-slate-800 rounded">
+              .map((call) => (
+                <div key={`${call.time}-${call.url}`} className="p-2 bg-slate-800 rounded">
                   <div className="flex items-center justify-between">
                     <span className="text-cyan-400">
                       {call.method} {call.status}
                     </span>
-                    <span className="text-slate-500">{call.time}ms</span>
+                    <span className="text-slate-500">
+                      {call.time}
+                      ms
+                    </span>
                   </div>
                   <p className="text-slate-300 text-xs truncate">{call.url}</p>
                 </div>
@@ -175,12 +178,14 @@ export function DebugPanel() {
       {/* Actions */}
       <div className="p-2 bg-slate-800 border-t border-slate-700 flex gap-2">
         <button
+          type="button"
           onClick={() => setEvents([])}
           className="flex-1 px-3 py-1 bg-slate-700 text-slate-300 text-xs rounded hover:bg-slate-600 transition-colors"
         >
           Clear Events
         </button>
         <button
+          type="button"
           onClick={() => setApiCalls([])}
           className="flex-1 px-3 py-1 bg-slate-700 text-slate-300 text-xs rounded hover:bg-slate-600 transition-colors"
         >
@@ -190,4 +195,3 @@ export function DebugPanel() {
     </div>
   );
 }
-

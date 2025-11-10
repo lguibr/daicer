@@ -2,7 +2,7 @@
  * Lobby screen - create or join rooms
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { createRoom, joinRoom } from '../services/api';
 
 interface LobbyScreenProps {
@@ -14,7 +14,7 @@ interface LobbyScreenProps {
  * @param props - Component props
  * @returns Lobby UI
  */
-export function LobbyScreen({ onRoomJoined }: LobbyScreenProps) {
+export default function LobbyScreen({ onRoomJoined }: LobbyScreenProps) {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +62,7 @@ export function LobbyScreen({ onRoomJoined }: LobbyScreenProps) {
 
         <div className="p-6 bg-slate-800 rounded-xl shadow-lg space-y-4">
           <button
+            type="button"
             onClick={handleCreateRoom}
             disabled={loading}
             className="w-full px-6 py-3 bg-cyan-600 text-white font-bold rounded-lg shadow-md hover:bg-cyan-700 transition-colors disabled:bg-slate-500 disabled:cursor-not-allowed"
@@ -71,7 +72,7 @@ export function LobbyScreen({ onRoomJoined }: LobbyScreenProps) {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-600"></div>
+              <div className="w-full border-t border-slate-600" />
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-slate-800 text-slate-400">OR</span>
@@ -106,4 +107,3 @@ export function LobbyScreen({ onRoomJoined }: LobbyScreenProps) {
     </div>
   );
 }
-

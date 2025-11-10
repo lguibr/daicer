@@ -26,7 +26,7 @@ async function getAuthToken(): Promise<string | null> {
   const user = auth.currentUser;
   if (!user) return null;
 
-  return await user.getIdToken();
+  return user.getIdToken();
 }
 
 /**
@@ -35,7 +35,7 @@ async function getAuthToken(): Promise<string | null> {
  * @param options - Fetch options
  * @returns Response data
  */
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = await getAuthToken();
 
   const headers: HeadersInit = {
@@ -142,4 +142,3 @@ export async function startGame(roomId: string, language: string): Promise<Messa
     body: JSON.stringify({ language }),
   });
 }
-

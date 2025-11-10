@@ -29,4 +29,3 @@ export function errorResponse(message: string, stack?: string) {
     },
   };
 }
-

@@ -29,15 +29,18 @@ graph TD
 ## How It Works
 
 ### 1. **Authentication**
+
 - Click "Continue with Google"
 - Uses Firebase Auth (emulators for local dev)
 - Any email works locally - no password needed!
 
 ### 2. **Create or Join Room**
+
 - **Create**: Click "Create New Adventure" → Configure world settings → Get room code
 - **Join**: Enter 6-character room code (e.g., "ABC123")
 
 ### 3. **Character Creation**
+
 - Fill out D20 character sheet:
   - Name, Race, Class, Alignment
   - Attributes (STR, DEX, CON, INT, WIS, CHA)
@@ -46,7 +49,9 @@ graph TD
 - Wait for all players to create characters
 
 ### 4. **Gameplay - Turn-Based System**
+
 Each turn:
+
 1. **Read** DM narration and previous actions
 2. **Type** your action (e.g., "I search for traps", "I attack the goblin")
 3. **Submit** and wait for others
@@ -54,8 +59,10 @@ Each turn:
 5. **Narrative**: DM describes what happens
 6. **Repeat**!
 
-### 5. **Dice System** 
+### 5. **Dice System**
+
 The LLM uses **real random dice rolls** via tools:
+
 - `roll_dice("2d6+3")` - Actual Math.random() results
 - `attribute_check(character, "Strength", DC=15)` - d20 + modifier
 - `saving_throw(character, "reflex", DC=12)` - Reflex/Fort/Will saves
@@ -65,6 +72,7 @@ The LLM uses **real random dice rolls** via tools:
 **Results are returned to the LLM**, which interprets them and writes the narrative.
 
 ### 6. **Real-Time Synchronization**
+
 - See other players' characters instantly
 - Know who's submitted their action
 - Turn auto-processes when everyone's ready
@@ -112,11 +120,13 @@ graph LR
 ### Local Development
 
 1. **Clone and install dependencies:**
+
 ```bash
 yarn install:all
 ```
 
 2. **Configure environment:**
+
 ```bash
 # Root directory
 cp .env.example .env.local
@@ -127,26 +137,31 @@ cp .env.example .env.local
 ```
 
 3. **Add your Gemini API key to `.env.local`:**
+
 ```
 GEMINI_API_KEY=your-key-here
 ```
 
 4. **Start everything with one command:**
+
 ```bash
 yarn dev
 ```
 
 This single command starts:
+
 - Firebase Emulators (Firestore + Auth)
 - Backend server (with hot reload)
 - Frontend dev server (with hot reload)
 
 **Alternative:** Use Docker Compose:
+
 ```bash
 docker-compose up
 ```
 
 5. **Access the app:**
+
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
 - Firebase UI: http://localhost:4000
@@ -184,6 +199,7 @@ d20ai/
 ## Development Commands
 
 ### Root
+
 - `yarn dev` - **Start everything** (emulators + backend + frontend)
 - `yarn install:all` - Install all dependencies
 - `yarn dev:frontend` - Start frontend only
@@ -196,6 +212,7 @@ d20ai/
 - `yarn typecheck` - TypeScript check
 
 ### Backend
+
 - `yarn dev` - Start with hot reload
 - `yarn build` - Build for production
 - `yarn test` - Run Jest tests
@@ -205,6 +222,7 @@ d20ai/
 ## API Endpoints
 
 ### Rooms
+
 - `POST /api/rooms` - Create new room
 - `POST /api/rooms/:code/join` - Join by code
 - `GET /api/rooms/:roomId` - Get room state
@@ -212,23 +230,27 @@ d20ai/
 - `DELETE /api/rooms/:roomId` - Delete room
 
 ### Game
+
 - `POST /api/game/:roomId/world` - Generate world
 - `POST /api/game/:roomId/character` - Add character
 - `POST /api/game/:roomId/start` - Start adventure
 - `POST /api/game/:roomId/turn` - Process turn
 
 ### Users
+
 - `GET /api/users/me` - Get current user
 
 ## Socket.io Events
 
 ### Client → Server
+
 - `room:join` - Join game room
 - `room:leave` - Leave room
 - `player:action` - Submit action
 - `turn:process` - Process turn
 
 ### Server → Client
+
 - `game:state` - Full state sync
 - `room:updated` - Room changed
 - `player:joined` - Player joined
@@ -241,6 +263,7 @@ d20ai/
 ### Environment Variables
 
 **Frontend (.env.local):**
+
 ```
 VITE_API_URL=http://localhost:3001
 VITE_FIREBASE_PROJECT_ID=demo-project
@@ -248,6 +271,7 @@ VITE_USE_EMULATORS=true
 ```
 
 **Backend (.env.local):**
+
 ```
 NODE_ENV=development
 PORT=3001
@@ -298,6 +322,7 @@ vercel
 ## Testing
 
 ### Backend (Jest)
+
 ```bash
 cd backend
 yarn test
@@ -305,11 +330,13 @@ yarn test:coverage
 ```
 
 ### Frontend (Vitest)
+
 ```bash
 yarn test:frontend
 ```
 
 ### E2E (Playwright)
+
 ```bash
 yarn test:e2e
 ```
@@ -317,6 +344,7 @@ yarn test:e2e
 ## Tech Stack
 
 **Frontend:**
+
 - React 19
 - TypeScript
 - Vite
@@ -325,6 +353,7 @@ yarn test:e2e
 - Socket.io Client
 
 **Backend:**
+
 - Node.js 20
 - Express
 - Socket.io
@@ -334,6 +363,7 @@ yarn test:e2e
 - Winston
 
 **Infrastructure:**
+
 - Google Cloud Run
 - Firebase Firestore
 - Secret Manager
@@ -341,6 +371,7 @@ yarn test:e2e
 - Terraform
 
 **Development:**
+
 - Firebase Emulators
 - Docker Compose
 - ESLint + Prettier
@@ -377,22 +408,26 @@ Access: http://localhost:3000
 ## Common Issues
 
 ### Java Not Found
+
 ```bash
 brew install openjdk@17  # macOS
 sudo apt install openjdk-17-jdk  # Linux
 ```
 
 ### Connection Failed
+
 - Verify all 3 services running (emulators, backend, frontend)
 - Check `.env.local` exists in root
 - Restart: `yarn dev`
 
 ### Auth Error
+
 - Hard refresh browser (Cmd+Shift+R)
 - Clear cookies
 - Verify emulators running on port 4000
 
 ### LLM Timeout
+
 - Check `GEMINI_API_KEY` in `backend/.env.local`
 - Verify key at https://ai.google.dev/
 - Check backend logs (blue output)

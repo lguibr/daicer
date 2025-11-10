@@ -1,13 +1,15 @@
-/**
- * Character creation screen with D20 character sheet
- */
-
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Room, Player, Attribute } from '../../types/shared';
 import { addCharacter } from '../../services/api';
 import { setReady } from '../../services/socket';
-import { useAuth } from '../../hooks/useAuth';
-import { MarkdownMessage } from '../game/MarkdownMessage';
+import useAuth from '../../hooks/useAuth';
+import MarkdownMessage from '../game/MarkdownMessage';
+import { useAlignments, useRaces, useClasses } from '../../hooks/useGameData';
+import { Button } from '../ui/button';
+import Input from '../ui/input';
+import Label from '../ui/label';
+import Textarea from '../ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface CharacterCreationProps {
   room: Room;
@@ -23,43 +25,122 @@ const ATTRIBUTES: Attribute[] = [
   'Charisma' as Attribute,
 ];
 
+// D&D 5e point-buy costs
+const POINT_BUY_COSTS: Record<number, number> = {
+  8: 0,
+  9: 1,
+  10: 2,
+  11: 3,
+  12: 4,
+  13: 5,
+  14: 7,
+  15: 9,
+};
+
+/**
+ * Calculate point cost for an attribute score
+ */
+function getPointCost(score: number): number {
+  return POINT_BUY_COSTS[score] || 0;
+}
+
+/**
+ * Calculate total points used
+ */
+function calculateTotalPoints(attributes: Record<string, number>): number {
+  return Object.values(attributes).reduce((sum, score) => sum + getPointCost(score), 0);
+}
+
 /**
  * Character creation component
- * @param props - Component props
- * @returns Character creation UI
  */
-export function CharacterCreation({ room, players }: CharacterCreationProps) {
+export default function CharacterCreation({ room, players }: CharacterCreationProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch game data from API
+  const { data: alignments, loading: alignmentsLoading } = useAlignments();
+  const { data: races, loading: racesLoading } = useRaces();
+  const { data: classes, loading: classesLoading } = useClasses();
+
+  const dataLoading = alignmentsLoading || racesLoading || classesLoading;
 
   // Check if current user already has a character
   const userPlayer = players.find((p) => p.userId === user?.uid);
   const hasCharacter = !!userPlayer;
 
+  const startingLevel = room.settings?.startingLevel || 1;
+  const attributeBudget = room.settings?.attributePointBudget || 27;
+
   const [formData, setFormData] = useState({
     name: '',
     race: 'Human',
     characterClass: 'Fighter',
-    alignment: 'True Neutral',
+    background: '',
+    alignment: 'Neutral Good',
     attributes: {
-      Strength: 10,
-      Dexterity: 10,
-      Constitution: 10,
-      Intelligence: 10,
-      Wisdom: 10,
-      Charisma: 10,
+      Strength: 8,
+      Dexterity: 8,
+      Constitution: 8,
+      Intelligence: 8,
+      Wisdom: 8,
+      Charisma: 8,
+    },
+    appearance: {
+      age: '',
+      height: '',
+      weight: '',
+      eyes: '',
+      skin: '',
+      hair: '',
+      description: '',
+    },
+    personality: {
+      traits: '',
+      ideals: '',
+      bonds: '',
+      flaws: '',
     },
   });
+
+  const pointsUsed = useMemo(() => calculateTotalPoints(formData.attributes), [formData.attributes]);
+  const pointsRemaining = attributeBudget - pointsUsed;
 
   const updateField = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateAttribute = (attr: Attribute, value: number) => {
+  const adjustAttribute = (attr: Attribute, delta: number) => {
+    const currentScore = formData.attributes[attr];
+    const newScore = Math.max(8, Math.min(15, currentScore + delta));
+
+    // Check if we have enough points
+    const currentCost = getPointCost(currentScore);
+    const newCost = getPointCost(newScore);
+    const costDelta = newCost - currentCost;
+
+    if (pointsRemaining - costDelta < 0 && delta > 0) {
+      return; // Not enough points
+    }
+
     setFormData((prev) => ({
       ...prev,
-      attributes: { ...prev.attributes, [attr]: value },
+      attributes: { ...prev.attributes, [attr]: newScore },
+    }));
+  };
+
+  const updateAppearance = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      appearance: { ...prev.appearance, [field]: value },
+    }));
+  };
+
+  const updatePersonality = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      personality: { ...prev.personality, [field]: value },
     }));
   };
 
@@ -71,18 +152,70 @@ export function CharacterCreation({ room, players }: CharacterCreationProps) {
       return;
     }
 
+    if (!formData.background.trim() || formData.background.length < 50) {
+      setError('Background story must be at least 50 characters and describe your character relationships');
+      return;
+    }
+
+    if (pointsRemaining !== 0) {
+      setError(`You must use all ${attributeBudget} attribute points (${pointsRemaining} remaining)`);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      const armorClass = 10 + Math.floor((formData.attributes.Dexterity - 10) / 2);
+      const conModifier = Math.floor((formData.attributes.Constitution - 10) / 2);
+      const dexModifier = Math.floor((formData.attributes.Dexterity - 10) / 2);
+      const armorClass = 10 + dexModifier;
+      const proficiencyBonus = 2;
 
       await addCharacter(room.id, {
         ...formData,
+        level: startingLevel,
+        xp: 0,
+        hp: 10 + conModifier,
+        maxHp: 10 + conModifier,
+        temporaryHp: 0,
+        hitDice: { total: startingLevel, current: startingLevel },
+        deathSaves: { successes: 0, failures: 0 },
         armorClass,
+        initiative: dexModifier,
+        speed: 30,
+        proficiencyBonus,
+        inspiration: false,
+        savingThrows: {
+          fortitude: conModifier,
+          reflex: dexModifier,
+          will: Math.floor((formData.attributes.Wisdom - 10) / 2),
+        },
+        skills: {},
+        baseAttackBonus: proficiencyBonus,
+        attacks: [],
+        equipment: '',
+        currency: {
+          cp: 0,
+          sp: 0,
+          ep: 0,
+          gp: 0,
+          pp: 0,
+        },
+        proficienciesAndLanguages: '',
+        features: '',
+        backstory: formData.background,
+        alliesAndOrganizations: '',
+        treasure: '',
+        spellcasting: {
+          class: '',
+          ability: '',
+          saveDC: 0,
+          attackBonus: 0,
+          cantrips: [],
+          spellsKnown: [],
+          slots: [],
+        },
       });
-
-      // Character created successfully
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create character');
     } finally {
@@ -91,22 +224,32 @@ export function CharacterCreation({ room, players }: CharacterCreationProps) {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8 bg-zinc-900">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6 text-center md:text-left">
-          <h1 className="text-3xl md:text-4xl font-bold text-aurora-300 mb-2">The Stage Is Set</h1>
-          <p className="text-shadow-300">Prepare your character for the journey ahead</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-blue-400 mb-2">The Stage Is Set</h1>
+          <p className="text-zinc-400">Prepare your character for the journey ahead</p>
+        </div>
+
+        {/* Teamwork Guidance */}
+        <div className="mb-6 p-4 bg-blue-950/50 border-2 border-blue-500/30 rounded-lg">
+          <h3 className="text-lg font-bold text-blue-300 mb-2">🤝 Adventure Together</h3>
+          <p className="text-zinc-300 text-sm leading-relaxed">
+            <strong>This is a team adventure!</strong> When writing your background, consider how your character knows
+            or could connect with the other players in your party. Share common goals, past encounters, or complementary
+            skills. Strong relationships make for better storytelling and more engaging gameplay!
+          </p>
         </div>
 
         {/* World Description */}
-        <div className="p-6 card mb-8">
-          <h2 className="text-xl font-bold text-aurora-300 mb-3">World</h2>
-          <div className="text-shadow-200 leading-relaxed prose-invert max-w-none">
+        <div className="p-6 bg-zinc-800 rounded-lg border border-zinc-700 mb-8">
+          <h2 className="text-xl font-bold text-blue-400 mb-3">World</h2>
+          <div className="text-zinc-200 leading-relaxed prose-invert max-w-none">
             {room.worldDescription ? (
               <MarkdownMessage content={room.worldDescription} />
             ) : (
-              <p className="italic text-shadow-400">Generating world description...</p>
+              <p className="italic text-zinc-500">Generating world description...</p>
             )}
           </div>
         </div>
@@ -114,118 +257,287 @@ export function CharacterCreation({ room, players }: CharacterCreationProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Character Creation Form */}
           <div>
-            <h2 className="text-2xl font-bold text-aurora-300 mb-4">
+            <h2 className="text-2xl font-bold text-blue-400 mb-4">
               {hasCharacter ? 'Your Character' : 'Create Your Character'}
             </h2>
 
             {hasCharacter ? (
-              <div className="p-6 card space-y-4">
+              <div className="p-6 bg-zinc-800 rounded-lg border border-zinc-700 space-y-4">
                 <div>
-                  <h3 className="text-xl font-bold text-shadow-50 mb-2">{userPlayer?.character.name}</h3>
-                  <p className="text-shadow-200 mb-2">
-                    {userPlayer?.character.race} {userPlayer?.character.characterClass}
+                  <h3 className="text-xl font-bold text-zinc-50 mb-2">{userPlayer?.character.name}</h3>
+                  <p className="text-zinc-300 mb-2">
+                    Level {userPlayer?.character.level} {userPlayer?.character.race}{' '}
+                    {userPlayer?.character.characterClass}
                   </p>
-                  <p className="text-shadow-400 text-xs">{userPlayer?.character.alignment}</p>
+                  <p className="text-zinc-500 text-xs">{userPlayer?.character.alignment}</p>
                 </div>
 
                 {userPlayer?.isReady ? (
                   <div>
-                    <p className="text-aurora-200 font-semibold">✓ You are ready!</p>
-                    <p className="text-shadow-400 text-sm mt-1">Waiting for other players...</p>
-                    <button
-                      onClick={() => setReady(room.id, false)}
-                      className="mt-3 w-full btn-secondary"
-                    >
+                    <p className="text-green-400 font-semibold">✓ You are ready!</p>
+                    <p className="text-zinc-500 text-sm mt-1">Waiting for other players...</p>
+                    <Button onClick={() => setReady(room.id, false)} variant="secondary" className="mt-3 w-full">
                       Unready
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setReady(room.id, true)}
-                    className="w-full px-6 py-3 bg-aurora-500 text-midnight-100 font-bold rounded-lg hover:bg-aurora-400 transition-colors shadow-lg"
-                  >
+                  <Button onClick={() => setReady(room.id, true)} className="w-full">
                     Ready Up!
-                  </button>
+                  </Button>
                 )}
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="p-6 card space-y-4">
+              <form onSubmit={handleSubmit} className="p-6 bg-zinc-800 rounded-lg border border-zinc-700 space-y-6">
                 {/* Basic Info */}
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-1">Character Name</label>
-                  <input
+                  <Label htmlFor="name">Character Name *</Label>
+                  <Input
+                    id="name"
                     type="text"
                     value={formData.name}
                     onChange={(e) => updateField('name', e.target.value)}
-                    placeholder="Enter name..."
-                    className="input-style w-full"
+                    placeholder="Enter your character's name"
+                    className="w-full"
                   />
+                </div>
+
+                <div className="text-sm text-zinc-400 p-3 bg-zinc-900/50 rounded border border-zinc-700">
+                  <strong>Starting Level:</strong> {startingLevel}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-shadow-300 mb-1">Race</label>
-                    <input
-                      type="text"
-                      value={formData.race}
-                      onChange={(e) => updateField('race', e.target.value)}
-                      placeholder="e.g., Human, Elf"
-                      className="input-style w-full"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="race">Race *</Label>
+                    <Select value={formData.race} onValueChange={(value) => updateField('race', value)}>
+                      <SelectTrigger id="race">
+                        <SelectValue placeholder="Select race" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {races?.map((race) => (
+                          <SelectItem key={race.id} value={race.name}>
+                            {race.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-shadow-300 mb-1">Class</label>
-                    <input
-                      type="text"
+                  <div className="space-y-2">
+                    <Label htmlFor="class">Class *</Label>
+                    <Select
                       value={formData.characterClass}
-                      onChange={(e) => updateField('characterClass', e.target.value)}
-                      placeholder="e.g., Fighter, Wizard"
-                      className="input-style w-full"
-                    />
+                      onValueChange={(value) => updateField('characterClass', value)}
+                    >
+                      <SelectTrigger id="class">
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classes?.map((cls) => (
+                          <SelectItem key={cls.id} value={cls.name}>
+                            {cls.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-1">Alignment</label>
-                  <input
-                    type="text"
-                    value={formData.alignment}
-                    onChange={(e) => updateField('alignment', e.target.value)}
-                    placeholder="e.g., Lawful Good, Chaotic Neutral"
-                    className="input-style w-full"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="alignment">Alignment *</Label>
+                  <Select value={formData.alignment} onValueChange={(value) => updateField('alignment', value)}>
+                    <SelectTrigger id="alignment">
+                      <SelectValue placeholder="Select alignment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {alignments?.map((alignment) => (
+                        <SelectItem key={alignment.id} value={alignment.name}>
+                          {alignment.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Attributes */}
+                {/* Background Story */}
+                <div className="space-y-2">
+                  <Label htmlFor="background">
+                    Background Story * <span className="text-xs text-zinc-500">(min 50 characters)</span>
+                  </Label>
+                  <Textarea
+                    id="background"
+                    value={formData.background}
+                    onChange={(e) => updateField('background', e.target.value)}
+                    placeholder="Write your character's background story here. IMPORTANT: Include how you know or connect with the other party members. Do you share a common goal? Did you meet at a tavern? Are you childhood friends? Strong party bonds make for better adventures!"
+                    rows={6}
+                    className="w-full resize-none"
+                  />
+                  <p className="text-xs text-zinc-500">
+                    {formData.background.length}
+                    /50 characters
+                    {formData.background.length >= 50 && <span className="text-green-500 ml-2">✓</span>}
+                  </p>
+                </div>
+
+                {/* Attributes with Point Buy */}
                 <div>
-                  <label className="block text-sm font-medium text-shadow-300 mb-2">Attributes</label>
+                  <div className="flex justify-between items-center mb-3">
+                    <Label>Attributes (Point Buy)</Label>
+                    <div
+                      className={`px-3 py-1 rounded-full text-sm font-bold ${
+                        pointsRemaining < 0
+                          ? 'bg-red-900/50 text-red-400'
+                          : pointsRemaining === 0
+                            ? 'bg-green-900/50 text-green-400'
+                            : 'bg-blue-900/50 text-blue-400'
+                      }`}
+                    >
+                      {pointsRemaining === 0 ? '✓ Perfect!' : `${pointsRemaining} points left`}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {ATTRIBUTES.map((attr) => {
                       const score = formData.attributes[attr];
                       const modifier = Math.floor((score - 10) / 2);
+                      const cost = getPointCost(score);
+
                       return (
-                        <div key={attr} className="bg-midnight-500/60 p-3 rounded-lg border border-midnight-600/60">
-                          <label className="block text-xs text-shadow-400 mb-1">
-                            {attr.slice(0, 3).toUpperCase()}
-                          </label>
-                          <input
-                            type="number"
-                            value={score}
-                            onChange={(e) => updateAttribute(attr, parseInt(e.target.value, 10) || 10)}
-                            min="1"
-                            max="30"
-                            className="w-full bg-midnight-600 text-shadow-50 px-2 py-1 rounded text-center font-bold focus:outline-none focus:ring-2 focus:ring-aurora-400"
-                          />
-                          <p className="text-xs text-center text-shadow-400 mt-1">
-                            {modifier >= 0 ? '+' : ''}
-                            {modifier}
-                          </p>
+                        <div key={attr} className="bg-zinc-900 p-3 rounded-lg border border-zinc-700">
+                          <div className="text-xs text-zinc-400 mb-2 font-semibold">{attr}</div>
+                          <div className="flex items-center justify-between gap-2">
+                            <Button
+                              type="button"
+                              onClick={() => adjustAttribute(attr, -1)}
+                              disabled={score <= 8}
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              −
+                            </Button>
+                            <div className="text-center flex-1">
+                              <div className="text-2xl font-bold text-zinc-50">{score}</div>
+                              <div className="text-xs text-zinc-500">
+                                {modifier >= 0 ? '+' : ''}
+                                {modifier}
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              onClick={() => adjustAttribute(attr, 1)}
+                              disabled={score >= 15 || pointsRemaining <= 0}
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              +
+                            </Button>
+                          </div>
+                          <div className="text-xs text-center text-zinc-600 mt-1">{cost} pts</div>
                         </div>
                       );
                     })}
                   </div>
+                  <p className="text-xs text-zinc-500 mt-2">
+                    Range: 8-15 | Total Budget:
+                    {attributeBudget} points
+                  </p>
                 </div>
+
+                {/* Appearance (Optional) */}
+                <details className="border-t border-zinc-700 pt-4">
+                  <summary className="text-sm font-medium text-zinc-400 mb-3 cursor-pointer hover:text-zinc-300">
+                    Appearance (Optional) ▼
+                  </summary>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                    <Input
+                      type="text"
+                      value={formData.appearance.age}
+                      onChange={(e) => updateAppearance('age', e.target.value)}
+                      placeholder="Age"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.appearance.height}
+                      onChange={(e) => updateAppearance('height', e.target.value)}
+                      placeholder="Height"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.appearance.weight}
+                      onChange={(e) => updateAppearance('weight', e.target.value)}
+                      placeholder="Weight"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.appearance.eyes}
+                      onChange={(e) => updateAppearance('eyes', e.target.value)}
+                      placeholder="Eyes"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.appearance.skin}
+                      onChange={(e) => updateAppearance('skin', e.target.value)}
+                      placeholder="Skin"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.appearance.hair}
+                      onChange={(e) => updateAppearance('hair', e.target.value)}
+                      placeholder="Hair"
+                      className="text-sm"
+                    />
+                  </div>
+                  <Textarea
+                    value={formData.appearance.description}
+                    onChange={(e) => updateAppearance('description', e.target.value)}
+                    placeholder="Physical description..."
+                    rows={2}
+                    className="mt-3 text-sm resize-none"
+                  />
+                </details>
+
+                {/* Personality (Optional) */}
+                <details className="border-t border-zinc-700 pt-4">
+                  <summary className="text-sm font-medium text-zinc-400 mb-3 cursor-pointer hover:text-zinc-300">
+                    Personality (Optional) ▼
+                  </summary>
+                  <div className="space-y-2 mt-3">
+                    <Input
+                      type="text"
+                      value={formData.personality.traits}
+                      onChange={(e) => updatePersonality('traits', e.target.value)}
+                      placeholder="Personality Traits"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.personality.ideals}
+                      onChange={(e) => updatePersonality('ideals', e.target.value)}
+                      placeholder="Ideals"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.personality.bonds}
+                      onChange={(e) => updatePersonality('bonds', e.target.value)}
+                      placeholder="Bonds"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={formData.personality.flaws}
+                      onChange={(e) => updatePersonality('flaws', e.target.value)}
+                      placeholder="Flaws"
+                      className="text-sm"
+                    />
+                  </div>
+                </details>
 
                 {error && (
                   <div className="p-3 bg-red-900/50 border border-red-500 rounded-lg">
@@ -233,44 +545,48 @@ export function CharacterCreation({ room, players }: CharacterCreationProps) {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-primary w-full"
-                >
-                  {loading ? 'Creating...' : 'Create Character'}
-                </button>
+                <Button type="submit" disabled={loading || dataLoading || pointsRemaining !== 0} className="w-full">
+                  {(() => {
+                    if (loading) return 'Creating...';
+                    if (dataLoading) return 'Loading...';
+                    return 'Create Character';
+                  })()}
+                </Button>
               </form>
             )}
           </div>
 
           {/* Player List */}
           <div>
-            <h2 className="text-2xl font-bold text-aurora-300 mb-4">Adventuring Party</h2>
+            <h2 className="text-2xl font-bold text-blue-400 mb-4">Adventuring Party</h2>
             <div className="space-y-3">
               {players.length === 0 && (
-                <p className="text-shadow-400 text-center p-8">Waiting for players to create characters...</p>
+                <p className="text-zinc-500 text-center p-8">Waiting for players to create characters...</p>
               )}
               {players.map((player) => (
-                <div key={player.id} className="p-4 card border border-midnight-600/60">
+                <div key={player.id} className="p-4 bg-zinc-800 rounded-lg border border-zinc-700">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-lg text-shadow-50">{player.character.name}</h3>
-                    {player.isReady && <span className="text-aurora-200 text-sm font-semibold">✓ Ready</span>}
+                    <h3 className="font-bold text-lg text-zinc-50">{player.character.name}</h3>
+                    {player.isReady && <span className="text-green-400 text-sm font-semibold">✓ Ready</span>}
                   </div>
-                  <p className="text-shadow-200 text-sm">
-                    {player.character.race} {player.character.characterClass}
+                  <p className="text-zinc-300 text-sm">
+                    Level {player.character.level} {player.character.race} {player.character.characterClass}
                   </p>
-                  <p className="text-shadow-400 text-xs">{player.character.alignment}</p>
+                  <p className="text-zinc-500 text-xs">{player.character.alignment}</p>
+                  {player.character.backstory && (
+                    <p className="text-zinc-400 text-xs mt-2 italic line-clamp-2">{player.character.backstory}</p>
+                  )}
                 </div>
               ))}
             </div>
 
             {hasCharacter && (
-              <div className="mt-6 p-4 bg-aurora-500/10 border border-aurora-400/40 rounded-lg">
-                <p className="text-aurora-200 text-sm font-semibold">
-                  {players.filter((p) => p.isReady).length} / {room.settings?.playerCount || players.length} players ready
+              <div className="mt-6 p-4 bg-blue-950/30 border border-blue-500/40 rounded-lg">
+                <p className="text-blue-300 text-sm font-semibold">
+                  {players.filter((p) => p.isReady).length} /{room.settings?.playerCount || players.length} players
+                  ready
                 </p>
-                <p className="text-shadow-400 text-xs mt-1">Game starts when all players are ready</p>
+                <p className="text-zinc-500 text-xs mt-1">Game starts when all players are ready</p>
               </div>
             )}
           </div>
@@ -279,4 +595,3 @@ export function CharacterCreation({ room, players }: CharacterCreationProps) {
     </div>
   );
 }
-

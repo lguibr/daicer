@@ -83,7 +83,6 @@ export function getSocket(): Socket | null {
  */
 export function joinRoom(roomId: string): void {
   if (!socket || !socket.connected) {
-    console.warn('Socket not connected, cannot join room');
     return;
   }
   socket.emit('room:join', { roomId });
@@ -104,7 +103,6 @@ export function leaveRoom(): void {
  */
 export function setReady(roomId: string, isReady: boolean): void {
   if (!socket || !socket.connected) {
-    console.warn('Socket not connected, cannot set ready');
     return;
   }
   socket.emit('player:ready', { roomId, isReady });
@@ -117,7 +115,6 @@ export function setReady(roomId: string, isReady: boolean): void {
  */
 export function submitAction(roomId: string, action: string): void {
   if (!socket || !socket.connected) {
-    console.warn('Socket not connected, cannot submit action');
     return;
   }
   socket.emit('player:action', { roomId, action });
@@ -130,7 +127,6 @@ export function submitAction(roomId: string, action: string): void {
  */
 export function processTurn(roomId: string, language = 'en'): void {
   if (!socket || !socket.connected) {
-    console.warn('Socket not connected, cannot process turn');
     return;
   }
   socket.emit('turn:process', { roomId, language });

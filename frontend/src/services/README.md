@@ -14,11 +14,11 @@ Service layer for external integrations.
 graph LR
     Components[React Components] --> Hooks[Custom Hooks]
     Hooks --> Services[Services]
-    
+
     Services --> Firebase[Firebase Auth]
     Services --> API[REST API]
     Services --> Socket[Socket.io]
-    
+
     API --> Backend[Backend Server]
     Socket --> Backend
 ```
@@ -29,4 +29,3 @@ graph LR
 - Errors are thrown and handled by components
 - Auth token automatically included
 - Socket reconnection handled automatically
-

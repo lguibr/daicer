@@ -5,18 +5,10 @@
 import { Router } from 'express';
 import type { Response } from 'express';
 import { z } from 'zod';
-import { authenticate, type AuthRequest } from '@/middleware/auth.js';
-import {
-  createRoom,
-  findRoomByCode,
-  getRoom,
-  updateRoomSettings,
-  deleteRoom,
-  addPlayer,
-  getPlayers,
-} from '@/services/firestore.js';
-import { ApiError } from '@/middleware/error.js';
-import type { WorldSettings } from '@/types/index.js';
+import { authenticate, type AuthRequest } from '@/middleware/auth';
+import { createRoom, findRoomByCode, getRoom, updateRoomSettings, deleteRoom, getPlayers } from '@/services/firestore';
+import { ApiError } from '@/middleware/error';
+import type { WorldSettings } from '@/types/index';
 
 const router = Router();
 
@@ -123,4 +115,3 @@ router.delete('/:roomId', authenticate, async (req: AuthRequest, res: Response) 
 });
 
 export default router;
-

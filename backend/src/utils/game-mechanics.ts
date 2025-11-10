@@ -2,8 +2,6 @@
  * D20 game mechanics and calculations
  */
 
-import type { Attribute } from '@/types/index.js';
-
 /**
  * Calculate attribute modifier from score
  * @param score - Attribute score (1-30)
@@ -87,4 +85,3 @@ export function rollSkillCheck(modifier: number): { roll: number; total: number 
     total: roll + modifier,
   };
 }
-

@@ -3,12 +3,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  type User as FirebaseUser 
+  type User as FirebaseUser,
 } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
@@ -25,7 +25,7 @@ interface AuthState {
  * Authentication hook
  * @returns Auth state and methods
  */
-export function useAuth() {
+export default function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
     loading: true,
@@ -73,8 +73,8 @@ export function useAuth() {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-    } catch (error) {
-      console.error('Sign out failed:', error);
+    } catch (err) {
+      // TODO: Handle sign out error
     }
   };
 
@@ -86,4 +86,3 @@ export function useAuth() {
     signOut,
   };
 }
-

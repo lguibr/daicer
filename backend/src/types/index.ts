@@ -2,18 +2,12 @@
  * Shared type definitions for the D20 AI backend
  */
 
-/**
- * Game phase enumeration
- */
 export enum GamePhase {
   SETUP = 'SETUP',
   CHARACTER_CREATION = 'CHARACTER_CREATION',
   GAMEPLAY = 'GAMEPLAY',
 }
 
-/**
- * Character attributes
- */
 export enum Attribute {
   STR = 'Strength',
   DEX = 'Dexterity',
@@ -36,21 +30,77 @@ export interface SavingThrows {
  * Complete character sheet
  */
 export interface CharacterSheet {
+  // Basic info
   name: string;
   race: string;
   characterClass: string;
+  background: string;
   alignment: string;
   level: number;
   xp: number;
+
+  // Core stats
   hp: number;
   maxHp: number;
+  temporaryHp: number;
+  hitDice: { total: number; current: number };
+  deathSaves: { successes: number; failures: number };
+
   armorClass: number;
   initiative: number;
-  baseAttackBonus: number;
+  speed: number;
+  proficiencyBonus: number;
+  inspiration: boolean;
+
+  // Attributes & skills
   attributes: Record<Attribute, number>;
   savingThrows: SavingThrows;
   skills: Record<string, number>;
+
+  // Combat & equipment
+  baseAttackBonus: number;
+  attacks: Array<{ name: string; bonus: string; damageType: string }>;
   equipment: string;
+
+  // Currency
+  currency: { cp: number; sp: number; ep: number; gp: number; pp: number };
+
+  // Character details
+  proficienciesAndLanguages: string;
+  features: string;
+
+  // Appearance & personality
+  appearance: {
+    age: string;
+    height: string;
+    weight: string;
+    eyes: string;
+    skin: string;
+    hair: string;
+    description: string;
+  };
+
+  personality: {
+    traits: string;
+    ideals: string;
+    bonds: string;
+    flaws: string;
+  };
+
+  backstory: string;
+  alliesAndOrganizations: string;
+  treasure: string;
+
+  // Spellcasting (all characters, empty for non-casters)
+  spellcasting: {
+    class: string;
+    ability: string;
+    saveDC: number;
+    attackBonus: number;
+    cantrips: string[];
+    spellsKnown: string[];
+    slots: { level: number; total: number; expended: number }[];
+  };
 }
 
 /**
@@ -72,6 +122,7 @@ export interface Player {
 export interface Message {
   id: string;
   sender: 'DM' | string;
+  recipientId?: string; // For player-specific messages
   text: string;
   images?: string[];
   timestamp: number;
@@ -89,6 +140,11 @@ export type AdventureLength = 'short' | 'medium' | 'epic';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 /**
+ * Supported languages
+ */
+export type Language = 'en' | 'es' | 'pt-BR';
+
+/**
  * World generation settings
  */
 export interface WorldSettings {
@@ -98,6 +154,9 @@ export interface WorldSettings {
   playerCount: number;
   adventureLength: AdventureLength;
   difficulty: Difficulty;
+  startingLevel: number;
+  attributePointBudget: number;
+  language?: Language;
 }
 
 /**
@@ -137,12 +196,6 @@ export interface User {
 }
 
 /**
- * Supported languages
- */
-export type Language = 'en' | 'es' | 'pt-BR';
-
-/**
  * LLM provider options
  */
-export type LLMProvider = 'gemini' | 'openai' | 'anthropic';
-
+export type LLMProvider = 'gemini';

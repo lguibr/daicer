@@ -27,4 +27,3 @@ export function generateRoomCode(): string {
 export function isValidRoomCode(code: string): boolean {
   return /^[A-Z0-9]{6}$/.test(code);
 }
-

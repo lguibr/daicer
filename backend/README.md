@@ -11,13 +11,13 @@ graph TB
     CR -->|Admin SDK| FS[Firestore]
     CR -->|Admin SDK| FA[Firebase Auth]
     CR -->|LangChain| LLM[LLM Providers]
-    
+
     subgraph "LLM Providers"
         LLM --> Gemini
         LLM --> OpenAI
         LLM --> Anthropic
     end
-    
+
     subgraph "Cloud Run"
         CR --> Express[Express REST API]
         CR --> SocketIO[Socket.io]
@@ -56,23 +56,27 @@ backend/
 ### Setup
 
 1. Install dependencies:
+
 ```bash
 yarn install
 ```
 
 2. Configure environment:
+
 ```bash
 cp .env.example .env.local
 # Edit .env.local with your values
 ```
 
 3. Start Firebase emulators (Terminal 1):
+
 ```bash
 cd ..
 yarn emulators
 ```
 
 4. Start backend (Terminal 2):
+
 ```bash
 yarn dev
 ```
@@ -101,9 +105,11 @@ docker-compose up backend
 ## API Endpoints
 
 ### Health
+
 - `GET /health` - Health check
 
 ### Rooms
+
 - `POST /api/rooms` - Create new room
 - `POST /api/rooms/:code/join` - Join room by code
 - `GET /api/rooms/:roomId` - Get room state
@@ -111,6 +117,7 @@ docker-compose up backend
 - `DELETE /api/rooms/:roomId` - Delete room (owner only)
 
 ### Game
+
 - `POST /api/game/:roomId/world` - Generate world (owner only)
 - `POST /api/game/:roomId/character` - Add character
 - `POST /api/game/:roomId/turn` - Process turn
@@ -118,12 +125,14 @@ docker-compose up backend
 ## Socket.io Events
 
 ### Client → Server
+
 - `room:join` - Join room
 - `room:leave` - Leave room
 - `player:action` - Submit player action
 - `turn:process` - Request turn processing
 
 ### Server → Client
+
 - `room:updated` - Room state changed
 - `player:joined` - Player joined
 - `player:left` - Player left
@@ -163,6 +172,7 @@ gcloud run deploy d20ai-backend \
 ### Environment Variables
 
 Set via Secret Manager:
+
 - `GEMINI_API_KEY`
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
@@ -183,4 +193,3 @@ Set via Secret Manager:
 ## License
 
 MIT
-

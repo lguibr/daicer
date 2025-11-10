@@ -2,14 +2,13 @@
  * Login screen with Google OAuth
  */
 
-import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 /**
  * Login screen component
  * @returns Login UI
  */
-export function LoginScreen() {
+export default function LoginScreen() {
   const { signInWithGoogle, loading, error } = useAuth();
 
   return (
@@ -20,6 +19,7 @@ export function LoginScreen() {
           <p className="text-slate-300 mb-8">Multiplayer D&D with AI Dungeon Master</p>
 
           <button
+            type="button"
             onClick={signInWithGoogle}
             disabled={loading}
             className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -51,4 +51,3 @@ export function LoginScreen() {
     </div>
   );
 }
-

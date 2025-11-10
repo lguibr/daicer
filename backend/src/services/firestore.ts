@@ -2,10 +2,10 @@
  * Firestore database operations
  */
 
-import { getDb } from '@/config/firebase.js';
-import type { Room, Player, Message, Creature, User, WorldSettings, GamePhase } from '@/types/index.js';
-import { generateRoomCode } from '@/utils/room-code.js';
-import { logger } from '@/utils/logger.js';
+import { getDb } from '@/config/firebase';
+import type { Room, Player, Message, Creature, User, WorldSettings, GamePhase } from '@/types/index';
+import { generateRoomCode } from '@/utils/room-code';
+import { logger } from '@/utils/logger';
 
 const db = () => getDb();
 
@@ -17,12 +17,7 @@ const db = () => getDb();
  * @param photoURL - Profile photo URL
  * @returns Created user
  */
-export async function createUser(
-  userId: string,
-  email: string,
-  displayName: string,
-  photoURL: string
-): Promise<User> {
+export async function createUser(userId: string, email: string, displayName: string, photoURL: string): Promise<User> {
   const user: User = {
     id: userId,
     email,
@@ -118,11 +113,7 @@ export async function updateRoomSettings(roomId: string, settings: WorldSettings
  * @param phase - New game phase
  * @returns Updated room
  */
-export async function updateRoomWorld(
-  roomId: string,
-  worldDescription: string,
-  phase: GamePhase
-): Promise<Room> {
+export async function updateRoomWorld(roomId: string, worldDescription: string, phase: GamePhase): Promise<Room> {
   await db().collection('rooms').doc(roomId).update({
     worldDescription,
     phase,
@@ -275,4 +266,3 @@ export async function getCreatures(roomId: string): Promise<Creature[]> {
 export async function updateCreatureHp(roomId: string, creatureName: string, hp: number): Promise<void> {
   await db().collection('rooms').doc(roomId).collection('creatures').doc(creatureName).update({ hp });
 }
-

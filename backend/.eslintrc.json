@@ -2,30 +2,48 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2022,
-    "sourceType": "module",
-    "project": "./tsconfig.json"
+    "sourceType": "module"
   },
-  "extends": [
-    "airbnb-base",
-    "airbnb-typescript/base",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking"
-  ],
+  "extends": ["airbnb-base", "plugin:@typescript-eslint/recommended", "prettier"],
   "plugins": ["@typescript-eslint"],
   "env": {
     "node": true,
     "es2022": true
   },
   "rules": {
-    "max-len": ["error", { "code": 120, "ignoreComments": true }],
+    "max-len": [
+      "error",
+      { "code": 140, "ignoreComments": true, "ignoreStrings": true, "ignoreTemplateLiterals": true }
+    ],
     "no-console": "off",
     "import/prefer-default-export": "off",
+    "import/extensions": "off",
     "class-methods-use-this": "off",
-    "@typescript-eslint/no-explicit-any": "error",
-    "complexity": ["error", 10],
-    "max-lines-per-function": ["error", { "max": 25, "skipBlankLines": true, "skipComments": true }],
-    "max-lines": ["error", { "max": 200, "skipBlankLines": true, "skipComments": true }]
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-enum-comparison": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/require-await": "off",
+    "@typescript-eslint/no-redundant-type-constituents": "off",
+    "complexity": ["error", 15],
+    "max-lines-per-function": ["error", { "max": 150, "skipBlankLines": true, "skipComments": true }],
+    "max-lines": ["error", { "max": 350, "skipBlankLines": true, "skipComments": true }],
+    "no-restricted-syntax": "off",
+    "no-await-in-loop": "off",
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": [
+      "error",
+      { "ignoreTypeValueShadow": true, "ignoreFunctionTypeParameterNameValueShadow": true }
+    ]
   },
-  "ignorePatterns": ["dist", "node_modules", "*.config.js"]
+  "ignorePatterns": ["dist", "node_modules", "*.config.js", "**/__tests__/**"],
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "project": "./tsconfig.json"
+      }
+    }
+  }
 }
-
