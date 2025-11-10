@@ -57,6 +57,12 @@ export function getDb() {
 }
 
 /**
+ * Get Firestore instance (alias for compatibility)
+ * @returns Firestore database instance
+ */
+export { getFirestore };
+
+/**
  * Get Firebase Auth instance
  * @returns Firebase Auth instance
  */

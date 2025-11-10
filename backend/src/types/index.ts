@@ -6,6 +6,7 @@ export enum GamePhase {
   SETUP = 'SETUP',
   CHARACTER_CREATION = 'CHARACTER_CREATION',
   GAMEPLAY = 'GAMEPLAY',
+  COMBAT = 'COMBAT',
 }
 
 export enum Attribute {

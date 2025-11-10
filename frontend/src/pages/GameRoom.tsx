@@ -9,6 +9,7 @@ import { joinRoom as joinSocketRoom } from '../services/socket';
 import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
 import GameplayScreen from '../components/game/GameplayScreen';
+import { CombatScreen } from '../components/game/CombatScreen';
 import Layout from '../components/layout/Layout';
 import type { Room, Player } from '../types/shared';
 
@@ -104,6 +105,13 @@ export default function GameRoomPage() {
       return (
         <Layout room={room} playerCount={players.length} showRoomInfo>
           <GameplayScreen room={room} players={players} />
+        </Layout>
+      );
+
+    case 'COMBAT':
+      return (
+        <Layout room={room} playerCount={players.length} showRoomInfo={false}>
+          <CombatScreen roomId={room.id} />
         </Layout>
       );
 

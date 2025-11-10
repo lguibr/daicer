@@ -1,5 +1,6 @@
 /**
  * Socket.io event handlers for real-time gameplay
+ * Refactored to use LangGraph game graph
  */
 
 import type { Server, Socket } from 'socket.io';
@@ -15,9 +16,10 @@ import {
   areAllPlayersReady,
   updateRoomWorld,
 } from '@/services/firestore';
-import { processTurn, generateCharacterOpenings } from '@/services/game';
+import { invokeGameGraph, getGameState } from '@/graph/game-graph';
+import { getActiveCombatSession } from '@/combat/tools';
 import { logger } from '@/utils/logger';
-import { GamePhase, type Message, type Language } from '@/types/index';
+import { GamePhase, type Language } from '@/types/index';
 
 /**
  * Socket authentication data
@@ -69,19 +71,33 @@ async function handleJoinRoom(socket: Socket, userId: string, data: { roomId: st
 
     logger.info(`User ${userId} joined room ${roomId}`);
 
-    // Send full state to new joiner
-    const [players, messages, creatures] = await Promise.all([
-      getPlayers(roomId),
-      getMessages(roomId),
-      getCreatures(roomId),
-    ]);
+    // Get game state from graph if it exists
+    const gameState = await getGameState(roomId);
+    
+    // If no graph state, send traditional state
+    if (!gameState) {
+      const [players, messages, creatures] = await Promise.all([
+        getPlayers(roomId),
+        getMessages(roomId),
+        getCreatures(roomId),
+      ]);
 
-    socket.emit('game:state', {
-      room,
-      players,
-      messages,
-      creatures,
-    });
+      socket.emit('game:state', {
+        room,
+        players,
+        messages,
+        creatures,
+      });
+    } else {
+      // Send graph state
+      socket.emit('game:state', {
+        room,
+        players: gameState.players,
+        messages: gameState.messages,
+        creatures: gameState.creatures,
+        combatState: gameState.combatState,
+      });
+    }
 
     // Notify others
     socket.to(roomId).emit('player:joined', { userId });
@@ -131,39 +147,39 @@ async function handlePlayerReady(
     if (allReady) {
       io.to(roomId).emit('room:all_ready');
 
-      // Generate opening messages
+      // Trigger character openings via game graph
       const room = await getRoom(roomId);
       if (!room) return;
+      
       const players = await getPlayers(roomId);
-      const { openings, mainMessage } = await generateCharacterOpenings(
-        room.worldDescription,
+
+      // Invoke graph to generate character openings
+      const result = await invokeGameGraph(roomId, {
+        roomId: room.id,
+        ownerId: room.ownerId,
+        code: room.code,
+        phase: 'CHARACTER_CREATION',
+        settings: room.settings,
+        worldDescription: room.worldDescription,
         players,
-        room.settings?.language || 'en'
-      );
+        messages: [],
+        creatures: [],
+        combatState: null,
+        createdAt: room.createdAt,
+        updatedAt: Date.now(),
+      });
 
-      // Add main message to firestore and emit
-      const mainMsg: Message = {
-        id: `msg-${Date.now()}-dm`,
-        sender: 'DM',
-        text: mainMessage,
-        timestamp: Date.now(),
-      };
-      await addMessage(roomId, mainMsg);
-      io.to(roomId).emit('message:new', mainMsg);
-
-      // Add and emit personalized messages
-      // eslint-disable-next-line no-restricted-syntax
-      for (const opening of openings) {
-        const personalMsg: Message = {
-          id: `msg-${Date.now()}-dm-${opening.playerId}`,
-          sender: 'DM',
-          text: opening.message,
-          recipientId: opening.playerId,
-          timestamp: Date.now(),
-        };
-        await addMessage(roomId, personalMsg);
-        // Assuming each player is in a socket room identified by their player ID
-        io.to(opening.playerId).emit('message:new', personalMsg);
+      // Emit messages from graph result
+      const messages = result.messages as Array<{ id: string; sender: string; text: string; timestamp: number; recipientId?: string }>;
+      const newMessages = messages.slice(-players.length - 1); // Last N+1 messages
+      for (const msg of newMessages) {
+        if (msg.recipientId) {
+          io.to(msg.recipientId).emit('message:new', msg);
+        } else {
+          io.to(roomId).emit('message:new', msg);
+        }
+        
+        await addMessage(roomId, msg);
       }
 
       // Auto-transition to gameplay
@@ -208,6 +224,7 @@ async function handlePlayerAction(
 
 /**
  * Handle turn:process event
+ * Now uses game graph instead of direct service calls
  */
 async function handleProcessTurn(
   io: Server,
@@ -216,7 +233,7 @@ async function handleProcessTurn(
   data: { roomId: string; language?: Language }
 ) {
   try {
-    const { roomId, language = 'en' as Language } = data;
+    const { roomId } = data;
     const room = await getRoom(roomId);
 
     if (!room) {
@@ -233,74 +250,195 @@ async function handleProcessTurn(
     // Notify that turn is processing
     io.to(roomId).emit('turn:processing');
 
-    const [players, messages, creatures] = await Promise.all([
-      getPlayers(roomId),
-      getMessages(roomId),
-      getCreatures(roomId),
-    ]);
+    // Get current state
+    let currentState = await getGameState();
+    
+    if (!currentState) {
+      // Initialize state if it doesn't exist
+      const [players, messages, creatures] = await Promise.all([
+        getPlayers(roomId),
+        getMessages(roomId),
+        getCreatures(roomId),
+      ]);
 
-    // Add player action messages
-    // eslint-disable-next-line no-restricted-syntax
-    for (const player of players) {
-      if (player.action) {
-        const msg: Message = {
-          id: `msg-${Date.now()}-${player.id}`,
-          sender: player.character.name,
-          text: player.action,
-          timestamp: Date.now(),
-        };
-        await addMessage(roomId, msg);
-      }
+      currentState = {
+        roomId: room.id,
+        ownerId: room.ownerId,
+        code: room.code,
+        phase: room.phase as any,
+        settings: room.settings,
+        worldDescription: room.worldDescription,
+        players,
+        messages,
+        creatures,
+        combatState: null,
+        createdAt: room.createdAt,
+        updatedAt: Date.now(),
+      };
     }
 
-    // Generate DM response
-    const dmResponse = await processTurn(room.worldDescription, messages, players, creatures, language);
+    // Invoke game graph to process turn
+    const result = await invokeGameGraph(roomId, currentState);
 
-    // Add overall summary message
-    const summaryMessage: Message = {
-      id: `msg-${Date.now()}-dm-summary`,
-      sender: 'DM',
-      text: dmResponse.overall_summary,
-      timestamp: Date.now(),
-    };
-    await addMessage(roomId, summaryMessage);
-
-    // Add personalized perspective messages
-    const perspectiveMessages: Message[] = [];
-    // eslint-disable-next-line no-restricted-syntax
-    for (const p of dmResponse.player_perspectives) {
-      const player = players.find((pl) => pl.character.name === p.playerName);
-      if (player) {
-        const perspectiveMessage: Message = {
-          id: `msg-${Date.now()}-dm-perspective-${player.id}`,
-          sender: 'DM',
-          text: p.perspective,
-          recipientId: player.id,
-          timestamp: Date.now(),
-        };
-        await addMessage(roomId, perspectiveMessage);
-        perspectiveMessages.push(perspectiveMessage);
+    // Emit new messages
+    const resultMessages = result.messages as Array<{
+      id: string; sender: string; text: string; timestamp: number; recipientId?: string;
+    }>;
+    const currentMessages = currentState.messages as Array<{
+      id: string; sender: string; text: string; timestamp: number; recipientId?: string;
+    }>;
+    const newMessagesCount = resultMessages.length - currentMessages.length;
+    const newMessages = resultMessages.slice(-newMessagesCount);
+    
+    for (const msg of newMessages) {
+      if (msg.recipientId) {
+        io.to(msg.recipientId).emit('message:new', msg);
+      } else {
+        io.to(roomId).emit('message:new', msg);
       }
+      
+      // Also save to Firestore for legacy compatibility
+      await addMessage(roomId, msg);
     }
 
-    // Clear player actions
-    // eslint-disable-next-line no-restricted-syntax
-    for (const player of players) {
+    // Clear player actions in Firestore
+    const resultPlayers = result.players as Array<{ id: string; action: string | null }>;
+    for (const player of resultPlayers) {
       await updatePlayerAction(roomId, player.id, '');
     }
 
-    // Notify room of new messages
+    // Notify turn complete
     io.to(roomId).emit('turn:complete');
-    io.to(roomId).emit('message:new', summaryMessage);
-    // eslint-disable-next-line no-restricted-syntax
-    for (const msg of perspectiveMessages) {
-      io.to(msg.recipientId!).emit('message:new', msg);
-    }
 
-    logger.info(`Turn processed in room ${roomId}`);
+    logger.info(`Turn processed via graph in room ${roomId}`);
   } catch (error) {
     logger.error('Error processing turn:', error);
     io.to(data.roomId).emit('error', { message: 'Failed to process turn' });
+  }
+}
+
+/**
+ * Handle combat:action event
+ * Routes combat actions through the game graph
+ */
+async function handleCombatAction(
+  io: Server,
+  socket: Socket,
+  _userId: string,
+  data: {
+    roomId: string;
+    action: 'attack' | 'move' | 'end_turn' | 'start_combat' | 'end_combat';
+    params: Record<string, unknown>;
+  }
+) {
+  try {
+    const { roomId, action, params } = data;
+
+    logger.info(`Combat action: ${action} in room ${roomId}`);
+
+    const session = getActiveCombatSession(roomId);
+    if (!session && action !== 'start_combat') {
+      socket.emit('error', { message: 'No active combat session' });
+      return;
+    }
+
+    let updatedState;
+
+    switch (action) {
+      case 'attack':
+        if (session) {
+          updatedState = await session.attack(
+            params.attackerId as string, 
+            params.defenderId as string, 
+            {
+              weaponDamage: params.weaponDamage as string | undefined,
+              damageType: params.damageType as string | undefined,
+            }
+          );
+        }
+        break;
+      
+      case 'move':
+        if (session) {
+          updatedState = await session.moveCharacter(
+            params.characterId as string, 
+            {
+              x: params.targetX as number,
+              y: params.targetY as number,
+            }
+          );
+        }
+        break;
+      
+      case 'end_turn':
+        if (session) {
+          updatedState = await session.endTurn();
+        }
+        break;
+      
+      default:
+        socket.emit('error', { message: 'Unknown combat action' });
+        return;
+    }
+
+    if (updatedState) {
+      // Update game state with new combat state
+      const gameState = await getGameState();
+      if (gameState) {
+        await invokeGameGraph(roomId, {
+          ...gameState,
+          combatState: updatedState,
+        });
+      }
+
+      // Emit updated combat state
+      io.to(roomId).emit('combat:state_update', updatedState);
+    }
+
+    logger.info(`Combat action ${action} completed`);
+  } catch (error) {
+    logger.error('Error handling combat action:', error);
+    socket.emit('error', { message: 'Failed to execute combat action' });
+  }
+}
+
+/**
+ * Handle combat:restore event (time-travel)
+ */
+async function handleRestoreCombatState(
+  io: Server,
+  socket: Socket,
+  _userId: string,
+  data: { roomId: string; historyIndex: number }
+) {
+  try {
+    const { roomId, historyIndex } = data;
+
+    const session = getActiveCombatSession(roomId);
+    if (!session) {
+      socket.emit('error', { message: 'No active combat session' });
+      return;
+    }
+
+    // Restore to previous state
+    const restoredState = await session.restoreState(historyIndex);
+
+    // Update game graph state
+    const gameState = await getGameState();
+    if (gameState) {
+      await invokeGameGraph(roomId, {
+        ...gameState,
+        combatState: restoredState,
+      });
+    }
+
+    // Emit restored state
+    io.to(roomId).emit('combat:state_update', restoredState);
+    
+    logger.info(`Combat state restored to index ${historyIndex} in room ${roomId}`);
+  } catch (error) {
+    logger.error('Error restoring combat state:', error);
+    socket.emit('error', { message: 'Failed to restore combat state' });
   }
 }
 
@@ -340,6 +478,8 @@ export function initializeSocketHandlers(io: Server): void {
     socket.on('player:ready', (data) => handlePlayerReady(io, socket, userId, data));
     socket.on('player:action', (data) => handlePlayerAction(io, socket, userId, data));
     socket.on('turn:process', (data) => handleProcessTurn(io, socket, userId, data));
+    socket.on('combat:action', (data) => handleCombatAction(io, socket, userId, data));
+    socket.on('combat:restore', (data) => handleRestoreCombatState(io, socket, userId, data));
     socket.on('disconnect', () => handleDisconnect(socket, userId, socketData));
   });
 }

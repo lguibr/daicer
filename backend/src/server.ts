@@ -9,6 +9,8 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { initializeFirebase } from '@/config/firebase';
 import { logger } from '@/utils/logger';
 import { errorHandler, notFoundHandler } from '@/middleware/error';
@@ -22,8 +24,18 @@ import gameDataRouter from '@/api/game-data';
 // Socket.io handlers
 import { initializeSocketHandlers } from '@/socket/handlers';
 
-// Load environment variables
-dotenv.config({ path: '.env.local' });
+// Get directory path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from backend and root
+const backendEnvLocal = path.resolve(__dirname, '../../.env.local');
+const rootEnvLocal = path.resolve(__dirname, '../../../.env.local');
+const backendEnv = path.resolve(__dirname, '../../.env');
+
+dotenv.config({ path: backendEnvLocal });
+dotenv.config({ path: rootEnvLocal });
+dotenv.config({ path: backendEnv });
 
 // Initialize Firebase
 initializeFirebase();
