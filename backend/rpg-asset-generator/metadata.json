@@ -1,0 +1,5 @@
+{
+  "name": "RPG Asset Generator",
+  "description": "An AI-powered application to generate character avatars, grid-based maps, and dynamic scene illustrations for tabletop role-playing games.",
+  "requestFramePermissions": []
+}

@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '22.12'
+  NODE_VERSION: '22.13'
 
 jobs:
   # Install dependencies once and cache for all jobs

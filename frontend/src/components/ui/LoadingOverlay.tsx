@@ -1,12 +1,13 @@
 /**
- * Full-screen loading overlay with icosahedron spinner
+ * Full-screen loading overlay with 3D dice spinner
  */
 
-import { IcosahedronLoader } from './IcosahedronLoader';
+import { DiceLoader } from './dice-loader';
+import type { DiceLoaderSize } from './dice-loader';
 
 interface LoadingOverlayProps {
   message?: string;
-  size?: 'small' | 'medium' | 'large';
+  size?: DiceLoaderSize;
 }
 
 export function LoadingOverlay({ message, size = 'large' }: LoadingOverlayProps) {
@@ -19,7 +20,7 @@ export function LoadingOverlay({ message, size = 'large' }: LoadingOverlayProps)
       }}
     >
       <div className="flex flex-col items-center gap-6">
-        <IcosahedronLoader size={size} />
+        <DiceLoader size={size} />
         {message && <p className="text-xl font-semibold text-white animate-pulse">{message}</p>}
       </div>
     </div>

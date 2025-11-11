@@ -61,7 +61,7 @@ backend/
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22.13+
 - Yarn
 - Firebase CLI
 - Docker (optional)
@@ -81,14 +81,23 @@ cp .env.example .env.local
 # Edit .env.local with your values
 ```
 
-3. Start Firebase emulators (Terminal 1):
+3. Ensure the following variables are present in `.env.local` (copy from `.env.example` if missing):
+
+```
+GEMINI_API_KEY=your-gemini-key
+FIREBASE_PROJECT_ID=daicer-dev
+FIREBASE_STORAGE_BUCKET=daicer-dev.appspot.com
+STORAGE_EMULATOR_HOST=http://127.0.0.1:9199
+```
+
+4. Start Firebase emulators (Terminal 1):
 
 ```bash
 cd ..
 yarn emulators
 ```
 
-4. Start backend (Terminal 2):
+5. Start backend (Terminal 2):
 
 ```bash
 yarn dev
@@ -134,6 +143,12 @@ docker-compose up backend
 - `POST /api/game/:roomId/world` - Generate world (owner only)
 - `POST /api/game/:roomId/character` - Add character
 - `POST /api/game/:roomId/turn` - Process turn
+
+- `POST /api/assets/avatar` - Generate portrait, upper-body, and full-body character variants
+- `POST /api/assets/grid-background` - Generate a battle map background tile
+- `POST /api/assets/action-frame` - Generate a cinematic action frame illustration
+
+Asset endpoints accept optional reference images (base64 data URIs), narrative context, and store generated files in Firebase Storage (emulator-first).
 
 ## Socket.io Events
 
@@ -187,6 +202,8 @@ gcloud run deploy daicer-backend \
 Set via Secret Manager:
 
 - `GEMINI_API_KEY`
+- `FIREBASE_STORAGE_BUCKET`
+- `STORAGE_EMULATOR_HOST` (for local development)
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `FIREBASE_PRIVATE_KEY`

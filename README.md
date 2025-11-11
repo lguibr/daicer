@@ -79,37 +79,37 @@ The following diagram illustrates the end-to-end player journey from authenticat
 graph TD
     Start([Player Opens App]) --> Auth[1. Authentication]
     Auth -->|Google Sign-In| Lobby[2. Lobby Dashboard]
-    
+
     Lobby -->|Create New Game| WorldConfig[3. Configure World]
     Lobby -->|Join Existing| CodeEntry[Enter 6-Char Code]
-    
+
     WorldConfig -->|Theme, Tone, Difficulty| RoomCreated[Room Created]
     CodeEntry -->|Valid Code| RoomCreated
-    
+
     RoomCreated -->|Unique URL: /room/:id| CharCreate[4. Character Creation]
-    
+
     CharCreate -->|Fill D20 Sheet| CharSubmit[Submit Character]
     CharSubmit --> WaitPlayers{All Players Ready?}
     WaitPlayers -->|No| CharCreate
     WaitPlayers -->|Yes| GameStart[5. Game Initializes]
-    
+
     GameStart -->|AI DM Opening Narration| TurnLoop[6. Gameplay Loop]
-    
+
     subgraph "Turn-Based Gameplay Loop"
         TurnLoop -->|Read DM Narration| PlayerAction[Each Player Types Action]
         PlayerAction -->|Submit Action| CheckAll{All Actions In?}
         CheckAll -->|No| PlayerAction
         CheckAll -->|Yes| ProcessTurn[DM Processes Turn]
-        
+
         ProcessTurn -->|Tool Calls| DiceRolls[Roll Dice]
         DiceRolls --> AttributeChecks[Attribute Checks]
         AttributeChecks --> CombatChecks[Combat Resolution]
         CombatChecks --> StateUpdate[Update Game State]
-        
+
         StateUpdate --> Narration[AI DM Narrates Results]
         Narration -->|Next Turn| TurnLoop
     end
-    
+
     style Start fill:#e1f5ff
     style Auth fill:#fff4e6
     style Lobby fill:#e8f5e9
@@ -130,19 +130,24 @@ graph TD
 ## 🧠 How It Works
 
 ### 1. **Authentication**
--   Click "Continue with Google".
--   Uses Firebase Auth (with local emulators for development). Any email works locally.
+
+- Click "Continue with Google".
+- Uses Firebase Auth (with local emulators for development). Any email works locally.
 
 ### 2. **Create or Join Room**
--   **Create**: Configure your world's theme, tone, and difficulty to get a 6-character room code.
--   **Join**: Enter an existing room code (e.g., "ABC123") to join a party.
+
+- **Create**: Configure your world's theme, tone, and difficulty to get a 6-character room code.
+- **Join**: Enter an existing room code (e.g., "ABC123") to join a party.
 
 ### 3. **Character Creation**
--   Fill out a complete D20 character sheet, including attributes (STR, DEX, etc.), race, class, and alignment.
--   Submit your character and wait for the rest of your party to get ready.
+
+- Fill out a complete D20 character sheet, including attributes (STR, DEX, etc.), race, class, and alignment.
+- Submit your character and wait for the rest of your party to get ready.
 
 ### 4. **Gameplay - Turn-Based System**
+
 Each narrative turn unfolds in a synchronized loop:
+
 1.  **Read** the DM's latest narration.
 2.  **Type** your character's action (e.g., "I search for traps," "I try to persuade the guard").
 3.  **Submit** your action and wait for all other players.
@@ -150,18 +155,21 @@ Each narrative turn unfolds in a synchronized loop:
 5.  **Narrate**: The DM describes what happens next, and the loop repeats.
 
 ### 5. **Dice System & AI Tools**
+
 The AI DM is bound by the rules of the game. It cannot invent outcomes. It **must** use tools to resolve actions, providing full transparency to the players.
--   `roll_dice("2d6+3")`: Executes real, random dice rolls.
--   `attribute_check(character, "Strength", DC=15)`: Performs a d20 skill check against a difficulty class.
--   `attack_roll(attacker, target)`: Resolves an attack roll against a target's Armor Class.
--   `deal_damage(target, "1d8+2", "slashing")`: Applies damage to a character.
+
+- `roll_dice("2d6+3")`: Executes real, random dice rolls.
+- `attribute_check(character, "Strength", DC=15)`: Performs a d20 skill check against a difficulty class.
+- `attack_roll(attacker, target)`: Resolves an attack roll against a target's Armor Class.
+- `deal_damage(target, "1d8+2", "slashing")`: Applies damage to a character.
 
 The results are returned to the LLM, which then creatively interprets them to write the ongoing narrative.
 
 ### 6. **Real-Time Synchronization**
--   Powered by Socket.io, the game state is always in sync.
--   See other players' characters and know who has submitted their action.
--   The turn automatically processes when everyone is ready.
+
+- Powered by Socket.io, the game state is always in sync.
+- See other players' characters and know who has submitted their action.
+- The turn automatically processes when everyone is ready.
 
 ---
 
@@ -182,7 +190,7 @@ graph LR
     LLM -.->|Fallback| Gemini
     LLM -.->|Fallback| OpenAI
     LLM -.->|Fallback| Anthropic
-````
+```
 
 ### The Engine: A Deeper Dive
 

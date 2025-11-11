@@ -21,6 +21,7 @@ import gameRouter from '@/api/game';
 import gameDataRouter from '@/api/game-data';
 import combatSimRouter from '@/api/combat-sim';
 import spellsRouter from '@/api/spells';
+import assetsRouter from '@/api/assets';
 
 // Socket.io handlers
 import { initializeSocketHandlers } from '@/socket/handlers';
@@ -72,6 +73,7 @@ app.use('/api/game', gameRouter);
 app.use('/api/game-data', gameDataRouter);
 app.use('/api/combat', combatSimRouter);
 app.use('/api/spells', spellsRouter);
+app.use('/api/assets', assetsRouter);
 
 // Error handling
 app.use(notFoundHandler);
