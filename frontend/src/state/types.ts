@@ -1,5 +1,4 @@
-import { GamePhase, WorldSettings, Player, Message, Creature } from '../types';
-import { Language } from '../i18n';
+import { GamePhase, WorldSettings, Player, Message, Creature, Language } from '../types/shared';
 
 export interface AppState {
   language: Language;

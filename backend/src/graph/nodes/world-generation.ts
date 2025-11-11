@@ -6,7 +6,7 @@
 import { task } from '@langchain/langgraph';
 import { generateText } from '@/services/llm';
 import { logger } from '@/utils/logger';
-import type { GameState } from '../state';
+import type { CharacterCreationState } from '../state';
 
 /**
  * Task: Generate world description
@@ -25,7 +25,7 @@ const generateWorldTask = task(
     language: string;
   }): Promise<string> => {
     const systemPrompt = `You are a creative Dungeon Master creating a rich D&D 5e world.`;
-    
+
     const userPrompt = `Create a ${params.adventureLength} ${params.difficulty} adventure for ${params.playerCount} level ${params.startingLevel} characters.
 Theme: ${params.theme}
 Setting: ${params.setting}
@@ -48,8 +48,8 @@ Make it immersive and exciting!`;
 /**
  * World generation node
  */
-export async function worldGenerationNode(state: GameState): Promise<Partial<GameState>> {
-  const {settings} = state;
+export async function worldGenerationNode(state: CharacterCreationState): Promise<Partial<CharacterCreationState>> {
+  const { settings } = state;
   if (!settings) {
     logger.error('No settings found for world generation');
     return {};
@@ -70,7 +70,5 @@ export async function worldGenerationNode(state: GameState): Promise<Partial<Gam
 
   return {
     worldDescription,
-    phase: 'CHARACTER_CREATION',
   };
 }
-

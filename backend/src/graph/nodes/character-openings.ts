@@ -6,14 +6,13 @@
 import { task } from '@langchain/langgraph';
 import { generateCharacterOpenings as generateOpeningsService } from '@/services/game';
 import { logger } from '@/utils/logger';
-import type { Message } from '@/types/index';
+import type { Message, Player } from '@/types/index';
+import type { CharacterCreationState } from '../state';
 
 /**
  * Task: Generate character openings
  * Wrapped in task() for deterministic replay
  */
-import type { Player } from '@/types/index';
-import type { GameState } from '../state';
 
 const generateOpeningsTask = task(
   'generateCharacterOpenings',
@@ -27,11 +26,7 @@ const generateOpeningsTask = task(
   }> => {
     logger.info('Generating character openings');
     const lang = params.language as 'en' | 'es' | 'pt-BR';
-    return generateOpeningsService(
-      params.worldDescription,
-      params.players,
-      lang
-    );
+    return generateOpeningsService(params.worldDescription, params.players, lang);
   }
 );
 
@@ -39,11 +34,16 @@ const generateOpeningsTask = task(
  * Character openings node
  * Generates personalized introductions when all players are ready
  */
-export async function characterOpeningsNode(state: GameState): Promise<Partial<GameState>> {
+export async function characterOpeningsNode(state: CharacterCreationState): Promise<Partial<CharacterCreationState>> {
+  // Get language from settings with fallback chain
+  const language = state.settings?.language || state.language || 'en';
+
+  logger.info(`Character openings using language: ${language}`);
+
   const { openings, mainMessage } = await generateOpeningsTask({
     worldDescription: state.worldDescription,
     players: state.players as Player[],
-    language: state.settings?.language ?? 'en',
+    language,
   });
 
   // Create message objects
@@ -54,7 +54,7 @@ export async function characterOpeningsNode(state: GameState): Promise<Partial<G
     timestamp: Date.now(),
   };
 
-  const personalMessages: Message[] = openings.map(opening => ({
+  const personalMessages: Message[] = openings.map((opening) => ({
     id: `msg-${Date.now()}-dm-${opening.playerId}`,
     sender: 'DM',
     text: opening.message,
@@ -66,7 +66,5 @@ export async function characterOpeningsNode(state: GameState): Promise<Partial<G
 
   return {
     messages: [mainMsg, ...personalMessages],
-    phase: 'GAMEPLAY',
   };
 }
-

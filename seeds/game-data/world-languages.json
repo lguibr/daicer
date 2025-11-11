@@ -1,0 +1,135 @@
+[
+  {
+    "id": "common",
+    "index": "common",
+    "name": "Common",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "common-sign-language",
+    "index": "common-sign-language",
+    "name": "Common Sign Language",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "draconic",
+    "index": "draconic",
+    "name": "Draconic",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "dwarvish",
+    "index": "dwarvish",
+    "name": "Dwarvish",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "elvish",
+    "index": "elvish",
+    "name": "Elvish",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "giant",
+    "index": "giant",
+    "name": "Giant",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "gnomish",
+    "index": "gnomish",
+    "name": "Gnomish",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "goblin",
+    "index": "goblin",
+    "name": "Goblin",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "halfling",
+    "index": "halfling",
+    "name": "Halfling",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "orc",
+    "index": "orc",
+    "name": "Orc",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "abyssal",
+    "index": "abyssal",
+    "name": "Abyssal",
+    "isRare": true,
+    "note": ""
+  },
+  {
+    "id": "celestial",
+    "index": "celestial",
+    "name": "Celestial",
+    "isRare": true,
+    "note": ""
+  },
+  {
+    "id": "deep-speech",
+    "index": "deep-speech",
+    "name": "Deep Speech",
+    "isRare": true,
+    "note": ""
+  },
+  {
+    "id": "druidic",
+    "index": "druidic",
+    "name": "Druidic",
+    "isRare": false,
+    "note": ""
+  },
+  {
+    "id": "infernal",
+    "index": "infernal",
+    "name": "Infernal",
+    "isRare": true,
+    "note": ""
+  },
+  {
+    "id": "primordial",
+    "index": "primordial",
+    "name": "Primordial",
+    "isRare": true,
+    "note": "Primordial includes the Aquan, Auran, Ignan, and Terran dialects. Creatures that know one of these dialects can communicate with those that know a different one."
+  },
+  {
+    "id": "sylvan",
+    "index": "sylvan",
+    "name": "Sylvan",
+    "isRare": true,
+    "note": ""
+  },
+  {
+    "id": "thieves-cant",
+    "index": "thieves-cant",
+    "name": "Thieves' Cant",
+    "isRare": true,
+    "note": ""
+  },
+  {
+    "id": "undercommon",
+    "index": "undercommon",
+    "name": "Undercommon",
+    "isRare": true,
+    "note": ""
+  }
+]

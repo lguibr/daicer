@@ -125,43 +125,53 @@ export function useCombat(roomId: string) {
     };
   }, []);
 
-  const attack = useCallback((attackerId: string, defenderId: string, options?: {
-    weaponDamage?: string;
-    damageType?: string;
-  }) => {
-    const socket = getSocket();
-    if (!socket) return;
-    
-    socket.emit('combat:action', {
-      roomId,
-      action: 'attack',
-      params: {
-        attackerId,
-        defenderId,
-        ...options,
-      },
-    });
-  }, [roomId]);
+  const attack = useCallback(
+    (
+      attackerId: string,
+      defenderId: string,
+      options?: {
+        weaponDamage?: string;
+        damageType?: string;
+      }
+    ) => {
+      const socket = getSocket();
+      if (!socket) return;
 
-  const move = useCallback((characterId: string, targetX: number, targetY: number) => {
-    const socket = getSocket();
-    if (!socket) return;
-    
-    socket.emit('combat:action', {
-      roomId,
-      action: 'move',
-      params: {
-        characterId,
-        targetX,
-        targetY,
-      },
-    });
-  }, [roomId]);
+      socket.emit('combat:action', {
+        roomId,
+        action: 'attack',
+        params: {
+          attackerId,
+          defenderId,
+          ...options,
+        },
+      });
+    },
+    [roomId]
+  );
+
+  const move = useCallback(
+    (characterId: string, targetX: number, targetY: number) => {
+      const socket = getSocket();
+      if (!socket) return;
+
+      socket.emit('combat:action', {
+        roomId,
+        action: 'move',
+        params: {
+          characterId,
+          targetX,
+          targetY,
+        },
+      });
+    },
+    [roomId]
+  );
 
   const endTurn = useCallback(() => {
     const socket = getSocket();
     if (!socket) return;
-    
+
     socket.emit('combat:action', {
       roomId,
       action: 'end_turn',
@@ -169,25 +179,31 @@ export function useCombat(roomId: string) {
     });
   }, [roomId]);
 
-  const restoreState = useCallback((historyIndex: number) => {
-    const socket = getSocket();
-    if (!socket) return;
-    
-    socket.emit('combat:restore', {
-      roomId,
-      historyIndex,
-    });
-  }, [roomId]);
+  const restoreState = useCallback(
+    (historyIndex: number) => {
+      const socket = getSocket();
+      if (!socket) return;
+
+      socket.emit('combat:restore', {
+        roomId,
+        historyIndex,
+      });
+    },
+    [roomId]
+  );
 
   const getActiveCharacter = useCallback((): CombatCharacter | null => {
     if (!combatState || !combatState.activeCharacterId) return null;
-    return combatState.characters.find(c => c.id === combatState.activeCharacterId) ?? null;
+    return combatState.characters.find((c) => c.id === combatState.activeCharacterId) ?? null;
   }, [combatState]);
 
-  const getCharacter = useCallback((id: string): CombatCharacter | undefined => {
-    if (!combatState) return undefined;
-    return combatState.characters.find(c => c.id === id);
-  }, [combatState]);
+  const getCharacter = useCallback(
+    (id: string): CombatCharacter | undefined => {
+      if (!combatState) return undefined;
+      return combatState.characters.find((c) => c.id === id);
+    },
+    [combatState]
+  );
 
   return {
     combatState,
@@ -200,4 +216,3 @@ export function useCombat(roomId: string) {
     getCharacter,
   };
 }
-

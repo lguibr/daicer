@@ -89,14 +89,27 @@ export const ATTRIBUTES = ['Strength', 'Dexterity', 'Constitution', 'Intelligenc
  * Default world settings
  */
 export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
+  worldType: 'terra',
+  worldSize: 'medium',
   theme: 'High Fantasy',
   setting: 'Medieval',
   tone: 'Heroic',
+  worldBackground: '',
+  dmStyle: {
+    verbosity: 3,
+    detail: 3,
+    engagement: 3,
+    narrative: 3,
+    specialMode: null,
+    customDirectives: '',
+  },
+  dmSystemPrompt: '',
   playerCount: 4,
   adventureLength: 'medium',
   difficulty: 'medium',
   startingLevel: 1,
   attributePointBudget: 27,
+  language: 'en',
 };
 
 /**

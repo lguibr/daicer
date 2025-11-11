@@ -93,13 +93,13 @@ export class DiceRoller {
    */
   private getSides(diceType: DiceType): number {
     const sidesMap: Record<DiceType, number> = {
-      'd4': 4,
-      'd6': 6,
-      'd8': 8,
-      'd10': 10,
-      'd12': 12,
-      'd20': 20,
-      'd100': 100,
+      d4: 4,
+      d6: 6,
+      d8: 8,
+      d10: 10,
+      d12: 12,
+      d20: 20,
+      d100: 100,
     };
     return sidesMap[diceType];
   }
@@ -139,9 +139,7 @@ export class DiceRoller {
     let finalResult: number;
     if (diceType === 'd20' && numberOfDice === 1 && advantageType !== 'normal') {
       // Advantage: take max, Disadvantage: take min
-      const selectedRoll = advantageType === 'advantage' 
-        ? Math.max(...rawRolls) 
-        : Math.min(...rawRolls);
+      const selectedRoll = advantageType === 'advantage' ? Math.max(...rawRolls) : Math.min(...rawRolls);
       finalResult = selectedRoll + modifier;
     } else {
       // Sum all dice and add modifier
@@ -222,12 +220,7 @@ export class DiceRoller {
   /**
    * Roll damage
    */
-  rollDamage(
-    diceNotation: string,
-    modifier?: number,
-    description?: string,
-    contextId?: string
-  ): DiceRollResult {
+  rollDamage(diceNotation: string, modifier?: number, description?: string, contextId?: string): DiceRollResult {
     return this.roll(diceNotation, {
       rollType: 'damage',
       modifier: modifier ?? 0,
@@ -239,11 +232,7 @@ export class DiceRoller {
   /**
    * Roll saving throw
    */
-  rollSavingThrow(
-    modifier?: number,
-    advantageType?: AdvantageType,
-    description?: string
-  ): DiceRollResult {
+  rollSavingThrow(modifier?: number, advantageType?: AdvantageType, description?: string): DiceRollResult {
     return this.roll('1d20', {
       rollType: 'saving_throw',
       modifier: modifier ?? 0,
@@ -263,7 +252,7 @@ export class DiceRoller {
    * Get rolls for specific context
    */
   getRollsByContext(contextId: string): DiceRollResult[] {
-    return this.history.filter(r => r.contextId === contextId);
+    return this.history.filter((r) => r.contextId === contextId);
   }
 
   /**
@@ -297,7 +286,7 @@ export class DiceRoller {
     } else if (roll.advantageType === 'disadvantage') {
       advantageText = ' (Disadvantage)';
     }
-    
+
     let rawRollsText = '';
     if (roll.rawRolls.length > 1 && roll.diceType === 'd20') {
       rawRollsText = ` [${roll.rawRolls.join(', ')}]`;
@@ -317,4 +306,3 @@ export class DiceRoller {
  * Global dice roller instance (can be replaced for testing)
  */
 export const globalDiceRoller = new DiceRoller();
-

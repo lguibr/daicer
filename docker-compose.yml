@@ -57,5 +57,5 @@ services:
 
 networks:
   default:
-    name: d20ai-network
+    name: daicer-network
 

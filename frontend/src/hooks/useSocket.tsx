@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { initSocket, disconnectSocket, getSocket } from '../services/socket';
+import { initSocket, disconnectSocket, getSocket, type ToolCall } from '../services/socket';
 import type { Room, Player, Message, Creature } from '../types/shared';
 
 /**
@@ -12,6 +12,7 @@ interface SocketState {
   players: Player[];
   messages: Message[];
   creatures: Creature[];
+  toolCalls: ToolCall[];
 }
 
 /**
@@ -27,6 +28,7 @@ export default function useSocket(roomId?: string) {
     players: [],
     messages: [],
     creatures: [],
+    toolCalls: [],
   });
 
   const updateState = useCallback((updates: Partial<SocketState>) => {
@@ -85,9 +87,7 @@ export default function useSocket(roomId?: string) {
             // Update player ready status
             setState((prev) => ({
               ...prev,
-              players: prev.players.map((p) =>
-                p.userId === data.userId ? { ...p, isReady: data.isReady } : p
-              ),
+              players: prev.players.map((p) => (p.userId === data.userId ? { ...p, isReady: data.isReady } : p)),
             }));
           },
           onPhaseChanged: (data) => {
@@ -102,6 +102,13 @@ export default function useSocket(roomId?: string) {
           },
           onTurnComplete: () => {
             // Turn complete - messages will arrive via message:new events
+          },
+          onToolCalls: (toolCalls) => {
+            // Add new tool calls to state
+            setState((prev) => ({
+              ...prev,
+              toolCalls: [...prev.toolCalls, ...toolCalls],
+            }));
           },
           onError: (data) => {
             updateState({ error: data.message });
@@ -128,6 +135,7 @@ export default function useSocket(roomId?: string) {
     players: state.players,
     messages: state.messages,
     creatures: state.creatures,
+    toolCalls: state.toolCalls,
     socket: getSocket(),
   };
 }

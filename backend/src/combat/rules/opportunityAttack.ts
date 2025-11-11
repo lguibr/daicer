@@ -41,10 +41,11 @@ export function checkOpportunityAttackTriggers(
 
   // Characters that could make opportunity attacks
   const potentialAttackers = allCharacters.filter(
-    c => c.hp > 0 &&
-    c.id !== movingCharacter.id &&
-    c.isPlayer !== movingCharacter.isPlayer && // Must be hostile
-    c.hasReaction // Must have reaction available
+    (c) =>
+      c.hp > 0 &&
+      c.id !== movingCharacter.id &&
+      c.isPlayer !== movingCharacter.isPlayer && // Must be hostile
+      c.hasReaction // Must have reaction available
   );
 
   for (const attacker of potentialAttackers) {
@@ -135,31 +136,21 @@ export function processOpportunityAttacks(
     };
   }
 
-  const triggers = checkOpportunityAttackTriggers(
-    movingCharacter,
-    fromPosition,
-    toPosition,
-    allCharacters
-  );
+  const triggers = checkOpportunityAttackTriggers(movingCharacter, fromPosition, toPosition, allCharacters);
 
   const attacks: OpportunityAttackResult[] = [];
   const updatedAttackers: CombatCharacter[] = [];
   let currentDefender = movingCharacter;
 
   for (const trigger of triggers) {
-    const attacker = allCharacters.find(c => c.id === trigger.attackerId);
+    const attacker = allCharacters.find((c) => c.id === trigger.attackerId);
     if (!attacker) {
       // eslint-disable-next-line no-continue
       continue;
     }
 
     // Resolve the opportunity attack
-    const result = resolveOpportunityAttack(
-      attacker,
-      currentDefender,
-      trigger,
-      diceRoller
-    );
+    const result = resolveOpportunityAttack(attacker, currentDefender, trigger, diceRoller);
 
     attacks.push(result);
 
@@ -190,14 +181,15 @@ export function getThreateningCharacters(
   allCharacters: CombatCharacter[],
   forCharacterId: string
 ): CombatCharacter[] {
-  const character = allCharacters.find(c => c.id === forCharacterId);
+  const character = allCharacters.find((c) => c.id === forCharacterId);
   if (!character) return [];
 
   return allCharacters.filter(
-    c => c.hp > 0 &&
-    c.id !== forCharacterId &&
-    c.isPlayer !== character.isPlayer &&
-    isWithinReach(position, c.position, c.reach)
+    (c) =>
+      c.hp > 0 &&
+      c.id !== forCharacterId &&
+      c.isPlayer !== character.isPlayer &&
+      isWithinReach(position, c.position, c.reach)
   );
 }
 
@@ -208,4 +200,3 @@ export function getThreateningCharacters(
 export function findSafestPath(to: Position): Position[] {
   return [to];
 }
-

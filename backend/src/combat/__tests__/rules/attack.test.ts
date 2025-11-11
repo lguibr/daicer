@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { 
-  makeAttackRoll, 
-  rollDamage, 
+import {
+  makeAttackRoll,
+  rollDamage,
   applyDamage,
   calculateAttackBonus,
   calculateDamageBonus,
@@ -17,7 +17,7 @@ describe('Attack Rules', () => {
 
   beforeEach(() => {
     diceRoller = new DiceRoller({ seed: 12345 });
-    
+
     attacker = {
       id: 'attacker-1',
       name: 'Fighter',
@@ -104,11 +104,7 @@ describe('Attack Rules', () => {
 
   describe('makeAttackRoll', () => {
     it('should make a basic attack roll', () => {
-      const result = makeAttackRoll(
-        { attacker, defender },
-        diceRoller,
-        5
-      );
+      const result = makeAttackRoll({ attacker, defender }, diceRoller, 5);
 
       expect(result.roll.rollType).toBe('attack');
       expect(result.roll.modifier).toBe(5);
@@ -119,12 +115,12 @@ describe('Attack Rules', () => {
     it('should detect critical hit on natural 20', () => {
       const roller = new DiceRoller({ seed: 12345 });
       let foundCrit = false;
-      
+
       for (let i = 0; i < 10000; i++) {
         roller.setSeed(i);
         roller.clearHistory();
         const result = makeAttackRoll({ attacker, defender }, roller, 0);
-        
+
         if (result.roll.rawRolls.includes(20)) {
           expect(result.isCriticalHit).toBe(true);
           expect(result.isHit).toBe(true); // Natural 20 always hits
@@ -132,19 +128,19 @@ describe('Attack Rules', () => {
           break;
         }
       }
-      
+
       expect(foundCrit).toBe(true);
     });
 
     it('should detect critical miss on natural 1', () => {
       const roller = new DiceRoller({ seed: 12345 });
       let foundCritMiss = false;
-      
+
       for (let i = 0; i < 10000; i++) {
         roller.setSeed(i);
         roller.clearHistory();
         const result = makeAttackRoll({ attacker, defender }, roller, 100); // High bonus
-        
+
         if (result.roll.rawRolls.includes(1)) {
           expect(result.isCriticalMiss).toBe(true);
           expect(result.isHit).toBe(false); // Natural 1 always misses
@@ -152,7 +148,7 @@ describe('Attack Rules', () => {
           break;
         }
       }
-      
+
       expect(foundCritMiss).toBe(true);
     });
   });
@@ -160,7 +156,7 @@ describe('Attack Rules', () => {
   describe('rollDamage', () => {
     it('should roll normal damage', () => {
       const result = rollDamage('2d6', 3, false, 'slashing', diceRoller);
-      
+
       expect(result.isCritical).toBe(false);
       expect(result.damageType).toBe('slashing');
       expect(result.roll.numberOfDice).toBe(2);
@@ -172,7 +168,7 @@ describe('Attack Rules', () => {
     it('should double dice on critical hit', () => {
       diceRoller.clearHistory();
       const result = rollDamage('2d6', 3, true, 'slashing', diceRoller);
-      
+
       expect(result.isCritical).toBe(true);
       expect(result.roll.rawRolls.length).toBe(4); // 2d6 rolled twice
       expect(result.totalDamage).toBeGreaterThanOrEqual(7); // Min 4 + 3
@@ -183,7 +179,7 @@ describe('Attack Rules', () => {
   describe('applyDamage', () => {
     it('should reduce HP', () => {
       const result = applyDamage(defender, 10);
-      
+
       expect(result.hpLost).toBe(10);
       expect(result.tempHpLost).toBe(0);
       expect(result.newHp).toBe(10);
@@ -193,7 +189,7 @@ describe('Attack Rules', () => {
     it('should absorb damage with temp HP first', () => {
       const charWithTempHp = { ...defender, tempHp: 5 };
       const result = applyDamage(charWithTempHp, 10);
-      
+
       expect(result.tempHpLost).toBe(5);
       expect(result.hpLost).toBe(5);
       expect(result.newHp).toBe(15);
@@ -202,7 +198,7 @@ describe('Attack Rules', () => {
 
     it('should detect death', () => {
       const result = applyDamage(defender, 100);
-      
+
       expect(result.isDead).toBe(true);
       expect(result.newHp).toBe(0);
     });
@@ -219,19 +215,13 @@ describe('Attack Rules', () => {
         const testRoller = new DiceRoller({ seed: i });
         const attackBonus = calculateAttackBonus(attacker);
         const testAttackRoll = testRoller.rollAttack(attackBonus);
-        
+
         if (testAttackRoll.finalResult >= defender.armorClass && !testAttackRoll.rawRolls.includes(20)) {
           diceRoller.setSeed(i);
           diceRoller.clearHistory();
-          
-          const result = resolveAttack(
-            { attacker, defender },
-            '1d8',
-            'slashing',
-            diceRoller,
-            false
-          );
-          
+
+          const result = resolveAttack({ attacker, defender }, '1d8', 'slashing', diceRoller, false);
+
           expect(result.attackRoll.isHit).toBe(true);
           expect(result.damageRoll).toBeDefined();
           expect(result.damageResult).toBeDefined();
@@ -247,19 +237,13 @@ describe('Attack Rules', () => {
         const testRoller = new DiceRoller({ seed: i });
         const attackBonus = calculateAttackBonus(attacker);
         const testAttackRoll = testRoller.rollAttack(attackBonus);
-        
+
         if (testAttackRoll.finalResult < defender.armorClass && !testAttackRoll.rawRolls.includes(1)) {
           diceRoller.setSeed(i);
           diceRoller.clearHistory();
-          
-          const result = resolveAttack(
-            { attacker, defender },
-            '1d8',
-            'slashing',
-            diceRoller,
-            false
-          );
-          
+
+          const result = resolveAttack({ attacker, defender }, '1d8', 'slashing', diceRoller, false);
+
           expect(result.attackRoll.isHit).toBe(false);
           expect(result.damageRoll).toBeUndefined();
           expect(result.updatedDefender).toBeUndefined();
@@ -269,4 +253,3 @@ describe('Attack Rules', () => {
     });
   });
 });
-

@@ -1,142 +1,66 @@
 import { useState } from 'react';
+import type { Language } from './types/shared';
+import enTranslations from './i18n/locales/en.json';
+import esTranslations from './i18n/locales/es.json';
+import ptBRTranslations from './i18n/locales/pt-BR.json';
 
-export type Language = 'en' | 'es' | 'pt-BR';
+export type { Language };
+
+// Flatten nested JSON structure into dot notation
+function flattenTranslations(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
+  const flattened: Record<string, string> = {};
+
+  Object.entries(obj).forEach(([key, value]) => {
+    const newKey = prefix ? `${prefix}.${key}` : key;
+
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      Object.assign(flattened, flattenTranslations(value as Record<string, unknown>, newKey));
+    } else {
+      flattened[newKey] = String(value);
+    }
+  });
+
+  return flattened;
+}
 
 const T = {
-  en: {
-    'auth.title': 'D20 AI',
-    'auth.subtitle': 'Multiplayer D&D with AI Dungeon Master',
-    'auth.login': 'Continue with Google',
-    'auth.loggingIn': 'Signing in...',
-    'auth.emulatorNote': 'Using Firebase emulators',
-    'auth.emulatorTip': 'Enter any email',
-    'lobby.title': 'Game Lobby',
-    'lobby.subtitle': 'Create or join adventure',
-    'lobby.createRoom': 'Create New Adventure',
-    'lobby.joinRoom': 'Join Room',
-    'lobby.enterCode': 'Room Code',
-    'lobby.codePlaceholder': 'CODE',
-    'lobby.joining': 'Joining...',
-    'lobby.orDivider': 'OR',
-    'worldSettings.title': 'Create Your Adventure',
-    'worldSettings.subtitle': 'Configure the world',
-    'worldSettings.story': 'Story',
-    'worldSettings.scope': 'Scope',
-    'worldSettings.theme': 'Theme',
-    'worldSettings.themePlaceholder': 'High Fantasy',
-    'worldSettings.setting': 'Setting',
-    'worldSettings.settingPlaceholder': 'Ancient Ruins',
-    'worldSettings.tone': 'Tone',
-    'worldSettings.tonePlaceholder': 'Dark and Gritty',
-    'worldSettings.playerCount': 'Players',
-    'worldSettings.adventureLength': 'Length',
-    'worldSettings.lengthShort': 'Short',
-    'worldSettings.lengthMedium': 'Medium',
-    'worldSettings.lengthEpic': 'Epic',
-    'worldSettings.difficulty': 'Difficulty',
-    'worldSettings.difficultyEasy': 'Easy',
-    'worldSettings.difficultyMedium': 'Medium',
-    'worldSettings.difficultyHard': 'Hard',
-    'worldSettings.cancel': 'Cancel',
-    'worldSettings.create': 'Create',
-    'worldSettings.creating': 'Creating...',
-  },
-  es: {
-    'auth.title': 'D20 AI',
-    'auth.subtitle': 'D&D Multijugador con IA',
-    'auth.login': 'Continuar con Google',
-    'auth.loggingIn': 'Entrando...',
-    'auth.emulatorNote': 'Usando emuladores',
-    'auth.emulatorTip': 'Cualquier email',
-    'lobby.title': 'Lobby',
-    'lobby.subtitle': 'Crea o únete',
-    'lobby.createRoom': 'Crear Aventura',
-    'lobby.joinRoom': 'Unirse',
-    'lobby.enterCode': 'Código',
-    'lobby.codePlaceholder': 'CÓDIGO',
-    'lobby.joining': 'Uniéndose...',
-    'lobby.orDivider': 'O',
-    'worldSettings.title': 'Crea Aventura',
-    'worldSettings.subtitle': 'Configura el mundo',
-    'worldSettings.story': 'Historia',
-    'worldSettings.scope': 'Alcance',
-    'worldSettings.theme': 'Tema',
-    'worldSettings.themePlaceholder': 'Alta Fantasía',
-    'worldSettings.setting': 'Escenario',
-    'worldSettings.settingPlaceholder': 'Ruinas',
-    'worldSettings.tone': 'Tono',
-    'worldSettings.tonePlaceholder': 'Oscuro',
-    'worldSettings.playerCount': 'Jugadores',
-    'worldSettings.adventureLength': 'Duración',
-    'worldSettings.lengthShort': 'Corta',
-    'worldSettings.lengthMedium': 'Media',
-    'worldSettings.lengthEpic': 'Épica',
-    'worldSettings.difficulty': 'Dificultad',
-    'worldSettings.difficultyEasy': 'Fácil',
-    'worldSettings.difficultyMedium': 'Media',
-    'worldSettings.difficultyHard': 'Difícil',
-    'worldSettings.cancel': 'Cancelar',
-    'worldSettings.create': 'Crear',
-    'worldSettings.creating': 'Creando...',
-  },
-  'pt-BR': {
-    'auth.title': 'D20 AI',
-    'auth.subtitle': 'D&D Multiplayer com IA',
-    'auth.login': 'Continuar com Google',
-    'auth.loggingIn': 'Entrando...',
-    'auth.emulatorNote': 'Usando emuladores',
-    'auth.emulatorTip': 'Qualquer email',
-    'lobby.title': 'Lobby',
-    'lobby.subtitle': 'Crie ou entre',
-    'lobby.createRoom': 'Criar Aventura',
-    'lobby.joinRoom': 'Entrar',
-    'lobby.enterCode': 'Código',
-    'lobby.codePlaceholder': 'CÓDIGO',
-    'lobby.joining': 'Entrando...',
-    'lobby.orDivider': 'OU',
-    'worldSettings.title': 'Crie Aventura',
-    'worldSettings.subtitle': 'Configure mundo',
-    'worldSettings.story': 'História',
-    'worldSettings.scope': 'Escopo',
-    'worldSettings.theme': 'Tema',
-    'worldSettings.themePlaceholder': 'Alta Fantasia',
-    'worldSettings.setting': 'Cenário',
-    'worldSettings.settingPlaceholder': 'Ruínas',
-    'worldSettings.tone': 'Tom',
-    'worldSettings.tonePlaceholder': 'Sombrio',
-    'worldSettings.playerCount': 'Jogadores',
-    'worldSettings.adventureLength': 'Duração',
-    'worldSettings.lengthShort': 'Curta',
-    'worldSettings.lengthMedium': 'Média',
-    'worldSettings.lengthEpic': 'Épica',
-    'worldSettings.difficulty': 'Dificuldade',
-    'worldSettings.difficultyEasy': 'Fácil',
-    'worldSettings.difficultyMedium': 'Média',
-    'worldSettings.difficultyHard': 'Difícil',
-    'worldSettings.cancel': 'Cancelar',
-    'worldSettings.create': 'Criar',
-    'worldSettings.creating': 'Criando...',
-  },
+  en: flattenTranslations(enTranslations),
+  es: flattenTranslations(esTranslations),
+  'pt-BR': flattenTranslations(ptBRTranslations),
 };
 
 export const supportedLanguages = [
-  { code: 'en' as Language, name: 'English', flag: '🇺🇸' },
-  { code: 'es' as Language, name: 'Español', flag: '🇪🇸' },
-  { code: 'pt-BR' as Language, name: 'Português', flag: '🇧🇷' },
+  { code: 'en' as Language, name: 'English', short: 'EN' },
+  { code: 'es' as Language, name: 'Español', short: 'ES' },
+  { code: 'pt-BR' as Language, name: 'Português', short: 'PT' },
 ];
 
+// Get browser language preference
+function getBrowserLanguage(): Language {
+  const browserLang = navigator.language;
+  if (browserLang.startsWith('es')) return 'es';
+  if (browserLang.startsWith('pt')) return 'pt-BR';
+  return 'en';
+}
+
+// Get stored language or fall back to browser language
+function getInitialLanguage(): Language {
+  const stored = localStorage.getItem('daicer-language');
+  if (stored === 'en' || stored === 'es' || stored === 'pt-BR') {
+    return stored;
+  }
+  return getBrowserLanguage();
+}
+
 export function useI18n() {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const stored = localStorage.getItem('d20ai-language');
-    return stored === 'es' || stored === 'pt-BR' ? stored : 'en';
-  });
+  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
 
   const setLanguage = (lang: Language) => {
-    localStorage.setItem('d20ai-language', lang);
+    localStorage.setItem('daicer-language', lang);
     setLanguageState(lang);
   };
 
-  const t = (key: string): string => T[language][key as keyof typeof T.en] || key;
+  const t = (key: string): string => T[language][key] || key;
 
   return {
     t,

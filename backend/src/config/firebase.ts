@@ -63,6 +63,19 @@ export function getDb() {
 export { getFirestore };
 
 /**
+ * Firestore database instance (lazy)
+ * Only call this after initializeFirebase() has been called
+ */
+// eslint-disable-next-line no-underscore-dangle
+let _db: ReturnType<typeof getFirestore> | null = null;
+export const db = (): ReturnType<typeof getFirestore> => {
+  if (!_db) {
+    _db = getFirestore();
+  }
+  return _db;
+};
+
+/**
  * Get Firebase Auth instance
  * @returns Firebase Auth instance
  */

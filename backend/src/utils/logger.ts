@@ -9,9 +9,10 @@ const { combine, timestamp, printf, colorize, errors } = winston.format;
 /**
  * Custom log format
  */
-const logFormat = printf(({ level, message, timestamp: ts, stack }) => {
+const logFormat = printf(({ level, message, timestamp: ts, stack, ...meta }) => {
   const msg = stack || message;
-  return `${ts as string} [${level}]: ${msg as string}`;
+  const metaString = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
+  return `${ts as string} [${level}]: ${msg as string}${metaString}`;
 });
 
 /**
@@ -19,13 +20,15 @@ const logFormat = printf(({ level, message, timestamp: ts, stack }) => {
  * @returns Configured logger
  */
 export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || 'silly',
   format: combine(errors({ stack: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
   transports: [
     new winston.transports.Console({
-      format: combine(colorize(), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
+      handleExceptions: true,
+      format: combine(colorize({ all: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
     }),
   ],
+  exitOnError: false,
 });
 
 /**

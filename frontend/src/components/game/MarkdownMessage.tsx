@@ -26,9 +26,10 @@ const customRenderers: Components = {
   ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1 text-slate-100">{children}</ol>,
   li: ({ children }) => <li className="ml-2">{children}</li>,
   hr: () => <hr className="border-t-2 border-cyan-500/30 my-4" />,
-  code: ({ inline, className, children }) => {
+  code: ({ className, children, ...props }) => {
     const match = /language-(\w+)/.exec(className || '');
-    return !inline && match ? (
+    const isInline = !match && !props.node?.position;
+    return !isInline && match ? (
       <code className="block bg-slate-700 p-3 rounded my-2 text-cyan-200 font-mono text-sm overflow-x-auto">
         {children}
       </code>

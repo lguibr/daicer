@@ -24,14 +24,32 @@ export interface AuthRequest extends Request {
  * @param next - Next function
  */
 export async function authenticate(req: AuthRequest, _res: Response, next: NextFunction): Promise<void> {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    next(new ApiError(401, 'No authentication token provided'));
+    return;
+  }
+
+  const [scheme, ...rest] = authHeader.trim().split(/\s+/);
+  if (!scheme || scheme.toLowerCase() !== 'bearer') {
+    next(new ApiError(401, 'Invalid authentication scheme'));
+    return;
+  }
+
+  const token = rest.join(' ').trim();
+  if (!token) {
+    next(new ApiError(401, 'No authentication token provided'));
+    return;
+  }
+
+  const loweredToken = token.toLowerCase();
+  if (loweredToken === 'undefined' || loweredToken === 'null') {
+    next(new ApiError(401, 'Invalid authentication token'));
+    return;
+  }
+
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new ApiError(401, 'No authentication token provided');
-    }
-
-    const token = authHeader.split('Bearer ')[1];
     const auth = getFirebaseAuth();
     const decodedToken = await auth.verifyIdToken(token);
 

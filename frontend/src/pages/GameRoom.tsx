@@ -2,7 +2,7 @@
  * Game room page - handles character creation and gameplay
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRoomState } from '../services/api';
 import { joinRoom as joinSocketRoom } from '../services/socket';
@@ -11,6 +11,8 @@ import CharacterCreation from '../components/room/CharacterCreation';
 import GameplayScreen from '../components/game/GameplayScreen';
 import { CombatScreen } from '../components/game/CombatScreen';
 import Layout from '../components/layout/Layout';
+import ToolsPanel from '../components/debug/ToolsPanel';
+import { ToolNotificationContainer } from '../components/ui/ToolNotificationToast';
 import type { Room, Player } from '../types/shared';
 
 /**
@@ -24,8 +26,17 @@ export default function GameRoomPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toolsPanelOpen, setToolsPanelOpen] = useState(false);
+  const [recentToolCalls, setRecentToolCalls] = useState<typeof socket.toolCalls>([]);
 
   const socket = useSocket(roomId);
+
+  // Handle new tool calls - show as toasts for most recent 3
+  useEffect(() => {
+    if (socket.toolCalls.length > recentToolCalls.length) {
+      setRecentToolCalls(socket.toolCalls.slice(-3)); // Keep only last 3 for toasts
+    }
+  }, [socket.toolCalls, recentToolCalls.length]);
 
   useEffect(() => {
     if (!roomId) {
@@ -91,37 +102,43 @@ export default function GameRoomPage() {
     );
   }
 
+  const handleDismissToast = (id: string) => {
+    setRecentToolCalls((prev) => prev.filter((tc) => tc.id !== id));
+  };
+
   // Render based on game phase
+  let content;
   switch (room.phase) {
     case 'SETUP':
     case 'CHARACTER_CREATION':
-      return (
-        <Layout room={room} playerCount={players.length} showRoomInfo>
-          <CharacterCreation room={room} players={players} />
-        </Layout>
-      );
+      content = <CharacterCreation room={room} players={players} />;
+      break;
 
     case 'GAMEPLAY':
-      return (
-        <Layout room={room} playerCount={players.length} showRoomInfo>
-          <GameplayScreen room={room} players={players} />
-        </Layout>
-      );
+      content = <GameplayScreen room={room} players={players} />;
+      break;
 
     case 'COMBAT':
-      return (
-        <Layout room={room} playerCount={players.length} showRoomInfo={false}>
-          <CombatScreen roomId={room.id} />
-        </Layout>
-      );
+      content = <CombatScreen roomId={room.id} />;
+      break;
 
     default:
-      return (
-        <Layout room={room} playerCount={players.length} showRoomInfo>
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-shadow-300">Unknown game phase</p>
-          </div>
-        </Layout>
+      content = (
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-shadow-300">Unknown game phase</p>
+        </div>
       );
   }
+
+  return (
+    <Layout room={room} playerCount={players.length} showRoomInfo={room.phase !== 'COMBAT'}>
+      {content}
+      <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={handleDismissToast} />
+      <ToolsPanel
+        toolCalls={socket.toolCalls}
+        isOpen={toolsPanelOpen}
+        onToggle={() => setToolsPanelOpen(!toolsPanelOpen)}
+      />
+    </Layout>
+  );
 }

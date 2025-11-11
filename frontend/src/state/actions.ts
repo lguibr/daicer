@@ -1,5 +1,4 @@
-import { Player, Message, WorldSettings, Creature } from '../types';
-import { Language } from '../i18n';
+import { Player, Message, WorldSettings, Creature, Language } from '../types/shared';
 
 export const ActionType = {
   // Language

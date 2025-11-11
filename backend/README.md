@@ -1,4 +1,17 @@
-# D20 AI Backend
+# Daicer Backend
+
+<div align="center">
+
+![Daicer Logo](../frontend/public/logo.png)
+
+[![CI](https://github.com/YOUR_USERNAME/daicer/workflows/CI/badge.svg)](https://github.com/YOUR_USERNAME/daicer/actions)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22-green?logo=node.js)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.21-black?logo=express)](https://expressjs.com/)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)]()
+[![Code Style](https://img.shields.io/badge/code%20style-airbnb-ff5a5f)](https://github.com/airbnb/javascript)
+
+</div>
 
 Multiplayer D&D dungeon master backend built with Express, Socket.io, Firebase, and LangChain.
 
@@ -163,8 +176,8 @@ Tests use Firebase emulators automatically.
 gcloud builds submit --config cloudbuild.yaml
 
 # Deploy
-gcloud run deploy d20ai-backend \
-  --image gcr.io/PROJECT_ID/d20ai-backend \
+gcloud run deploy daicer-backend \
+  --image gcr.io/PROJECT_ID/daicer-backend \
   --region us-central1 \
   --allow-unauthenticated
 ```
@@ -189,6 +202,21 @@ Set via Secret Manager:
   - Max file length: 200 lines
   - Complexity: < 10
   - All exports have JSDoc
+
+## Quality Assurance
+
+```bash
+# Run full QA suite (format, lint, typecheck, test with coverage)
+yarn qa
+
+# Individual checks
+yarn format:check  # ✨ Code formatting
+yarn lint:check    # 🔍 Linting (CI mode, 0 warnings)
+yarn typecheck     # 🔬 Type checking
+yarn test:coverage # 📊 Tests + coverage report
+```
+
+All quality gates enforced in CI/CD pipeline.
 
 ## License
 

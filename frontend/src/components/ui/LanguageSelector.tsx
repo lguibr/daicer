@@ -15,11 +15,12 @@ export default function LanguageSelector() {
     <select
       value={language}
       onChange={(e) => setLanguage(e.target.value as typeof language)}
-      className="bg-slate-700 text-white text-sm rounded-lg px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+      data-testid="language-selector"
+      className="rounded-md border border-midnight-500/60 bg-midnight-500/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.35em] text-shadow-200 outline-none transition focus:border-aurora-400 focus:ring-2 focus:ring-aurora-400/40"
     >
       {availableLanguages.map((lang) => (
         <option key={lang.code} value={lang.code}>
-          {lang.flag} {lang.name}
+          {lang.short} · {lang.name}
         </option>
       ))}
     </select>

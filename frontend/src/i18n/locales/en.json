@@ -1,0 +1,206 @@
+{
+  "auth": {
+    "title": "dAIcer",
+    "subtitle": "AI Dungeon Master for tabletop legends",
+    "heroDescription": "Forge a living campaign with an AI Dungeon Master trained to honour lore, tension, and teamwork.",
+    "cards": {
+      "lore": {
+        "title": "Curated Lore",
+        "body": "Sync realms, factions, relic histories, and prophecies—the DM remembers every secret."
+      },
+      "encounters": {
+        "title": "Adaptive Encounters",
+        "body": "Calibrate the danger curve, tone, and pacing with precision narrative controls."
+      },
+      "party": {
+        "title": "Party Focus",
+        "body": "Spotlight cooperation, weaving shared glory and combined tactics into every scene."
+      }
+    },
+    "cta": {
+      "heading": "Gate of Entry",
+      "copy": "Sign in with your adventuring charter to gather the party in moments."
+    },
+    "login": "Continue with Google",
+    "loggingIn": "Logging in...",
+    "emulatorNote": "Using development emulators",
+    "emulatorTip": "Any email works in this realm."
+  },
+  "lobby": {
+    "title": "Lobby",
+    "subtitle": "Choose your course",
+    "description": "Rally a brand-new table or join a sworn fellowship. The citadel syncs settings, lore, and rosters instantly.",
+    "cards": {
+      "create": {
+        "title": "Create",
+        "body": "Craft a bespoke realm with tone, difficulty, and DM persona tailored to your troupe."
+      },
+      "join": {
+        "title": "Join",
+        "body": "Enter an invite code to step back into an ongoing saga—your legend continues."
+      },
+      "demo": {
+        "title": "Combat Demo",
+        "body": "Watch a deterministic battle replay to understand the tactical engine at a glance.",
+        "action": "Open Combat Demo"
+      }
+    },
+    "createButton": "Create New Adventure",
+    "joinButton": "Join Room",
+    "inputLabel": "Enter Room Code",
+    "codePlaceholder": "CODE",
+    "joining": "Joining...",
+    "orDivider": "OR",
+    "devButton": "Dev Test Mode"
+  },
+  "worldSettings": {
+    "title": "Create Adventure",
+    "subtitle": "Configure your world",
+    "story": "Story",
+    "scope": "Scope",
+    "theme": "Theme",
+    "themePlaceholder": "e.g., High Fantasy",
+    "setting": "Setting",
+    "settingPlaceholder": "e.g., Ancient Ruins",
+    "tone": "Tone",
+    "tonePlaceholder": "e.g., Dark and Gritty",
+    "playerCount": "Number of Players",
+    "adventureLength": "Adventure Length",
+    "lengthShort": "Short",
+    "lengthMedium": "Medium",
+    "lengthEpic": "Epic",
+    "difficulty": "Difficulty",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard",
+    "cancel": "Cancel",
+    "create": "Create World",
+    "creating": "Creating world..."
+  },
+  "dev": {
+    "testMode": {
+      "title": "Dev Test Mode",
+      "description": "Quick setup for exercising combat, narrative, and tone variations.",
+      "worldLabel": "World",
+      "dmStyleLabel": "DM Style",
+      "characterLabel": "Character",
+      "back": "Back to Lobby"
+    }
+  },
+  "archetypes": {
+    "terra": {
+      "label": "Verdant Dominion",
+      "theme": "Chivalric high fantasy",
+      "setting": "Verdant kingdoms crowned by ruined keeps",
+      "tone": "Heroic with gathering dusk",
+      "mood": "Verdant Dominion",
+      "description": "Feudal baronies stitched between ancient forests, oathbound knights, and druidic circles guarding secret leyroads.",
+      "background": "The Crownmarch of Hollowspire weaves rival houses, moss-choked ruins, and ironwood groves together while druids warn of something vast stirring beneath the roots."
+    },
+    "water": {
+      "label": "Tidal Sovereignty",
+      "theme": "High seas saga",
+      "setting": "Storm-wracked archipelagos and leviathan deeps",
+      "tone": "Swashbuckling and perilous",
+      "mood": "Tidal Sovereignty",
+      "description": "Privateer flotillas, drowned temples, and charts that shift with moon-touched currents.",
+      "background": "Corsair armadas raid imperial convoys as lighthouse enclaves barter with sea witches; legends whisper of a tidal sovereign testing mortals before a coming maelstrom throne."
+    },
+    "desert": {
+      "label": "Sunstorm Courts",
+      "theme": "Sun-scorched realms",
+      "setting": "Saffron dunes and obsidian ziggurats",
+      "tone": "Harsh and mythic",
+      "mood": "Sunstorm Courts",
+      "description": "Mirage citadels, djinni-pacted caravans, and sand-song prophets trading in true names.",
+      "background": "Across the Sable Meridian, astrologer-kings carve palaces into living sandstone while zealots scour for relics buried beneath petrified leviathans."
+    },
+    "ice": {
+      "label": "Aurora Vigil",
+      "theme": "Aurora expanse",
+      "setting": "Glacier citadels beneath endless twilight",
+      "tone": "Bleak endurance and fragile hope",
+      "mood": "Aurora Vigil",
+      "description": "Storm-lashed tundras, rune-marked icefields, and silent monasteries guarding shards of a fallen star.",
+      "background": "Aurora tempests scour the Jotun frontier while frost monasteries honor ancient pacts with glacier spirits; survival hinges on shared fires and remembered lore."
+    },
+    "volcanic": {
+      "label": "Ember Supremacy",
+      "theme": "Ashen dominion",
+      "setting": "Magma-choked calderas and obsidian fortresses",
+      "tone": "Volatile and ruthless",
+      "mood": "Ember Supremacy",
+      "description": "Obsidian bastions, salamander forges, and cults singing to the rhythm of a caldera heart.",
+      "background": "War-smith clans harness rivers of fire to fuel siege engines while ash prophets attempt to wake the slumbering titan bound beneath the mountain chain."
+    },
+    "forest": {
+      "label": "Whispering Wilds",
+      "theme": "Elderwood enigma",
+      "setting": "Sentient groves and moonlit courts",
+      "tone": "Whispered and uncanny",
+      "mood": "Whispering Wilds",
+      "description": "Wyrd flora, seasonal fey courts, and living paths that shift under watchful canopies.",
+      "background": "Elder trees dream in verdant cathedrals, weaving treaties with mortals; every bargain carries hidden clauses enforced by unseen wardens."
+    },
+    "sky": {
+      "label": "Zephyr Ascendancy",
+      "theme": "Skyborne empires",
+      "setting": "Drifting isles and zephyr bridges",
+      "tone": "Majestic and surreal",
+      "mood": "Zephyr Ascendancy",
+      "description": "Sky-knight orders, cloud forges, and storm leviathans patrolling the horizon.",
+      "background": "Floating archipelagos orbit a shattered moonstone core; zephyr caravans smuggle relics between isles while thunder mages duel for dominion of the upper winds."
+    },
+    "underground": {
+      "label": "Umbral Crucible",
+      "theme": "Umbral vast",
+      "setting": "Bioluminescent caverns and abyssal markets",
+      "tone": "Claustrophobic intrigue",
+      "mood": "Umbral Crucible",
+      "description": "Stalactite cities, tremor cults, and fungus guilds trading memory spores.",
+      "background": "Gem-lit bazaars cling to cavern ceilings while tremor prophets warn of a colossal burrower nearing the vault; alliances shift faster than cave rivers."
+    },
+    "custom": {
+      "label": "Custom Realm",
+      "theme": "",
+      "setting": "",
+      "tone": "",
+      "mood": "Author's Canvas",
+      "description": "Define your own tone, lore, and sigils from the ground up.",
+      "background": ""
+    }
+  },
+  "character": {
+    "roomCode": "Room Code",
+    "playersReady": "{count} / {total} players ready",
+    "waitingForPlayers": "Waiting for all players to be ready"
+  },
+  "gameplay": {
+    "submitAction": "Submit Action",
+    "submit": "Submit",
+    "sending": "Sending...",
+    "endTurn": "End Turn",
+    "actionPlaceholder": "What do you do?",
+    "processing": "Processing...",
+    "processTurn": "Process Turn",
+    "yourTurn": "Your turn - submit an action",
+    "actionSubmitted": "Action submitted. Waiting for turn to process...",
+    "actionsSubmitted": "Actions submitted",
+    "waitingForOthers": "✓ Waiting for others...",
+    "readyToProcess": "Ready to process turn!",
+    "adventureBegins": "The adventure begins..."
+  },
+  "debug": {
+    "title": "Debug Panel",
+    "close": "Close"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete"
+  }
+}

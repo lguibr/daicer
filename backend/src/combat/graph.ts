@@ -34,7 +34,8 @@ const rollInitiativeTask = task(
  * This graph manages a single combat encounter from start to finish
  */
 export function createCombatGraph() {
-  const builder = new StateGraph(CombatStateSchema)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const builder = (new StateGraph<CombatState>(CombatStateSchema as any) as any)
     // Combat initialization
     .addNode('initiative', async (state: CombatState) => {
       // Initiative rolling happens here
@@ -44,36 +45,41 @@ export function createCombatGraph() {
       });
       return result;
     })
-    
+
     // Turn start
     .addNode('turn_start', turnStartNode)
-    
+
     // Turn end
     .addNode('turn_end', turnEndNode)
-    
+
     // Action selection (this is where external input comes in)
-    .addNode('action_selection', (state: CombatState) => 
-      // This node just waits for external action
-      // The actual action execution happens via tool calls
-       state
+    .addNode(
+      'action_selection',
+      ((state: CombatState) =>
+        // This node just waits for external action
+        // The actual action execution happens via tool calls
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        state) as any
     )
-    
+
     // Setup edges
     .addEdge(START, 'initiative')
     .addEdge('initiative', 'turn_start')
-    
+
     // Turn cycle
-    .addConditionalEdges('turn_start', (state: CombatState) => {
+    .addConditionalEdges('turn_start', ((state: CombatState) => {
       if (state.isCombatOver) return END;
       return 'action_selection';
-    })
-    
-    .addConditionalEdges('action_selection', (state: CombatState) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any)
+
+    .addConditionalEdges('action_selection', ((state: CombatState) => {
       if (state.isCombatOver) return END;
       // External control determines when to end turn
       return 'action_selection';
-    })
-    
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }) as any)
+
     .addEdge('turn_end', 'turn_start');
 
   return builder;
@@ -92,7 +98,7 @@ export class CombatSession {
   constructor(sessionId: string, diceRollerSeed?: number) {
     const seed = diceRollerSeed ?? Date.now();
     this.diceRoller = new DiceRoller({ seed, enableHistory: true });
-    
+
     this.state = {
       sessionId,
       characters: [],
@@ -122,7 +128,7 @@ export class CombatSession {
 
     this.state = { ...this.state, ...result };
     this.recordState('Combat started');
-    
+
     return this.state;
   }
 
@@ -133,7 +139,7 @@ export class CombatSession {
     const result = turnStartNode(this.state);
     this.state = { ...this.state, ...result };
     this.recordState('Turn started');
-    
+
     return this.state;
   }
 
@@ -144,7 +150,7 @@ export class CombatSession {
     const result = turnEndNode(this.state);
     this.state = { ...this.state, ...result };
     this.recordState('Turn ended');
-    
+
     return this.state;
   }
 
@@ -160,7 +166,7 @@ export class CombatSession {
 
     this.state = { ...this.state, ...result };
     this.recordState(`${characterId} moved`);
-    
+
     return this.state;
   }
 
@@ -186,7 +192,7 @@ export class CombatSession {
 
     this.state = { ...this.state, ...result };
     this.recordState(`${attackerId} attacked ${defenderId}`);
-    
+
     return this.state;
   }
 
@@ -202,21 +208,21 @@ export class CombatSession {
    */
   getActiveCharacter(): CombatCharacter | null {
     if (!this.state.activeCharacterId) return null;
-    return this.state.characters.find(c => c.id === this.state.activeCharacterId) ?? null;
+    return this.state.characters.find((c) => c.id === this.state.activeCharacterId) ?? null;
   }
 
   /**
    * Get character by ID
    */
   getCharacter(id: string): CombatCharacter | undefined {
-    return this.state.characters.find(c => c.id === id);
+    return this.state.characters.find((c) => c.id === id);
   }
 
   /**
    * Get all alive characters
    */
   getAliveCharacters(): CombatCharacter[] {
-    return this.state.characters.filter(c => c.hp > 0);
+    return this.state.characters.filter((c) => c.hp > 0);
   }
 
   /**
@@ -250,10 +256,10 @@ export class CombatSession {
       throw new Error('Snapshot not found');
     }
     this.state = JSON.parse(JSON.stringify(snapshot.state)); // Deep clone
-    
+
     // Restore dice roller seed
     this.diceRoller.setSeed(this.state.diceRollerSeed);
-    
+
     return this.state;
   }
 
@@ -262,10 +268,10 @@ export class CombatSession {
    */
   async forkFromState(historyIndex: number): Promise<CombatState> {
     const restoredState = await this.restoreState(historyIndex);
-    
+
     // Truncate history to fork point
     this.stateHistory = this.stateHistory.slice(0, historyIndex + 1);
-    
+
     return restoredState;
   }
 
@@ -290,4 +296,3 @@ export class CombatSession {
 export function createCombatSession(sessionId: string, seed?: number): CombatSession {
   return new CombatSession(sessionId, seed);
 }
-

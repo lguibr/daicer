@@ -4,6 +4,8 @@ import LandingPage from './pages/Landing';
 import LobbyPage from './pages/Lobby';
 import CreateRoomPage from './pages/CreateRoom';
 import GameRoomPage from './pages/GameRoom';
+import TestSetupPage from './pages/TestSetup';
+import CombatDemoPage from './pages/CombatDemo';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 export default function App() {
@@ -32,6 +34,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <GameRoomPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/test-setup"
+          element={
+            <ProtectedRoute>
+              <TestSetupPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/combat-demo"
+          element={
+            <ProtectedRoute>
+              <CombatDemoPage />
             </ProtectedRoute>
           }
         />

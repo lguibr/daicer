@@ -160,38 +160,22 @@ describe('Movement Rules', () => {
 
   describe('findReachableSquares', () => {
     it('should find all squares within movement range', () => {
-      const reachable = findReachableSquares(
-        { x: 5, y: 5 },
-        2,
-        characters,
-        10,
-        10,
-        [],
-        'char-1'
-      );
+      const reachable = findReachableSquares({ x: 5, y: 5 }, 2, characters, 10, 10, 'char-1', []);
 
       expect(reachable.length).toBeGreaterThan(0);
-      
+
       // All reachable squares should be within distance 2
-      reachable.forEach(pos => {
+      reachable.forEach((pos) => {
         const distance = calculateDistance({ x: 5, y: 5 }, pos);
         expect(distance).toBeLessThanOrEqual(2);
       });
     });
 
     it('should not include occupied squares', () => {
-      const reachable = findReachableSquares(
-        { x: 5, y: 5 },
-        6,
-        characters,
-        10,
-        10,
-        [],
-        'char-1'
-      );
+      const reachable = findReachableSquares({ x: 5, y: 5 }, 6, characters, 10, 10, 'char-1', []);
 
       // Position (7, 7) is occupied by char-2
-      const hasOccupied = reachable.some(pos => pos.x === 7 && pos.y === 7);
+      const hasOccupied = reachable.some((pos) => pos.x === 7 && pos.y === 7);
       expect(hasOccupied).toBe(false);
     });
   });
@@ -209,4 +193,3 @@ describe('Movement Rules', () => {
     });
   });
 });
-

@@ -38,9 +38,7 @@ All game state is defined using **Zod schemas** in `src/graph/state.ts`:
 import { GameStateSchema } from '@/graph/state';
 import { StateGraph } from '@langchain/langgraph';
 
-const graph = new StateGraph(GameStateSchema)
-  .addNode('my_node', nodeFunction)
-  .compile({ checkpointer });
+const graph = new StateGraph(GameStateSchema).addNode('my_node', nodeFunction).compile({ checkpointer });
 ```
 
 ### State Schema Structure
@@ -110,12 +108,9 @@ export async function worldGenerationNode(state: GameState): Promise<Partial<Gam
 import { task } from '@langchain/langgraph';
 
 // ✅ CORRECT: LLM call wrapped in task
-const generateWorldTask = task(
-  'generateWorld',
-  async (params: WorldParams): Promise<string> => {
-    return await generateText(systemPrompt, userPrompt, params.language);
-  }
-);
+const generateWorldTask = task('generateWorld', async (params: WorldParams): Promise<string> => {
+  return await generateText(systemPrompt, userPrompt, params.language);
+});
 
 // ❌ WRONG: Direct LLM call in node
 async function worldGenerationNode(state: GameState) {
@@ -128,6 +123,7 @@ async function worldGenerationNode(state: GameState) {
 ### Why Tasks Matter
 
 When you resume a workflow (e.g., after an interrupt or error):
+
 - LangGraph re-executes the node **from the beginning**
 - Tasks that already ran are **retrieved from checkpoints** instead of re-executed
 - This ensures **deterministic replay** and **idempotency**
@@ -199,13 +195,9 @@ export const attackTool = tool(
   async (input, config) => {
     const roomId = config.configurable?.roomId;
     const session = getCombatSession(roomId);
-    
+
     // Execute attack via combat session
-    const updatedState = await session.attack(
-      input.attackerId,
-      input.targetId,
-      { weaponDamage: input.weaponDamage }
-    );
+    const updatedState = await session.attack(input.attackerId, input.targetId, { weaponDamage: input.weaponDamage });
 
     // Return Command to update game state
     return new Command({
@@ -347,16 +339,13 @@ Emit custom data during execution:
 ```typescript
 import { LangGraphRunnableConfig } from '@langchain/langgraph';
 
-async function processTurnNode(
-  state: GameState,
-  config: LangGraphRunnableConfig
-): Promise<Partial<GameState>> {
+async function processTurnNode(state: GameState, config: LangGraphRunnableConfig): Promise<Partial<GameState>> {
   config.writer?.('Processing player actions...'); // Custom event
-  
+
   const result = await llmTask(state.playerActions);
-  
+
   config.writer?.({ type: 'progress', value: 100 }); // Custom event
-  
+
   return { messages: result };
 }
 ```
@@ -404,12 +393,14 @@ async function myNode(state: GameState): Promise<Partial<GameState>> {
   } catch (error) {
     logger.error('Error in node:', error);
     return {
-      messages: [{
-        id: `error-${Date.now()}`,
-        sender: 'DM',
-        text: 'An error occurred. Please try again.',
-        timestamp: Date.now(),
-      }],
+      messages: [
+        {
+          id: `error-${Date.now()}`,
+          sender: 'DM',
+          text: 'An error occurred. Please try again.',
+          timestamp: Date.now(),
+        },
+      ],
     };
   }
 }
@@ -423,10 +414,10 @@ Always test combat/dice logic with fixed seeds:
 it('should produce deterministic results', () => {
   const session1 = createCombatSession('test', 42);
   const session2 = createCombatSession('test', 42);
-  
+
   const state1 = await session1.startCombat(characters);
   const state2 = await session2.startCombat(characters);
-  
+
   expect(state1.turnOrder).toEqual(state2.turnOrder);
 });
 ```
@@ -613,4 +604,3 @@ LangGraph enables D20 AI to provide:
 - **Checkpointing** for recovery and exploration
 
 Always remember: **Wrap LLM calls and dice rolls in `task()`** to maintain determinism!
-

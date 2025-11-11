@@ -1,10 +1,9 @@
-import { GamePhase } from '../types';
+import { GamePhase } from '../types/shared';
 import { AppState } from './types';
 import { AppAction, ActionType } from './actions';
-import { getNavigatorLanguage } from '../i18n';
 
 export const initialState: AppState = {
-  language: getNavigatorLanguage(),
+  language: 'en',
   gamePhase: GamePhase.SETUP,
   worldSettings: null,
   worldDescription: '',
@@ -47,10 +46,11 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
 
     case ActionType.PROCESS_TURN_START: {
-      const playerActionMessages = state.players.map((p) => ({
+      const playerActionMessages: Message[] = state.players.map((p) => ({
         id: `msg-${Date.now()}-${p.id}`,
         sender: p.character.name,
         text: p.action || 'does nothing.',
+        timestamp: Date.now(),
       }));
       return {
         ...state,

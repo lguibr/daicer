@@ -3,11 +3,60 @@
  */
 
 import { getLLMModel } from '@/config/langchain';
-import type { WorldSettings, Player, Creature, Message, Language, CharacterSheet } from '@/types/index';
+import type {
+  WorldSettings,
+  Player,
+  Creature,
+  Message,
+  Language,
+  CharacterSheet,
+  DMStyle,
+  ScaleLevel,
+} from '@/types/index';
 import { logger } from '@/utils/logger';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { generateText } from './llm';
+import { getRuleContext } from './rag';
+
+const VERBOSITY_DESCRIPTORS: Record<ScaleLevel, string> = {
+  0: 'Deliver crisp headline summaries; keep narration to essential beats.',
+  1: 'Speak in short bursts that hit key sensory notes while staying brisk.',
+  2: 'Balance concise narration with a handful of atmospheric details.',
+  3: 'Weave story-driven paragraphs with recurring hooks and callbacks.',
+  4: 'Lean into rich language, metaphor, and evocative cadence.',
+  5: 'Craft epic narration with layered description and dramatic pacing.',
+  6: 'Unleash operatic storytelling fit for bardic sagas and legendary chronicles.',
+};
+
+const DETAIL_DESCRIPTORS: Record<ScaleLevel, string> = {
+  0: 'Prioritise mechanical clarity; pare down to tactical essentials.',
+  1: 'Highlight only the props, hazards, and clues the party must see.',
+  2: 'Blend mechanical stakes with a handful of sensory anchors.',
+  3: 'Balance environmental description with rule-focused insight.',
+  4: 'Layer textures, sounds, and histories into every scene.',
+  5: 'Immerse players with nuanced lore, mood, and symbolism.',
+  6: 'Paint cinematic tableaux dense with cultural and emotional context.',
+};
+
+const ENGAGEMENT_DESCRIPTORS: Record<ScaleLevel, string> = {
+  0: 'Stay observational; deliver outcomes with minimal prompting.',
+  1: 'Invite player decisions at inflection points but keep a light touch.',
+  2: 'Check in routinely for intentions, reactions, and table talk.',
+  3: 'Co-author moments; spotlight teamwork and shared discovery.',
+  4: 'Seed dilemmas, rivalries, and cliff-hangers that demand responses.',
+  5: 'Escalate dramatic tension and rotate the spotlight deliberately.',
+  6: 'Fully immerse the party with in-character dialogue and emotive beats.',
+};
+
+const NARRATIVE_DESCRIPTORS: Record<ScaleLevel, string> = {
+  0: 'Let the party define the arc; you react swiftly to their initiatives.',
+  1: 'Offer scattered threads and let players braid them together.',
+  2: 'Blend branching choices with gentle narrative nudges.',
+  3: 'Maintain balanced arcs with equal agency and plotted beats.',
+  4: 'Guide scenes with clear stakes and recurring NPC agendas.',
+  5: 'Engineer planned twists and episodic crescendos.',
+  6: 'Author a sweeping saga with foreshadowed climaxes and mythic structure.',
+};
 
 /**
  * Generate world description from settings
@@ -50,10 +99,16 @@ Provide a rich 2-3 paragraph world description that sets the scene and hints at 
  * @param worldDescription - World background
  * @param players - Current players
  * @param creatures - Active creatures
- * @param language - Game language
  * @returns System instruction for DM
  */
-function buildDMSystemInstruction(worldDescription: string, players: Player[], creatures: Creature[]): string {
+function buildDMSystemInstruction(
+  worldDescription: string,
+  players: Player[],
+  creatures: Creature[],
+  settings?: WorldSettings
+): string {
+  const dmStyle = settings?.dmStyle;
+
   const playerSummaries = players
     .map((p) => {
       const char = p.character;
@@ -63,10 +118,46 @@ function buildDMSystemInstruction(worldDescription: string, players: Player[], c
 
   const creatureSummaries = creatures.map((c) => `- ${c.name}, HP: ${c.hp}/${c.maxHp}`).join('\n');
 
-  return `You are a world-class Dungeon Master for a d20-based tabletop RPG.
+  // Build DM style instructions
+  let dynamicStyleInstructions = '';
+  if (dmStyle) {
+    const specialModeDescriptions: Record<NonNullable<DMStyle['specialMode']>, string> = {
+      pirate: 'Swashbuckling bravado, nautical slang, audacious swagger.',
+      shakespearean: 'Elizabethan prose, poetic metaphor, theatrical flourish.',
+      noir: 'Hardboiled inner monologue, moody metaphors, smoky intrigue.',
+      courtly: 'Highborn etiquette, heraldic praise, regal formality.',
+      grimdark: 'Brooding brutality, moral ambiguity, fatalistic tone.',
+      storybook: 'Whimsical narration, fairytale cadence, moral undertones.',
+    };
+
+    const directives = [
+      `- Verbosity Level ${dmStyle.verbosity + 1}: ${VERBOSITY_DESCRIPTORS[dmStyle.verbosity]}`,
+      `- Descriptive Detail Level ${dmStyle.detail + 1}: ${DETAIL_DESCRIPTORS[dmStyle.detail]}`,
+      `- Player Engagement Level ${dmStyle.engagement + 1}: ${ENGAGEMENT_DESCRIPTORS[dmStyle.engagement]}`,
+      `- Narrative Guidance Level ${dmStyle.narrative + 1}: ${NARRATIVE_DESCRIPTORS[dmStyle.narrative]}`,
+    ];
+
+    if (dmStyle.specialMode && specialModeDescriptions[dmStyle.specialMode]) {
+      directives.push(`- Performance Mode: ${specialModeDescriptions[dmStyle.specialMode]}`);
+    }
+
+    if (dmStyle.customDirectives?.trim()) {
+      directives.push(`- Custom Directives: ${dmStyle.customDirectives.trim()}`);
+    }
+
+    dynamicStyleInstructions = `\nDYNAMIC STYLE ADJUSTMENTS:\n${directives.join('\n')}\n`;
+  }
+
+  const basePrelude =
+    settings?.dmSystemPrompt?.trim() ||
+    'You are a world-class Dungeon Master for a d20-based tabletop RPG. Uphold teamwork, dramatic stakes, and balanced rulings.';
+
+  const worldLore = [settings?.worldBackground?.trim(), worldDescription].filter(Boolean).join('\n\n');
+
+  return `${basePrelude}${dynamicStyleInstructions}
 
 WORLD CONTEXT:
-${worldDescription}
+${worldLore}
 
 CURRENT PARTY:
 ${playerSummaries}
@@ -185,16 +276,16 @@ export async function processTurn(
   messages: Message[],
   players: Player[],
   creatures: Creature[],
-  language: Language = 'en'
+  language: Language = 'en',
+  settings?: WorldSettings
 ): Promise<{ overall_summary: string; player_perspectives: Array<{ playerName: string; perspective: string }> }> {
   const languageMap: Record<Language, string> = {
     en: 'English',
     es: 'Spanish',
     'pt-BR': 'Brazilian Portuguese',
   };
-
-  const systemPrompt = buildDMSystemInstruction(worldDescription, players, creatures);
   const languageName = languageMap[language] || 'English';
+  const systemPrompt = buildDMSystemInstruction(worldDescription, players, creatures, settings);
 
   // Define the structured output schema
   const TurnResponseSchema = z.object({
@@ -213,7 +304,8 @@ export async function processTurn(
 
   // Get LLM model with the structured output schema
   const model = await getLLMModel();
-  const structuredModel = model.withStructuredOutput(TurnResponseSchema);
+  type TurnResponse = z.infer<typeof TurnResponseSchema>;
+  const structuredModel = model.withStructuredOutput<TurnResponse>(TurnResponseSchema);
 
   // Build conversation
   const conversationHistory = messages.map((msg) => `${msg.sender}: ${msg.text}`).join('\n\n');
@@ -223,10 +315,20 @@ export async function processTurn(
     .map((p) => `${p.character.name}: ${p.action}`)
     .join('\n');
 
+  // Fetch relevant D&D rules via RAG
+  let relevantRules = '';
+  try {
+    const ruleQuery = currentActions || 'general gameplay';
+    relevantRules = await getRuleContext(ruleQuery, 3);
+  } catch (error) {
+    logger.warn('Failed to fetch RAG context, proceeding without it:', error);
+  }
+
   const fullPrompt = `${systemPrompt}
 
-You MUST respond with a JSON object that matches this schema:
-${JSON.stringify(zodToJsonSchema(TurnResponseSchema))}
+${relevantRules ? `RELEVANT D&D 5E RULES:\n${relevantRules}\n\n` : ''}You MUST respond with a structured JSON object containing:
+- overall_summary (string): An overall summary of what happened this turn
+- player_perspectives (array): Personalized perspectives for each player
 
 PREVIOUS STORY:
 ${conversationHistory}
@@ -234,7 +336,7 @@ ${conversationHistory}
 CURRENT TURN ACTIONS:
 ${currentActions}
 
-As the Dungeon Master, narrate what happens. First, provide an 'overall_summary' of the events that unfold. Then, provide a personalized 'player_perspectives' for each character involved in the current actions, describing what they see, feel, and experience from their unique point of view. Use the provided tools (roll_dice, attribute_check, saving_throw, attack_roll, deal_damage) to determine outcomes fairly.
+As the Dungeon Master, narrate what happens. First, provide an 'overall_summary' of the events that unfold. Then, provide a personalized 'player_perspectives' for each character involved in the current actions, describing what they see, feel, and experience from their unique point of view. Use the provided tools (roll_dice, attribute_check, saving_throw, attack_roll, deal_damage) to determine outcomes fairly.${relevantRules ? ' Apply the relevant D&D 5e rules provided above when adjudicating actions.' : ''}
 
 Respond entirely in ${languageName}.`;
 
@@ -244,7 +346,7 @@ Respond entirely in ${languageName}.`;
 
   logger.info('Turn processed successfully');
 
-  return response;
+  return response as TurnResponse;
 }
 
 /**
@@ -259,10 +361,20 @@ async function generateCharacterOpening(
   character: CharacterSheet,
   language: Language = 'en'
 ): Promise<string> {
+  const languageMap: Record<Language, string> = {
+    en: 'English',
+    es: 'Spanish',
+    'pt-BR': 'Brazilian Portuguese',
+  };
+  const languageName = languageMap[language] || 'English';
+
   const systemPrompt = `You are the Dungeon Master. You provide immersive, personalized perspectives for each character.
 
 WORLD CONTEXT:
-${worldDescription}`;
+${worldDescription}
+
+LANGUAGE REQUIREMENT:
+You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
 
   const userMessage = `Generate a personalized opening for this character:
 
@@ -313,10 +425,20 @@ export async function generateCharacterOpenings(
   players: Player[],
   language: Language = 'en'
 ): Promise<{ openings: Array<{ playerId: string; message: string }>; mainMessage: string }> {
-  logger.info(`Generating personalized openings for ${players.length} characters`);
+  logger.info(`Generating personalized openings for ${players.length} characters in language: ${language}`);
 
-  const openingSystemPrompt =
-    'You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.';
+  const languageMap: Record<Language, string> = {
+    en: 'English',
+    es: 'Spanish',
+    'pt-BR': 'Brazilian Portuguese',
+  };
+  const languageName = languageMap[language] || 'English';
+
+  const openingSystemPrompt = `You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.
+
+LANGUAGE REQUIREMENT:
+You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
+
   const openingUserPrompt = `Based on the world description below, write a 2-3 paragraph opening narration for the entire party. Introduce the immediate surroundings and hint at the brewing conflict or adventure.
 
 WORLD:

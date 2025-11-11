@@ -3,7 +3,7 @@
  * Main combat interface with grid, character cards, log, and time-travel
  */
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useCombat, type Position } from '../../hooks/useCombat';
 import { CombatGrid } from '../combat/CombatGrid';
 import { CharacterCard } from '../combat/CharacterCard';
@@ -17,12 +17,12 @@ interface CombatScreenProps {
 export function CombatScreen({ roomId }: CombatScreenProps) {
   const { combatState, history, attack, move, endTurn, restoreState, getActiveCharacter } = useCombat(roomId);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
-  const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+  const [_selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
   const [isTimeTravelOpen, setIsTimeTravelOpen] = useState(false);
 
   const activeCharacter = getActiveCharacter();
-  const selectedCharacter = selectedCharacterId 
-    ? combatState?.characters.find(c => c.id === selectedCharacterId) 
+  const selectedCharacter = selectedCharacterId
+    ? combatState?.characters.find((c) => c.id === selectedCharacterId)
     : null;
 
   // Calculate reachable squares for movement
@@ -41,13 +41,13 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
           Math.abs(x - selectedCharacter.position.x),
           Math.abs(y - selectedCharacter.position.y)
         );
-        
+
         if (distance <= movement && distance > 0) {
           // Check if square is occupied
           const isOccupied = combatState.characters.some(
-            c => c.hp > 0 && c.id !== selectedCharacter.id && c.position.x === x && c.position.y === y
+            (c) => c.hp > 0 && c.id !== selectedCharacter.id && c.position.x === x && c.position.y === y
           );
-          
+
           if (!isOccupied) {
             squares.push({ x, y });
           }
@@ -71,7 +71,7 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
   const handleCharacterClick = (characterId: string) => {
     if (!combatState) return;
 
-    const clickedChar = combatState.characters.find(c => c.id === characterId);
+    const clickedChar = combatState.characters.find((c) => c.id === characterId);
     if (!clickedChar) return;
 
     // If selecting our own active character, select for movement
@@ -115,8 +115,8 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
     );
   }
 
-  const playerCharacters = combatState.characters.filter(c => c.isPlayer);
-  const enemyCharacters = combatState.characters.filter(c => !c.isPlayer);
+  const playerCharacters = combatState.characters.filter((c) => c.isPlayer);
+  const enemyCharacters = combatState.characters.filter((c) => !c.isPlayer);
 
   return (
     <div className="h-screen bg-midnight-900 flex flex-col">
@@ -126,11 +126,12 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
           <div>
             <h2 className="text-2xl font-bold text-shadow-50">⚔️ Combat</h2>
             <div className="text-sm text-shadow-400">
-              Round {combatState.round} • {activeCharacter?.name}'s Turn
+              Round {combatState.round} • {activeCharacter?.name}&apos;s Turn
             </div>
           </div>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={handleEndTurn}
               disabled={!activeCharacter || activeCharacter.id !== selectedCharacterId}
               className="px-4 py-2 bg-nebula-600 hover:bg-nebula-500 disabled:bg-shadow-800 disabled:cursor-not-allowed text-white rounded transition-colors"
@@ -146,7 +147,7 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
         {/* Left Sidebar - Player Characters */}
         <div className="col-span-2 overflow-y-auto space-y-2">
           <h3 className="text-sm font-bold text-shadow-300 mb-2">PLAYERS</h3>
-          {playerCharacters.map(char => (
+          {playerCharacters.map((char) => (
             <CharacterCard
               key={char.id}
               character={char}
@@ -177,7 +178,7 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
           <div className="space-y-2">
             <h3 className="text-sm font-bold text-shadow-300 mb-2">ENEMIES</h3>
             <div className="grid gap-2">
-              {enemyCharacters.map(char => (
+              {enemyCharacters.map((char) => (
                 <CharacterCard
                   key={char.id}
                   character={char}
@@ -215,6 +216,7 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
               {combatState.winner === 'player' ? 'The party is victorious!' : 'The enemies have won...'}
             </div>
             <button
+              type="button"
               onClick={() => {
                 // Signal to return to gameplay
                 window.location.reload(); // Temporary - should be handled by phase transition
@@ -229,4 +231,3 @@ export function CombatScreen({ roomId }: CombatScreenProps) {
     </div>
   );
 }
-

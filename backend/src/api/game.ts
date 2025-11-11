@@ -49,6 +49,10 @@ const characterSchema = z.object({
  */
 router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {
@@ -63,7 +67,9 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
     throw new ApiError(400, 'Room settings not configured');
   }
 
-  const worldDescription = await generateWorld(room.settings, req.body.language || 'en');
+  // Use language from room settings, NOT request body
+  const language = room.settings.language || 'en';
+  const worldDescription = await generateWorld(room.settings, language);
   const updatedRoom = await updateRoomWorld(roomId, worldDescription, GamePhase.CHARACTER_CREATION);
 
   res.json({ success: true, data: updatedRoom });
@@ -75,6 +81,10 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
  */
 router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {
@@ -115,6 +125,10 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
  */
 router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {
@@ -131,7 +145,9 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
     throw new ApiError(400, 'No players in room');
   }
 
-  const openings = await generateCharacterOpenings(room.worldDescription, players, req.body.language || 'en');
+  // Use language from room settings, NOT request body
+  const language = room.settings?.language || 'en';
+  const openings = await generateCharacterOpenings(room.worldDescription, players, language);
 
   const messages: Message[] = [];
 
@@ -159,6 +175,10 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
  */
 router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {
@@ -186,8 +206,16 @@ router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Respons
     }
   }
 
-  // Generate DM response
-  const dmResponse = await processTurn(room.worldDescription, messages, players, creatures, req.body.language || 'en');
+  // Generate DM response using language and DM style from room settings
+  const language = room.settings?.language || 'en';
+  const dmResponse = await processTurn(
+    room.worldDescription,
+    messages,
+    players,
+    creatures,
+    language,
+    room.settings || undefined
+  );
 
   const dmMessage: Message = {
     id: `msg-${Date.now()}-dm`,

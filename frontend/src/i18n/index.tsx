@@ -5,7 +5,7 @@ export type Language = 'en' | 'es' | 'pt-BR';
 const translations = {
   en: {
     auth: {
-      title: 'D20 AI',
+      title: 'Daicer',
       subtitle: 'Multiplayer D&D with AI Dungeon Master',
       login: 'Continue with Google',
       loggingIn: 'Signing in...',
@@ -123,7 +123,7 @@ const translations = {
   },
   es: {
     auth: {
-      title: 'D20 AI',
+      title: 'Daicer',
       subtitle: 'D&D Multijugador con Dungeon Master IA',
       login: 'Continuar con Google',
       loggingIn: 'Iniciando sesión...',
@@ -241,7 +241,7 @@ const translations = {
   },
   'pt-BR': {
     auth: {
-      title: 'D20 AI',
+      title: 'Daicer',
       subtitle: 'D&D Multiplayer com Mestre de IA',
       login: 'Continuar com Google',
       loggingIn: 'Entrando...',
@@ -360,9 +360,9 @@ const translations = {
 } as const;
 
 export const supportedLanguages = [
-  { code: 'en' as Language, name: 'English', flag: '🇺🇸' },
-  { code: 'es' as Language, name: 'Español', flag: '🇪🇸' },
-  { code: 'pt-BR' as Language, name: 'Português', flag: '🇧🇷' },
+  { code: 'en' as Language, name: 'English', short: 'EN' },
+  { code: 'es' as Language, name: 'Español', short: 'ES' },
+  { code: 'pt-BR' as Language, name: 'Português', short: 'PT' },
 ];
 
 function getBrowserLanguage(): Language {
@@ -373,7 +373,7 @@ function getBrowserLanguage(): Language {
 }
 
 function getStoredLanguage(): Language {
-  const stored = localStorage.getItem('d20ai-language') as Language;
+  const stored = localStorage.getItem('daicer-language') as Language;
   if (stored && (stored === 'en' || stored === 'es' || stored === 'pt-BR')) {
     return stored;
   }
@@ -384,7 +384,7 @@ export function useI18n() {
   const [language, setLanguageState] = useState<Language>(getStoredLanguage());
 
   const setLanguage = (lang: Language) => {
-    localStorage.setItem('d20ai-language', lang);
+    localStorage.setItem('daicer-language', lang);
     setLanguageState(lang);
   };
 

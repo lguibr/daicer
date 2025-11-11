@@ -7,6 +7,8 @@ import { validateMovement } from '../rules/movement';
 import { processOpportunityAttacks } from '../rules/opportunityAttack';
 import { DiceRoller } from '../dice';
 
+type CombatLogEntry = CombatState['log'][number];
+
 export interface Position {
   x: number;
   y: number;
@@ -20,17 +22,20 @@ export interface MoveNodeInput {
 
 export function moveNode(state: CombatState, input: MoveNodeInput): Partial<CombatState> {
   const { characterId, targetPosition, diceRoller } = input;
-  
-  const character = state.characters.find(c => c.id === characterId);
+
+  const character = state.characters.find((c) => c.id === characterId);
   if (!character) {
     return {
-      log: [...state.log, {
-        id: `log-move-error-${Date.now()}`,
-        timestamp: Date.now(),
-        message: `Error: Character ${characterId} not found`,
-        type: 'info' as const,
-        relatedRolls: [],
-      }],
+      log: [
+        ...state.log,
+        {
+          id: `log-move-error-${Date.now()}`,
+          timestamp: Date.now(),
+          message: `Error: Character ${characterId} not found`,
+          type: 'info' as const,
+          relatedRolls: [],
+        },
+      ],
     };
   }
 
@@ -46,15 +51,21 @@ export function moveNode(state: CombatState, input: MoveNodeInput): Partial<Comb
 
   if (!validation.isValid) {
     return {
-      log: [...state.log, {
-        id: `log-move-invalid-${Date.now()}`,
-        timestamp: Date.now(),
-        message: `❌ ${character.name} cannot move: ${validation.reason}`,
-        type: 'info' as const,
-        relatedRolls: [],
-      }],
+      log: [
+        ...state.log,
+        {
+          id: `log-move-invalid-${Date.now()}`,
+          timestamp: Date.now(),
+          message: `❌ ${character.name} cannot move: ${validation.reason}`,
+          type: 'info' as const,
+          relatedRolls: [],
+        },
+      ],
     };
   }
+
+  // Track dice history prior to resolving reactions so we can append only new rolls
+  const historyBefore = diceRoller.getHistory().length;
 
   // Check for opportunity attacks
   const opportunityResult = processOpportunityAttacks(
@@ -65,43 +76,52 @@ export function moveNode(state: CombatState, input: MoveNodeInput): Partial<Comb
     diceRoller
   );
 
+  const historyAfter = diceRoller.getHistory();
+  const newDiceHistory = historyAfter.slice(historyBefore);
+
+  const baseDefender = opportunityResult.updatedDefender;
+  const wasKilled = baseDefender.hp <= 0 && character.hp > 0;
+  const remainingMovement = Math.max(0, character.movementRemaining - validation.movementCost);
+
   // Update character position and movement
   const updatedCharacter: CombatCharacter = {
-    ...opportunityResult.updatedDefender,
-    position: targetPosition,
-    hasMoved: true,
-    movementRemaining: character.movementRemaining - validation.movementCost,
+    ...baseDefender,
+    position: wasKilled ? character.position : targetPosition,
+    hasMoved: wasKilled ? character.hasMoved : true,
+    movementRemaining: wasKilled ? character.movementRemaining : remainingMovement,
   };
 
   // Update all characters (mover + those who used reactions)
-  const updatedCharacters = state.characters.map(c => {
+  const updatedCharacters = state.characters.map((c) => {
     if (c.id === characterId) return updatedCharacter;
-    
+
     // Update attackers who used their reaction
-    const attackerUpdate = opportunityResult.updatedAttackers.find(a => a.id === c.id);
+    const attackerUpdate = opportunityResult.updatedAttackers.find((a) => a.id === c.id);
     if (attackerUpdate) return attackerUpdate;
-    
+
     return c;
   });
 
   // Build log entries
-  const moveLog = {
+  const moveLog: CombatLogEntry = {
     id: `log-move-${Date.now()}`,
     timestamp: Date.now(),
     message: `🏃 ${character.name} moves to (${targetPosition.x}, ${targetPosition.y}) [${validation.movementCost} ft used, ${updatedCharacter.movementRemaining} ft remaining]`,
-    type: 'move' as const,
+    type: 'move',
     relatedRolls: [],
   };
 
-  const opportunityLogs = opportunityResult.attacks.flatMap(oa => {
-    const attacker = state.characters.find(c => c.id === oa.trigger.attackerId);
-    const logs = [{
-      id: `log-opportunity-${Date.now()}`,
-      timestamp: Date.now(),
-      message: `⚡ ${attacker?.name} makes an opportunity attack!`,
-      type: 'attack' as const,
-      relatedRolls: [oa.resolution.attackRoll.roll.id],
-    }];
+  const opportunityLogs = opportunityResult.attacks.flatMap((oa) => {
+    const attacker = state.characters.find((c) => c.id === oa.trigger.attackerId);
+    const logs: CombatLogEntry[] = [
+      {
+        id: `log-opportunity-${Date.now()}`,
+        timestamp: Date.now(),
+        message: `⚡ ${attacker?.name} makes an opportunity attack!`,
+        type: 'attack',
+        relatedRolls: [oa.resolution.attackRoll.roll.id],
+      },
+    ];
 
     if (oa.resolution.damageRoll) {
       const hitMsg = oa.resolution.attackRoll.isCriticalHit ? 'Critical Hit!' : 'Hit!';
@@ -125,10 +145,25 @@ export function moveNode(state: CombatState, input: MoveNodeInput): Partial<Comb
     return logs;
   });
 
+  const baseDiceHistory = state.diceHistory ?? [];
+  const updatedDiceHistory = newDiceHistory.length > 0 ? [...baseDiceHistory, ...newDiceHistory] : [...baseDiceHistory];
+
+  const additionalLogs: CombatLogEntry[] = [];
+  if (wasKilled) {
+    additionalLogs.push({
+      id: `log-move-failed-${Date.now()}`,
+      timestamp: Date.now(),
+      message: `💀 ${character.name} is cut down while trying to retreat!`,
+      type: 'info',
+      relatedRolls: [],
+    });
+  } else {
+    additionalLogs.push(moveLog);
+  }
+
   return {
     characters: updatedCharacters,
-    log: [...state.log, moveLog, ...opportunityLogs],
-    diceHistory: [...state.diceHistory, ...diceRoller.getHistory().slice(-opportunityResult.attacks.length * 2)],
+    log: [...state.log, ...additionalLogs, ...opportunityLogs],
+    diceHistory: updatedDiceHistory,
   };
 }
-

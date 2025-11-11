@@ -1,0 +1,65 @@
+[
+  {
+    "id": "human",
+    "name": "Human",
+    "description": "Versatile and ambitious, humans are the most common race.",
+    "speed": 30,
+    "size": "Medium"
+  },
+  {
+    "id": "elf",
+    "name": "Elf",
+    "description": "Graceful and long-lived, elves are magical beings with keen senses.",
+    "speed": 30,
+    "size": "Medium"
+  },
+  {
+    "id": "dwarf",
+    "name": "Dwarf",
+    "description": "Short and stout, dwarves are renowned craftsmen and warriors.",
+    "speed": 25,
+    "size": "Medium"
+  },
+  {
+    "id": "halfling",
+    "name": "Halfling",
+    "description": "Small and nimble, halflings are naturally lucky and brave.",
+    "speed": 25,
+    "size": "Small"
+  },
+  {
+    "id": "dragonborn",
+    "name": "Dragonborn",
+    "description": "Proud dragon-like humanoids with breath weapons.",
+    "speed": 30,
+    "size": "Medium"
+  },
+  {
+    "id": "gnome",
+    "name": "Gnome",
+    "description": "Inventive and curious, gnomes are masters of magic and engineering.",
+    "speed": 25,
+    "size": "Small"
+  },
+  {
+    "id": "half-elf",
+    "name": "Half-Elf",
+    "description": "Combining human ambition with elven grace.",
+    "speed": 30,
+    "size": "Medium"
+  },
+  {
+    "id": "half-orc",
+    "name": "Half-Orc",
+    "description": "Strong and resilient, combining human and orc heritage.",
+    "speed": 30,
+    "size": "Medium"
+  },
+  {
+    "id": "tiefling",
+    "name": "Tiefling",
+    "description": "Bearing infernal heritage, tieflings have innate magical abilities.",
+    "speed": 30,
+    "size": "Medium"
+  }
+]

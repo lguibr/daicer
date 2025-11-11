@@ -2,7 +2,7 @@
  * Room API endpoint tests
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../server';
 

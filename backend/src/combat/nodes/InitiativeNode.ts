@@ -13,15 +13,12 @@ export interface InitiativeNodeInput {
 
 export function initiativeNode(_state: CombatState, input: InitiativeNodeInput): Partial<CombatState> {
   const { characters, diceRoller } = input;
-  
+
   // Roll initiative for each character
-  const charactersWithInitiative = characters.map(char => {
+  const charactersWithInitiative = characters.map((char) => {
     const dexMod = getAbilityModifier(char.dexterity);
-    const initiativeRoll = diceRoller.rollInitiative(
-      dexMod,
-      `${char.name} initiative`
-    );
-    
+    const initiativeRoll = diceRoller.rollInitiative(dexMod, `${char.name} initiative`);
+
     return {
       ...char,
       initiative: initiativeRoll.finalResult,
@@ -42,11 +39,11 @@ export function initiativeNode(_state: CombatState, input: InitiativeNodeInput):
     return b.dexterity - a.dexterity;
   });
 
-  const turnOrder = sorted.map(c => c.id);
+  const turnOrder = sorted.map((c) => c.id);
   const activeCharacterId = turnOrder[0] ?? null;
 
   // Create initiative log entries
-  const initiativeLog = sorted.map(char => ({
+  const initiativeLog = sorted.map((char) => ({
     id: `log-initiative-${char.id}-${Date.now()}`,
     timestamp: Date.now(),
     message: `${char.name} rolled ${char.initiative} for initiative`,
@@ -69,7 +66,6 @@ export function initiativeNode(_state: CombatState, input: InitiativeNodeInput):
     round: 1,
     phase: 'turn_start',
     log: [startLog, ...initiativeLog],
-    diceHistory: diceRoller.getHistory().filter(r => r !== undefined),
+    diceHistory: diceRoller.getHistory().filter((r) => r !== undefined),
   };
 }
-

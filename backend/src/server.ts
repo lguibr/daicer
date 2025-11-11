@@ -10,7 +10,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { initializeFirebase } from '@/config/firebase';
 import { logger } from '@/utils/logger';
 import { errorHandler, notFoundHandler } from '@/middleware/error';
@@ -20,18 +19,18 @@ import usersRouter from '@/api/users';
 import roomsRouter from '@/api/rooms';
 import gameRouter from '@/api/game';
 import gameDataRouter from '@/api/game-data';
+import combatSimRouter from '@/api/combat-sim';
+import spellsRouter from '@/api/spells';
 
 // Socket.io handlers
 import { initializeSocketHandlers } from '@/socket/handlers';
 
 // Get directory path for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // Load environment variables from backend and root
-const backendEnvLocal = path.resolve(__dirname, '../../.env.local');
-const rootEnvLocal = path.resolve(__dirname, '../../../.env.local');
-const backendEnv = path.resolve(__dirname, '../../.env');
+const appRoot = process.cwd();
+const backendEnvLocal = path.resolve(appRoot, '.env.local');
+const rootEnvLocal = path.resolve(appRoot, '../.env.local');
+const backendEnv = path.resolve(appRoot, '.env');
 
 dotenv.config({ path: backendEnvLocal });
 dotenv.config({ path: rootEnvLocal });
@@ -71,6 +70,8 @@ app.use('/api/users', usersRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/game', gameRouter);
 app.use('/api/game-data', gameDataRouter);
+app.use('/api/combat', combatSimRouter);
+app.use('/api/spells', spellsRouter);
 
 // Error handling
 app.use(notFoundHandler);

@@ -43,99 +43,99 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
   };
 
   return (
-    <nav className="relative z-50 bg-midnight-400/70 border-b border-aurora-500/20 shadow-lg backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo/Title */}
-          <div className="flex items-center flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => navigate('/lobby')}
-              className="flex items-center  text-2xl font-bold text-aurora-300 hover:text-aurora-200 transition-colors"
-            >
-              <img src="/logo.png" alt="D20 AI Logo" className="h-8 w-auto" />
-            </button>
-          </div>
+    <nav className="relative z-50 bg-midnight-400/80 border-b border-midnight-500/70 shadow-[0_18px_40px_rgba(4,7,12,0.45)] backdrop-blur-xl">
+      <div className="mx-auto flex h-[4.25rem] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
+        {/* Brand */}
+        <button
+          type="button"
+          onClick={() => navigate('/lobby')}
+          className="group flex items-center gap-4 focus:outline-none"
+        >
+          <img
+            src="/logo.png"
+            alt="dAIcer logo"
+            className="h-12 w-12 rounded-full shadow-[0_10px_25px_rgba(4,7,12,0.45)] transition-transform duration-300 group-hover:scale-105"
+          />
+        </button>
 
-          {/* Center - Room Info (Desktop) */}
-          {showRoomInfo && room && (
-            <div className="hidden md:flex items-center gap-6">
-              {/* Room Code */}
-              <div className="flex items-center gap-2">
-                <span className="text-shadow-300 text-sm">Room:</span>
-                <span className="font-mono text-lg font-bold text-aurora-200 bg-midnight-500/50 px-3 py-1 rounded border border-aurora-400/40">
-                  {room.code}
-                </span>
-              </div>
-
-              {/* Phase Indicator */}
-              <div className="flex items-center gap-2">
-                <span className="text-shadow-300 text-sm">Phase:</span>
-                <span className="text-aurora-200 font-semibold">{getPhaseLabel(room.phase)}</span>
-              </div>
-
-              {/* Player Count */}
-              {playerCount !== undefined && (
-                <div className="flex items-center gap-2">
-                  <span className="text-shadow-300 text-sm">Players:</span>
-                  <span className="text-nebula-300 font-semibold">{playerCount}</span>
-                </div>
-              )}
+        {/* Center - Room Info (Desktop) */}
+        {showRoomInfo && room && (
+          <div className="hidden md:flex items-center gap-6">
+            {/* Room Code */}
+            <div className="flex items-center gap-2">
+              <span className="text-shadow-300 text-sm">Room:</span>
+              <span className="font-mono text-lg font-bold text-aurora-200 bg-midnight-500/50 px-3 py-1 rounded border border-aurora-400/40">
+                {room.code}
+              </span>
             </div>
-          )}
 
-          {/* Right - User Menu (Desktop) */}
-          <div className="hidden md:flex items-center gap-4">
-            {user && (
-              <>
-                <div className="flex items-center gap-3">
-                  {user.photoURL && (
-                    <img
-                      src={user.photoURL}
-                      alt={user.displayName || 'User'}
-                      className="w-8 h-8 rounded-full border-2 border-aurora-400/60"
-                    />
-                  )}
-                  <span className="text-shadow-100 text-sm font-medium">{user.displayName || user.email}</span>
-                </div>
+            {/* Phase Indicator */}
+            <div className="flex items-center gap-2">
+              <span className="text-shadow-300 text-sm">Phase:</span>
+              <span className="text-aurora-200 font-semibold">{getPhaseLabel(room.phase)}</span>
+            </div>
 
-                {showRoomInfo && (
-                  <button
-                    type="button"
-                    onClick={handleLeaveRoom}
-                    className="px-4 py-2 bg-midnight-500 text-shadow-100 rounded-lg hover:bg-midnight-400 transition-colors text-sm font-medium"
-                  >
-                    Leave Room
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-aurora-500 text-midnight-100 rounded-lg hover:bg-aurora-400 transition-colors text-sm font-medium"
-                >
-                  Logout
-                </button>
-              </>
+            {/* Player Count */}
+            {playerCount !== undefined && (
+              <div className="flex items-center gap-2">
+                <span className="text-shadow-300 text-sm">Players:</span>
+                <span className="text-nebula-300 font-semibold">{playerCount}</span>
+              </div>
             )}
           </div>
+        )}
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-shadow-300 hover:text-shadow-50 hover:bg-midnight-500/60 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        {/* Right - User Menu (Desktop) */}
+        <div className="hidden items-center gap-4 md:flex">
+          {user && (
+            <>
+              <div className="flex items-center gap-3">
+                {user.photoURL && (
+                  <img
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
+                    className="h-9 w-9 rounded-full border border-aurora-500/40 shadow-xl"
+                  />
                 )}
-              </svg>
-            </button>
-          </div>
+                <span className="font-medium text-shadow-100">{user.displayName || user.email}</span>
+              </div>
+
+              {showRoomInfo && (
+                <button
+                  type="button"
+                  onClick={handleLeaveRoom}
+                  className="rounded-lg border border-midnight-400 bg-midnight-500/70 px-4 py-2 text-sm font-medium text-shadow-100 transition-colors hover:border-aurora-400/40 hover:bg-midnight-400/70"
+                >
+                  Leave Room
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-lg border border-aurora-500/40 bg-aurora-500 px-4 py-2 text-sm font-semibold text-midnight-100 shadow-[0_12px_20px_rgba(211,143,31,0.25)] transition-all hover:-translate-y-0.5 hover:bg-aurora-400"
+              >
+                Logout
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="rounded-lg border border-midnight-500/60 bg-midnight-500/40 p-2 text-shadow-200 transition-colors hover:border-aurora-400/40 hover:text-shadow-50"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
 

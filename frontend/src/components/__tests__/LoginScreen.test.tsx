@@ -6,13 +6,13 @@ import React from 'react';
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import LoginScreen from '../LoginScreen';
-import * as authHook from '../../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
 
 vi.mock('../../hooks/useAuth');
 
 describe('LoginScreen', () => {
   test('renders login button', () => {
-    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: null,
       loading: false,
       error: null,
@@ -27,7 +27,7 @@ describe('LoginScreen', () => {
   test('calls signInWithGoogle on button click', async () => {
     const mockSignIn = vi.fn();
 
-    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: null,
       loading: false,
       error: null,
@@ -43,7 +43,7 @@ describe('LoginScreen', () => {
   });
 
   test('shows loading state', () => {
-    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: null,
       loading: true,
       error: null,
@@ -58,7 +58,7 @@ describe('LoginScreen', () => {
   test('displays error message', () => {
     const errorMessage = 'Authentication failed';
 
-    vi.spyOn(authHook, 'useAuth').mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue({
       user: null,
       loading: false,
       error: errorMessage,

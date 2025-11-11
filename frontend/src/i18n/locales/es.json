@@ -1,0 +1,206 @@
+{
+  "auth": {
+    "title": "dAIcer",
+    "subtitle": "Maestro de mazmorras con IA para leyendas de mesa",
+    "heroDescription": "Forja una campaña viva con un Maestro de Mazmorras que honra la historia, la tensión y el trabajo en equipo.",
+    "cards": {
+      "lore": {
+        "title": "Lore Curado",
+        "body": "Sincroniza reinos, facciones, reliquias y profecías: la IA recuerda cada secreto."
+      },
+      "encounters": {
+        "title": "Encuentros Adaptativos",
+        "body": "Ajusta con precisión la dificultad, el tono y el ritmo narrativo de cada sesión."
+      },
+      "party": {
+        "title": "Enfoque en la Compañía",
+        "body": "Destaca la cooperación y teje gloria compartida y tácticas combinadas en cada escena."
+      }
+    },
+    "cta": {
+      "heading": "Puerta de Entrada",
+      "copy": "Firma con tu carta de aventura y reúne a la compañía en cuestión de instantes."
+    },
+    "login": "Continuar con Google",
+    "loggingIn": "Iniciando sesión...",
+    "emulatorNote": "Usando emuladores de desarrollo",
+    "emulatorTip": "Cualquier correo funciona en este reino."
+  },
+  "lobby": {
+    "title": "Lobby",
+    "subtitle": "Elige tu rumbo",
+    "description": "Reúne una mesa nueva o únete a una compañía juramentada. La ciudadela sincroniza ajustes, lore y expedientes al instante.",
+    "cards": {
+      "create": {
+        "title": "Crear",
+        "body": "Diseña un reino a medida con tono, dificultad y personalidad de DM para tu grupo."
+      },
+      "join": {
+        "title": "Unirse",
+        "body": "Introduce un código de invitación y regresa a una saga en curso—tu leyenda continúa."
+      },
+      "demo": {
+        "title": "Demo de Combate",
+        "body": "Observa una batalla determinista para comprender el motor táctico.",
+        "action": "Abrir demo de combate"
+      }
+    },
+    "createButton": "Crear nueva aventura",
+    "joinButton": "Unirse a la sala",
+    "inputLabel": "Introduce el código de la sala",
+    "codePlaceholder": "CÓDIGO",
+    "joining": "Uniéndose...",
+    "orDivider": "O",
+    "devButton": "Modo de prueba"
+  },
+  "worldSettings": {
+    "title": "Crear Aventura",
+    "subtitle": "Configurar mundo",
+    "story": "Historia",
+    "scope": "Alcance",
+    "theme": "Tema",
+    "themePlaceholder": "p.ej., Alta Fantasía",
+    "setting": "Escenario",
+    "settingPlaceholder": "p.ej., Ruinas Antiguas",
+    "tone": "Tono",
+    "tonePlaceholder": "p.ej., Oscuro y Realista",
+    "playerCount": "Número de Jugadores",
+    "adventureLength": "Duración de Aventura",
+    "lengthShort": "Corta",
+    "lengthMedium": "Media",
+    "lengthEpic": "Épica",
+    "difficulty": "Dificultad",
+    "difficultyEasy": "Fácil",
+    "difficultyMedium": "Media",
+    "difficultyHard": "Difícil",
+    "cancel": "Cancelar",
+    "create": "Crear Mundo",
+    "creating": "Creando mundo..."
+  },
+  "dev": {
+    "testMode": {
+      "title": "Modo de Prueba",
+      "description": "Configura rápidamente combates, narrativas y variaciones de tono.",
+      "worldLabel": "Mundo",
+      "dmStyleLabel": "Estilo de DM",
+      "characterLabel": "Personaje",
+      "back": "Volver al lobby"
+    }
+  },
+  "archetypes": {
+    "terra": {
+      "label": "Dominio Verdeante",
+      "theme": "Alta fantasía caballeresca",
+      "setting": "Reinos verdes coronados por fortalezas en ruinas",
+      "tone": "Heroico con penumbra creciente",
+      "mood": "Dominio Verdeante",
+      "description": "Baronías feudales entre bosques ancestrales, caballeros juramentados y círculos druidas que custodian rutas arcanas.",
+      "background": "La Marcha de la Corona de Hollowspire entrelaza casas rivales, ruinas cubiertas de musgo y bosques de hierro, mientras los druidas advierten que algo inmenso se agita bajo las raíces."
+    },
+    "water": {
+      "label": "Soberanía de las Mareas",
+      "theme": "Saga de alta mar",
+      "setting": "Archipiélagos azotados por tormentas y fosos abisales",
+      "tone": "Aventurero y peligroso",
+      "mood": "Soberanía de las Mareas",
+      "description": "Flotas corsarias, templos hundidos y cartas náuticas que cambian con la luz de la luna.",
+      "background": "Armadas corsarias saquean convoyes imperiales mientras faros enclaves negocian con brujas del mar; las leyendas susurran sobre un soberano de las mareas que prueba a los mortales antes de un inminente trono de marejada."
+    },
+    "desert": {
+      "label": "Cortes de la Tormenta Solar",
+      "theme": "Reinos abrasados por el sol",
+      "setting": "Dunas azafrán y zigurat de obsidiana",
+      "tone": "Áspero y mítico",
+      "mood": "Cortes de la Tormenta Solar",
+      "description": "Ciudadelas espejismo, caravanas pactadas con djinn y profetas que cantan a la arena.",
+      "background": "A lo largo del Meridiano de Sable, reyes astrólogos tallan palacios en arenisca viva mientras fanáticos buscan reliquias enterradas bajo leviatanes petrificados."
+    },
+    "ice": {
+      "label": "Vigilia de la Aurora",
+      "theme": "Extensión boreal",
+      "setting": "Ciudadelas glaciales bajo un crepúsculo eterno",
+      "tone": "Resistencia sombría y esperanza frágil",
+      "mood": "Vigilia de la Aurora",
+      "description": "Tundras azotadas por tormentas, campos de hielo marcados con runas y monasterios silenciosos que guardan fragmentos de una estrella caída.",
+      "background": "Tempestades de aurora barren la frontera jotun mientras monasterios helados honran pactos antiguos con espíritus glaciales; la supervivencia depende de fuegos compartidos y de la memoria del clan."
+    },
+    "volcanic": {
+      "label": "Supremacía Ígnea",
+      "theme": "Dominio de ceniza",
+      "setting": "Calderas de magma y fortalezas de obsidiana",
+      "tone": "Volátil y despiadado",
+      "mood": "Supremacía Ígnea",
+      "description": "Bastiones de obsidiana, fraguas de salamandra y cultos que cantan al ritmo del corazón de la caldera.",
+      "background": "Clanes herreros canalizan ríos de fuego para alimentar máquinas de asedio mientras profetas de ceniza intentan despertar al titán que duerme bajo la cordillera."
+    },
+    "forest": {
+      "label": "Selvas Susurrantes",
+      "theme": "Enigma del bosque anciano",
+      "setting": "Arboledas conscientes y cortes a la luz de la luna",
+      "tone": "Susurrante y misterioso",
+      "mood": "Selvas Susurrantes",
+      "description": "Flora extraña, cortes feéricas estacionales y senderos vivos que se desplazan bajo copas vigilantes.",
+      "background": "Árboles ancianos sueñan en catedrales verdes, tejiendo tratados con mortales; cada pacto lleva cláusulas ocultas vigiladas por guardianes invisibles."
+    },
+    "sky": {
+      "label": "Ascendencia Céfiro",
+      "theme": "Imperios en el cielo",
+      "setting": "Islas flotantes y puentes de viento",
+      "tone": "Majestuoso y surrealista",
+      "mood": "Ascendencia Céfiro",
+      "description": "Órdenes de caballeros del cielo, forjas de nubes y leviatanes de tormenta patrullando el horizonte.",
+      "background": "Archipiélagos flotantes orbitan un núcleo de piedra lunar fracturada; caravanas de viento contrabandean reliquias entre islas mientras magos de trueno se baten por el dominio de los cielos."
+    },
+    "underground": {
+      "label": "Crisol Umbrío",
+      "theme": "Vasto umbral",
+      "setting": "Cavernas bioluminiscentes y mercados abisales",
+      "tone": "Intriga claustrofóbica",
+      "mood": "Crisol Umbrío",
+      "description": "Ciudades estalactita, cultos del temblor y gremios de hongos que comercian esporas de memoria.",
+      "background": "Bazarres iluminados por gemas se aferran a los techos mientras profetas sísmicos advierten sobre un colosal perforador que se acerca a la bóveda; las alianzas cambian como ríos subterráneos."
+    },
+    "custom": {
+      "label": "Reino Personalizado",
+      "theme": "",
+      "setting": "",
+      "tone": "",
+      "mood": "Lienzo del Autor",
+      "description": "Define tu propio tono, lore y emblemas desde cero.",
+      "background": ""
+    }
+  },
+  "character": {
+    "roomCode": "Código de Sala",
+    "playersReady": "{count} / {total} jugadores listos",
+    "waitingForPlayers": "Esperando a que todos los jugadores estén listos"
+  },
+  "gameplay": {
+    "submitAction": "Enviar Acción",
+    "submit": "Enviar",
+    "sending": "Enviando...",
+    "endTurn": "Terminar Turno",
+    "actionPlaceholder": "¿Qué haces?",
+    "processing": "Procesando...",
+    "processTurn": "Procesar Turno",
+    "yourTurn": "Tu turno - envía una acción",
+    "actionSubmitted": "Acción enviada. Esperando procesamiento...",
+    "actionsSubmitted": "Acciones enviadas",
+    "waitingForOthers": "✓ Esperando a otros...",
+    "readyToProcess": "¡Listo para procesar turno!",
+    "adventureBegins": "La aventura comienza..."
+  },
+  "debug": {
+    "title": "Panel de Depuración",
+    "close": "Cerrar"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar"
+  }
+}

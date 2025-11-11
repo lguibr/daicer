@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { createGameGraph, invokeGameGraph } from '../game-graph';
+import { createGameGraph } from '../game-graph';
 import type { GameState } from '../state';
 
 describe('Game Graph', () => {
@@ -46,14 +46,14 @@ describe('Game Graph', () => {
       { ...initialState, phase: 'COMBAT' as const },
     ];
 
-    states.forEach(state => {
+    states.forEach((state) => {
       expect(state.phase).toMatch(/SETUP|CHARACTER_CREATION|GAMEPLAY|COMBAT/);
     });
   });
 
   it('should compile with checkpointer', () => {
     const graph = createGameGraph();
-    
+
     // Graph should be compiled and ready to invoke
     expect(typeof graph.invoke).toBe('function');
     expect(typeof graph.stream).toBe('function');
@@ -98,4 +98,3 @@ describe('Game State Management', () => {
     expect(state.combatState).toBeNull();
   });
 });
-

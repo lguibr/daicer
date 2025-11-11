@@ -3,7 +3,7 @@
  * Allows navigating combat history and restoring previous states
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { CombatHistory } from '../../hooks/useCombat';
 
 interface TimeTravelPanelProps {
@@ -14,13 +14,7 @@ interface TimeTravelPanelProps {
   onToggle: () => void;
 }
 
-export function TimeTravelPanel({
-  history,
-  currentIndex,
-  onRestore,
-  isOpen,
-  onToggle,
-}: TimeTravelPanelProps) {
+export function TimeTravelPanel({ history, currentIndex, onRestore, isOpen, onToggle }: TimeTravelPanelProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const formatTimestamp = (timestamp: number): string => {
@@ -31,12 +25,19 @@ export function TimeTravelPanel({
   if (!isOpen) {
     return (
       <button
+        type="button"
         onClick={onToggle}
         className="fixed bottom-4 right-4 p-3 bg-nebula-600 hover:bg-nebula-500 text-white rounded-full shadow-lg transition-colors z-50"
         title="Open Time Travel"
+        aria-label="Open Time Travel"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
       </button>
     );
@@ -48,13 +49,20 @@ export function TimeTravelPanel({
       <div className="p-3 border-b border-shadow-800 flex items-center justify-between">
         <h3 className="text-lg font-bold text-shadow-50 flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           Time Travel
         </h3>
         <button
+          type="button"
           onClick={onToggle}
           className="text-shadow-400 hover:text-shadow-200 transition-colors"
+          aria-label="Close Time Travel"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -77,19 +85,23 @@ export function TimeTravelPanel({
 
               return (
                 <div
-                  key={index}
+                  key={entry.timestamp}
                   className="relative"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                 >
                   {/* Timeline dot */}
-                  <div className={`
+                  <div
+                    className={`
                     absolute left-5 w-3 h-3 rounded-full border-2 z-10
                     ${isCurrent ? 'bg-nebula-500 border-nebula-400' : 'bg-shadow-800 border-shadow-600'}
-                  `} />
+                  `}
+                  />
 
                   {/* Entry content */}
                   <div
+                    role="button"
+                    tabIndex={0}
                     className={`
                       ml-10 p-2 rounded border cursor-pointer transition-all
                       ${isCurrent ? 'bg-nebula-900/30 border-nebula-600' : 'bg-shadow-900/50 border-shadow-700'}
@@ -98,11 +110,16 @@ export function TimeTravelPanel({
                       ${isFuture ? 'opacity-40' : ''}
                     `}
                     onClick={() => onRestore(index)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        onRestore(index);
+                      }
+                    }}
                   >
                     <div className="text-xs text-shadow-300">{formatTimestamp(entry.timestamp)}</div>
                     <div className="text-sm text-shadow-100 font-medium">{entry.description}</div>
                     <div className="text-xs text-shadow-400 mt-1">
-                      Round {entry.state.round} • {entry.state.characters.filter(c => c.hp > 0).length} alive
+                      Round {entry.state.round} • {entry.state.characters.filter((c) => c.hp > 0).length} alive
                     </div>
                   </div>
                 </div>
@@ -111,17 +128,14 @@ export function TimeTravelPanel({
           </div>
         </div>
 
-        {history.length === 0 && (
-          <div className="text-center text-shadow-400 py-8">
-            No history yet
-          </div>
-        )}
+        {history.length === 0 && <div className="text-center text-shadow-400 py-8">No history yet</div>}
       </div>
 
       {/* Controls */}
       <div className="p-3 border-t border-shadow-800 bg-shadow-900/50">
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => onRestore(Math.max(0, currentIndex - 1))}
             disabled={currentIndex <= 0}
             className="flex-1 px-3 py-2 bg-shadow-800 hover:bg-shadow-700 disabled:opacity-50 disabled:cursor-not-allowed text-shadow-200 rounded text-sm transition-colors"
@@ -129,6 +143,7 @@ export function TimeTravelPanel({
             ← Prev
           </button>
           <button
+            type="button"
             onClick={() => onRestore(Math.min(history.length - 1, currentIndex + 1))}
             disabled={currentIndex >= history.length - 1}
             className="flex-1 px-3 py-2 bg-shadow-800 hover:bg-shadow-700 disabled:opacity-50 disabled:cursor-not-allowed text-shadow-200 rounded text-sm transition-colors"
@@ -143,4 +158,3 @@ export function TimeTravelPanel({
     </div>
   );
 }
-

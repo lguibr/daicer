@@ -39,6 +39,10 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
  */
 router.post('/:code/join', authenticate, async (req: AuthRequest, res: Response) => {
   const { code } = req.params;
+  if (!code) {
+    throw new ApiError(400, 'Room code is required');
+  }
+
   const room = await findRoomByCode(code.toUpperCase());
 
   if (!room) {
@@ -54,6 +58,10 @@ router.post('/:code/join', authenticate, async (req: AuthRequest, res: Response)
  */
 router.get('/:roomId', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {
@@ -77,6 +85,10 @@ router.get('/:roomId', authenticate, async (req: AuthRequest, res: Response) => 
  */
 router.patch('/:roomId/settings', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {
@@ -99,6 +111,10 @@ router.patch('/:roomId/settings', authenticate, async (req: AuthRequest, res: Re
  */
 router.delete('/:roomId', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
   const room = await getRoom(roomId);
 
   if (!room) {

@@ -7,6 +7,8 @@ import { resolveAttack, AttackContext } from '../rules/attack';
 import { isWithinReach } from '../rules/movement';
 import { DiceRoller } from '../dice';
 
+type CombatLogEntry = CombatState['log'][number];
+
 export interface AttackNodeInput {
   attackerId: string;
   defenderId: string;
@@ -28,44 +30,53 @@ export function attackNode(state: CombatState, input: AttackNodeInput): Partial<
     isRanged = false,
   } = input;
 
-  const attacker = state.characters.find(c => c.id === attackerId);
-  const defender = state.characters.find(c => c.id === defenderId);
+  const attacker = state.characters.find((c) => c.id === attackerId);
+  const defender = state.characters.find((c) => c.id === defenderId);
 
   if (!attacker || !defender) {
     return {
-      log: [...state.log, {
-        id: `log-attack-error-${Date.now()}`,
-        timestamp: Date.now(),
-        message: `Error: Invalid attacker or defender`,
-        type: 'info' as const,
-        relatedRolls: [],
-      }],
+      log: [
+        ...state.log,
+        {
+          id: `log-attack-error-${Date.now()}`,
+          timestamp: Date.now(),
+          message: `Error: Invalid attacker or defender`,
+          type: 'info' as const,
+          relatedRolls: [],
+        },
+      ],
     };
   }
 
   // Check if attacker can attack
   if (attacker.hasActed) {
     return {
-      log: [...state.log, {
-        id: `log-attack-already-${Date.now()}`,
-        timestamp: Date.now(),
-        message: `${attacker.name} has already acted this turn`,
-        type: 'info' as const,
-        relatedRolls: [],
-      }],
+      log: [
+        ...state.log,
+        {
+          id: `log-attack-already-${Date.now()}`,
+          timestamp: Date.now(),
+          message: `${attacker.name} has already acted this turn`,
+          type: 'info' as const,
+          relatedRolls: [],
+        },
+      ],
     };
   }
 
   // Check reach
   if (!isRanged && !isWithinReach(attacker.position, defender.position, attacker.reach)) {
     return {
-      log: [...state.log, {
-        id: `log-attack-range-${Date.now()}`,
-        timestamp: Date.now(),
-        message: `${attacker.name} is not within reach of ${defender.name}`,
-        type: 'info' as const,
-        relatedRolls: [],
-      }],
+      log: [
+        ...state.log,
+        {
+          id: `log-attack-range-${Date.now()}`,
+          timestamp: Date.now(),
+          message: `${attacker.name} is not within reach of ${defender.name}`,
+          type: 'info' as const,
+          relatedRolls: [],
+        },
+      ],
     };
   }
 
@@ -79,14 +90,11 @@ export function attackNode(state: CombatState, input: AttackNodeInput): Partial<
     weaponReach: attacker.reach,
   };
 
+  // Track dice history before resolving the attack to capture new rolls precisely
+  const historyBefore = diceRoller.getHistory().length;
+
   // Resolve the attack
-  const result = resolveAttack(
-    context,
-    weaponDamage,
-    damageType,
-    diceRoller,
-    isFinesse
-  );
+  const result = resolveAttack(context, weaponDamage, damageType, diceRoller, isFinesse);
 
   // Update attacker (has acted)
   const updatedAttacker: CombatCharacter = {
@@ -100,22 +108,22 @@ export function attackNode(state: CombatState, input: AttackNodeInput): Partial<
     updatedDefender = result.updatedDefender;
   }
 
-  const updatedCharacters = state.characters.map(c => {
+  const updatedCharacters = state.characters.map((c) => {
     if (c.id === attackerId) return updatedAttacker;
     if (c.id === defenderId) return updatedDefender;
     return c;
   });
 
   // Build log entries
-  const attackLog = {
+  const attackLog: CombatLogEntry = {
     id: `log-attack-${Date.now()}`,
     timestamp: Date.now(),
     message: `⚔️ ${attacker.name} attacks ${defender.name}!`,
-    type: 'attack' as const,
+    type: 'attack',
     relatedRolls: [result.attackRoll.roll.id],
   };
 
-  const logs = [attackLog];
+  const logs: CombatLogEntry[] = [attackLog];
 
   if (result.attackRoll.isCriticalHit) {
     logs.push({
@@ -164,9 +172,9 @@ export function attackNode(state: CombatState, input: AttackNodeInput): Partial<
   }
 
   // Check if combat is over
-  const aliveCharacters = updatedCharacters.filter(c => c.hp > 0);
-  const isPlayerTeamAlive = aliveCharacters.some(c => c.isPlayer);
-  const isEnemyTeamAlive = aliveCharacters.some(c => !c.isPlayer);
+  const aliveCharacters = updatedCharacters.filter((c) => c.hp > 0);
+  const isPlayerTeamAlive = aliveCharacters.some((c) => c.isPlayer);
+  const isEnemyTeamAlive = aliveCharacters.some((c) => !c.isPlayer);
   const isCombatOver = !isPlayerTeamAlive || !isEnemyTeamAlive;
   let winner: 'player' | 'enemy' | null = null;
   if (isCombatOver) {
@@ -183,13 +191,17 @@ export function attackNode(state: CombatState, input: AttackNodeInput): Partial<
     });
   }
 
+  const historyAfter = diceRoller.getHistory();
+  const newDiceHistory = historyAfter.slice(historyBefore);
+  const baseDiceHistory = state.diceHistory ?? [];
+  const updatedDiceHistory = newDiceHistory.length > 0 ? [...baseDiceHistory, ...newDiceHistory] : [...baseDiceHistory];
+
   return {
     characters: updatedCharacters,
     log: [...state.log, ...logs],
-    diceHistory: [...state.diceHistory, ...diceRoller.getHistory().slice(-(result.damageRoll ? 2 : 1))],
+    diceHistory: updatedDiceHistory,
     isCombatOver,
     winner,
     phase: isCombatOver ? 'combat_end' : 'action_selection',
   };
 }
-

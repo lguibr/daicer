@@ -6,9 +6,9 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/d20ai-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/daicer-backend:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/d20ai-backend:latest'
+      - 'gcr.io/$PROJECT_ID/daicer-backend:latest'
       - '.'
     dir: 'backend'
 
@@ -16,12 +16,12 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/d20ai-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/daicer-backend:$COMMIT_SHA'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/d20ai-backend:latest'
+      - 'gcr.io/$PROJECT_ID/daicer-backend:latest'
 
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -29,9 +29,9 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'd20ai-backend'
+      - 'daicer-backend'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/d20ai-backend:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/daicer-backend:$COMMIT_SHA'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -43,8 +43,8 @@ steps:
       - 'GEMINI_API_KEY=GEMINI_API_KEY:latest,FIREBASE_PRIVATE_KEY=FIREBASE_PRIVATE_KEY:latest'
 
 images:
-  - 'gcr.io/$PROJECT_ID/d20ai-backend:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/d20ai-backend:latest'
+  - 'gcr.io/$PROJECT_ID/daicer-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/daicer-backend:latest'
 
 timeout: 1200s
 

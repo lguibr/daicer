@@ -1,0 +1,50 @@
+[
+  {
+    "id": "str",
+    "index": "str",
+    "name": "STR",
+    "fullName": "Strength",
+    "description": "Natural athleticism, bodily power",
+    "skills": ["Athletics"]
+  },
+  {
+    "id": "dex",
+    "index": "dex",
+    "name": "DEX",
+    "fullName": "Dexterity",
+    "description": "Physical agility, reflexes, balance, poise",
+    "skills": ["Acrobatics", "Sleight of Hand", "Stealth"]
+  },
+  {
+    "id": "con",
+    "index": "con",
+    "name": "CON",
+    "fullName": "Constitution",
+    "description": "Health, stamina, vital force",
+    "skills": []
+  },
+  {
+    "id": "int",
+    "index": "int",
+    "name": "INT",
+    "fullName": "Intelligence",
+    "description": "Mental acuity, information recall, analytical skill",
+    "skills": ["Arcana", "History", "Investigation", "Nature", "Religion"]
+  },
+  {
+    "id": "wis",
+    "index": "wis",
+    "name": "WIS",
+    "fullName": "Wisdom",
+    "description": "Awareness, intuition, insight",
+    "skills": ["Animal Handling", "Insight", "Medicine", "Perception", "Survival"]
+  },
+  {
+    "id": "cha",
+    "index": "cha",
+    "name": "CHA",
+    "fullName": "Charisma",
+    "description": "Confidence, eloquence, leadership",
+    "skills": ["Deception", "Intimidation", "Performance", "Persuasion"]
+  }
+]

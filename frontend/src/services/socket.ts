@@ -10,6 +10,14 @@ const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 let socket: Socket | null = null;
 
+export interface ToolCall {
+  id: string;
+  toolName: string;
+  parameters: Record<string, unknown>;
+  result?: unknown;
+  timestamp: number;
+}
+
 /**
  * Socket event callbacks
  */
@@ -24,6 +32,7 @@ interface SocketEvents {
   onPhaseChanged?: (data: { phase: string }) => void;
   onTurnProcessing?: () => void;
   onTurnComplete?: (data: { messages: Message[] }) => void;
+  onToolCalls?: (toolCalls: ToolCall[]) => void;
   onError?: (data: { message: string }) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -64,6 +73,7 @@ export async function initSocket(events: SocketEvents = {}): Promise<Socket> {
   if (events.onPhaseChanged) socket.on('room:phase_changed', events.onPhaseChanged);
   if (events.onTurnProcessing) socket.on('turn:processing', events.onTurnProcessing);
   if (events.onTurnComplete) socket.on('turn:complete', events.onTurnComplete);
+  if (events.onToolCalls) socket.on('tool:calls', events.onToolCalls);
   if (events.onError) socket.on('error', events.onError);
 
   return socket;

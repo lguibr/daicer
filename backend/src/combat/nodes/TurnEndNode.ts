@@ -11,7 +11,7 @@ export function turnEndNode(state: CombatState): Partial<CombatState> {
   }
 
   // Find current index in turn order
-  const currentIndex = state.turnOrder.findIndex(id => id === state.activeCharacterId);
+  const currentIndex = state.turnOrder.findIndex((id) => id === state.activeCharacterId);
   if (currentIndex === -1) {
     return { phase: 'combat_end' };
   }
@@ -23,12 +23,12 @@ export function turnEndNode(state: CombatState): Partial<CombatState> {
 
   while (attempts < maxAttempts) {
     const nextCharId = state.turnOrder[nextIndex];
-    const nextChar = state.characters.find(c => c.id === nextCharId);
-    
+    const nextChar = state.characters.find((c) => c.id === nextCharId);
+
     if (nextChar && isAlive(nextChar)) {
       break;
     }
-    
+
     nextIndex = (nextIndex + 1) % state.turnOrder.length;
     attempts += 1;
   }
@@ -46,11 +46,7 @@ export function turnEndNode(state: CombatState): Partial<CombatState> {
   const newRound = isNewRound ? state.round + 1 : state.round;
 
   // Reset reactions at start of character's turn
-  const updatedCharacters = state.characters.map(c =>
-    c.id === nextCharacterId
-      ? { ...c, hasReaction: true }
-      : c
-  );
+  const updatedCharacters = state.characters.map((c) => (c.id === nextCharacterId ? { ...c, hasReaction: true } : c));
 
   const logs = [];
   if (isNewRound) {
@@ -71,4 +67,3 @@ export function turnEndNode(state: CombatState): Partial<CombatState> {
     phase: 'turn_start',
   };
 }
-

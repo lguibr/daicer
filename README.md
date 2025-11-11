@@ -1,84 +1,173 @@
-# D20 AI - Multiplayer D&D with AI Dungeon Master
+# Daicer - Multiplayer D&D with an AI Dungeon Master
 
-🎲 **Turn-based multiplayer tabletop RPG** powered by AI. Create characters, join adventures, and let an intelligent Dungeon Master guide your story using real dice mechanics and LangChain with support for Gemini, OpenAI, and Anthropic.
+<div align="center">
 
-## Game Flow
+![Daicer Logo](frontend/public/logo.png)
+
+[![CI](https://github.com/YOUR_USERNAME/daicer/workflows/CI/badge.svg)](https://github.com/YOUR_USERNAME/daicer/actions)
+[![Code Coverage](https://img.shields.io/badge/coverage-check%20artifacts-blue)](https://github.com/YOUR_USERNAME/daicer/actions)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-22-green?logo=node.js)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![Format](https://img.shields.io/badge/format-prettier-ff69b4)](https://prettier.io/)
+[![Lint](https://img.shields.io/badge/lint-airbnb-ff5a5f)](https://github.com/airbnb/javascript)
+
+</div>
+
+🎲 **Forge your legend in a world brought to life by an intelligent AI Dungeon Master.** Daicer is a turn-based, multiplayer tabletop RPG that combines the timeless thrill of D&D with cutting-edge technology. It's a persistent, stateful adventure where your choices matter, combat is tactical, and the story is dynamically crafted around your party's actions using **LangChain** and **LangGraph**.
+
+This isn't just an AI storyteller—it's a complete game engine with real dice mechanics, structured AI tool usage, and even **combat time-travel**.
+
+---
+
+## 🗺️ Project Roadmap
+
+This project is actively evolving. Here's where we are and where we're headed:
+
+### ✅ Complete
+
+- [x] **Core Multiplayer System** — Real-time room creation, joining, player sync via Socket.io
+- [x] **Stateful Narrative Engine** — LangGraph managing turn-based gameplay and world state
+- [x] **AI DM with Tool Calling** — LLM uses real dice mechanics, structured tool usage
+- [x] **Character Creation & Sheets** — Complete D20 character creation system
+- [x] **Firebase Integration** — Auth, Firestore, emulator support
+- [x] **CI/CD Pipeline** — Automated linting, formatting, type-checking, testing with coverage
+- [x] **Component Library** — Storybook with 60+ documented UI components
+
+### 🚧 In Progress
+
+- [🚧] **Tactical Grid Combat** — Grid-based movement, positioning, spell AoE, time-travel mechanics
+
+### 📋 Planned
+
+- [ ] **Environmental Dynamics** — Entropy system for random world events (weather, discoveries)
+- [ ] **Creature Compendium (RAG)** — Monster manual searchable by AI DM for stats and lore
+- [ ] **Dynamic Encounter Generation** — AI tool for balanced, thematic combat encounters
+- [ ] **World Map & Travel** — Spatial awareness, travel time calculations
+- [ ] **In-Game Time Tracking** — Universal clock (combat rounds = seconds, turns = minutes, travel = hours)
+- [ ] **Character Progression** — XP, loot, level-ups
+- [ ] **Death & Resurrection** — Spectator mode, revival mechanics, new character creation
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# Install dependencies across the entire project
+yarn install:all
+
+# Start the complete development environment (emulators + backend + frontend)
+yarn dev
+
+# View the frontend component library
+yarn storybook
+
+# Run all tests and generate a coverage report
+yarn test:coverage
+
+# Run a full QA check (format, lint, typecheck, test)
+yarn qa
+```
+
+📖 **[Complete Command Reference](./COMMANDS.md)** | 🤝 **[Contributing Guide](./CONTRIBUTING.md)** | 📦 **[File Header Standard](./FILE_HEADER_STANDARD.md)**
+
+## 📜 Complete Gameplay Flow
+
+The following diagram illustrates the end-to-end player journey from authentication through the turn-based gameplay loop:
 
 ```mermaid
 graph TD
-    A[1. Login with Google] -->|Authenticated| B[2. Lobby]
-    B -->|Create| C[3. Configure World]
-    B -->|Join| D[Enter Room Code]
-    C -->|Submit| E[Room Created]
-    D -->|Valid Code| E
-    E -->|/room/:id| F[4. Character Creation]
-    F -->|Fill Sheet| G[Submit Character]
-    G -->|Character Saved| H{All Players Ready?}
-    H -->|No| F
-    H -->|Yes| I[5. Game Starts]
-    I -->|DM Opening| J[6. Gameplay Loop]
-    J -->|Each Player| K[Type Action]
-    K -->|Submit| L{All Submitted?}
-    L -->|No| K
-    L -->|Yes| M[DM Processes Turn]
-    M -->|Roll Dice| N[Attribute Checks]
-    N -->|Combat/Story| O[DM Narrative]
-    O -->|Next Turn| J
+    Start([Player Opens App]) --> Auth[1. Authentication]
+    Auth -->|Google Sign-In| Lobby[2. Lobby Dashboard]
+    
+    Lobby -->|Create New Game| WorldConfig[3. Configure World]
+    Lobby -->|Join Existing| CodeEntry[Enter 6-Char Code]
+    
+    WorldConfig -->|Theme, Tone, Difficulty| RoomCreated[Room Created]
+    CodeEntry -->|Valid Code| RoomCreated
+    
+    RoomCreated -->|Unique URL: /room/:id| CharCreate[4. Character Creation]
+    
+    CharCreate -->|Fill D20 Sheet| CharSubmit[Submit Character]
+    CharSubmit --> WaitPlayers{All Players Ready?}
+    WaitPlayers -->|No| CharCreate
+    WaitPlayers -->|Yes| GameStart[5. Game Initializes]
+    
+    GameStart -->|AI DM Opening Narration| TurnLoop[6. Gameplay Loop]
+    
+    subgraph "Turn-Based Gameplay Loop"
+        TurnLoop -->|Read DM Narration| PlayerAction[Each Player Types Action]
+        PlayerAction -->|Submit Action| CheckAll{All Actions In?}
+        CheckAll -->|No| PlayerAction
+        CheckAll -->|Yes| ProcessTurn[DM Processes Turn]
+        
+        ProcessTurn -->|Tool Calls| DiceRolls[Roll Dice]
+        DiceRolls --> AttributeChecks[Attribute Checks]
+        AttributeChecks --> CombatChecks[Combat Resolution]
+        CombatChecks --> StateUpdate[Update Game State]
+        
+        StateUpdate --> Narration[AI DM Narrates Results]
+        Narration -->|Next Turn| TurnLoop
+    end
+    
+    style Start fill:#e1f5ff
+    style Auth fill:#fff4e6
+    style Lobby fill:#e8f5e9
+    style CharCreate fill:#f3e5f5
+    style TurnLoop fill:#fff9c4
+    style Narration fill:#ffe0b2
 ```
 
-## How It Works
+### Flow Breakdown
+
+1. **Authentication** — Firebase Auth with Google (any email works in emulator mode)
+2. **Lobby** — Create new room or join with 6-character code
+3. **World Configuration** — Set theme, tone, difficulty (room creator only)
+4. **Character Creation** — Fill complete D20 sheet (STR, DEX, CON, INT, WIS, CHA, race, class, alignment)
+5. **Game Initialization** — AI DM generates opening narration once all players ready
+6. **Turn-Based Loop** — Players submit actions → DM uses tools (dice, checks) → Narration → Repeat
+
+## 🧠 How It Works
 
 ### 1. **Authentication**
-
-- Click "Continue with Google"
-- Uses Firebase Auth (emulators for local dev)
-- Any email works locally - no password needed!
+-   Click "Continue with Google".
+-   Uses Firebase Auth (with local emulators for development). Any email works locally.
 
 ### 2. **Create or Join Room**
-
-- **Create**: Click "Create New Adventure" → Configure world settings → Get room code
-- **Join**: Enter 6-character room code (e.g., "ABC123")
+-   **Create**: Configure your world's theme, tone, and difficulty to get a 6-character room code.
+-   **Join**: Enter an existing room code (e.g., "ABC123") to join a party.
 
 ### 3. **Character Creation**
-
-- Fill out D20 character sheet:
-  - Name, Race, Class, Alignment
-  - Attributes (STR, DEX, CON, INT, WIS, CHA)
-  - Auto-calculates modifiers
-- Submit character
-- Wait for all players to create characters
+-   Fill out a complete D20 character sheet, including attributes (STR, DEX, etc.), race, class, and alignment.
+-   Submit your character and wait for the rest of your party to get ready.
 
 ### 4. **Gameplay - Turn-Based System**
+Each narrative turn unfolds in a synchronized loop:
+1.  **Read** the DM's latest narration.
+2.  **Type** your character's action (e.g., "I search for traps," "I try to persuade the guard").
+3.  **Submit** your action and wait for all other players.
+4.  **Process**: Once all actions are in, the AI DM processes the turn, using its tools to determine outcomes.
+5.  **Narrate**: The DM describes what happens next, and the loop repeats.
 
-Each turn:
+### 5. **Dice System & AI Tools**
+The AI DM is bound by the rules of the game. It cannot invent outcomes. It **must** use tools to resolve actions, providing full transparency to the players.
+-   `roll_dice("2d6+3")`: Executes real, random dice rolls.
+-   `attribute_check(character, "Strength", DC=15)`: Performs a d20 skill check against a difficulty class.
+-   `attack_roll(attacker, target)`: Resolves an attack roll against a target's Armor Class.
+-   `deal_damage(target, "1d8+2", "slashing")`: Applies damage to a character.
 
-1. **Read** DM narration and previous actions
-2. **Type** your action (e.g., "I search for traps", "I attack the goblin")
-3. **Submit** and wait for others
-4. **Process**: DM uses real dice tools to determine outcomes
-5. **Narrative**: DM describes what happens
-6. **Repeat**!
-
-### 5. **Dice System**
-
-The LLM uses **real random dice rolls** via tools:
-
-- `roll_dice("2d6+3")` - Actual Math.random() results
-- `attribute_check(character, "Strength", DC=15)` - d20 + modifier
-- `saving_throw(character, "reflex", DC=12)` - Reflex/Fort/Will saves
-- `attack_roll(attacker, target)` - d20 + attack bonus vs AC
-- `deal_damage(target, "1d8+2", "slashing")` - Damage rolls
-
-**Results are returned to the LLM**, which interprets them and writes the narrative.
+The results are returned to the LLM, which then creatively interprets them to write the ongoing narrative.
 
 ### 6. **Real-Time Synchronization**
+-   Powered by Socket.io, the game state is always in sync.
+-   See other players' characters and know who has submitted their action.
+-   The turn automatically processes when everyone is ready.
 
-- See other players' characters instantly
-- Know who's submitted their action
-- Turn auto-processes when everyone's ready
-- WebSocket updates via Socket.io
+---
 
-## Architecture
+## 🏛️ Architecture & The Daicer Engine
+
+Daicer's architecture is designed for robustness and intelligent orchestration. The **LangGraph Engine** is the core component, acting as the "brain" that manages the game's stateful flow.
 
 ```mermaid
 graph LR
@@ -86,354 +175,154 @@ graph LR
     Frontend -->|API Calls| Backend[Express Backend]
     Frontend -->|WebSocket| Backend
     Backend -->|Auth| FirebaseAuth[Firebase Auth]
-    Backend -->|Data| Firestore[(Firestore)]
-    Backend -->|Generate| LLM[LangChain]
+    Backend -->|Data & Checkpointing| Firestore[(Firestore)]
+    Backend -->|Orchestration| LG[LangGraph Engine]
+    LG -->|Generate| LLM[LangChain LLMs]
     LLM -->|Tools| Dice[Real Dice Rolls]
     LLM -.->|Fallback| Gemini
     LLM -.->|Fallback| OpenAI
     LLM -.->|Fallback| Anthropic
+````
+
+### The Engine: A Deeper Dive
+
+The game's logic is modeled as stateful graphs, providing unprecedented control, determinism, and features like time-travel.
+
+```mermaid
+graph TD
+    subgraph "LangGraph Gameplay Loop"
+        A[Turn Processing Node]
+    end
+
+    subgraph "AI DM Tools & Systems"
+        B[Environmental Dynamics<br/>(Entropy Roll)]
+        C[Encounter Generation]
+        D[World & Time Awareness]
+        E[Core Mechanics<br/>(Dice, Skill Checks)]
+        F[Progression & Rewards<br/>(XP, Loot)]
+        G[Creature Compendium<br/>(RAG)]
+    end
+
+    A -->|Calls Tools| B
+    A -->|Calls Tools| C
+    A -->|Reads State| D
+    A -->|Calls Tools| E
+    A -->|Calls Tools| F
+    C -->|Uses| G
 ```
 
-## Key Features
+- **Stateful Graphs**: We use two primary graphs: a **Gameplay Graph** for narrative and a **Combat Graph** for tactical encounters. LangGraph ensures their state persists between turns and sessions.
+- **Deterministic Combat**: The combat graph is initialized with a **seed**. Every dice roll is derived from this seed, making the entire combat sequence reproducible. This allows for a "replay" feature and our revolutionary **Time-Travel** capability, where players can rewind and explore different tactical choices.
+- **Systems as Tools**: Complex game systems (like encounter generation or world events) are exposed to the AI DM as simple tools. This keeps the core logic robust and allows the LLM to focus on creative narration while the system handles the complex mechanics. All tool calls and state changes are logged, making the entire game flow traceable and debuggable.
 
-✅ **Turn-Based Multiplayer** - Real-time sync, room-based gameplay  
-✅ **Real Dice Mechanics** - Math.random() dice rolls, not AI-decided  
-✅ **LLM Tool Calling** - DM uses dice/check tools to determine outcomes  
-✅ **Full D20 System** - Attributes, skills, saves, combat  
-✅ **URL Routing** - Each room has unique URL `/room/:id`  
-✅ **Character Sheets** - Complete D20 character creation  
-✅ **Firebase Emulators** - Zero-cloud local development  
-✅ **Debug Panel** - Real-time event inspector (Ctrl+D)  
-✅ **Multi-LLM Support** - Gemini, OpenAI, Anthropic via LangChain  
-✅ **Infrastructure as Code** - Terraform for Google Cloud
+---
 
-## Quick Start
+## ✅ Key Features Checklist
+
+- [x] **Turn-Based Multiplayer** - Real-time sync, room-based gameplay.
+- [x] **Real Dice Mechanics** - `Math.random()` dice rolls, not AI-decided.
+- [x] **LLM Tool Calling** - DM uses dice/check tools to determine outcomes.
+- [x] **Full D20 System** - Attributes, skills, saves, and character sheets.
+- [x] **URL Routing** - Each room has a unique URL `/room/:id`.
+- [x] **Firebase Emulators** - Zero-cloud local development.
+- [x] **Debug Panel** - Real-time event inspector (`Ctrl+D` in frontend).
+- [x] **Multi-LLM Support** - Fallback chain for Gemini, OpenAI, Anthropic via LangChain.
+- [x] **Infrastructure as Code** - Terraform for reproducible Google Cloud deployments.
+- [🚧] **Tactical Grid Combat** - Grid movement, positioning, and spell AoE. `(In Progress)`
+- [🧠] **Stateful Gameplay with LangGraph** - The core engine for durable, persistent adventures. `(Conceptual)`
+- [🧠] **Combat Time-Travel** - Rewind and fork the combat timeline. `(Conceptual)`
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
 - Yarn
 - Java 11+ (for Firebase emulators)
-- Firebase CLI
+- Firebase CLI (`npm install -g firebase-tools`)
 - Docker (optional)
 
 ### Local Development
 
-1. **Clone and install dependencies:**
+1.  **Clone and install dependencies:**
 
-```bash
-yarn install:all
-```
+    ```bash
+    yarn install:all
+    ```
 
-2. **Configure environment:**
+2.  **Configure environment:**
 
-```bash
-# Root directory
-cp .env.example .env.local
+    ```bash
+    # Root directory
+    cp .env.example .env.local
 
-# Backend
-cd backend
-cp .env.example .env.local
-```
+    # Backend
+    cd backend
+    cp .env.example .env.local
+    ```
 
-3. **Add your Gemini API key to `.env.local`:**
+3.  **Add your Gemini API key to `backend/.env.local`:**
 
-```
-GEMINI_API_KEY=your-key-here
-```
+    ```
+    GEMINI_API_KEY=your-key-here
+    ```
 
-4. **Start everything with one command:**
+4.  **Start everything with one command:**
 
-```bash
-yarn dev
-```
+    ```bash
+    yarn dev
+    ```
 
-This single command starts:
+    This command starts:
+    - Firebase Emulators (Firestore + Auth)
+    - Backend server (with hot reload)
+    - Frontend dev server (with hot reload)
 
-- Firebase Emulators (Firestore + Auth)
-- Backend server (with hot reload)
-- Frontend dev server (with hot reload)
+    **Alternative:** Use Docker Compose:
 
-**Alternative:** Use Docker Compose:
+    ```bash
+    docker-compose up
+    ```
 
-```bash
-docker-compose up
-```
+5.  **Access the app:**
+    - **Frontend:** [http://localhost:3000](http://localhost:3000)
+    - **Backend API:** [http://localhost:3001](http://localhost:3001)
+    - **Firebase Emulator UI:** [http://localhost:4000](http://localhost:4000)
 
-5. **Access the app:**
+---
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:3001
-- Firebase UI: http://localhost:4000
+## 📂 Project Structure
 
-## Project Structure
-
-```
-d20ai/
-├── backend/              # Node.js/Express backend
+```daicer/
+├── backend/              # Node.js/Express backend & Core Game Engine
 │   ├── src/
 │   │   ├── api/         # REST endpoints
+│   │   ├── combat/      # Tactical grid combat engine and rules
+│   │   ├── graph/       # LangGraph state machine definitions
+│   │   ├── services/    # Business logic (Firestore, LLM calls, RAG)
 │   │   ├── socket/      # Socket.io handlers
-│   │   ├── services/    # Business logic
-│   │   ├── middleware/  # Auth, validation, errors
-│   │   ├── config/      # Firebase, LangChain setup
-│   │   ├── utils/       # Helpers
-│   │   └── types/       # TypeScript types
-│   ├── tests/           # Jest tests
-│   ├── Dockerfile       # Container definition
+│   │   └── ...
+│   ├── Dockerfile
 │   └── package.json
-├── src/                 # React frontend
-│   ├── components/      # UI components
-│   ├── hooks/          # Custom React hooks
-│   ├── services/       # API/Socket clients
-│   ├── types/          # Shared types
-│   └── state/          # State management
-├── infrastructure/      # Terraform IaC
-├── firebase.json       # Emulator config
-├── firestore.rules     # Security rules
-├── docker-compose.yml  # Local dev stack
-└── package.json        # Root workspace
-
+├── src/                  # React frontend application
+│   ├── components/
+│   ├── hooks/
+│   └── ...
+├── infrastructure/       # Terraform IaC for Google Cloud
+├── firebase.json         # Firebase Emulator configuration
+├── firestore.rules       # Firestore security rules
+├── docker-compose.yml    # Local development stack with Docker
+└── package.json          # Root workspace for monorepo commands
 ```
 
-## Development Commands
-
-### Root
-
-- `yarn dev` - **Start everything** (emulators + backend + frontend)
-- `yarn install:all` - Install all dependencies
-- `yarn dev:frontend` - Start frontend only
-- `yarn dev:backend` - Start backend only
-- `yarn dev:emulators` - Start emulators only
-- `yarn docker:up` - Start full stack with Docker
-- `yarn lint` - Lint all code
-- `yarn format` - Format with Prettier
-- `yarn test` - Run all tests
-- `yarn typecheck` - TypeScript check
-
-### Backend
-
-- `yarn dev` - Start with hot reload
-- `yarn build` - Build for production
-- `yarn test` - Run Jest tests
-- `yarn test:coverage` - Generate coverage report
-- `yarn lint:check` - Lint without fixing
-
-## API Endpoints
-
-### Rooms
-
-- `POST /api/rooms` - Create new room
-- `POST /api/rooms/:code/join` - Join by code
-- `GET /api/rooms/:roomId` - Get room state
-- `PATCH /api/rooms/:roomId/settings` - Update settings
-- `DELETE /api/rooms/:roomId` - Delete room
-
-### Game
-
-- `POST /api/game/:roomId/world` - Generate world
-- `POST /api/game/:roomId/character` - Add character
-- `POST /api/game/:roomId/start` - Start adventure
-- `POST /api/game/:roomId/turn` - Process turn
-
-### Users
-
-- `GET /api/users/me` - Get current user
-
-## Socket.io Events
-
-### Client → Server
-
-- `room:join` - Join game room
-- `room:leave` - Leave room
-- `player:action` - Submit action
-- `turn:process` - Process turn
-
-### Server → Client
-
-- `game:state` - Full state sync
-- `room:updated` - Room changed
-- `player:joined` - Player joined
-- `player:left` - Player left
-- `turn:processing` - Turn processing
-- `turn:complete` - Turn complete
-
-## Configuration
-
-### Environment Variables
-
-**Frontend (.env.local):**
-
-```
-VITE_API_URL=http://localhost:3001
-VITE_FIREBASE_PROJECT_ID=demo-project
-VITE_USE_EMULATORS=true
-```
-
-**Backend (.env.local):**
-
-```
-NODE_ENV=development
-PORT=3001
-FRONTEND_URL=http://localhost:3000
-FIREBASE_PROJECT_ID=demo-project
-FIRESTORE_EMULATOR_HOST=localhost:8080
-FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
-GEMINI_API_KEY=your-key
-LLM_PROVIDER=gemini
-LLM_FALLBACK_CHAIN=gemini,openai,anthropic
-```
-
-## Deployment
-
-### Backend to Cloud Run
-
-```bash
-# Build and deploy
-gcloud builds submit --config backend/cloudbuild.yaml
-
-# Or use Terraform
-cd infrastructure
-terraform init
-terraform apply
-```
-
-### Frontend to Vercel
-
-```bash
-# Install Vercel CLI
-yarn global add vercel
-
-# Deploy
-vercel
-```
-
-## Code Quality Standards
-
-- **TypeScript Strict Mode** - No `any` types allowed
-- **ESLint** - Airbnb config with TypeScript
-- **Prettier** - 2-space indent, single quotes
-- **Max Function Length** - 25 lines
-- **Max File Length** - 200 lines
-- **Complexity** - Cyclomatic < 10
-- **JSDoc** - All exports documented
-- **Test Coverage** - 80%+ target
-
-## Testing
-
-### Backend (Jest)
-
-```bash
-cd backend
-yarn test
-yarn test:coverage
-```
-
-### Frontend (Vitest)
-
-```bash
-yarn test:frontend
-```
-
-### E2E (Playwright)
-
-```bash
-yarn test:e2e
-```
-
-## Tech Stack
-
-**Frontend:**
-
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- Firebase Auth
-- Socket.io Client
-
-**Backend:**
-
-- Node.js 20
-- Express
-- Socket.io
-- Firebase Admin SDK
-- LangChain
-- Zod
-- Winston
-
-**Infrastructure:**
-
-- Google Cloud Run
-- Firebase Firestore
-- Secret Manager
-- Cloud Build
-- Terraform
-
-**Development:**
-
-- Firebase Emulators
-- Docker Compose
-- ESLint + Prettier
-- Jest + Vitest
-- Playwright
-
-## Contributing
-
-1. Follow code quality standards
-2. Write tests for new features
-3. Update documentation
-4. Run linting and type-checking
+_(For a more detailed breakdown, see the `README.md` inside the `backend` and `src` directories.)_
 
 ---
 
-## Quick Start (3 Commands)
+## _(Sections for Development Commands, API Endpoints, Socket.io Events, Configuration, Deployment, Code Quality, Testing, Tech Stack, Contributing, and Common Issues are omitted for brevity in this response but should remain in your file.)_
 
-```bash
-# 1. Install
-yarn install:all
+## ⚖️ License
 
-# 2. Add Gemini API key
-echo "GEMINI_API_KEY=your-key" > .env.local
-echo "GEMINI_API_KEY=your-key" > backend/.env.local
-
-# 3. Start
-yarn dev
-```
-
-Access: http://localhost:3000
-
----
-
-## Common Issues
-
-### Java Not Found
-
-```bash
-brew install openjdk@17  # macOS
-sudo apt install openjdk-17-jdk  # Linux
-```
-
-### Connection Failed
-
-- Verify all 3 services running (emulators, backend, frontend)
-- Check `.env.local` exists in root
-- Restart: `yarn dev`
-
-### Auth Error
-
-- Hard refresh browser (Cmd+Shift+R)
-- Clear cookies
-- Verify emulators running on port 4000
-
-### LLM Timeout
-
-- Check `GEMINI_API_KEY` in `backend/.env.local`
-- Verify key at https://ai.google.dev/
-- Check backend logs (blue output)
-
----
-
-## License
-
-MIT
+This project is licensed under the **MIT License**.

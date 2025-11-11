@@ -124,28 +124,28 @@ describe('Combat Scenarios', () => {
 
   it('should run a complete combat sequence', async () => {
     const session = createCombatSession('test-combat', 42);
-    
+
     // Start combat
     const startState = await session.startCombat([fighter, wizard, goblin1, goblin2]);
-    
+
     expect(startState.characters).toHaveLength(4);
     expect(startState.round).toBe(1);
     expect(startState.turnOrder).toHaveLength(4);
     expect(startState.activeCharacterId).toBeTruthy();
-    
+
     // Start first turn
     await session.startTurn();
     const state1 = session.getState();
     expect(state1.phase).toBe('action_selection');
-    
+
     // Get active character
     const activeChar = session.getActiveCharacter();
     expect(activeChar).toBeTruthy();
-    
+
     // Execute attack if in range
     if (activeChar) {
       // Find an enemy
-      const enemies = state1.characters.filter(c => c.isPlayer !== activeChar.isPlayer);
+      const enemies = state1.characters.filter((c) => c.isPlayer !== activeChar.isPlayer);
       if (enemies.length > 0 && enemies[0]) {
         await session.attack(activeChar.id, enemies[0].id, {
           weaponDamage: '1d8',
@@ -153,11 +153,11 @@ describe('Combat Scenarios', () => {
         });
       }
     }
-    
+
     // End turn
     await session.endTurn();
     const state2 = session.getState();
-    
+
     // Should advance to next character
     expect(state2.activeCharacterId).not.toBe(state1.activeCharacterId);
   });
@@ -165,10 +165,10 @@ describe('Combat Scenarios', () => {
   it('should detect combat end when all enemies defeated', async () => {
     const weakGoblin = { ...goblin1, hp: 1, maxHp: 1 };
     const session = createCombatSession('test-combat-end', 42);
-    
+
     await session.startCombat([fighter, weakGoblin]);
     await session.startTurn();
-    
+
     // Attack until goblin is defeated
     let attempts = 0;
     while (!session.isCombatOver() && attempts < 20) {
@@ -179,15 +179,15 @@ describe('Combat Scenarios', () => {
           damageType: 'slashing',
         });
       }
-      
+
       if (!session.isCombatOver()) {
         await session.endTurn();
         await session.startTurn();
       }
-      
+
       attempts++;
     }
-    
+
     // Combat should end when goblin is defeated
     if (session.isCombatOver()) {
       expect(session.getWinner()).toBe('player');
@@ -196,27 +196,28 @@ describe('Combat Scenarios', () => {
 
   it('should support time-travel', async () => {
     const session = createCombatSession('test-timetravel', 123);
-    
+
     await session.startCombat([fighter, goblin1]);
     await session.startTurn();
-    
+
     const state1 = session.getState();
-    
+
     // Move fighter
     await session.moveCharacter(fighter.id, { x: 3, y: 3 });
-    
+
     const state2 = session.getState();
-    expect(state2.characters.find(c => c.id === fighter.id)?.position).toEqual({ x: 3, y: 3 });
-    
+    expect(state2.characters.find((c) => c.id === fighter.id)?.position).toEqual({ x: 3, y: 3 });
+
     // Get history
     const history = session.getHistory();
     expect(history.length).toBeGreaterThan(0);
-    
+
     // Restore to state before movement
     await session.restoreState(history.length - 2);
     const restoredState = session.getState();
-    
-    expect(restoredState.characters.find(c => c.id === fighter.id)?.position).toEqual(state1.characters.find(c => c.id === fighter.id)?.position);
+
+    expect(restoredState.characters.find((c) => c.id === fighter.id)?.position).toEqual(
+      state1.characters.find((c) => c.id === fighter.id)?.position
+    );
   });
 });
-

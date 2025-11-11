@@ -54,47 +54,34 @@ export function isValidPosition(pos: Position, gridWidth: number, gridHeight: nu
 /**
  * Check if position is occupied by any character
  */
-export function isPositionOccupied(
-  pos: Position,
-  characters: CombatCharacter[],
-  excludeCharacterId?: string
-): boolean {
+export function isPositionOccupied(pos: Position, characters: CombatCharacter[], excludeCharacterId?: string): boolean {
   return characters.some(
-    c => c.hp > 0 && 
-    c.id !== excludeCharacterId && 
-    c.position.x === pos.x && 
-    c.position.y === pos.y
+    (c) => c.hp > 0 && c.id !== excludeCharacterId && c.position.x === pos.x && c.position.y === pos.y
   );
 }
 
 /**
  * Get character at position
  */
-export function getCharacterAtPosition(
-  pos: Position,
-  characters: CombatCharacter[]
-): CombatCharacter | undefined {
-  return characters.find(c => c.hp > 0 && c.position.x === pos.x && c.position.y === pos.y);
+export function getCharacterAtPosition(pos: Position, characters: CombatCharacter[]): CombatCharacter | undefined {
+  return characters.find((c) => c.hp > 0 && c.position.x === pos.x && c.position.y === pos.y);
 }
 
 /**
  * Check if position is difficult terrain
  */
-export function isDifficultTerrain(
-  pos: Position,
-  difficultTerrainSquares: Position[] = []
-): boolean {
-  return difficultTerrainSquares.some(dt => dt.x === pos.x && dt.y === pos.y);
+export function isDifficultTerrain(pos: Position, difficultTerrainSquares: Position[] = []): boolean {
+  return difficultTerrainSquares.some((dt) => dt.x === pos.x && dt.y === pos.y);
 }
 
 /**
  * Calculate movement cost for a character
  */
 export function calculateMovementSpeed(character: CombatCharacter): number {
-  let {speed} = character;
+  let { speed } = character;
 
   // Exhaustion level 2: speed halved
-  const exhaustionLevel = character.conditions.find(c => c.type === 'exhaustion')?.level ?? 0;
+  const exhaustionLevel = character.conditions.find((c) => c.type === 'exhaustion')?.level ?? 0;
   if (exhaustionLevel >= 2) {
     speed = Math.floor(speed / 2);
   }
@@ -156,7 +143,7 @@ export function findReachableSquares(
 
         // Calculate movement cost
         let moveCost = 1;
-        
+
         // Difficult terrain costs extra movement
         if (isDifficultTerrain(nextPos, difficultTerrainSquares)) {
           moveCost = 2; // Costs 1 extra foot per foot
@@ -171,7 +158,7 @@ export function findReachableSquares(
 
         if (nextCost <= movementRemaining) {
           visited.add(posKey);
-          
+
           // Can't end movement on an occupied square
           if (!isPositionOccupied(nextPos, characters, characterId)) {
             reachable.push(nextPos);
@@ -189,7 +176,15 @@ export function findReachableSquares(
  * Validate a movement attempt
  */
 export function validateMovement(context: MovementContext): MovementValidationResult {
-  const { character, fromPosition, toPosition, characters, gridWidth, gridHeight, difficultTerrainSquares = [] } = context;
+  const {
+    character,
+    fromPosition,
+    toPosition,
+    characters,
+    gridWidth,
+    gridHeight,
+    difficultTerrainSquares = [],
+  } = context;
 
   // Check if character can move
   if (!canMove(character)) {
@@ -245,38 +240,30 @@ export function validateMovement(context: MovementContext): MovementValidationRe
 /**
  * Check if attacker is within reach of defender
  */
-export function isWithinReach(
-  attackerPos: Position,
-  defenderPos: Position,
-  reach: number = 1
-): boolean {
+export function isWithinReach(attackerPos: Position, defenderPos: Position, reach: number = 1): boolean {
   return calculateDistance(attackerPos, defenderPos) <= reach;
 }
 
 /**
  * Get all adjacent positions (for reach = 1)
  */
-export function getAdjacentPositions(
-  pos: Position,
-  gridWidth: number,
-  gridHeight: number
-): Position[] {
+export function getAdjacentPositions(pos: Position, gridWidth: number, gridHeight: number): Position[] {
   const adjacent: Position[] = [];
-  
+
   for (let dx = -1; dx <= 1; dx += 1) {
     for (let dy = -1; dy <= 1; dy += 1) {
       if (dx === 0 && dy === 0) {
         // eslint-disable-next-line no-continue
         continue;
       }
-      
+
       const adjPos = { x: pos.x + dx, y: pos.y + dy };
       if (isValidPosition(adjPos, gridWidth, gridHeight)) {
         adjacent.push(adjPos);
       }
     }
   }
-  
+
   return adjacent;
 }
 
@@ -290,7 +277,7 @@ export function getPositionsWithinReach(
   gridHeight: number
 ): Position[] {
   const positions: Position[] = [];
-  
+
   for (let x = 0; x < gridWidth; x += 1) {
     for (let y = 0; y < gridHeight; y += 1) {
       const testPos = { x, y };
@@ -299,7 +286,7 @@ export function getPositionsWithinReach(
       }
     }
   }
-  
+
   return positions;
 }
 
@@ -316,10 +303,7 @@ export function checksOpportunityAttacks(
 
   // Find hostile characters that can make opportunity attacks
   const hostileCharacters = allCharacters.filter(
-    c => c.hp > 0 && 
-    c.id !== movingCharacter.id && 
-    c.isPlayer !== movingCharacter.isPlayer &&
-    c.hasReaction
+    (c) => c.hp > 0 && c.id !== movingCharacter.id && c.isPlayer !== movingCharacter.isPlayer && c.hasReaction
   );
 
   for (const hostile of hostileCharacters) {
@@ -337,4 +321,3 @@ export function checksOpportunityAttacks(
 
   return opportunityAttackers;
 }
-

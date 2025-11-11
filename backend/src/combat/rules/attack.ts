@@ -76,7 +76,11 @@ export function calculateAttackAdvantage(context: AttackContext): {
       advantages.push('Defender is prone (melee attack within 5ft)');
     }
   }
-  if (hasCondition(defender, 'paralyzed') || hasCondition(defender, 'stunned') || hasCondition(defender, 'unconscious')) {
+  if (
+    hasCondition(defender, 'paralyzed') ||
+    hasCondition(defender, 'stunned') ||
+    hasCondition(defender, 'unconscious')
+  ) {
     advantages.push('Defender is incapacitated');
   }
   if (hasCondition(defender, 'invisible')) {
@@ -118,17 +122,12 @@ export function makeAttackRoll(
   const { hasAdvantage, hasDisadvantage } = calculateAttackAdvantage(context);
   const finalAdvantageType = resolveAdvantageType(hasAdvantage, hasDisadvantage);
 
-  const roll = diceRoller.rollAttack(
-    attackBonus,
-    finalAdvantageType,
-    `Attack roll`,
-    contextId
-  );
+  const roll = diceRoller.rollAttack(attackBonus, finalAdvantageType, `Attack roll`, contextId);
 
   const targetAC = defender.armorClass;
   const isCriticalHit = roll.rawRolls.includes(20);
   const isCriticalMiss = roll.rawRolls.includes(1);
-  
+
   // Natural 20 always hits, natural 1 always misses
   const isHit = isCriticalHit || (!isCriticalMiss && roll.finalResult >= targetAC);
 
@@ -156,7 +155,7 @@ export function rollDamage(
   contextId?: string
 ): DamageRollResult {
   let totalDamage = 0;
-  
+
   if (isCritical) {
     // Critical hit: roll damage dice twice
     const roll1 = diceRoller.rollDamage(
@@ -165,15 +164,10 @@ export function rollDamage(
       `Critical damage roll (${diceNotation}) - Roll 1`,
       contextId
     );
-    const roll2 = diceRoller.rollDamage(
-      diceNotation,
-      0,
-      `Critical damage roll (${diceNotation}) - Roll 2`,
-      contextId
-    );
-    
+    const roll2 = diceRoller.rollDamage(diceNotation, 0, `Critical damage roll (${diceNotation}) - Roll 2`, contextId);
+
     totalDamage = roll1.finalResult + roll2.finalResult + damageBonus;
-    
+
     // Return combined roll result
     return {
       roll: {
@@ -187,22 +181,21 @@ export function rollDamage(
       damageType,
       totalDamage,
     };
-  } 
-    // Normal damage roll
-    const roll = diceRoller.rollDamage(
-      diceNotation,
-      damageBonus,
-      `${damageType} damage (${diceNotation} + ${damageBonus})`,
-      contextId
-    );
-    
-    return {
-      roll,
-      isCritical: false,
-      damageType,
-      totalDamage: roll.finalResult,
-    };
-  
+  }
+  // Normal damage roll
+  const roll = diceRoller.rollDamage(
+    diceNotation,
+    damageBonus,
+    `${damageType} damage (${diceNotation} + ${damageBonus})`,
+    contextId
+  );
+
+  return {
+    roll,
+    isCritical: false,
+    damageType,
+    totalDamage: roll.finalResult,
+  };
 }
 
 /**
@@ -218,12 +211,9 @@ export interface ApplyDamageResult {
   wasAlreadyDead: boolean;
 }
 
-export function applyDamage(
-  character: CombatCharacter,
-  damage: number
-): ApplyDamageResult {
+export function applyDamage(character: CombatCharacter, damage: number): ApplyDamageResult {
   const wasAlreadyDead = character.hp <= 0;
-  
+
   // TODO: Implement resistance/vulnerability based on damage type
   // For now, just apply damage directly
   let remainingDamage = damage;
@@ -259,34 +249,24 @@ export function applyDamage(
 /**
  * Calculate attack bonus for a character
  */
-export function calculateAttackBonus(
-  character: CombatCharacter,
-  isFinesse: boolean = false
-): number {
+export function calculateAttackBonus(character: CombatCharacter, isFinesse: boolean = false): number {
   const strengthMod = getAbilityModifier(character.strength);
   const dexterityMod = getAbilityModifier(character.dexterity);
-  
+
   // Finesse weapons can use either STR or DEX
-  const abilityMod = isFinesse 
-    ? Math.max(strengthMod, dexterityMod)
-    : strengthMod;
-  
+  const abilityMod = isFinesse ? Math.max(strengthMod, dexterityMod) : strengthMod;
+
   return abilityMod + character.proficiencyBonus;
 }
 
 /**
  * Calculate damage bonus for a character
  */
-export function calculateDamageBonus(
-  character: CombatCharacter,
-  isFinesse: boolean = false
-): number {
+export function calculateDamageBonus(character: CombatCharacter, isFinesse: boolean = false): number {
   const strengthMod = getAbilityModifier(character.strength);
   const dexterityMod = getAbilityModifier(character.dexterity);
-  
-  return isFinesse 
-    ? Math.max(strengthMod, dexterityMod)
-    : strengthMod;
+
+  return isFinesse ? Math.max(strengthMod, dexterityMod) : strengthMod;
 }
 
 /**
@@ -308,9 +288,9 @@ export function resolveAttack(
 ): AttackResolutionResult {
   const contextId = `attack-${Date.now()}`;
   const attackBonus = calculateAttackBonus(context.attacker, isFinesse);
-  
+
   const attackRoll = makeAttackRoll(context, diceRoller, attackBonus, contextId);
-  
+
   if (!attackRoll.isHit) {
     // Miss - no damage
     return { attackRoll };
@@ -318,18 +298,11 @@ export function resolveAttack(
 
   // Hit - roll damage
   const damageBonus = calculateDamageBonus(context.attacker, isFinesse);
-  const damageRoll = rollDamage(
-    weaponDamage,
-    damageBonus,
-    attackRoll.isCriticalHit,
-    damageType,
-    diceRoller,
-    contextId
-  );
+  const damageRoll = rollDamage(weaponDamage, damageBonus, attackRoll.isCriticalHit, damageType, diceRoller, contextId);
 
   // Apply damage to defender
-  const damageResult = applyDamage(context.defender, damageRoll.totalDamage, damageType);
-  
+  const damageResult = applyDamage(context.defender, damageRoll.totalDamage);
+
   const updatedDefender: CombatCharacter = {
     ...context.defender,
     hp: damageResult.newHp,
@@ -343,4 +316,3 @@ export function resolveAttack(
     updatedDefender,
   };
 }
-

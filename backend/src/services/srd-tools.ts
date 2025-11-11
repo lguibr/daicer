@@ -6,15 +6,15 @@
 import { DynamicStructuredTool } from 'langchain';
 import { z } from 'zod';
 import {
-  SKILLS,
-  CONDITIONS,
-  EQUIPMENT_ITEMS,
-  DAMAGE_TYPES,
-  ALIGNMENTS,
-  LANGUAGES,
-  MAGIC_SCHOOLS,
-  WEAPON_PROPERTIES,
-} from '@/game-data/index';
+  getSkills,
+  getConditions,
+  getEquipment,
+  getDamageTypes,
+  getAlignments,
+  getLanguages,
+  getMagicSchools,
+  getWeaponProperties,
+} from './game-data.js';
 // import { logger } from '@/utils/logger';
 
 /**
@@ -28,7 +28,8 @@ export const lookupSkillTool = new DynamicStructuredTool({
     skillName: z.string().describe('Name of the skill (e.g., "Acrobatics", "Stealth", "Perception")'),
   }),
   func: async ({ skillName }: { skillName: string }) => {
-    const skill = SKILLS.find(
+    const skills = await getSkills();
+    const skill = skills.find(
       (s) => s.name.toLowerCase() === skillName.toLowerCase() || s.index === skillName.toLowerCase()
     );
 
@@ -59,12 +60,13 @@ export const lookupConditionTool = new DynamicStructuredTool({
     conditionName: z.string().describe('Name of the condition (e.g., "Blinded", "Poisoned", "Exhaustion")'),
   }),
   func: async ({ conditionName }: { conditionName: string }) => {
-    const condition = CONDITIONS.find(
+    const conditions = await getConditions();
+    const condition = conditions.find(
       (c) => c.name.toLowerCase() === conditionName.toLowerCase() || c.index === conditionName.toLowerCase()
     );
 
     if (!condition) {
-      const available = CONDITIONS.map((c) => c.name).join(', ');
+      const available = conditions.map((c) => c.name).join(', ');
       return JSON.stringify({
         found: false,
         message: `Condition "${conditionName}" not found. Available conditions: ${available}`,
@@ -90,7 +92,8 @@ export const lookupEquipmentTool = new DynamicStructuredTool({
     equipmentName: z.string().describe('Name of the equipment (e.g., "Longsword", "Chain Mail", "Rope")'),
   }),
   func: async ({ equipmentName }: { equipmentName: string }) => {
-    const equipment = EQUIPMENT_ITEMS.find(
+    const equipmentItems = await getEquipment();
+    const equipment = equipmentItems.find(
       (e) => e.name.toLowerCase() === equipmentName.toLowerCase() || e.index === equipmentName.toLowerCase()
     );
 
@@ -146,12 +149,13 @@ export const lookupDamageTypeTool = new DynamicStructuredTool({
     damageType: z.string().describe('Type of damage (e.g., "Fire", "Slashing", "Necrotic")'),
   }),
   func: async ({ damageType }: { damageType: string }) => {
-    const damage = DAMAGE_TYPES.find(
+    const damageTypes = await getDamageTypes();
+    const damage = damageTypes.find(
       (d) => d.name.toLowerCase() === damageType.toLowerCase() || d.index === damageType.toLowerCase()
     );
 
     if (!damage) {
-      const available = DAMAGE_TYPES.map((d) => d.name).join(', ');
+      const available = damageTypes.map((d) => d.name).join(', ');
       return JSON.stringify({
         found: false,
         message: `Damage type "${damageType}" not found. Available types: ${available}`,
@@ -177,12 +181,13 @@ export const lookupAlignmentTool = new DynamicStructuredTool({
     alignment: z.string().describe('Alignment name (e.g., "Lawful Good", "Chaotic Neutral")'),
   }),
   func: async ({ alignment }: { alignment: string }) => {
-    const align = ALIGNMENTS.find(
+    const alignments = await getAlignments();
+    const align = alignments.find(
       (a) => a.name.toLowerCase() === alignment.toLowerCase() || a.id === alignment.toLowerCase()
     );
 
     if (!align) {
-      const available = ALIGNMENTS.map((a) => a.name).join(', ');
+      const available = alignments.map((a) => a.name).join(', ');
       return JSON.stringify({
         found: false,
         message: `Alignment "${alignment}" not found. Available alignments: ${available}`,
@@ -208,12 +213,13 @@ export const lookupLanguageTool = new DynamicStructuredTool({
     language: z.string().describe('Language name (e.g., "Common", "Elvish", "Draconic")'),
   }),
   func: async ({ language }: { language: string }) => {
-    const lang = LANGUAGES.find(
+    const languages = await getLanguages();
+    const lang = languages.find(
       (l) => l.name.toLowerCase() === language.toLowerCase() || l.index === language.toLowerCase()
     );
 
     if (!lang) {
-      const available = LANGUAGES.map((l) => l.name).join(', ');
+      const available = languages.map((l) => l.name).join(', ');
       return JSON.stringify({
         found: false,
         message: `Language "${language}" not found. Available languages: ${available}`,
@@ -240,12 +246,13 @@ export const lookupMagicSchoolTool = new DynamicStructuredTool({
     school: z.string().describe('Magic school name (e.g., "Evocation", "Necromancy", "Illusion")'),
   }),
   func: async ({ school }: { school: string }) => {
-    const magicSchool = MAGIC_SCHOOLS.find(
+    const magicSchools = await getMagicSchools();
+    const magicSchool = magicSchools.find(
       (s) => s.name.toLowerCase() === school.toLowerCase() || s.index === school.toLowerCase()
     );
 
     if (!magicSchool) {
-      const available = MAGIC_SCHOOLS.map((s) => s.name).join(', ');
+      const available = magicSchools.map((s) => s.name).join(', ');
       return JSON.stringify({
         found: false,
         message: `Magic school "${school}" not found. Available schools: ${available}`,
@@ -271,12 +278,13 @@ export const lookupWeaponPropertyTool = new DynamicStructuredTool({
     property: z.string().describe('Weapon property name (e.g., "Finesse", "Heavy", "Versatile")'),
   }),
   func: async ({ property }: { property: string }) => {
-    const prop = WEAPON_PROPERTIES.find(
+    const weaponProperties = await getWeaponProperties();
+    const prop = weaponProperties.find(
       (p) => p.name.toLowerCase() === property.toLowerCase() || p.index === property.toLowerCase()
     );
 
     if (!prop) {
-      const available = WEAPON_PROPERTIES.map((p) => p.name).join(', ');
+      const available = weaponProperties.map((p) => p.name).join(', ');
       return JSON.stringify({
         found: false,
         message: `Weapon property "${property}" not found. Available properties: ${available}`,

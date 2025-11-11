@@ -5,12 +5,12 @@
 import type { CombatState, CombatCharacter } from '@/graph/state';
 
 export function turnStartNode(state: CombatState): Partial<CombatState> {
-  const {activeCharacterId} = state;
+  const { activeCharacterId } = state;
   if (!activeCharacterId) {
     return { phase: 'combat_end' };
   }
 
-  const activeChar = state.characters.find(c => c.id === activeCharacterId);
+  const activeChar = state.characters.find((c) => c.id === activeCharacterId);
   if (!activeChar) {
     return { phase: 'combat_end' };
   }
@@ -25,14 +25,12 @@ export function turnStartNode(state: CombatState): Partial<CombatState> {
   };
 
   // Apply exhaustion speed reduction if needed
-  const exhaustionLevel = activeChar.conditions.find(c => c.type === 'exhaustion')?.level ?? 0;
+  const exhaustionLevel = activeChar.conditions.find((c) => c.type === 'exhaustion')?.level ?? 0;
   if (exhaustionLevel >= 2) {
     updatedCharacter.movementRemaining = Math.floor(updatedCharacter.movementRemaining / 2);
   }
 
-  const updatedCharacters = state.characters.map(c =>
-    c.id === activeCharacterId ? updatedCharacter : c
-  );
+  const updatedCharacters = state.characters.map((c) => (c.id === activeCharacterId ? updatedCharacter : c));
 
   // Check if character is surprised (can't act on first turn)
   // TODO: Implement surprise mechanics
@@ -52,4 +50,3 @@ export function turnStartNode(state: CombatState): Partial<CombatState> {
     phase: 'action_selection',
   };
 }
-

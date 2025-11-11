@@ -78,7 +78,12 @@ export async function findRoomByCode(code: string): Promise<Room | null> {
     return null;
   }
 
-  return snapshot.docs[0].data() as Room;
+  const doc = snapshot.docs[0];
+  if (!doc) {
+    return null;
+  }
+
+  return doc.data() as Room;
 }
 
 /**

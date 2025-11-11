@@ -9,7 +9,7 @@ import { z } from 'zod';
  */
 export const ToolCallSchema = z.object({
   tool: z.enum(['roll_dice', 'attribute_check', 'saving_throw', 'attack_roll', 'deal_damage']),
-  params: z.record(z.any()),
+  params: z.record(z.string(), z.any()),
   result: z.any(),
 });
 

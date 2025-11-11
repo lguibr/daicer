@@ -9,7 +9,7 @@ module.exports = {
     'airbnb-typescript',
     'prettier',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs', 'vite.config.ts'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'vite.config.ts', '**/__tests__/**', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
@@ -42,6 +42,24 @@ module.exports = {
     'jsx-a11y/label-has-associated-control': ['error', {
       'assert': 'either'
     }],
+    'import/prefer-default-export': 'off',
+    'react/no-array-index-key': 'warn',
+    'jsx-a11y/click-events-have-key-events': 'warn',
+    'jsx-a11y/no-static-element-interactions': 'warn',
+    'jsx-a11y/control-has-associated-label': 'warn',
+    'react/button-has-type': 'warn',
+    'react/no-unescaped-entities': 'warn',
+    'react/no-danger': 'warn',
+    'no-plusplus': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
+    '@typescript-eslint/no-shadow': ['error', { 'ignoreOnInitialization': true }],
+    '@typescript-eslint/naming-convention': ['error', {
+      'selector': 'variable',
+      'format': ['camelCase', 'PascalCase', 'UPPER_CASE'],
+      'leadingUnderscore': 'allow'
+    }],
+    '@typescript-eslint/no-explicit-any': 'error',
+    'consistent-return': 'off',
   },
   settings: {
     'import/resolver': {

@@ -1,9 +1,9 @@
 /**
- * Character Card Component
- * Displays character stats and combat status
+ * @file frontend/src/components/combat/CharacterCard.tsx
+ * @description Character Card Component - Displays character stats and combat status
+ * @note Update README.md in this directory when modifying component behavior or props
  */
 
-import React from 'react';
 import type { CombatCharacter } from '../../hooks/useCombat';
 
 interface CharacterCardProps {
@@ -17,16 +17,14 @@ export function CharacterCard({ character, isActive, isSelected, onClick }: Char
   const hpPercentage = (character.hp / character.maxHp) * 100;
   const hpColor = hpPercentage > 50 ? 'bg-green-500' : hpPercentage > 25 ? 'bg-yellow-500' : 'bg-red-500';
 
-  const getAbilityModifier = (score: number): number => {
-    return Math.floor((score - 10) / 2);
-  };
+  const getAbilityModifier = (score: number): number => Math.floor((score - 10) / 2);
 
-  const formatModifier = (modifier: number): string => {
-    return modifier >= 0 ? `+${modifier}` : `${modifier}`;
-  };
+  const formatModifier = (modifier: number): string => (modifier >= 0 ? `+${modifier}` : `${modifier}`);
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={`
         p-3 rounded-lg border transition-all cursor-pointer
         ${isActive ? 'border-nebula-400 bg-nebula-900/20' : 'border-shadow-700 bg-midnight-300'}
@@ -35,13 +33,20 @@ export function CharacterCard({ character, isActive, isSelected, onClick }: Char
         hover:bg-shadow-800/50
       `}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClick();
+        }
+      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-            character.isPlayer ? 'bg-aurora-500 text-white' : 'bg-red-600 text-white'
-          }`}>
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+              character.isPlayer ? 'bg-aurora-500 text-white' : 'bg-red-600 text-white'
+            }`}
+          >
             {character.name.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -49,30 +54,24 @@ export function CharacterCard({ character, isActive, isSelected, onClick }: Char
             <div className="text-xs text-shadow-400">Init: {character.initiative}</div>
           </div>
         </div>
-        {isActive && (
-          <div className="text-xs font-bold text-nebula-300 px-2 py-1 bg-nebula-900/50 rounded">
-            ACTIVE
-          </div>
-        )}
+        {isActive && <div className="text-xs font-bold text-nebula-300 px-2 py-1 bg-nebula-900/50 rounded">ACTIVE</div>}
       </div>
 
       {/* HP Bar */}
       <div className="mb-2">
         <div className="flex justify-between text-xs text-shadow-300 mb-1">
           <span>HP</span>
-          <span>{character.hp}/{character.maxHp}</span>
+          <span>
+            {character.hp}/{character.maxHp}
+          </span>
         </div>
         <div className="w-full bg-shadow-800 rounded-full h-2">
-          <div 
+          <div
             className={`${hpColor} h-2 rounded-full transition-all`}
             style={{ width: `${Math.max(0, hpPercentage)}%` }}
           />
         </div>
-        {character.tempHp > 0 && (
-          <div className="text-xs text-blue-300 mt-1">
-            +{character.tempHp} temp HP
-          </div>
-        )}
+        {character.tempHp > 0 && <div className="text-xs text-blue-300 mt-1">+{character.tempHp} temp HP</div>}
       </div>
 
       {/* Stats */}
@@ -111,10 +110,14 @@ export function CharacterCard({ character, isActive, isSelected, onClick }: Char
       {/* Turn Status */}
       {isActive && (
         <div className="flex gap-1 text-xs">
-          <div className={`px-2 py-1 rounded ${character.hasMoved ? 'bg-shadow-700 text-shadow-400' : 'bg-green-900/50 text-green-300'}`}>
+          <div
+            className={`px-2 py-1 rounded ${character.hasMoved ? 'bg-shadow-700 text-shadow-400' : 'bg-green-900/50 text-green-300'}`}
+          >
             {character.hasMoved ? '✓ Moved' : 'Can Move'}
           </div>
-          <div className={`px-2 py-1 rounded ${character.hasActed ? 'bg-shadow-700 text-shadow-400' : 'bg-green-900/50 text-green-300'}`}>
+          <div
+            className={`px-2 py-1 rounded ${character.hasActed ? 'bg-shadow-700 text-shadow-400' : 'bg-green-900/50 text-green-300'}`}
+          >
             {character.hasActed ? '✓ Acted' : 'Can Act'}
           </div>
         </div>
@@ -123,8 +126,11 @@ export function CharacterCard({ character, isActive, isSelected, onClick }: Char
       {/* Conditions */}
       {character.conditions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
-          {character.conditions.map((condition, idx) => (
-            <div key={idx} className="text-xs px-2 py-0.5 bg-red-900/50 text-red-300 rounded border border-red-700">
+          {character.conditions.map((condition) => (
+            <div
+              key={`${condition.type}-${condition.level || 0}`}
+              className="text-xs px-2 py-0.5 bg-red-900/50 text-red-300 rounded border border-red-700"
+            >
               {condition.type}
               {condition.level !== undefined && ` ${condition.level}`}
             </div>
@@ -134,4 +140,3 @@ export function CharacterCard({ character, isActive, isSelected, onClick }: Char
     </div>
   );
 }
-

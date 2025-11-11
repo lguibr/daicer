@@ -130,15 +130,17 @@ export interface Message {
   targetPlayer?: string;
 }
 
+export type ScaleLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 /**
  * Adventure length options
  */
-export type AdventureLength = 'short' | 'medium' | 'epic';
+export type AdventureLength = 'flash' | 'short' | 'medium' | 'long' | 'epic' | 'legendary';
 
 /**
  * Difficulty levels
  */
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Difficulty = 'storyteller' | 'easy' | 'medium' | 'challenging' | 'gritty' | 'deadly';
 
 /**
  * Supported languages
@@ -146,18 +148,49 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export type Language = 'en' | 'es' | 'pt-BR';
 
 /**
+ * World archetype types
+ */
+export type WorldType = 'terra' | 'water' | 'desert' | 'ice' | 'volcanic' | 'forest' | 'sky' | 'underground' | 'custom';
+export type WorldSize = 'intimate' | 'small' | 'medium' | 'large' | 'vast' | 'epic';
+export type DMPerformanceMode = 'pirate' | 'shakespearean' | 'noir' | 'courtly' | 'grimdark' | 'storybook';
+
+/**
+ * DM personality style
+ */
+export interface DMStyle {
+  verbosity: ScaleLevel;
+  detail: ScaleLevel;
+  engagement: ScaleLevel;
+  narrative: ScaleLevel;
+  specialMode?: DMPerformanceMode | null;
+  customDirectives: string;
+}
+
+/**
  * World generation settings
  */
 export interface WorldSettings {
+  // World Archetype
+  worldType: WorldType;
+  worldSize: WorldSize;
+
+  // Theme (editable, pre-filled by archetype)
   theme: string;
   setting: string;
   tone: string;
+  worldBackground: string;
+
+  // DM Personality
+  dmStyle: DMStyle;
+  dmSystemPrompt: string;
+
+  // Game Settings
   playerCount: number;
   adventureLength: AdventureLength;
   difficulty: Difficulty;
   startingLevel: number;
   attributePointBudget: number;
-  language?: Language;
+  language: Language;
 }
 
 /**

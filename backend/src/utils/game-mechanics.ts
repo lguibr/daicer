@@ -40,8 +40,8 @@ export function parseDiceRoll(notation: string): number {
     throw new Error(`Invalid dice notation: ${notation}`);
   }
 
-  const count = parseInt(match[1], 10);
-  const sides = parseInt(match[2], 10);
+  const count = parseInt(match[1]!, 10);
+  const sides = parseInt(match[2]!, 10);
   const operator = match[3];
   const modifier = match[4] ? parseInt(match[4], 10) : 0;
 

@@ -1,4 +1,4 @@
-import { Attribute, CharacterSheet } from './types';
+import { Attribute, CharacterSheet } from './types/shared';
 
 export const ATTRIBUTES: Attribute[] = [
   Attribute.STR,

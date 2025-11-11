@@ -39,19 +39,21 @@ const CharacterSheetSchema = z.object({
   speed: z.number(),
   proficiencyBonus: z.number(),
   inspiration: z.boolean(),
-  attributes: z.record(z.number()),
+  attributes: z.record(z.string(), z.number()),
   savingThrows: z.object({
     fortitude: z.number(),
     reflex: z.number(),
     will: z.number(),
   }),
-  skills: z.record(z.number()),
+  skills: z.record(z.string(), z.number()),
   baseAttackBonus: z.number(),
-  attacks: z.array(z.object({
-    name: z.string(),
-    bonus: z.string(),
-    damageType: z.string(),
-  })),
+  attacks: z.array(
+    z.object({
+      name: z.string(),
+      bonus: z.string(),
+      damageType: z.string(),
+    })
+  ),
   equipment: z.string(),
   currency: z.object({
     cp: z.number(),
@@ -87,11 +89,13 @@ const CharacterSheetSchema = z.object({
     attackBonus: z.number(),
     cantrips: z.array(z.string()),
     spellsKnown: z.array(z.string()),
-    slots: z.array(z.object({
-      level: z.number(),
-      total: z.number(),
-      expended: z.number(),
-    })),
+    slots: z.array(
+      z.object({
+        level: z.number(),
+        total: z.number(),
+        expended: z.number(),
+      })
+    ),
   }),
 });
 
@@ -171,7 +175,7 @@ export const CombatCharacterSchema = z.object({
   initiative: z.number(),
   avatar: z.string(),
   isPlayer: z.boolean(),
-  
+
   // Ability scores
   strength: z.number().int().min(1).max(30).default(10),
   dexterity: z.number().int().min(1).max(30).default(10),
@@ -179,27 +183,29 @@ export const CombatCharacterSchema = z.object({
   intelligence: z.number().int().min(1).max(30).default(10),
   wisdom: z.number().int().min(1).max(30).default(10),
   charisma: z.number().int().min(1).max(30).default(10),
-  
+
   // Combat stats
   proficiencyBonus: z.number().int().min(2).default(2),
   speed: z.number().int().positive(),
   reach: z.number().int().positive().default(1),
-  
+
   // Turn state
   hasMoved: z.boolean().default(false),
   hasActed: z.boolean().default(false),
   hasReaction: z.boolean().default(true),
   hasBonusAction: z.boolean().default(true),
   movementRemaining: z.number().int().min(0).default(0),
-  
+
   // Conditions and effects
   conditions: z.array(ConditionSchema).default([]),
-  
+
   // Death saves (for PCs)
-  deathSaves: z.object({
-    successes: z.number().int().min(0).max(3).default(0),
-    failures: z.number().int().min(0).max(3).default(0),
-  }).optional(),
+  deathSaves: z
+    .object({
+      successes: z.number().int().min(0).max(3).default(0),
+      failures: z.number().int().min(0).max(3).default(0),
+    })
+    .optional(),
 });
 
 export type CombatCharacter = z.infer<typeof CombatCharacterSchema>;
@@ -239,50 +245,56 @@ export const CombatLogEntrySchema = z.object({
 export const CombatStateSchema = z.object({
   // Combat session ID
   sessionId: z.string(),
-  
+
   // Characters in combat
   characters: z.array(CombatCharacterSchema),
-  
+
   // Turn tracking
   activeCharacterId: z.string().nullable(),
   turnOrder: z.array(z.string()),
   round: z.number().int().min(0).default(0),
-  
+
   // Combat status
   isCombatOver: z.boolean().default(false),
   winner: z.enum(['player', 'enemy']).nullable().default(null),
-  
+
   // Logging
   log: z.array(CombatLogEntrySchema).default([]),
-  
+
   // Dice history for time-travel
   diceHistory: z.array(DiceRollResultSchema).default([]),
-  
+
   // Grid configuration
   gridWidth: z.number().int().positive().default(10),
   gridHeight: z.number().int().positive().default(10),
-  
+
   // Combat phase tracking
-  phase: z.enum([
-    'setup',
-    'initiative',
-    'turn_start',
-    'action_selection',
-    'movement',
-    'action',
-    'bonus_action',
-    'reaction',
-    'turn_end',
-    'combat_end',
-  ]).default('setup'),
-  
+  phase: z
+    .enum([
+      'setup',
+      'initiative',
+      'turn_start',
+      'action_selection',
+      'movement',
+      'action',
+      'bonus_action',
+      'reaction',
+      'turn_end',
+      'combat_end',
+    ])
+    .default('setup'),
+
   // Pending opportunity attacks
-  pendingOpportunityAttacks: z.array(z.object({
-    attackerId: z.string(),
-    defenderId: z.string(),
-    trigger: z.string(),
-  })).default([]),
-  
+  pendingOpportunityAttacks: z
+    .array(
+      z.object({
+        attackerId: z.string(),
+        defenderId: z.string(),
+        trigger: z.string(),
+      })
+    )
+    .default([]),
+
   // Dice roller seed for determinism
   diceRollerSeed: z.number(),
 });
@@ -297,38 +309,43 @@ export const GameStateSchema = z.object({
   roomId: z.string(),
   ownerId: z.string(),
   code: z.string(),
-  
+
   // Game phase
   phase: z.enum(['SETUP', 'CHARACTER_CREATION', 'GAMEPLAY', 'COMBAT']),
-  
+
   // World settings
-  settings: z.object({
-    theme: z.string(),
-    setting: z.string(),
-    tone: z.string(),
-    playerCount: z.number(),
-    adventureLength: z.enum(['short', 'medium', 'epic']),
-    difficulty: z.enum(['easy', 'medium', 'hard']),
-    startingLevel: z.number(),
-    attributePointBudget: z.number(),
-    language: z.enum(['en', 'es', 'pt-BR']).optional(),
-  }).nullable(),
-  
+  settings: z
+    .object({
+      theme: z.string(),
+      setting: z.string(),
+      tone: z.string(),
+      playerCount: z.number(),
+      adventureLength: z.enum(['short', 'medium', 'epic']),
+      difficulty: z.enum(['easy', 'medium', 'hard']),
+      startingLevel: z.number(),
+      attributePointBudget: z.number(),
+      language: z.enum(['en', 'es', 'pt-BR']).optional(),
+    })
+    .nullable(),
+
   // World description
   worldDescription: z.string(),
-  
+
   // Players (array of players)
   players: z.array(PlayerSchema),
-  
+
   // Messages (append-only)
   messages: z.array(MessageSchema),
-  
+
   // Creatures
   creatures: z.array(CreatureSchema),
-  
+
   // Combat state (null when not in combat)
   combatState: CombatStateSchema.nullable().default(null),
-  
+
+  // Turn flow control
+  waitingForAction: z.boolean().default(false),
+
   // Timestamps
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -337,10 +354,73 @@ export const GameStateSchema = z.object({
 export type GameState = z.infer<typeof GameStateSchema>;
 
 /**
+ * Character Creation Phase State (Simplified)
+ * Used during SETUP and CHARACTER_CREATION phases
+ */
+export const CharacterCreationStateSchema = z.object({
+  roomId: z.string(),
+  ownerId: z.string(),
+  code: z.string(),
+  settings: z
+    .object({
+      theme: z.string(),
+      setting: z.string(),
+      tone: z.string(),
+      playerCount: z.number(),
+      adventureLength: z.enum(['short', 'medium', 'epic']),
+      difficulty: z.enum(['easy', 'medium', 'hard']),
+      startingLevel: z.number(),
+      attributePointBudget: z.number(),
+      language: z.enum(['en', 'es', 'pt-BR']).optional(),
+    })
+    .nullable(),
+  worldDescription: z.string(),
+  players: z.array(PlayerSchema),
+  messages: z.array(MessageSchema),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export type CharacterCreationState = z.infer<typeof CharacterCreationStateSchema>;
+
+/**
+ * Gameplay Phase State (Simplified)
+ * Used during GAMEPLAY phase (non-combat)
+ */
+export const GameplayStateSchema = z.object({
+  roomId: z.string(),
+  ownerId: z.string(),
+  code: z.string(),
+  settings: z
+    .object({
+      theme: z.string(),
+      setting: z.string(),
+      tone: z.string(),
+      playerCount: z.number(),
+      adventureLength: z.enum(['short', 'medium', 'epic']),
+      difficulty: z.enum(['easy', 'medium', 'hard']),
+      startingLevel: z.number(),
+      attributePointBudget: z.number(),
+      language: z.enum(['en', 'es', 'pt-BR']).default('en'),
+    })
+    .nullable(),
+  worldDescription: z.string(),
+  players: z.array(PlayerSchema),
+  messages: z.array(MessageSchema),
+  creatures: z.array(CreatureSchema),
+  waitingForAction: z.boolean().default(false),
+  combatState: CombatStateSchema.nullable().default(null),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+export type GameplayState = z.infer<typeof GameplayStateSchema>;
+
+/**
  * Type guard to check if state has active combat
  */
-export function hasActiveCombat(state: GameState): boolean {
-  const {combatState} = state;
+export function hasActiveCombat(state: GameState | GameplayState): boolean {
+  const { combatState } = state;
   return combatState !== null && !combatState.isCombatOver;
 }
 
@@ -350,4 +430,3 @@ export function hasActiveCombat(state: GameState): boolean {
 export function isInCombat(state: GameState): boolean {
   return state.phase === 'COMBAT';
 }
-

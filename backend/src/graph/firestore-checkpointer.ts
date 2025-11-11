@@ -1,6 +1,9 @@
 /**
  * Firestore-based checkpointer for LangGraph
  * Persists graph state to Firestore for durable execution
+ *
+ * NOTE: Currently not compatible with latest LangGraph API
+ * TODO: Update to new BaseCheckpointSaver interface
  */
 
 import { BaseCheckpointSaver, Checkpoint, CheckpointMetadata, CheckpointTuple } from '@langchain/langgraph';
@@ -12,17 +15,13 @@ import { logger } from '@/utils/logger';
  * Firestore checkpointer implementation
  * Stores checkpoints in: rooms/{roomId}/checkpoints/{checkpoint_id}
  */
-export class FirestoreCheckpointer extends BaseCheckpointSaver {
+export class FirestoreCheckpointer extends BaseCheckpointSaver<number> {
   private db = getFirestore();
 
   /**
    * Save a checkpoint to Firestore
    */
-  async put(
-    config: RunnableConfig,
-    checkpoint: Checkpoint,
-    metadata: CheckpointMetadata
-  ): Promise<RunnableConfig> {
+  async put(config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata): Promise<RunnableConfig> {
     const threadId = config.configurable?.thread_id as string;
     if (!threadId) {
       throw new Error('thread_id required in config.configurable');
@@ -33,11 +32,7 @@ export class FirestoreCheckpointer extends BaseCheckpointSaver {
 
     try {
       // Store checkpoint in Firestore
-      const checkpointRef = this.db
-        .collection('rooms')
-        .doc(threadId)
-        .collection('checkpoints')
-        .doc(checkpointId);
+      const checkpointRef = this.db.collection('rooms').doc(threadId).collection('checkpoints').doc(checkpointId);
 
       await checkpointRef.set({
         checkpoint,
@@ -63,9 +58,9 @@ export class FirestoreCheckpointer extends BaseCheckpointSaver {
   }
 
   /**
-   * Get a specific checkpoint from Firestore
+   * Get a specific checkpoint tuple from Firestore (new API)
    */
-  async get(config: RunnableConfig): Promise<CheckpointTuple | undefined> {
+  async getTuple(config: RunnableConfig): Promise<CheckpointTuple | undefined> {
     const threadId = config.configurable?.thread_id as string;
     if (!threadId) {
       return undefined;
@@ -77,14 +72,10 @@ export class FirestoreCheckpointer extends BaseCheckpointSaver {
     try {
       if (checkpointId) {
         // Get specific checkpoint
-        const checkpointRef = this.db
-          .collection('rooms')
-          .doc(threadId)
-          .collection('checkpoints')
-          .doc(checkpointId);
+        const checkpointRef = this.db.collection('rooms').doc(threadId).collection('checkpoints').doc(checkpointId);
 
         const doc = await checkpointRef.get();
-        
+
         if (!doc.exists) {
           return undefined;
         }
@@ -105,42 +96,60 @@ export class FirestoreCheckpointer extends BaseCheckpointSaver {
           metadata: data.metadata,
           parentConfig: data.parent_config,
         };
-      } 
-        // Get latest checkpoint
-        const checkpointsRef = this.db
-          .collection('rooms')
-          .doc(threadId)
-          .collection('checkpoints')
-          .where('checkpoint_ns', '==', checkpointNs)
-          .orderBy('created_at', 'desc')
-          .limit(1);
+      }
+      // Get latest checkpoint
+      const checkpointsRef = this.db
+        .collection('rooms')
+        .doc(threadId)
+        .collection('checkpoints')
+        .where('checkpoint_ns', '==', checkpointNs)
+        .orderBy('created_at', 'desc')
+        .limit(1);
 
-        const snapshot = await checkpointsRef.get();
-        
-        if (snapshot.empty) {
-          return undefined;
-        }
+      const snapshot = await checkpointsRef.get();
 
-        const doc = snapshot.docs[0];
-        const data = doc.data();
+      if (snapshot.empty) {
+        return undefined;
+      }
 
-        return {
-          config: {
-            ...config,
-            configurable: {
-              ...config.configurable,
-              checkpoint_id: doc.id,
-              checkpoint_ns: data.checkpoint_ns,
-            },
+      const doc = snapshot.docs[0];
+      if (!doc) return undefined;
+      const data = doc.data();
+
+      return {
+        config: {
+          ...config,
+          configurable: {
+            ...config.configurable,
+            checkpoint_id: doc.id,
+            checkpoint_ns: data.checkpoint_ns,
           },
-          checkpoint: data.checkpoint,
-          metadata: data.metadata,
-          parentConfig: data.parent_config,
-        };
-      
+        },
+        checkpoint: data.checkpoint as Checkpoint,
+        metadata: data.metadata,
+        parentConfig: data.parent_config,
+      };
     } catch (error) {
       logger.error('Error retrieving checkpoint:', error);
       return undefined;
+    }
+  }
+
+  /**
+   * Delete a thread and all its checkpoints
+   */
+  async deleteThread(threadId: string): Promise<void> {
+    try {
+      const checkpointsRef = this.db.collection('rooms').doc(threadId).collection('checkpoints');
+      const snapshot = await checkpointsRef.get();
+
+      const deletePromises = snapshot.docs.map((doc) => doc.ref.delete());
+      await Promise.all(deletePromises);
+
+      logger.info(`Deleted thread: ${threadId}`);
+    } catch (error) {
+      logger.error('Error deleting thread:', error);
+      throw error;
     }
   }
 
@@ -179,7 +188,7 @@ export class FirestoreCheckpointer extends BaseCheckpointSaver {
             .collection('checkpoints')
             .doc(beforeCheckpointId)
             .get();
-          
+
           if (beforeDoc.exists) {
             const beforeData = beforeDoc.data();
             if (beforeData) {
@@ -220,4 +229,3 @@ export class FirestoreCheckpointer extends BaseCheckpointSaver {
     logger.debug('putWrites called (not implemented)');
   }
 }
-

@@ -6,7 +6,7 @@
 import { tool } from '@langchain/core/tools';
 import { Command, LangGraphRunnableConfig } from '@langchain/langgraph';
 import * as z from 'zod';
-import type { CombatCharacter, GameState } from '@/graph/state';
+import type { CombatCharacter, GameplayState } from '@/graph/state';
 import type { Player } from '@/types/index';
 import { v4 as uuidv4 } from 'uuid';
 import { createCombatSession } from './graph';
@@ -89,7 +89,7 @@ export function getActiveCombatSession(roomId: string): ReturnType<typeof create
  */
 function playerToCombatCharacter(player: Player, position: { x: number; y: number }): CombatCharacter {
   const attributes = player.character.attributes as Record<string, number>;
-  
+
   return {
     id: `player-${player.id}`,
     name: player.character.name,
@@ -131,20 +131,26 @@ export const startCombatTool = tool(
     }
 
     // Get game state from config
-    const gameState = config.configurable?.gameState as GameState;
-    if (!gameState) {
-      throw new Error('Game state required');
+    const gameplayState = config.configurable?.gameplayState as GameplayState;
+    if (!gameplayState) {
+      throw new Error('Gameplay state required');
     }
 
     // Create combat characters from players
-    const players = (gameState.players as Player[]).filter(p => input.playerIds.includes(p.id));
-    const combatCharacters: CombatCharacter[] = players.map((p, i) => 
-      playerToCombatCharacter(p, { x: 2 + i, y: 2 }) // Position players in starting area
+    const players = (gameplayState.players as Player[]).filter((p) => input.playerIds.includes(p.id));
+    const combatCharacters: CombatCharacter[] = players.map(
+      (p, i) => playerToCombatCharacter(p, { x: 2 + i, y: 2 }) // Position players in starting area
     );
 
     // Add enemies (from game state creatures)
-    const creatures = gameState.creatures as Array<{ name: string; hp: number; maxHp: number; attackBonus: number; damage: string }>;
-    const enemies = creatures.filter(c => input.enemyNames.includes(c.name));
+    const creatures = gameplayState.creatures as Array<{
+      name: string;
+      hp: number;
+      maxHp: number;
+      attackBonus: number;
+      damage: string;
+    }>;
+    const enemies = creatures.filter((c) => input.enemyNames.includes(c.name));
     enemies.forEach((enemy, i) => {
       combatCharacters.push({
         id: `enemy-${uuidv4()}`,
@@ -179,17 +185,17 @@ export const startCombatTool = tool(
     const session = getCombatSession(roomId, Date.now());
     const combatState = await session.startCombat(combatCharacters);
 
-    // Return Command to update game state
+    // Return Command to update gameplay state
     return new Command({
       update: {
-        phase: 'COMBAT',
         combatState,
-      } as Partial<GameState>,
+      } as Partial<GameplayState>,
     });
   },
   {
     name: 'start_combat',
-    description: 'Initialize a combat encounter with specified players and enemies. Use this when combat is about to begin.',
+    description:
+      'Initialize a combat encounter with specified players and enemies. Use this when combat is about to begin.',
     schema: StartCombatSchema,
   }
 );
@@ -202,11 +208,11 @@ export const attackTool = tool(
   async (input: z.infer<typeof AttackSchema>, config: LangGraphRunnableConfig): Promise<Command> => {
     const roomId = config.configurable?.roomId as string;
     const session = getCombatSession(roomId);
-    
+
     const currentState = session.getState();
-    const attacker = currentState.characters.find(c => c.name === input.attackerName);
-    const target = currentState.characters.find(c => c.name === input.targetName);
-    
+    const attacker = currentState.characters.find((c) => c.name === input.attackerName);
+    const target = currentState.characters.find((c) => c.name === input.targetName);
+
     if (!attacker || !target) {
       throw new Error(`Character not found: ${input.attackerName} or ${input.targetName}`);
     }
@@ -219,7 +225,7 @@ export const attackTool = tool(
     return new Command({
       update: {
         combatState: updatedState,
-      } as Partial<GameState>,
+      } as Partial<GameplayState>,
     });
   },
   {
@@ -237,10 +243,10 @@ export const moveTool = tool(
   async (input: z.infer<typeof MoveSchema>, config: LangGraphRunnableConfig): Promise<Command> => {
     const roomId = config.configurable?.roomId as string;
     const session = getCombatSession(roomId);
-    
+
     const currentState = session.getState();
-    const character = currentState.characters.find(c => c.name === input.characterName);
-    
+    const character = currentState.characters.find((c) => c.name === input.characterName);
+
     if (!character) {
       throw new Error(`Character not found: ${input.characterName}`);
     }
@@ -253,7 +259,7 @@ export const moveTool = tool(
     return new Command({
       update: {
         combatState: updatedState,
-      } as Partial<GameState>,
+      } as Partial<GameplayState>,
     });
   },
   {
@@ -271,18 +277,18 @@ export const endTurnTool = tool(
   async (_input: z.infer<typeof EndTurnSchema>, config: LangGraphRunnableConfig): Promise<Command> => {
     const roomId = config.configurable?.roomId as string;
     const session = getCombatSession(roomId);
-    
+
     const updatedState = await session.endTurn();
 
     return new Command({
       update: {
         combatState: updatedState,
-      } as Partial<GameState>,
+      } as Partial<GameplayState>,
     });
   },
   {
     name: 'end_turn',
-    description: 'End the current character\'s turn and advance to the next character in initiative order.',
+    description: "End the current character's turn and advance to the next character in initiative order.",
     schema: EndTurnSchema,
   }
 );
@@ -294,15 +300,14 @@ export const endTurnTool = tool(
 export const endCombatTool = tool(
   async (_input: z.infer<typeof EndCombatSchema>, config: LangGraphRunnableConfig): Promise<Command> => {
     const roomId = config.configurable?.roomId as string;
-    
+
     // Remove the combat session
     removeCombatSession(roomId);
 
     return new Command({
       update: {
-        phase: 'GAMEPLAY',
         combatState: null,
-      } as Partial<GameState>,
+      } as Partial<GameplayState>,
     });
   },
   {
@@ -315,11 +320,4 @@ export const endCombatTool = tool(
 /**
  * All combat tools for the DM agent
  */
-export const combatTools = [
-  startCombatTool,
-  attackTool,
-  moveTool,
-  endTurnTool,
-  endCombatTool,
-];
-
+export const combatTools = [startCombatTool, attackTool, moveTool, endTurnTool, endCombatTool];
