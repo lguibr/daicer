@@ -33,6 +33,7 @@ describe('Game Data API', () => {
           { ability: 'WIS', bonus: 1 },
           { ability: 'CHA', bonus: 1 },
         ],
+        imageUrl: null,
       });
 
     // Add test class
@@ -63,6 +64,7 @@ describe('Game Data API', () => {
             ],
           },
         },
+        imageUrl: null,
       });
 
     // Add test background
@@ -77,6 +79,7 @@ describe('Game Data API', () => {
         toolProficiencies: ['Gaming set'],
         languages: 0,
         equipment: ['Insignia of rank', 'Trophy', 'Playing card set', 'Common clothes', '10 gp'],
+        imageUrl: null,
       });
 
     // Add test alignment
@@ -85,6 +88,7 @@ describe('Game Data API', () => {
       name: 'Lawful Good',
       abbreviation: 'LG',
       description: 'Creatures that can be counted on to do the right thing.',
+      imageUrl: null,
     });
 
     // Add test ability
@@ -93,6 +97,7 @@ describe('Game Data API', () => {
       name: 'Strength',
       abbreviation: 'STR',
       description: 'Measures physical power.',
+      imageUrl: null,
     });
 
     // Add test skill
@@ -101,6 +106,7 @@ describe('Game Data API', () => {
       name: 'Athletics',
       ability: 'Strength',
       description: 'Your Strength check covers difficult situations.',
+      imageUrl: null,
     });
   });
 
@@ -127,6 +133,7 @@ describe('Game Data API', () => {
       expect(human).toBeDefined();
       expect(human.name).toBe('Human');
       expect(human.speed).toBe(30);
+      expect(human).toHaveProperty('imageUrl');
     });
 
     test('includes required fields', async () => {
@@ -138,6 +145,7 @@ describe('Game Data API', () => {
       expect(race).toHaveProperty('description');
       expect(race).toHaveProperty('speed');
       expect(race).toHaveProperty('size');
+      expect(race).toHaveProperty('imageUrl');
     });
   });
 
@@ -153,6 +161,7 @@ describe('Game Data API', () => {
       expect(fighter).toBeDefined();
       expect(fighter.name).toBe('Fighter');
       expect(fighter.hitDie).toBe(10);
+      expect(fighter).toHaveProperty('imageUrl');
     });
 
     test('includes required fields', async () => {
@@ -165,6 +174,7 @@ describe('Game Data API', () => {
       expect(charClass).toHaveProperty('hitDie');
       expect(charClass).toHaveProperty('primaryAbility');
       expect(charClass).toHaveProperty('savingThrows');
+      expect(charClass).toHaveProperty('imageUrl');
     });
   });
 
@@ -179,6 +189,7 @@ describe('Game Data API', () => {
       const soldier = res.body.data.find((b: any) => b.id === 'soldier');
       expect(soldier).toBeDefined();
       expect(soldier.name).toBe('Soldier');
+      expect(soldier).toHaveProperty('imageUrl');
     });
 
     test('includes required fields', async () => {
@@ -188,6 +199,7 @@ describe('Game Data API', () => {
       expect(background).toHaveProperty('id');
       expect(background).toHaveProperty('name');
       expect(background).toHaveProperty('description');
+      expect(background).toHaveProperty('imageUrl');
     });
   });
 

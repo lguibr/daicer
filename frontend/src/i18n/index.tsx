@@ -391,13 +391,17 @@ export function useI18n() {
   const t = (key: string): string => {
     const keys = key.split('.');
 
-    const findTranslation = (langObj: (typeof translations)[Language]): string | null =>
-      keys.reduce((acc: Record<string, unknown> | string | null, currentKey) => {
-        if (acc && typeof acc === 'object' && currentKey in acc) {
-          return acc[currentKey];
+    const findTranslation = (langObj: (typeof translations)[Language]): string | null => {
+      let current: unknown = langObj;
+      for (const currentKey of keys) {
+        if (typeof current === 'object' && current !== null && currentKey in current) {
+          current = (current as Record<string, unknown>)[currentKey];
+        } else {
+          return null;
         }
-        return null;
-      }, langObj);
+      }
+      return typeof current === 'string' ? current : null;
+    };
 
     // Try to get from selected language first
     if (language !== 'en') {

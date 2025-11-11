@@ -137,6 +137,7 @@ async function seedGameData(): Promise<void> {
         description: r.description,
         speed: r.speed,
         size: r.size,
+        imageUrl: null,
       }))
     );
 
@@ -152,6 +153,7 @@ async function seedGameData(): Promise<void> {
         hitDie: c.hitDie,
         primaryAbility: c.primaryAbility,
         savingThrows: c.savingThrows,
+        imageUrl: null,
       }))
     );
 
@@ -165,6 +167,7 @@ async function seedGameData(): Promise<void> {
         name: b.name,
         description: b.description,
         skillProficiencies: b.skillProficiencies,
+        imageUrl: null,
       }))
     );
 
@@ -179,6 +182,7 @@ async function seedGameData(): Promise<void> {
         name: a.name,
         fullName: a.fullName,
         description: a.description,
+        imageUrl: null,
       }))
     );
 
@@ -193,6 +197,7 @@ async function seedGameData(): Promise<void> {
         name: a.name,
         abbreviation: a.abbreviation,
         description: a.description,
+        imageUrl: null,
       }))
     );
 
@@ -207,6 +212,7 @@ async function seedGameData(): Promise<void> {
         name: s.name,
         description: s.description,
         abilityScore: s.abilityScore,
+        imageUrl: null,
       }))
     );
 
@@ -220,6 +226,7 @@ async function seedGameData(): Promise<void> {
         index: c.index,
         name: c.name,
         description: c.description,
+        imageUrl: null,
       }))
     );
 
@@ -233,6 +240,7 @@ async function seedGameData(): Promise<void> {
         index: d.index,
         name: d.name,
         description: d.description,
+        imageUrl: null,
       }))
     );
 
@@ -247,6 +255,7 @@ async function seedGameData(): Promise<void> {
         name: l.name,
         isRare: l.isRare,
         note: l.note,
+        imageUrl: null,
       }))
     );
 
@@ -260,6 +269,7 @@ async function seedGameData(): Promise<void> {
         index: m.index,
         name: m.name,
         description: m.description,
+        imageUrl: null,
       }))
     );
 
@@ -273,6 +283,7 @@ async function seedGameData(): Promise<void> {
         index: e.index,
         name: e.name,
         equipment: e.equipment,
+        imageUrl: null,
       }))
     );
 
@@ -286,6 +297,7 @@ async function seedGameData(): Promise<void> {
         index: w.index,
         name: w.name,
         description: w.description,
+        imageUrl: null,
       }))
     );
 
@@ -306,6 +318,7 @@ async function seedGameData(): Promise<void> {
         armorClass: e.armorClass,
         range: e.range,
         properties: e.properties,
+        imageUrl: null,
       }))
     );
 

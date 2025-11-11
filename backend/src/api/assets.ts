@@ -2,24 +2,19 @@ import { randomUUID } from 'crypto';
 
 import { Router } from 'express';
 import { z } from 'zod';
-import getExtension from 'mime';
+import mime from 'mime';
 
 import { ApiError } from '@/middleware/error';
 import { buildActionFramePrompt, buildAvatarPrompt, buildGridPrompt, type AvatarView } from '@/services/asset-prompts';
 import { generateImage } from '@/services/gemini-image';
 import { saveAsset } from '@/services/asset-storage';
-import type {
-  ActionFramePayload,
-  AvatarAssetResponse,
-  AvatarGenerationPayload,
-  GridBackgroundPayload,
-  ReferenceImagePayload,
-} from '@/types/assets';
+import type { AvatarAssetResponse, ReferenceImagePayload } from '@/types/assets';
+import { optimizeImage } from '@/utils/image';
 
 const router = Router();
 
 const referenceImageSchema = z.object({
-  mimeType: z.string().optional(),
+  mimeType: z.string().min(1).default('image/png'),
   data: z.string().min(1),
   description: z.string().optional(),
 });
@@ -56,6 +51,27 @@ const avatarPayloadSchema = z.object({
   referenceImages: z.array(referenceImageSchema).max(4).optional(),
 });
 
+const previewImageSchema = z.object({
+  mimeType: z.string().min(1),
+  data: z.string().min(1),
+  prompt: z.string().optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+});
+
+const portraitPreviewRequestSchema = avatarPayloadSchema;
+
+const upperBodyPreviewRequestSchema = z.object({
+  payload: avatarPayloadSchema,
+  portrait: previewImageSchema,
+});
+
+const fullBodyPreviewRequestSchema = z.object({
+  payload: avatarPayloadSchema,
+  portrait: previewImageSchema,
+  upperBody: previewImageSchema,
+});
+
 const gridPayloadSchema = z.object({
   themePrompt: z.string().min(10),
   gridSize: z.object({
@@ -87,14 +103,13 @@ const parseBody = <T>(schema: z.ZodType<T>, body: unknown): T => {
 
 const stripDataUri = (input: string): { mimeType?: string; data: string } => {
   const match = input.match(/^data:(?<mime>[^;]+);base64,(?<data>[\s\S]+)$/);
-  if (match?.groups) {
-    return {
-      mimeType: match.groups.mime,
-      data: match.groups.data,
-    };
+  if (!match?.groups || !match.groups.mime || !match.groups.data) {
+    return { data: input };
   }
+
   return {
-    data: input,
+    mimeType: match.groups.mime,
+    data: match.groups.data,
   };
 };
 
@@ -104,22 +119,77 @@ const normalizeReferences = (references?: ReferenceImagePayload[]): ReferenceIma
   }
 
   return references.map((ref) => {
-    let { data, mimeType } = ref;
+    let { data } = ref;
     if (data.startsWith('data:')) {
       const parsed = stripDataUri(data);
       data = parsed.data;
-      mimeType = mimeType ?? parsed.mimeType;
+      const resolvedMimeType = ref.mimeType ?? parsed.mimeType ?? 'image/png';
+      return {
+        ...ref,
+        data,
+        mimeType: resolvedMimeType,
+      };
     }
 
     return {
       ...ref,
       data,
-      mimeType: mimeType ?? 'image/png',
+      mimeType: ref.mimeType ?? 'image/png',
     };
   });
 };
 
 const buildFilename = (variant: string): string => variant.replace(/[^a-zA-Z0-9_-]/g, '-');
+
+const TARGET_SPECS = {
+  portrait: { width: 512, height: 512, fit: 'cover' as const },
+  upperBody: { width: 576, height: 768, fit: 'cover' as const },
+  fullBody: { width: 640, fit: 'contain' as const },
+} as const;
+
+type NormalizedPreview = {
+  mimeType: string;
+  data: string;
+  prompt?: string;
+  width?: number;
+  height?: number;
+};
+
+const normalizePreviewImage = (preview: z.infer<typeof previewImageSchema>): NormalizedPreview => {
+  if (preview.data.startsWith('data:')) {
+    const parsed = stripDataUri(preview.data);
+    return {
+      mimeType: preview.mimeType || parsed.mimeType || 'image/png',
+      data: parsed.data,
+      prompt: preview.prompt,
+      width: preview.width,
+      height: preview.height,
+    };
+  }
+
+  return {
+    mimeType: preview.mimeType,
+    data: preview.data,
+    prompt: preview.prompt,
+    width: preview.width,
+    height: preview.height,
+  };
+};
+
+const toReferenceFromPreview = async (
+  preview: z.infer<typeof previewImageSchema>,
+  description: string,
+  target: { width?: number; height?: number; fit?: 'cover' | 'contain' }
+): Promise<ReferenceImagePayload> => {
+  const normalized = normalizePreviewImage(preview);
+  const buffer = Buffer.from(normalized.data, 'base64');
+  const optimized = await optimizeImage(buffer, normalized.mimeType, { target });
+  return {
+    mimeType: optimized.mimeType,
+    data: optimized.buffer.toString('base64'),
+    description,
+  };
+};
 
 const toAssetResponse = async (
   params: {
@@ -131,7 +201,7 @@ const toAssetResponse = async (
   },
   variant: string
 ) => {
-  const extension = getExtension(params.mimeType) ?? 'png';
+  const extension = mime.getExtension(params.mimeType) ?? 'png';
   const stored = await saveAsset({
     buffer: params.buffer,
     contentType: params.mimeType,
@@ -175,16 +245,24 @@ router.post('/avatar', async (req, res, next) => {
         prompt,
         references,
         config: {
-          size: '1K',
+          size: '768',
         },
       });
 
+      const optimized = await optimizeImage(result.buffer, result.mimeType, {
+        target:
+          key === 'portrait'
+            ? TARGET_SPECS.portrait
+            : key === 'upperBody'
+              ? TARGET_SPECS.upperBody
+              : TARGET_SPECS.fullBody,
+      });
       const filename = buildFilename(key === 'upperBody' ? 'upper-body' : key === 'fullBody' ? 'full-body' : key);
 
       responses[key] = await toAssetResponse(
         {
-          buffer: result.buffer,
-          mimeType: result.mimeType,
+          buffer: optimized.buffer,
+          mimeType: optimized.mimeType,
           prompt,
           folder,
           filename,
@@ -194,6 +272,110 @@ router.post('/avatar', async (req, res, next) => {
     }
 
     return res.status(201).json({ success: true, data: responses });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/avatar/preview/portrait', async (req, res, next) => {
+  try {
+    const payload = parseBody(portraitPreviewRequestSchema, req.body);
+    const references = normalizeReferences(payload.referenceImages);
+    const portraitPrompt = buildAvatarPrompt(payload, 'portrait');
+    const portraitResult = await generateImage({
+      prompt: portraitPrompt,
+      references,
+      config: {
+        size: '768',
+      },
+    });
+
+    const optimizedPortrait = await optimizeImage(portraitResult.buffer, portraitResult.mimeType, {
+      target: TARGET_SPECS.portrait,
+    });
+
+    const portraitPreview = {
+      mimeType: optimizedPortrait.mimeType,
+      data: optimizedPortrait.buffer.toString('base64'),
+      prompt: portraitPrompt,
+      width: optimizedPortrait.width,
+      height: optimizedPortrait.height,
+    };
+
+    return res.status(200).json({ success: true, data: portraitPreview });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/avatar/preview/upper', async (req, res, next) => {
+  try {
+    const { payload, portrait } = parseBody(upperBodyPreviewRequestSchema, req.body);
+    const references = normalizeReferences(payload.referenceImages);
+    const portraitReference = await toReferenceFromPreview(
+      portrait,
+      'Frontal face portrait reference',
+      TARGET_SPECS.portrait
+    );
+
+    const upperBodyPrompt = buildAvatarPrompt(payload, 'upper-body');
+    const upperBodyResult = await generateImage({
+      prompt: upperBodyPrompt,
+      references: [...references, portraitReference],
+      config: {
+        size: '768',
+      },
+    });
+
+    const optimizedUpperBody = await optimizeImage(upperBodyResult.buffer, upperBodyResult.mimeType, {
+      target: TARGET_SPECS.upperBody,
+    });
+
+    const upperBodyPreview = {
+      mimeType: optimizedUpperBody.mimeType,
+      data: optimizedUpperBody.buffer.toString('base64'),
+      prompt: upperBodyPrompt,
+      width: optimizedUpperBody.width,
+      height: optimizedUpperBody.height,
+    };
+
+    return res.status(200).json({ success: true, data: upperBodyPreview });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/avatar/preview/full', async (req, res, next) => {
+  try {
+    const { payload, portrait, upperBody } = parseBody(fullBodyPreviewRequestSchema, req.body);
+    const references = normalizeReferences(payload.referenceImages);
+    const [portraitReference, upperBodyReference] = await Promise.all([
+      toReferenceFromPreview(portrait, 'Frontal face portrait reference', TARGET_SPECS.portrait),
+      toReferenceFromPreview(upperBody, 'Upper-body reference', TARGET_SPECS.upperBody),
+    ]);
+
+    const fullBodyPrompt = buildAvatarPrompt(payload, 'full-body');
+    const fullBodyResult = await generateImage({
+      prompt: fullBodyPrompt,
+      references: [...references, portraitReference, upperBodyReference],
+      config: {
+        size: '768',
+      },
+    });
+
+    const optimizedFullBody = await optimizeImage(fullBodyResult.buffer, fullBodyResult.mimeType, {
+      target: TARGET_SPECS.fullBody,
+    });
+
+    const fullBodyPreview = {
+      mimeType: optimizedFullBody.mimeType,
+      data: optimizedFullBody.buffer.toString('base64'),
+      prompt: fullBodyPrompt,
+      width: optimizedFullBody.width,
+      height: optimizedFullBody.height,
+    };
+
+    return res.status(200).json({ success: true, data: fullBodyPreview });
   } catch (error) {
     return next(error);
   }
@@ -209,7 +391,7 @@ router.post('/grid-background', async (req, res, next) => {
       prompt,
       references,
       config: {
-        size: '1K',
+        size: '768',
       },
     });
 
@@ -241,7 +423,7 @@ router.post('/action-frame', async (req, res, next) => {
       prompt,
       references,
       config: {
-        size: '1K',
+        size: '768',
         temperature: 0.7,
       },
     });

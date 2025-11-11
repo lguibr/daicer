@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "dAIcer",
+    "title": "DAIcer",
     "subtitle": "Mestre de masmorra com IA para lendas de mesa",
     "heroDescription": "Forje uma campanha viva com um Mestre de Masmorra que honra lore, tensão e trabalho em equipe.",
     "cards": {
@@ -193,6 +193,14 @@
   "debug": {
     "title": "Painel de Depuração",
     "close": "Fechar"
+  },
+  "diceLoader": {
+    "messages": {
+      "summoning": "Invocando dados reluzentes...",
+      "rattling": "Chacoalhando a bandeja do destino...",
+      "focusing": "Consultando os espíritos da probabilidade...",
+      "calibrating": "Calibrando as chances de crítico..."
+    }
   },
   "common": {
     "loading": "Carregando...",

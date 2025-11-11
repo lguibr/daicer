@@ -67,3 +67,17 @@ export interface AvatarAssetResponse {
   upperBody: AssetResponse;
   fullBody: AssetResponse;
 }
+
+export interface AvatarPreviewImage {
+  mimeType: string;
+  data: string; // base64 encoded
+  prompt: string;
+  width: number;
+  height: number;
+}
+
+export interface AvatarPreviewResponse {
+  portrait: AvatarPreviewImage;
+  upperBody: AvatarPreviewImage;
+  fullBody: AvatarPreviewImage;
+}

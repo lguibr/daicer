@@ -19,7 +19,7 @@ test.describe('Internationalization', () => {
     await page.goto('/');
 
     // Should show Spanish title
-    await expect(page.locator('h1')).toContainText('dAIcer');
+    await expect(page.locator('h1')).toContainText('DAIcer');
     await expect(page.getByRole('button')).toContainText('Continuar con Google');
   });
 

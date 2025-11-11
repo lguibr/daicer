@@ -18,6 +18,7 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const avatarSrc = user?.photoURL && user.photoURL.trim().length > 0 ? user.photoURL : user ? '/face.png' : undefined;
 
   const handleLeaveRoom = () => {
     navigate('/lobby');
@@ -46,17 +47,27 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
     <nav className="relative z-50 bg-midnight-400/80 border-b border-midnight-500/70 shadow-[0_18px_40px_rgba(4,7,12,0.45)] backdrop-blur-xl">
       <div className="mx-auto flex h-[4.25rem] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
         {/* Brand */}
-        <button
-          type="button"
-          onClick={() => navigate('/lobby')}
-          className="group flex items-center gap-4 focus:outline-none"
-        >
-          <img
-            src="/logo.png"
-            alt="dAIcer logo"
-            className="h-12 w-12 rounded-full shadow-[0_10px_25px_rgba(4,7,12,0.45)] transition-transform duration-300 group-hover:scale-105"
-          />
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/lobby')}
+            className="group flex items-center gap-4 focus:outline-none"
+          >
+            <img
+              src="/logo.png"
+              alt="DAIcer logo"
+              className="h-12 w-12 rounded-full shadow-[0_10px_25px_rgba(4,7,12,0.45)] transition-transform duration-300 group-hover:scale-105"
+            />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/explore')}
+            className="hidden rounded-lg border border-aurora-400/40 bg-aurora-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-aurora-100 transition hover:bg-aurora-400/15 sm:inline-flex"
+          >
+            Explore
+          </button>
+        </div>
 
         {/* Center - Room Info (Desktop) */}
         {showRoomInfo && room && (
@@ -90,11 +101,12 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
           {user && (
             <>
               <div className="flex items-center gap-3">
-                {user.photoURL && (
+                {avatarSrc && (
                   <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'User'}
-                    className="h-9 w-9 rounded-full border border-aurora-500/40 shadow-xl"
+                    src={avatarSrc}
+                    alt={user.displayName || user.email || 'User'}
+                    className="h-9 w-9 rounded-full border border-aurora-500/40 shadow-xl object-cover"
+                    loading="lazy"
                   />
                 )}
                 <span className="font-medium text-shadow-100">{user.displayName || user.email}</span>
@@ -143,6 +155,17 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-aurora-500/20 bg-midnight-400/80 backdrop-blur-md">
           <div className="px-4 py-4 space-y-4">
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/explore');
+                setMobileMenuOpen(false);
+              }}
+              className="w-full rounded-lg border border-aurora-400/30 bg-aurora-500/10 px-4 py-3 text-sm font-medium text-aurora-100 transition-colors hover:bg-aurora-500/20"
+            >
+              Explore
+            </button>
+
             {/* Room Info Mobile */}
             {showRoomInfo && room && (
               <div className="space-y-3 pb-4 border-b border-midnight-600">
@@ -169,11 +192,12 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
             {user && (
               <>
                 <div className="flex items-center gap-3 pb-4 border-b border-midnight-600">
-                  {user.photoURL && (
+                  {avatarSrc && (
                     <img
-                      src={user.photoURL}
-                      alt={user.displayName || 'User'}
-                      className="w-10 h-10 rounded-full border-2 border-aurora-400/60"
+                      src={avatarSrc}
+                      alt={user.displayName || user.email || 'User'}
+                      className="w-10 h-10 rounded-full border-2 border-aurora-400/60 object-cover"
+                      loading="lazy"
                     />
                   )}
                   <span className="text-shadow-100 font-medium">{user.displayName || user.email}</span>

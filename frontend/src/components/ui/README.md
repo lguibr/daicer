@@ -1,183 +1,127 @@
-# UI Components
+# UI Primitives
 
-Primitive UI components built with Radix UI primitives and Tailwind CSS. These form the foundation of the application's design system.
+Tailwind + Radix-based component primitives that underpin every screen. Keep them lean, accessible, and theme-aware.
 
-## Architecture
+---
 
-```mermaid
-graph TD
-    A[UI Components] --> B[Form Controls]
-    A --> C[Layout]
-    A --> D[Feedback]
+## Philosophy
 
-    B --> E[Button]
-    B --> F[Input]
-    B --> G[Textarea]
-    B --> H[Select]
-    B --> I[Label]
+- **Composable**: Build larger surfaces by combining primitives, not by duplicating styling.
+- **Accessible defaults**: Proper semantics, ARIA attributes, focus states baked in.
+- **Theme driven**: Colors, spacing, and typography sourced from Tailwind tokens (`aurora`, `nebula`, `midnight`).
+- **Deterministic variants**: Use `class-variance-authority` to maintain a single source of truth for styling permutations.
 
-    C --> J[Card]
+---
 
-    D --> K[AnimatedBackground]
-    D --> L[LanguageSelector]
+## Catalogue
 
-    style A fill:#4a5568
-    style B fill:#2d3748
-    style C fill:#2d3748
-    style D fill:#2d3748
-```
+| Category      | Components                                                             | Notes                                                           |
+| ------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Form Controls | `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Toggle`, `Label` | Wrap Radix primitives where it adds value; otherwise plain HTML |
+| Layout        | `Card`, `Sheet`, `Dialog`, `Tabs`, `Accordion`                         | Guarantee animated transitions respect `prefers-reduced-motion` |
+| Feedback      | `Toaster`, `Alert`, `Badge`, `Progress`, `Skeleton`                    | Use consistent iconography and color semantics                  |
+| Navigation    | `Breadcrumb`, `Tabs`, `Menu`, `Pagination`                             | Keep keyboard navigation first-class                            |
+| Visual        | `AnimatedBackground`, `LanguageSelector`, `Avatar`                     | Provide fallback states for missing data                        |
 
-## Components
+See `components/ui/index.ts` for barrel exports.
 
-### Form Controls
+---
 
-#### Button
+## Usage Examples
 
-Multi-variant button component with size options.
-
-**Variants:** `default` | `destructive` | `outline` | `secondary` | `ghost` | `link`  
-**Sizes:** `default` | `sm` | `lg` | `icon`
+### Button Variants
 
 ```tsx
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ui/button';
 
-<Button variant="default" size="lg">Click Me</Button>
-<Button variant="destructive">Delete</Button>
-<Button size="icon">★</Button>
+function Actions() {
+  return (
+    <div className="flex gap-2">
+      <Button>Continue</Button>
+      <Button variant="outline">Cancel</Button>
+      <Button variant="destructive">Delete</Button>
+      <Button size="icon" aria-label="Open debug panel">
+        ⚙️
+      </Button>
+    </div>
+  );
+}
 ```
 
-#### Input
-
-Styled text input with focus states.
+### Form Layout
 
 ```tsx
-import Input from '@/components/ui';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
-<Input type="email" placeholder="Email address" />
-<Input type="password" disabled />
+function WorldSettingsForm() {
+  return (
+    <form className="space-y-4">
+      <div>
+        <Label htmlFor="world-name">World Name</Label>
+        <Input id="world-name" maxLength={48} required />
+      </div>
+      <div>
+        <Label htmlFor="world-prompt">Prompt</Label>
+        <Textarea id="world-prompt" rows={5} />
+      </div>
+    </form>
+  );
+}
 ```
 
-#### Textarea
+---
 
-Multi-line text input with auto-resize.
+## Styling System
 
-```tsx
-import Textarea from '@/components/ui';
+- Tailwind config extends theme with custom colors:
+  - `aurora` (cyan gradient) for primary actions.
+  - `nebula` (purple) for secondary accents.
+  - `ember` (orange) for combat emphasis.
+- `cn()` utility merges class names safely (`src/lib/utils.ts`).
+- Dark mode by default; respect light mode experiments by toggling `data-theme`.
 
-<Textarea placeholder="Enter description" rows={4} />;
-```
+---
 
-#### Select
+## Accessibility Notes
 
-Dropdown select with keyboard navigation (Radix UI).
+- Focus outlines are highly visible (`ring-2 ring-aurora-500`).
+- `Select` uses Radix primitives to ensure keyboard + screen reader support.
+- Motion utilities (`AnimatedBackground`) check `prefers-reduced-motion`.
+- `LanguageSelector` exposes `aria-label` and uses ISO language codes.
 
-```tsx
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui';
-
-<Select>
-  <SelectTrigger>
-    <SelectValue placeholder="Choose" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="option1">Option 1</SelectItem>
-    <SelectItem value="option2">Option 2</SelectItem>
-  </SelectContent>
-</Select>;
-```
-
-#### Label
-
-Accessible form label component.
-
-```tsx
-import Label from '@/components/ui';
-
-<Label htmlFor="username">Username</Label>
-<Input id="username" />
-```
-
-### Layout
-
-#### Card
-
-Flexible card container with sub-components.
-
-```tsx
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
-
-<Card>
-  <CardHeader>
-    <CardTitle>Card Title</CardTitle>
-    <CardDescription>Description text</CardDescription>
-  </CardHeader>
-  <CardContent>Main content</CardContent>
-  <CardFooter>Footer content</CardFooter>
-</Card>;
-```
-
-### Feedback & Visual
-
-#### AnimatedBackground
-
-Cosmic-themed animated background with aurora effects.
-
-```tsx
-import AnimatedBackground from '@/components/ui';
-
-<AnimatedBackground />;
-```
-
-#### LanguageSelector
-
-Dropdown for language selection with flag emojis.
-
-```tsx
-import LanguageSelector from '@/components/ui';
-
-<LanguageSelector />;
-```
-
-## Design System
-
-### Color Palette
-
-- **Primary:** Aurora (cyan/blue gradients)
-- **Secondary:** Nebula (purple/pink gradients)
-- **Neutral:** Shadow/Midnight (dark grays/blues)
-- **Semantic:** Red (destructive), Green (success)
-
-### Spacing
-
-Follows Tailwind's spacing scale (0.25rem increments).
-
-### Typography
-
-- **Font:** System font stack
-- **Sizes:** `text-xs` to `text-4xl`
-- **Weights:** `font-normal`, `font-medium`, `font-semibold`, `font-bold`
+---
 
 ## Testing
 
-All components have comprehensive test coverage using Vitest and Testing Library.
-
 ```bash
-yarn test ui/__tests__
+yarn test frontend/src/components/ui/__tests__
 ```
 
-## Storybook
+- Snapshot structural output to catch regressions.
+- Use Testing Library for interaction (e.g. dropdown navigation).
+- For motion components, mock `IntersectionObserver` / timers where needed.
 
-View all component variants and states:
+---
+
+## Storybook Coverage
+
+- Stories under `UI/` show every variant + disabled/invalid states.
+- Add docs stories when introducing new primitives to describe usage constraints.
+
+Run Storybook:
 
 ```bash
 yarn storybook
 ```
 
-Navigate to `UI/` section in Storybook sidebar.
+---
 
-## Type Safety
+## Adding a Primitive
 
-All components are fully typed with TypeScript. Shared types are exported from `@/components/types`.
-
-```tsx
-import type { ButtonProps, InputSize } from '@/components/types';
-```
+1. Create component file (e.g. `switch.tsx`).
+2. Wrap Radix primitive if accessible semantics already solved.
+3. Define `cva` variants for size/color if relevant.
+4. Provide test + story + doc comment.
+5. Export from `components/ui/index.ts` and update this README.

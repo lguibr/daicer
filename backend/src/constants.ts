@@ -40,6 +40,8 @@ export const NEW_CHARACTER_TEMPLATE: CharacterSheet = {
     will: 0,
   },
   skills: {},
+  skillDetails: [],
+  expertises: [],
   attacks: [],
   equipment: '',
   currency: {
@@ -51,6 +53,7 @@ export const NEW_CHARACTER_TEMPLATE: CharacterSheet = {
   },
   proficienciesAndLanguages: '',
   features: '',
+  talents: [],
   appearance: {
     age: '',
     height: '',
@@ -67,8 +70,22 @@ export const NEW_CHARACTER_TEMPLATE: CharacterSheet = {
     flaws: '',
   },
   backstory: '',
+  backgroundDetails: {
+    origin: '',
+    upbringing: '',
+    motivation: '',
+    keyEvents: [],
+    allies: [],
+  },
   alliesAndOrganizations: '',
   treasure: '',
+  resourcePools: [],
+  advancementPoints: {
+    ability: 0,
+    skill: 0,
+    talent: 0,
+  },
+  avatarAssets: null,
   spellcasting: {
     class: '',
     ability: '',

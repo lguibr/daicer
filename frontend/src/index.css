@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -18,9 +18,10 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: radial-gradient(circle at top, rgba(51, 64, 78, 0.25), transparent 55%),
-    linear-gradient(135deg, rgba(12, 16, 20, 0.92), rgba(6, 7, 8, 0.92)),
-    theme('colors.midnight.200');
+  background:
+    radial-gradient(circle at 12% 18%, rgba(216, 132, 22, 0.18), transparent 52%),
+    radial-gradient(circle at 82% 8%, rgba(122, 73, 217, 0.18), transparent 48%),
+    linear-gradient(140deg, rgba(7, 5, 7, 0.98), rgba(11, 8, 10, 0.96));
   color: theme('colors.shadow.100');
   overflow-x: hidden;
 }
@@ -64,7 +65,7 @@ h4 {
 }
 
 .input-style {
-  @apply px-3 py-2 rounded-lg border border-midnight-600 bg-midnight-500/70 text-shadow-100 transition-all duration-200 focus:border-aurora-400 focus:ring-2 focus:ring-aurora-400/60 focus:outline-none;
+  @apply px-3 py-2 rounded-lg border border-midnight-600 bg-midnight-500/70 text-shadow-100 transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/50 focus:outline-none;
   box-shadow: inset 0 1px 2px rgba(5, 6, 7, 0.35);
 }
 
@@ -85,72 +86,74 @@ h4 {
 }
 
 ::selection {
-  background-color: rgba(211, 143, 31, 0.45);
+  background: linear-gradient(120deg, rgba(216, 132, 22, 0.55), rgba(122, 73, 217, 0.55));
   color: theme('colors.midnight.50');
 }
 
 ::-moz-selection {
-  background-color: rgba(211, 143, 31, 0.45);
+  background: linear-gradient(120deg, rgba(216, 132, 22, 0.55), rgba(122, 73, 217, 0.55));
   color: theme('colors.midnight.50');
 }
 
 @layer base {
   :root {
     --font-display: 'Cinzel', serif;
-    --font-body: 'Spectral', Georgia, serif;
+    --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
-    --background: 214 22% 14%;
-    --foreground: 203 20% 92%;
-    --card: 214 25% 18%;
-    --card-foreground: 203 18% 94%;
-    --popover: 214 25% 18%;
-    --popover-foreground: 203 18% 94%;
-    --primary: 35 73% 45%;
-    --primary-foreground: 208 50% 12%;
-    --secondary: 214 26% 24%;
-    --secondary-foreground: 205 20% 90%;
-    --muted: 214 26% 24%;
-    --muted-foreground: 205 14% 64%;
-    --accent: 247 38% 38%;
-    --accent-foreground: 207 24% 92%;
-    --destructive: 8 69% 46%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 214 28% 26%;
-    --input: 214 28% 26%;
-    --ring: 38 74% 52%;
-    --chart-1: 38 72% 52%;
-    --chart-2: 205 62% 46%;
-    --chart-3: 247 48% 44%;
-    --chart-4: 161 38% 42%;
-    --chart-5: 12 60% 52%;
+    --background: 270 22% 6%;
+    --foreground: 40 45% 94%;
+    --card: 24 30% 12%;
+    --card-foreground: 38 38% 94%;
+    --popover: 24 30% 12%;
+    --popover-foreground: 38 38% 94%;
+    --primary: 38 78% 48%;
+    --primary-foreground: 24 68% 12%;
+    --secondary: 26 26% 20%;
+    --secondary-foreground: 38 34% 88%;
+    --muted: 25 20% 24%;
+    --muted-foreground: 34 18% 64%;
+    --accent: 278 64% 58%;
+    --accent-foreground: 261 75% 96%;
+    --destructive: 6 70% 48%;
+    --destructive-foreground: 24 68% 12%;
+    --border: 26 26% 26%;
+    --input: 26 26% 26%;
+    --ring: 38 78% 48%;
+    --chart-1: 38 78% 48%;
+    --chart-2: 280 64% 56%;
+    --chart-3: 18 63% 48%;
+    --chart-4: 48 36% 44%;
+    --chart-5: 6 60% 50%;
     --radius: 0.65rem;
+    --app-accent: hsl(var(--accent));
   }
 
   .dark {
-    --background: 214 22% 12%;
-    --foreground: 203 20% 92%;
-    --card: 214 24% 16%;
-    --card-foreground: 203 18% 94%;
-    --popover: 214 24% 16%;
-    --popover-foreground: 203 18% 94%;
-    --primary: 35 73% 45%;
-    --primary-foreground: 208 50% 12%;
-    --secondary: 214 26% 22%;
-    --secondary-foreground: 205 20% 90%;
-    --muted: 214 26% 22%;
-    --muted-foreground: 205 14% 64%;
-    --accent: 247 38% 38%;
-    --accent-foreground: 207 24% 92%;
-    --destructive: 8 69% 46%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 214 28% 24%;
-    --input: 214 28% 24%;
-    --ring: 38 74% 52%;
-    --chart-1: 38 72% 52%;
-    --chart-2: 205 62% 46%;
-    --chart-3: 247 48% 44%;
-    --chart-4: 161 38% 42%;
-    --chart-5: 12 60% 52%;
+    --background: 270 22% 5%;
+    --foreground: 40 45% 94%;
+    --card: 26 32% 10%;
+    --card-foreground: 38 38% 94%;
+    --popover: 26 32% 10%;
+    --popover-foreground: 38 38% 94%;
+    --primary: 38 78% 48%;
+    --primary-foreground: 24 68% 12%;
+    --secondary: 28 24% 18%;
+    --secondary-foreground: 38 34% 88%;
+    --muted: 28 20% 20%;
+    --muted-foreground: 34 18% 64%;
+    --accent: 278 64% 58%;
+    --accent-foreground: 261 75% 96%;
+    --destructive: 6 70% 48%;
+    --destructive-foreground: 24 68% 12%;
+    --border: 28 24% 20%;
+    --input: 28 24% 20%;
+    --ring: 38 78% 48%;
+    --chart-1: 38 78% 48%;
+    --chart-2: 280 64% 56%;
+    --chart-3: 18 63% 48%;
+    --chart-4: 48 36% 44%;
+    --chart-5: 6 60% 50%;
+    --app-accent: hsl(var(--accent));
   }
 
   * {

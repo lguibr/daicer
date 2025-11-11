@@ -128,7 +128,10 @@ export function createDie(type: DieType, color: string): THREE.Group {
   dieGroup.add(dieBody);
 
   const numbers = FACE_NUMBER_MAP[type];
-  const positions = geometry.attributes.position;
+  const positions = geometry.getAttribute('position');
+  if (!positions) {
+    throw new Error('Die geometry is missing position attributes.');
+  }
   const indices = geometry.index;
 
   if (type === 2) {
@@ -195,28 +198,26 @@ export function createDie(type: DieType, color: string): THREE.Group {
       const normal = new THREE.Vector3().crossVectors(vB.clone().sub(vA), vC.clone().sub(vA)).normalize();
 
       const faceNumber = numbers[i];
-      if (faceNumber === undefined) {
-        continue;
+      if (faceNumber !== undefined) {
+        const plane = createNumberPlane(faceNumber, 0.5);
+        plane.position.copy(center).add(normal.clone().multiplyScalar(0.01));
+        plane.lookAt(center.clone().add(normal));
+        dieGroup.add(plane);
       }
-      const plane = createNumberPlane(faceNumber, 0.5);
-      plane.position.copy(center).add(normal.clone().multiplyScalar(0.01));
-      plane.lookAt(center.clone().add(normal));
-      dieGroup.add(plane);
     }
   } else {
-    const isIndexed = Boolean(indices);
-    const faceCount = isIndexed ? indices!.count / 3 : positions.count / 3;
+    const faceCount = indices ? indices.count / 3 : positions.count / 3;
 
     for (let i = 0; i < faceCount; i += 1) {
       const vA = new THREE.Vector3();
       const vB = new THREE.Vector3();
       const vC = new THREE.Vector3();
 
-      if (isIndexed) {
+      if (indices) {
         const idx = i * 3;
-        const iA = indices!.getX(idx);
-        const iB = indices!.getY(idx);
-        const iC = indices!.getZ(idx);
+        const iA = indices.getX(idx);
+        const iB = indices.getY(idx);
+        const iC = indices.getZ(idx);
         vA.fromBufferAttribute(positions, iA);
         vB.fromBufferAttribute(positions, iB);
         vC.fromBufferAttribute(positions, iC);
@@ -231,13 +232,12 @@ export function createDie(type: DieType, color: string): THREE.Group {
       const normal = new THREE.Vector3().crossVectors(vB.clone().sub(vA), vC.clone().sub(vA)).normalize();
 
       const faceNumber = numbers[i];
-      if (faceNumber === undefined) {
-        continue;
+      if (faceNumber !== undefined) {
+        const plane = createNumberPlane(faceNumber, type === 4 ? 0.6 : 0.5);
+        plane.position.copy(center).add(normal.clone().multiplyScalar(0.01));
+        plane.lookAt(center.clone().add(normal));
+        dieGroup.add(plane);
       }
-      const plane = createNumberPlane(faceNumber, type === 4 ? 0.6 : 0.5);
-      plane.position.copy(center).add(normal.clone().multiplyScalar(0.01));
-      plane.lookAt(center.clone().add(normal));
-      dieGroup.add(plane);
     }
   }
 

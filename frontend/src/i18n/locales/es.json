@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "dAIcer",
+    "title": "DAIcer",
     "subtitle": "Maestro de mazmorras con IA para leyendas de mesa",
     "heroDescription": "Forja una campaña viva con un Maestro de Mazmorras que honra la historia, la tensión y el trabajo en equipo.",
     "cards": {
@@ -193,6 +193,14 @@
   "debug": {
     "title": "Panel de Depuración",
     "close": "Cerrar"
+  },
+  "diceLoader": {
+    "messages": {
+      "summoning": "Invocando dados brillantes...",
+      "rattling": "Agitando la bandeja del destino...",
+      "focusing": "Consultando a los espíritus de la probabilidad...",
+      "calibrating": "Calibrando las tiradas críticas..."
+    }
   },
   "common": {
     "loading": "Cargando...",

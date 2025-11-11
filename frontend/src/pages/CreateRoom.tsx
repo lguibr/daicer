@@ -6,9 +6,10 @@ import { createRoom, updateRoomSettings, generateWorld } from '../services/api';
 import { useI18n } from '../i18n';
 import LanguageSelector from '../components/ui/LanguageSelector';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
-import Layout from '../components/layout/Layout';
+import { PrivateLayout } from '../components/layout';
 import { WORLD_ARCHETYPES, type ArchetypeSigil } from '../constants/worldArchetypes';
 import DiscreteSlider, { type SliderMark } from '../components/forms/DiscreteSlider';
+import NumericStepper from '../components/ui/NumericStepper';
 import type {
   AdventureLength,
   Difficulty,
@@ -47,13 +48,13 @@ function OptionTile({ label, detail, description, active, onSelect }: OptionTile
       onClick={onSelect}
       className={`w-full rounded-xl border px-4 py-4 text-left transition-all duration-200 ${
         active
-          ? 'border-aurora-500/60 bg-aurora-500/15 shadow-[0_18px_35px_rgba(211,143,31,0.25)]'
-          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-aurora-400/40 hover:bg-midnight-400/40'
+          ? 'border-accent/45 bg-gradient-to-br from-aurora-500/25 via-accent/15 to-midnight-700/40 shadow-[0_22px_45px_rgba(122,73,217,0.28)]'
+          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-accent/30 hover:bg-midnight-400/40'
       }`}
     >
       <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-shadow-400">
         <span>{label}</span>
-        <span className="rounded-full border border-midnight-400/50 bg-midnight-500/60 px-2 py-1 text-[0.6rem] text-shadow-200">
+        <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-1 text-[0.6rem] text-accent">
           {detail}
         </span>
       </div>
@@ -311,7 +312,7 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <Layout showNavbar={false}>
+    <PrivateLayout showNavbar={false}>
       {loading && <LoadingOverlay message={t('worldSettings.creating')} />}
       <div className="relative mx-auto min-h-screen max-w-6xl px-6 py-16 sm:px-10 lg:px-12">
         <div className="absolute right-6 top-6">
@@ -451,14 +452,17 @@ export default function CreateRoomPage() {
                     >
                       Party Size
                     </label>
-                    <input
+                    <NumericStepper
                       id="player-count-input"
-                      type="number"
+                      value={settings.playerCount}
+                      onChange={(next) => updateSetting('playerCount', next)}
                       min={1}
                       max={8}
-                      value={settings.playerCount}
-                      onChange={(event) => updateSetting('playerCount', Number.parseInt(event.target.value, 10) || 1)}
-                      className="input-style w-full"
+                      step={1}
+                      wrapperClassName="border border-midnight-600 bg-midnight-700/60"
+                      inputClassName="text-base font-semibold text-shadow-50"
+                      decreaseLabel="Decrease party size"
+                      increaseLabel="Increase party size"
                     />
                   </div>
                   <div className="space-y-2">
@@ -468,19 +472,17 @@ export default function CreateRoomPage() {
                     >
                       Starting Level
                     </label>
-                    <input
+                    <NumericStepper
                       id="starting-level-input"
-                      type="number"
+                      value={settings.startingLevel}
+                      onChange={(next) => updateSetting('startingLevel', next)}
                       min={1}
                       max={20}
-                      value={settings.startingLevel}
-                      onChange={(event) =>
-                        updateSetting(
-                          'startingLevel',
-                          Number.parseInt(event.target.value, 10) || settings.startingLevel
-                        )
-                      }
-                      className="input-style w-full"
+                      step={1}
+                      wrapperClassName="border border-midnight-600 bg-midnight-700/60"
+                      inputClassName="text-base font-semibold text-shadow-50"
+                      decreaseLabel="Decrease starting level"
+                      increaseLabel="Increase starting level"
                     />
                   </div>
                 </div>
@@ -576,11 +578,11 @@ export default function CreateRoomPage() {
                       onClick={() => updateDMStyle('specialMode', option.id)}
                       className={`rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 ${
                         settings.dmStyle.specialMode === option.id
-                          ? 'border-aurora-500/60 bg-aurora-500/15 shadow-[0_14px_28px_rgba(211,143,31,0.22)]'
-                          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-aurora-400/40 hover:bg-midnight-400/40'
+                          ? 'border-accent/40 bg-gradient-to-br from-accent/15 via-aurora-500/20 to-midnight-700/40 shadow-[0_20px_40px_rgba(122,73,217,0.25)]'
+                          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-accent/30 hover:bg-midnight-400/40'
                       }`}
                     >
-                      <p className="font-semibold text-aurora-200">{option.label}</p>
+                      <p className="font-semibold text-accent">{option.label}</p>
                       <p className="mt-1 text-xs leading-relaxed text-shadow-200">{option.description}</p>
                     </button>
                   ))}
@@ -636,6 +638,6 @@ export default function CreateRoomPage() {
           </form>
         </div>
       </div>
-    </Layout>
+    </PrivateLayout>
   );
 }

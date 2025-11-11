@@ -2,12 +2,12 @@ export default function AnimatedBackground() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-midnight-200 via-midnight-400 to-shadow-900" />
+      <div className="absolute inset-0 bg-gradient-to-br from-midnight-900 via-midnight-800 to-midnight-600" />
 
       {/* Moving veils */}
       <div className="absolute inset-0 mix-blend-screen opacity-80">
-        <div className="absolute -left-1/3 top-[-12%] h-[80%] w-[85%] rounded-full bg-gradient-to-br from-aurora-400/40 via-aurora-500/20 to-transparent blur-[120px] animate-veil-shift" />
-        <div className="absolute -right-1/4 bottom-[-18%] h-[90%] w-[95%] rounded-full bg-gradient-to-bl from-nebula-500/30 via-nebula-400/18 to-transparent blur-[140px] animate-ember-pulse" />
+        <div className="absolute -left-1/3 top-[-12%] h-[80%] w-[85%] rounded-full bg-gradient-to-br from-aurora-400/35 via-aurora-500/18 to-transparent blur-[120px] animate-veil-shift" />
+        <div className="absolute -right-1/4 bottom-[-18%] h-[90%] w-[95%] rounded-full bg-gradient-to-bl from-accent/35 via-nebula-400/18 to-transparent blur-[140px] animate-ember-pulse" />
       </div>
 
       {/* Subtle rune lattice */}
@@ -37,8 +37,8 @@ export default function AnimatedBackground() {
 
       {/* Horizon glow */}
       <div className="absolute inset-x-[-10%] bottom-[-20%] h-[55%]">
-        <div className="absolute inset-0 bg-gradient-to-t from-midnight-900/75 via-midnight-700/40 to-transparent blur-[90px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-aurora-500/35 via-transparent to-transparent blur-[110px] animate-aurora-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-t from-midnight-950/80 via-midnight-800/45 to-transparent blur-[90px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-accent/30 via-aurora-400/25 to-transparent blur-[110px] animate-aurora-pulse" />
       </div>
 
       {/* Noise layer */}

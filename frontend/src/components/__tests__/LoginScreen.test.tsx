@@ -52,7 +52,7 @@ describe('LoginScreen', () => {
     });
 
     render(<LoginScreen />);
-    expect(screen.getByText(/Signing in.../i)).toBeInTheDocument();
+    expect(screen.getByText(/Logging in.../i)).toBeInTheDocument();
   });
 
   test('displays error message', () => {

@@ -3,7 +3,7 @@
  */
 
 import { getDb } from '@/config/firebase';
-import type { Room, Player, Message, Creature, User, WorldSettings, GamePhase } from '@/types/index';
+import type { Room, Player, Message, Creature, User, WorldSettings, GamePhase, CharacterSheet } from '@/types/index';
 import { generateRoomCode } from '@/utils/room-code';
 import { logger } from '@/utils/logger';
 
@@ -174,6 +174,17 @@ export async function getPlayers(roomId: string): Promise<Player[]> {
 }
 
 /**
+ * Get single player in room
+ * @param roomId - Room ID
+ * @param playerId - Player ID
+ * @returns Player or null
+ */
+export async function getPlayer(roomId: string, playerId: string): Promise<Player | null> {
+  const doc = await db().collection('rooms').doc(roomId).collection('players').doc(playerId).get();
+  return doc.exists ? (doc.data() as Player) : null;
+}
+
+/**
  * Update player action
  * @param roomId - Room ID
  * @param playerId - Player ID
@@ -192,6 +203,33 @@ export async function updatePlayerAction(roomId: string, playerId: string, actio
 export async function setPlayerReady(roomId: string, playerId: string, isReady: boolean): Promise<void> {
   await db().collection('rooms').doc(roomId).collection('players').doc(playerId).update({ isReady });
   logger.info(`Player ${playerId} ready state: ${isReady}`);
+}
+
+/**
+ * Update player character sheet
+ * @param roomId - Room ID
+ * @param playerId - Player ID
+ * @param character - Updated character sheet
+ * @returns Updated player
+ */
+export async function updatePlayerCharacter(
+  roomId: string,
+  playerId: string,
+  character: CharacterSheet
+): Promise<Player> {
+  const playerRef = db().collection('rooms').doc(roomId).collection('players').doc(playerId);
+  await playerRef.update({
+    character,
+    name: character.name,
+    updatedAt: Date.now(),
+  });
+
+  const updated = await playerRef.get();
+  if (!updated.exists) {
+    throw new Error(`Player ${playerId} not found in room ${roomId} after update`);
+  }
+
+  return updated.data() as Player;
 }
 
 /**

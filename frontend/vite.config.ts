@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        daicer: path.resolve(__dirname, '..'),
       },
     },
     test: {

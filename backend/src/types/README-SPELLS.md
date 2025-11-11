@@ -1,314 +1,214 @@
-# Spell System with Spatial Effect Types
+# Spell System Reference
 
-**CORE combat mechanic** - Spell shapes determine which grid squares are affected in battle.
+Single source of truth for spell data, spatial effect types, and combat integration across backend + frontend.
 
-## Architecture
+---
 
-```mermaid
-graph TD
-    A[Spell System] --> B[Parsing]
-    A --> C[Type System]
-    A --> D[CORE Combat]
-    A --> E[API]
-    A --> F[Frontend]
-
-    B --> B1[raw_spell_book.html]
-    B1 --> B2[parse-spells.ts]
-    B2 --> B3[spells.json - 487 spells]
-
-    C --> C1[SpellEffectShape enum]
-    C --> C2[EffectDimensions]
-    C --> C3[SpellData interface]
-
-    D --> D1[spell-targeting.ts]
-    D1 --> D2[calculateConeArea]
-    D1 --> D3[calculateSphereArea]
-    D1 --> D4[calculateLineArea]
-    D1 --> D5[calculateCubeArea]
-    D1 --> D6[calculateAffectedSquares]
-
-    E --> E1[/api/spells]
-    E --> E2[/api/spells/:id]
-    E --> E3[/api/spells/shapes/:shape]
-
-    F --> F1[SpellEffectOverlay]
-    F --> F2[28+ Storybook stories]
-
-    style D fill:#ff6b6b
-    style D1 fill:#ff6b6b
-```
-
-## Spatial Effect Shapes (CORE)
-
-### Single Target
-
-#### MELEE_TOUCH
-
-- **Range**: Adjacent square (5ft)
-- **Example**: Cure Wounds, Shocking Grasp
-- **Friendly Fire**: No
-- **LOS**: Yes
-
-#### RANGED_SINGLE
-
-- **Range**: Variable (30-120ft typical)
-- **Example**: Eldritch Blast, Fire Bolt
-- **Targets**: One creature, spell guides to target
-- **Friendly Fire**: No
-- **LOS**: Yes
-
-#### PROJECTILE_STRAIGHT
-
-- **Range**: Variable
-- **Example**: Scorching Ray
-- **Behavior**: Straight line, stops at first hit
-- **Friendly Fire**: No (usually)
-- **LOS**: Required
-
-### Area of Effect
-
-#### CONE
+## End-to-End Pipeline
 
 ```mermaid
-graph LR
-    C[Caster] --> A[  ]
-    C --> B[ ]
-    C --> D[  ]
-    A --> E[    ]
-    B --> F[   ]
-    D --> G[    ]
-    E --> H[     ]
-    F --> I[    ]
-    G --> J[     ]
+flowchart LR
+    RawHTML[raw_spell_book.html] --> Parser[parse-spells.ts]
+    Parser --> JSON[spells.json (487 spells)]
+    JSON --> Seeder[seed-spells.ts]
+    Seeder --> Firestore[(Firestore Collection: spells)]
+
+    JSON --> Types[backend/src/types/spells.ts]
+    Types --> Combat[combat/spell-targeting.ts]
+    Types --> API[api/spells.ts]
+    Types --> FrontendTypes[frontend/src/types/spells.ts]
+    FrontendTypes --> Overlay[SpellEffectOverlay]
 ```
 
-- **Dimensions**: Length in feet (15ft, 30ft, 60ft)
-- **Example**: Burning Hands (15ft), Cone of Cold (60ft)
-- **Spreads**: Wider as it extends
-- **Friendly Fire**: YES
-- **LOS**: Required from caster
+Key properties:
 
-#### LINE
+- **Deterministic source**: Derived from SRD HTML. Parsing script owned here.
+- **Type safe**: Shared enums/interfaces enforce identical shapes across stack.
+- **Tested**: Geometry functions backed by snapshot + numeric tests.
 
-- **Dimensions**: Length x Width (100ft x 5ft typical)
-- **Example**: Lightning Bolt (100ft x 5ft)
-- **Pattern**: Straight line through all targets
-- **Friendly Fire**: YES
-- **LOS**: Required
+---
 
-#### SPHERE
+## Core Types
 
-- **Dimensions**: Radius (10-40ft)
-- **Example**: Fireball (20ft), Thunderwave (5ft)
-- **Pattern**: Radius around target point
-- **Friendly Fire**: YES
-- **LOS**: To target point
+```typescript
+export enum SpellEffectShape {
+  MELEE_TOUCH = 'MELEE_TOUCH',
+  RANGED_SINGLE = 'RANGED_SINGLE',
+  PROJECTILE_STRAIGHT = 'PROJECTILE_STRAIGHT',
+  CONE = 'CONE',
+  LINE = 'LINE',
+  SPHERE = 'SPHERE',
+  CUBE = 'CUBE',
+  CYLINDER = 'CYLINDER',
+  SELF_ONLY = 'SELF_ONLY',
+  SELF_AURA = 'SELF_AURA',
+  WALL = 'WALL',
+}
 
-#### CUBE
+export interface SpellEffectDimensions {
+  radius?: number;
+  length?: number;
+  lineLength?: number;
+  lineWidth?: number;
+  height?: number;
+  cubeSize?: number;
+}
 
-- **Dimensions**: Side length (10-30ft)
-- **Example**: Thunderwave (15ft cube)
-- **Pattern**: NxN grid squares
-- **Friendly Fire**: YES
-- **LOS**: To target point
+export interface SpellData {
+  id: string;
+  name: string;
+  level: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  school: SpellSchool;
+  effectShape: SpellEffectShape;
+  effectDimensions?: SpellEffectDimensions;
+  damage?: DamageProfile;
+  savingThrow?: AbilityScore;
+  castingTime: string;
+  range: string;
+  duration: string;
+  concentration: boolean;
+  description: string;
+  higherLevel?: string;
+}
+```
 
-#### CYLINDER
+See `backend/src/types/spells.ts` for the complete set (damage types, components, flags).
 
-- **Dimensions**: Radius + Height
-- **Example**: Flame Strike (10ft radius, 40ft height)
-- **Pattern**: Vertical cylinder (2D = sphere)
-- **Friendly Fire**: YES
+---
 
-### Special
+## Spatial Effect Shapes
 
-#### SELF_ONLY
+| Shape                 | Typical Range           | Friendly Fire | Line of Sight   | Examples                    |
+| --------------------- | ----------------------- | ------------- | --------------- | --------------------------- |
+| `MELEE_TOUCH`         | 5 ft                    | No            | Yes             | Cure Wounds, Shocking Grasp |
+| `RANGED_SINGLE`       | 30–120 ft               | No            | Yes             | Eldritch Blast, Fire Bolt   |
+| `PROJECTILE_STRAIGHT` | Variable                | Usually No    | Yes             | Scorching Ray               |
+| `CONE`                | 15–60 ft length         | Yes           | Yes             | Burning Hands, Cone of Cold |
+| `LINE`                | 60–120 ft length        | Yes           | Yes             | Lightning Bolt              |
+| `SPHERE`              | 5–40 ft radius          | Yes           | To target point | Fireball, Thunderwave       |
+| `CUBE`                | 10–30 ft edges          | Yes           | To target point | Thunderwave                 |
+| `CYLINDER`            | Radius + height         | Yes           | Partial         | Flame Strike                |
+| `SELF_ONLY`           | Self                    | No            | No              | Shield                      |
+| `SELF_AURA`           | Radius (moving)         | Possible      | No              | Spirit Guardians            |
+| `WALL`                | Length/height/thickness | Blocks LOS    | To placement    | Wall of Fire                |
 
-- **Targets**: Caster only
-- **Example**: Shield, Mage Armor
-- **Friendly Fire**: No
-- **LOS**: No
+Helpers:
 
-#### SELF_AURA
+- `canCauseFriendlyFire(shape)` — warn UI players of risk.
+- `requiresLineOfSight(shape)` — ensures DM checks visibility.
+- `requiresConcentration(spell)` — evaluate disruption rules.
 
-- **Dimensions**: Radius
-- **Example**: Spirit Guardians (15ft)
-- **Pattern**: Moves with caster
-- **Friendly Fire**: Can affect allies
-- **LOS**: No
-
-#### WALL
-
-- **Dimensions**: Length, Height, Thickness
-- **Example**: Wall of Fire, Wall of Stone
-- **Pattern**: Linear or circular barrier
-- **Blocks**: Movement and LOS
+---
 
 ## Combat Integration
 
 ```mermaid
 sequenceDiagram
     participant Player
-    participant CombatGraph
-    participant SpellTargeting
+    participant Graph as Combat Graph
+    participant Spell as spell-targeting.ts
     participant Grid
 
-    Player->>CombatGraph: Cast Fireball at (10,10)
-    CombatGraph->>SpellTargeting: calculateAffectedSquares(sphere, 20ft)
-    SpellTargeting->>Grid: Get all squares in 20ft radius
-    Grid-->>SpellTargeting: 50 squares
-    SpellTargeting-->>CombatGraph: Affected positions
-    CombatGraph->>CombatGraph: Find characters in squares
-    CombatGraph->>CombatGraph: Apply damage (8d6 fire)
-    CombatGraph->>CombatGraph: Roll saves for each
-    CombatGraph-->>Player: Damage results
+    Player->>Graph: Cast Fireball at (10,10)
+    Graph->>Spell: calculateAffectedSquares(SPHERE, 20ft, ...)
+    Spell->>Grid: enumerate squares
+    Grid-->>Spell: squares hit
+    Spell-->>Graph: affected positions
+    Graph->>Graph: apply damage + saves
+    Graph-->>Player: narrated outcome
 ```
 
-## Grid Calculations
+Primary functions (`backend/src/combat/spell-targeting.ts`):
 
-### Core Functions
+- `calculateAffectedSquares(shape, dimensions, casterPos, targetPos, gridWidth, gridHeight)`
+- `calculateConeArea`, `calculateSphereArea`, `calculateLineArea`, `calculateCubeArea`, etc.
+- `determineRequiredSaves(spell, targets)`
+- `outlineWallSegments(spell, wallOrigin)`
 
-**`calculateAffectedSquares()`** - Main integration point
+All geometry functions operate on 5 ft squares (grid coordinates). They are deterministic given identical inputs, enabling combat time-travel.
 
-```typescript
-// Example: Fireball
-const affected = calculateAffectedSquares(
-  SpellEffectShape.SPHERE,
-  { radius: 20 },
-  casterPos,
-  targetPos,
-  gridWidth,
-  gridHeight
-);
-// Returns: Array of all grid squares in 20ft radius
-```
+---
 
-**`canCauseFriendlyFire()`** - Safety check
+## Dataset Stats
 
-```typescript
-if (canCauseFriendlyFire(spell.effectShape)) {
-  // Warn player about allies in area
-}
-```
+- **Total spells**: 487
+  - Level 0 (Cantrips): 50
+  - Level 1–9: 437
+- Each spell entry contains:
+  - Localization-ready name + description
+  - Components (V/S/M) with material text
+  - Tags (`ritual`, `concentration`)
+  - Damage profile (dice formula + type)
+  - Saving throw ability (if any)
+  - Effect shape + dimensions
+  - Source reference (SRD page)
 
-**`requiresLineOfSight()`** - LOS check
+---
 
-```typescript
-if (requiresLineOfSight(spell.effectShape)) {
-  // Check LOS from caster to target
-}
-```
-
-## Data Structure
-
-**Spell Level**: 0-9 (spell level, NOT character level)
-
-- 0 = Cantrip
-- 1-9 = Spell levels
-
-**487 Spells Parsed**:
-
-- Level 0: ~50 cantrips
-- Level 1-9: ~437 leveled spells
-
-## API Endpoints
+## API Surface
 
 ```bash
-GET /api/spells                    # List all
-GET /api/spells?level=3            # Level 3 spells
-GET /api/spells?school=evocation   # By school
-GET /api/spells?effectShape=cone   # By shape
-GET /api/spells/:id                # Single spell
-GET /api/spells/shapes/sphere      # All sphere spells
-GET /api/spells/levels/0           # All cantrips
+GET /api/spells
+GET /api/spells?level=3
+GET /api/spells?school=evocation
+GET /api/spells?effectShape=cone
+GET /api/spells/:id
+GET /api/spells/shapes/:shape
+GET /api/spells/levels/:level
 ```
+
+Responses adhere to shared `SpellData` type. Filtering performed in Firestore via composite indexes (see `firestore.indexes.json`).
+
+---
+
+## Frontend Usage
+
+- `frontend/src/types/spells.ts` re-exports the same enums/interfaces.
+- `SpellEffectOverlay` Storybook stories visualize every shape (28+ stories).
+- Combat UI uses `useCombat` hook to render affected squares and friendly fire warnings.
+- Spell search UI uses filters identical to API query parameters.
+
+---
 
 ## Testing
 
-**Backend**: 58/58 tests passing
-
-- Targeting calculations: 46 tests
-- API/Data structure: 12 tests
+Backend:
 
 ```bash
-yarn test spell-targeting.test.ts
-yarn test spells.test.ts
+yarn test backend/src/combat/__tests__/spell-targeting.test.ts
+yarn test backend/src/api/__tests__/spells.spec.ts
 ```
 
-## Storybook Visualization
+- 46 geometry tests (snapshots + numeric assertions).
+- 12 API tests covering filters, pagination, caching.
+- Golden fixtures stored under `backend/src/combat/__tests__/fixtures/`.
 
-**28+ stories** showing:
-
-- Cone in 8 directions
-- Sphere at 5 radii (10, 15, 20, 30, 40ft)
-- Line at 4 angles + diagonal
-- Cube at 4 sizes
-- Cylinder variants
-- Single target types
-- Self effects
-- Famous spells (Fireball, Lightning Bolt, Cone of Cold)
+Frontend:
 
 ```bash
+yarn test frontend/src/components/combat/__tests__/SpellEffectOverlay.spec.tsx
 yarn storybook
-# Navigate to Combat/SpellEffectOverlay
 ```
 
-## Usage Examples
+Storybook manual QA ensures visuals match calculations.
 
-### Fireball
+---
 
-```typescript
-const spell = {
-  name: 'Fireball',
-  level: 3, // Spell level, not caster level
-  effectShape: SpellEffectShape.SPHERE,
-  effectDimensions: { radius: 20 },
-};
+## Extending the System
 
-const affected = calculateAffectedSquares(
-  spell.effectShape,
-  spell.effectDimensions,
-  casterPosition,
-  targetPoint,
-  gridWidth,
-  gridHeight
-);
-// Returns ~50 squares in 20ft radius
-```
+1. Update parser (`backend/src/scripts/parse-spells.ts`) if SRD format changes.
+2. Regenerate JSON dataset (`yarn ts-node backend/src/scripts/parse-spells.ts`).
+3. Rerun seed script or import via Firebase console.
+4. Add/adjust type definitions in `spells.ts`.
+5. Extend geometry helpers + tests for new shapes.
+6. Sync frontend types + stories.
+7. Update this README with the new shape or capability.
 
-### Lightning Bolt
+---
 
-```typescript
-const spell = {
-  name: 'Lightning Bolt',
-  level: 3,
-  effectShape: SpellEffectShape.LINE,
-  effectDimensions: { lineLength: 100, lineWidth: 5 },
-};
-// Affects ~20 squares in 100ft line
-```
+## References
 
-### Burning Hands
-
-```typescript
-const spell = {
-  name: 'Burning Hands',
-  level: 1,
-  effectShape: SpellEffectShape.CONE,
-  effectDimensions: { length: 15 },
-};
-// Affects spreading cone up to 15ft
-```
-
-## Files
-
-- `backend/src/types/spells.ts` - Type definitions
-- `backend/src/combat/spell-targeting.ts` - CORE calculations
-- `backend/src/combat/__tests__/spell-targeting.test.ts` - 46 tests
-- `backend/src/api/spells.ts` - REST endpoints
-- `backend/src/api/__tests__/spells.test.ts` - 12 tests
-- `backend/src/scripts/parse-spells.ts` - HTML parser
-- `seeds/scripts/seed-spells.ts` - Firestore seeder
-- `seeds/game-data/spells.json` - 487 spells
-- `frontend/src/types/spells.ts` - Frontend types
-- `frontend/src/components/combat/SpellEffectOverlay.tsx` - Visualization
-- `frontend/src/components/combat/SpellEffectOverlay.stories.tsx` - 28+ stories
+- `backend/src/combat/README.md` (coming soon) — broader combat engine docs.
+- `docs/graphs/combat-graph.mmd` — Mermaid of combat LangGraph.
+- `frontend/src/components/combat/README.md` — UI integration.
+- SRD license: `docs/LICENSE-SRD.md`.

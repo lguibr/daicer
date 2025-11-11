@@ -20,6 +20,7 @@ concurrency:
 
 env:
   NODE_VERSION: '22.13'
+  NODE_MODULES_ARTIFACT: node-modules-${{ github.run_id }}
 
 jobs:
   # Install dependencies once and cache for all jobs
@@ -37,12 +38,9 @@ jobs:
           cache: yarn
           cache-dependency-path: yarn.lock
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        id: yarn-cache
+      - name: Restore node_modules cache
+        id: node-modules-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             node_modules
@@ -51,6 +49,29 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Save node_modules cache
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            frontend/node_modules
+            backend/node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Upload dependencies artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: |
+            node_modules
+            frontend/node_modules
+            backend/node_modules
+          retention-days: 1
 
   # Parallel quality checks
   format:
@@ -66,14 +87,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Check code formatting
         run: yarn format:check
@@ -91,14 +109,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Lint frontend
         run: yarn lint:check:frontend
@@ -116,14 +131,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Lint backend
         run: yarn lint:check:backend
@@ -141,14 +153,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Typecheck frontend
         run: yarn typecheck:frontend
@@ -166,14 +175,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Typecheck backend
         run: yarn typecheck:backend
@@ -191,14 +197,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Run frontend tests
         run: yarn test:ci:frontend
@@ -224,14 +227,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Run backend tests
         run: yarn test:ci:backend
@@ -257,14 +257,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Build frontend
         run: yarn build:frontend
@@ -289,14 +286,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Restore dependencies
-        uses: actions/cache@v4
+      - name: Download dependencies artifact
+        uses: actions/download-artifact@v4
         with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          name: ${{ env.NODE_MODULES_ARTIFACT }}
+          path: .
 
       - name: Build backend
         run: yarn build:backend

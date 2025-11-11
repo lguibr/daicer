@@ -22,6 +22,7 @@ import gameDataRouter from '@/api/game-data';
 import combatSimRouter from '@/api/combat-sim';
 import spellsRouter from '@/api/spells';
 import assetsRouter from '@/api/assets';
+import charactersRouter from '@/api/characters';
 
 // Socket.io handlers
 import { initializeSocketHandlers } from '@/socket/handlers';
@@ -59,7 +60,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // Health check
 app.get('/health', (_req, res) => {
@@ -74,6 +76,7 @@ app.use('/api/game-data', gameDataRouter);
 app.use('/api/combat', combatSimRouter);
 app.use('/api/spells', spellsRouter);
 app.use('/api/assets', assetsRouter);
+app.use('/api/characters', charactersRouter);
 
 // Error handling
 app.use(notFoundHandler);

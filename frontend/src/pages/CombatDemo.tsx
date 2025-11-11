@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Play, Pause, StepForward, StepBack, RotateCcw, Loader2 } from 'lucide-react';
-import Layout from '../components/layout/Layout';
+import { PrivateLayout } from '../components/layout';
 import { CombatGrid } from '../components/combat/CombatGrid';
 import { CharacterCard } from '../components/combat/CharacterCard';
 import { CombatLog } from '../components/combat/CombatLog';
@@ -29,8 +29,11 @@ export default function CombatDemoPage() {
         const data = await fetchCombatSimulationSummaries();
         if (cancelled) return;
         setScenarios(data);
-        if (!selectedScenarioId && data.length > 0) {
-          setSelectedScenarioId(data[0].id);
+        if (!selectedScenarioId) {
+          const [firstScenario] = data;
+          if (firstScenario) {
+            setSelectedScenarioId(firstScenario.id);
+          }
         }
       } catch (err) {
         if (cancelled) return;
@@ -39,7 +42,7 @@ export default function CombatDemoPage() {
       }
     };
 
-    void loadScenarios();
+    loadScenarios();
 
     return () => {
       cancelled = true;
@@ -73,7 +76,7 @@ export default function CombatDemoPage() {
       }
     };
 
-    void loadSimulation();
+    loadSimulation();
 
     return () => {
       cancelled = true;
@@ -174,7 +177,7 @@ export default function CombatDemoPage() {
   };
 
   return (
-    <Layout showRoomInfo={false}>
+    <PrivateLayout showRoomInfo={false}>
       <div className="min-h-screen bg-midnight-900 py-12 px-6 sm:px-10 lg:px-12 text-shadow-50">
         <div className="max-w-7xl mx-auto space-y-8">
           <header className="space-y-2">
@@ -412,6 +415,6 @@ export default function CombatDemoPage() {
           )}
         </div>
       </div>
-    </Layout>
+    </PrivateLayout>
   );
 }

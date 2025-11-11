@@ -27,6 +27,7 @@ export interface RaceDocument {
     bonus: number;
   }>;
   traits?: string[];
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -50,6 +51,7 @@ export interface CharacterClassDocument {
       from: string[];
     };
   };
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -68,6 +70,7 @@ export interface BackgroundDocument {
     name: string;
     description: string;
   };
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -105,6 +108,7 @@ export interface EquipmentDocument {
   weaponCategory?: 'Simple' | 'Martial';
   armorCategory?: 'Light' | 'Medium' | 'Heavy' | 'Shield';
   gearCategory?: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -116,6 +120,7 @@ export interface EquipmentCategoryDocument {
   index: string;
   name: string;
   equipment?: string[]; // References to equipment IDs
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -127,6 +132,7 @@ export interface WeaponPropertyDocument {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -139,6 +145,7 @@ export interface AbilityDocument {
   name: string;
   fullName: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -151,6 +158,7 @@ export interface SkillDocument {
   name: string;
   description: string;
   abilityScore: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -162,6 +170,7 @@ export interface ConditionDocument {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -173,6 +182,7 @@ export interface DamageTypeDocument {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -185,6 +195,7 @@ export interface LanguageDocument {
   name: string;
   isRare: boolean;
   note: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -196,6 +207,7 @@ export interface MagicSchoolDocument {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================
@@ -208,6 +220,7 @@ export interface AlignmentDocument {
   name: string;
   abbreviation: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 // ============================================================================

@@ -9,7 +9,7 @@ test.describe('Authentication', () => {
   test('shows login screen when not authenticated', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('h1')).toContainText('dAIcer');
+    await expect(page.locator('h1')).toContainText('DAIcer');
     await expect(page.getByRole('button', { name: /Continue with Google/i })).toBeVisible();
   });
 

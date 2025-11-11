@@ -44,10 +44,11 @@ describe('AnimatedBackground', () => {
     expect(background).toHaveClass('overflow-hidden');
   });
 
-  it('renders star field with custom background image', () => {
+  it('renders spark drift layer with custom background image', () => {
     const { container } = render(<AnimatedBackground />);
-    const starField = container.querySelector('[class*="animate-stars-twinkle"]');
-    expect(starField).toBeInTheDocument();
+    const sparkLayer = container.querySelector('.animate-spark-drift') as HTMLElement | null;
+    expect(sparkLayer).toBeInTheDocument();
+    expect(sparkLayer?.style.backgroundImage).toContain('radial-gradient');
   });
 
   it('renders dark overlay for readability', () => {

@@ -1,240 +1,259 @@
 # Daicer Backend
 
-<div align="center">
+Purpose-built orchestration layer for the AI Dungeon Master: REST + WebSocket APIs, LangGraph-tuned services, and Firebase persistence.
 
-![Daicer Logo](../frontend/public/logo.png)
+---
 
-[![CI](https://github.com/YOUR_USERNAME/daicer/workflows/CI/badge.svg)](https://github.com/YOUR_USERNAME/daicer/actions)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-22-green?logo=node.js)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-4.21-black?logo=express)](https://expressjs.com/)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)]()
-[![Code Style](https://img.shields.io/badge/code%20style-airbnb-ff5a5f)](https://github.com/airbnb/javascript)
+## TL;DR
 
-</div>
+- Express + Socket.IO server running on Node.js 22 with strict TypeScript and zero `any`.
+- Persists narrative, combat, and asset state to Firestore and Storage via Firebase Admin SDK.
+- Delegates AI-heavy work to LangChain / LangGraph services with deterministic dice rolls and audit trails.
+- Ships with emulator-first workflows, reproducible Cloud Run deployments, and CI-enforced QA gates.
 
-Multiplayer D&D dungeon master backend built with Express, Socket.io, Firebase, and LangChain.
+---
 
-## Architecture
+## Module Map
 
-```mermaid
-graph TB
-    Client[React Client] -->|HTTP/WS| LB[Load Balancer]
-    LB --> CR[Cloud Run Backend]
-    CR -->|Admin SDK| FS[Firestore]
-    CR -->|Admin SDK| FA[Firebase Auth]
-    CR -->|LangChain| LLM[LLM Providers]
-
-    subgraph "LLM Providers"
-        LLM --> Gemini
-        LLM --> OpenAI
-        LLM --> Anthropic
-    end
-
-    subgraph "Cloud Run"
-        CR --> Express[Express REST API]
-        CR --> SocketIO[Socket.io]
-        Express --> Middleware[Auth/Validation]
-        SocketIO --> Handlers[Event Handlers]
-    end
-```
-
-## Project Structure
-
-```
+```text
 backend/
 ├── src/
-│   ├── api/           # REST API endpoints
-│   ├── socket/        # Socket.io event handlers
-│   ├── services/      # Business logic (Firebase, LLM, Game)
-│   ├── middleware/    # Express middleware (auth, validation, error)
-│   ├── types/         # TypeScript type definitions
-│   ├── utils/         # Helper functions
-│   ├── config/        # Configuration (Firebase, LangChain)
-│   └── server.ts      # Entry point
-├── tests/             # Test files
-├── Dockerfile         # Container definition
-└── cloudbuild.yaml    # Cloud Build config
+│   ├── api/          HTTP controllers (RESTful surface)
+│   ├── services/     Business logic: game engine, Firestore, LLM, assets
+│   ├── socket/       Real-time combat + narrative events
+│   ├── middleware/   Auth, validation, error shaping
+│   ├── utils/        Shared helpers (logging, dice, responses)
+│   ├── types/        Domain models (spells, combat graph, payloads)
+│   ├── config/       Firebase + LangChain configuration
+│   ├── server.ts     Express + Socket boot strap
+│   └── ...           Tests, scripts, generators
+├── jest.config.js
+├── Dockerfile
+└── cloudbuild.yaml
 ```
 
-## Local Development
+Cross-links:
 
-### Prerequisites
+- API design: `src/api/README.md`
+- Socket design: `src/socket/README.md`
+- Service orchestration: `src/services/README.md`
+- Middleware contracts: `src/middleware/README.md`
+- Spell system types: `src/types/README-SPELLS.md`
 
-- Node.js 22.13+
-- Yarn
-- Firebase CLI
-- Docker (optional)
+---
 
-### Setup
+## Architecture Overview
 
-1. Install dependencies:
+```mermaid
+flowchart LR
+    Browser[Frontend\nReact/Vite] -->|HTTPS| REST[Express API]
+    Browser -->|WebSocket| WS[Socket.IO Gateway]
+
+    REST -->|Firebase Admin| Firestore[(Firestore)]
+    REST -->|Firebase Admin| Auth[(Auth)]
+    REST --> Services[Services Layer]
+
+    WS --> SocketHandlers[Socket Handlers]
+    SocketHandlers --> Services
+
+    Services -->|Graph Exec| LangGraph[LangGraph Engine]
+    LangGraph -->|Tool Calls| Dice[Deterministic Dice]
+    LangGraph -->|LLM Calls| LangChain[LangChain Client]
+
+    LangChain --> Gemini
+    LangChain --> OpenAI
+    LangChain --> Anthropic
+```
+
+Key traits:
+
+- **Stateless containers**: Everything needed to rebuild state lives in Firestore and LangGraph checkpoints.
+- **Deterministic combat**: Dice rolls seeded per encounter for replay & time-travel.
+- **Observability baked in**: Structured logging with request correlation IDs and per-turn traces.
+
+---
+
+## Getting Started (Local)
+
+1. Install workspace dependencies from repository root:
+
+   ```bash
+   yarn install:all
+   ```
+
+2. Copy environment templates (root + backend):
+
+   ```bash
+   cp .env.example .env.local
+   cp backend/.env.example backend/.env.local
+   ```
+
+3. Populate `backend/.env.local`:
+
+   ```env
+   GEMINI_API_KEY=your-gemini-key
+   FIREBASE_PROJECT_ID=daicer-dev
+   FIREBASE_STORAGE_BUCKET=daicer-dev.appspot.com
+   STORAGE_EMULATOR_HOST=http://127.0.0.1:9199
+   OPENAI_API_KEY=optional
+   ANTHROPIC_API_KEY=optional
+   ```
+
+4. Launch the full stack (from repo root):
+
+   ```bash
+   yarn dev
+   ```
+
+   - Spins up Firebase emulators, backend watcher (port `3001`), and frontend dev server.
+
+5. Alternative targeted workflows:
+
+   ```bash
+   yarn emulators           # Firebase only
+   yarn dev:backend         # Backend only
+   yarn test backend        # Jest in watch mode
+   yarn storybook           # UI component catalog
+   ```
+
+Docker users:
 
 ```bash
-yarn install
+docker-compose up backend   # Backend + emulators
+docker-compose up           # Full stack
 ```
 
-2. Configure environment:
+---
+
+## Runtime Responsibilities
+
+| Capability              | Where                                    | Notes                                                   |
+| ----------------------- | ---------------------------------------- | ------------------------------------------------------- |
+| REST endpoints          | `src/api`                                | Rooms, game lifecycle, asset generation, health checks  |
+| WebSocket events        | `src/socket`                             | Real-time room state, combat progression, notifications |
+| LangGraph orchestration | `src/services/game.ts`                   | Manages turn graph, tool execution, time travel         |
+| Firestore access        | `src/services/firestore.ts`              | Emulator-aware, batched writes, optimistic concurrency  |
+| Asset pipelines         | `src/services/asset-*.ts`                | Streams prompts to Gemini, stores outputs to Storage    |
+| Spell + combat math     | `src/combat/*.ts`, `src/types/spells.ts` | Grid calculations, targeting, deterministic dice        |
+
+---
+
+## Key Scripts
+
+| Command                       | Description                                        |
+| ----------------------------- | -------------------------------------------------- |
+| `yarn dev`                    | Start backend in watch mode (requires emulators)   |
+| `yarn build`                  | Compile TypeScript to `dist/`                      |
+| `yarn start`                  | Run compiled server (production)                   |
+| `yarn test`                   | Jest unit/integration suite (auto spins emulators) |
+| `yarn test:coverage`          | Jest with Istanbul coverage                        |
+| `yarn test:ci`                | Headless CI run (fail on warnings)                 |
+| `yarn lint` / `yarn lint:fix` | ESLint with Airbnb/TypeScript rules                |
+| `yarn format`                 | Prettier write                                     |
+| `yarn typecheck`              | `tsc --noEmit` safety net                          |
+
+---
+
+## Environment & Configuration
+
+- **Firebase emulators** (default): Firestore on `localhost:8080`, Auth on `9099`, Storage on `9199`.
+- **Service account**: Emulator mode uses `firebase-admin` without credentials; production injects service account via Secret Manager.
+- **LangChain providers**: Keys pulled from env; configure provider priority in `src/config/langchain.ts`.
+- **CORS**: Locked to `http://localhost:3000` in dev, environment variable driven in production.
+- **Rate limiting**: Apply per-route via `express-rate-limit` (see `src/middleware/README.md`).
+
+---
+
+## Testing & QA
 
 ```bash
-cp .env.example .env.local
-# Edit .env.local with your values
-```
+# Backend unit + integration suites
+yarn test backend
 
-3. Ensure the following variables are present in `.env.local` (copy from `.env.example` if missing):
+# Spell targeting golden tests
+yarn test backend/src/combat/__tests__/spell-targeting.test.ts
 
-```
-GEMINI_API_KEY=your-gemini-key
-FIREBASE_PROJECT_ID=daicer-dev
-FIREBASE_STORAGE_BUCKET=daicer-dev.appspot.com
-STORAGE_EMULATOR_HOST=http://127.0.0.1:9199
-```
-
-4. Start Firebase emulators (Terminal 1):
-
-```bash
-cd ..
-yarn emulators
-```
-
-5. Start backend (Terminal 2):
-
-```bash
-yarn dev
-```
-
-Backend runs on `http://localhost:3001`
-
-### With Docker
-
-```bash
-docker-compose up backend
-```
-
-## Available Scripts
-
-- `yarn dev` - Start development server with hot reload
-- `yarn build` - Build for production
-- `yarn start` - Start production server
-- `yarn lint` - Lint code
-- `yarn lint:fix` - Fix linting issues
-- `yarn format` - Format code with Prettier
-- `yarn test` - Run tests
-- `yarn test:watch` - Run tests in watch mode
-- `yarn test:coverage` - Generate coverage report
-- `yarn typecheck` - Type-check without emitting
-
-## API Endpoints
-
-### Health
-
-- `GET /health` - Health check
-
-### Rooms
-
-- `POST /api/rooms` - Create new room
-- `POST /api/rooms/:code/join` - Join room by code
-- `GET /api/rooms/:roomId` - Get room state
-- `PATCH /api/rooms/:roomId/settings` - Update settings (owner only)
-- `DELETE /api/rooms/:roomId` - Delete room (owner only)
-
-### Game
-
-- `POST /api/game/:roomId/world` - Generate world (owner only)
-- `POST /api/game/:roomId/character` - Add character
-- `POST /api/game/:roomId/turn` - Process turn
-
-- `POST /api/assets/avatar` - Generate portrait, upper-body, and full-body character variants
-- `POST /api/assets/grid-background` - Generate a battle map background tile
-- `POST /api/assets/action-frame` - Generate a cinematic action frame illustration
-
-Asset endpoints accept optional reference images (base64 data URIs), narrative context, and store generated files in Firebase Storage (emulator-first).
-
-## Socket.io Events
-
-### Client → Server
-
-- `room:join` - Join room
-- `room:leave` - Leave room
-- `player:action` - Submit player action
-- `turn:process` - Request turn processing
-
-### Server → Client
-
-- `room:updated` - Room state changed
-- `player:joined` - Player joined
-- `player:left` - Player left
-- `game:state` - Full game state sync
-- `error` - Error occurred
-
-## Testing
-
-```bash
-# Unit tests
-yarn test
-
-# With coverage
-yarn test:coverage
-
-# CI mode
-yarn test:ci
-```
-
-Tests use Firebase emulators automatically.
-
-## Deployment
-
-### Cloud Run
-
-```bash
-# Build
-gcloud builds submit --config cloudbuild.yaml
-
-# Deploy
-gcloud run deploy daicer-backend \
-  --image gcr.io/PROJECT_ID/daicer-backend \
-  --region us-central1 \
-  --allow-unauthenticated
-```
-
-### Environment Variables
-
-Set via Secret Manager:
-
-- `GEMINI_API_KEY`
-- `FIREBASE_STORAGE_BUCKET`
-- `STORAGE_EMULATOR_HOST` (for local development)
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
-- `FIREBASE_PRIVATE_KEY`
-
-## Code Quality
-
-- **Linting:** ESLint (Airbnb TypeScript config)
-- **Formatting:** Prettier
-- **Type Safety:** Strict TypeScript, no `any`
-- **Testing:** Jest with 80%+ coverage
-- **Standards:**
-  - Max function length: 25 lines
-  - Max file length: 200 lines
-  - Complexity: < 10
-  - All exports have JSDoc
-
-## Quality Assurance
-
-```bash
-# Run full QA suite (format, lint, typecheck, test with coverage)
+# Full QA (lint + format + typecheck + tests)
 yarn qa
-
-# Individual checks
-yarn format:check  # ✨ Code formatting
-yarn lint:check    # 🔍 Linting (CI mode, 0 warnings)
-yarn typecheck     # 🔬 Type checking
-yarn test:coverage # 📊 Tests + coverage report
 ```
 
-All quality gates enforced in CI/CD pipeline.
+Testing layers:
 
-## License
+- **Unit**: Utilities, services, reducers (Vitest-style assertions via Jest).
+- **Integration**: API + socket flows with Firebase emulators.
+- **Snapshots**: Combat spell geometries, LangGraph node transitions.
+- **Regression**: Coverage enforced at ≥80% statements/branches.
 
-MIT
+---
+
+## Observability & Ops
+
+- **Logging**: `src/utils/logger.ts` configures Winston; emits JSON with request IDs and spans.
+- **Tracing**: LangGraph runs annotate each node with duration + tool calls (persisted in Firestore `turn_history`).
+- **Error shaping**: `src/middleware/error.ts` standardizes responses + hides stack traces in production.
+- **Health**: `GET /health` tests Firestore and LangGraph readiness.
+- **Metrics**: TODO — integrate OpenTelemetry (tracked in roadmap).
+
+---
+
+## Deployment (Cloud Run)
+
+1. Build and push container via Cloud Build:
+
+   ```bash
+   gcloud builds submit --config cloudbuild.yaml
+   ```
+
+2. Deploy latest image:
+
+   ```bash
+   gcloud run deploy daicer-backend \
+     --image gcr.io/<PROJECT_ID>/daicer-backend \
+     --region us-central1 \
+     --allow-unauthenticated
+   ```
+
+3. Configure environment:
+   - Secrets: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `FIREBASE_PRIVATE_KEY`.
+   - Vars: `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `LOG_LEVEL`, `ALLOWED_ORIGINS`.
+   - Minimum instances: `1` (cold-start mitigation), concurrency: `80`.
+
+4. Post-deploy checklist:
+   - Run smoke test `yarn test:e2e` against deployed URL.
+   - Verify Firestore indexes (`firestore.indexes.json`) synced.
+   - Review Cloud Logging filters for error spikes.
+
+---
+
+## Contributing Checklist
+
+1. Add/adjust tests beside the module (`*.spec.ts`).
+2. Run `yarn qa backend`.
+3. Update relevant README(s) if behavior or contracts change.
+4. Provide migration notes for deployments (Firestore indexes, env vars).
+
+Refer to `CONTRIBUTING.md` for repo-wide expectations.
+
+---
+
+## Troubleshooting
+
+| Symptom                          | Likely Cause                    | Fix                                                         |
+| -------------------------------- | ------------------------------- | ----------------------------------------------------------- |
+| `UNAUTHENTICATED` responses      | Missing Firebase auth header    | Ensure frontend sends `Authorization: Bearer <token>`       |
+| `Firestore emulator not running` | Forgot `yarn emulators`         | Start emulators or set `USE_EMULATORS=false`                |
+| LangGraph node hang              | Gemini rate-limits              | Provide API key, enable fallback providers                  |
+| Socket replay loop               | Client not acknowledging events | Inspect `socket/handlers.ts` and confirm idempotent reducer |
+
+---
+
+## Further Reading
+
+- `src/services/README.md` — detailed LangGraph + Firestore orchestration.
+- `docs/graphs/` — Mermaid diagrams for combat/narrative flows.
+- `seeds/` — data population scripts for spells and SRD content.
+- Root `README.md` — project-wide overview with frontend context.
+
+---
+
+MIT License.

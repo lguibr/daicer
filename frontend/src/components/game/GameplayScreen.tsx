@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Room, Player } from '../../types/shared';
 import useSocket from '../../hooks/useSocket';
 import { submitAction, processTurn } from '../../services/socket';
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
+import { Button } from '../ui/button';
 import ChatArea from './ChatArea';
 import PlayerSidebar from './PlayerSidebar';
+import CharacterSheetPanel from './CharacterSheetPanel';
 
 interface GameplayScreenProps {
   room: Room;
@@ -24,12 +26,23 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const { t } = useI18n();
   const [action, setAction] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const currentPlayer = players.find((p) => p.userId === user?.uid);
   const hasSubmitted = currentPlayer?.action !== null && currentPlayer?.action !== '';
   const allSubmitted = players.every((p) => p.action);
   const submittedCount = players.filter((p) => p.action).length;
   const roomLanguage = room.settings?.language || 'en';
+
+  const sortedPlayers = useMemo(
+    () =>
+      [...players].sort((a, b) => {
+        if (a.userId === user?.uid) return -1;
+        if (b.userId === user?.uid) return 1;
+        return a.character.name.localeCompare(b.character.name);
+      }),
+    [players, user?.uid]
+  );
 
   const handleSubmitAction = async () => {
     if (!action.trim() || !room.id) return;
@@ -110,11 +123,35 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
       <div className="flex flex-col lg:grid lg:grid-cols-5 h-[calc(100vh-4rem)] lg:h-screen w-full gap-0">
         {/* Sidebar - Collapsed on mobile, visible on desktop */}
         <div className="hidden lg:block lg:col-span-1 border-r border-shadow-800/70 overflow-y-auto">
-          <PlayerSidebar players={players} creatures={socket.creatures} />
+          <PlayerSidebar
+            players={sortedPlayers}
+            creatures={socket.creatures}
+            onSelectPlayer={(player) => setSelectedPlayer(player)}
+          />
         </div>
 
         {/* Main Chat Area */}
         <div className="lg:col-span-4 flex flex-col h-full">
+          <div className="flex flex-col gap-3 border-b border-shadow-800/70 bg-midnight-400/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-shadow-50">Adventure Feed</h2>
+              <p className="text-xs text-shadow-400">
+                {t('gameplay.actionsSubmitted')}: {submittedCount} / {players.length}
+              </p>
+            </div>
+            {currentPlayer && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setSelectedPlayer(currentPlayer)}
+                className="self-start sm:self-auto"
+              >
+                {t('gameplay.openCharacterSheet') ?? 'Character Sheet'}
+              </Button>
+            )}
+          </div>
+
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto">
             <ChatArea messages={socket.messages} worldDescription={room.worldDescription} />
@@ -141,6 +178,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
           </div>
         </div>
       </div>
+      <CharacterSheetPanel player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
     </>
   );
 }

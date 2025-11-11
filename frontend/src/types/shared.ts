@@ -3,6 +3,8 @@
  * These must match backend/src/types/index.ts
  */
 
+import type { AvatarAssetResponse } from './assets';
+
 export enum GamePhase {
   SETUP = 'SETUP',
   CHARACTER_CREATION = 'CHARACTER_CREATION',
@@ -23,6 +25,44 @@ export interface SavingThrows {
   fortitude: number;
   reflex: number;
   will: number;
+}
+
+export type SkillProficiency = 'none' | 'trained' | 'proficient' | 'expertise';
+
+export interface SkillDetail {
+  name: string;
+  ability: Attribute;
+  modifier: number;
+  proficiency: SkillProficiency;
+  notes?: string;
+}
+
+export interface Talent {
+  name: string;
+  category: 'class' | 'racial' | 'background' | 'custom';
+  description: string;
+}
+
+export interface BackgroundDetails {
+  origin: string;
+  upbringing: string;
+  motivation: string;
+  keyEvents: string[];
+  allies?: string[];
+}
+
+export interface ResourcePool {
+  name: string;
+  current: number;
+  max: number;
+  refresh: 'at-will' | 'encounter' | 'short-rest' | 'long-rest' | 'daily' | 'custom';
+  description?: string;
+}
+
+export interface AdvancementPoints {
+  ability: number;
+  skill: number;
+  talent: number;
 }
 
 export interface CharacterSheet {
@@ -52,6 +92,8 @@ export interface CharacterSheet {
   attributes: Record<Attribute, number>;
   savingThrows: SavingThrows;
   skills: Record<string, number>;
+  skillDetails: SkillDetail[];
+  expertises: string[];
 
   // Combat & equipment
   baseAttackBonus: number;
@@ -64,6 +106,7 @@ export interface CharacterSheet {
   // Character details
   proficienciesAndLanguages: string;
   features: string;
+  talents: Talent[];
 
   // Appearance & personality
   appearance: {
@@ -84,8 +127,12 @@ export interface CharacterSheet {
   };
 
   backstory: string;
+  backgroundDetails: BackgroundDetails;
   alliesAndOrganizations: string;
   treasure: string;
+  resourcePools: ResourcePool[];
+  advancementPoints: AdvancementPoints;
+  avatarAssets?: AvatarAssetResponse | null;
 
   // Spellcasting (all characters, empty for non-casters)
   spellcasting: {
@@ -107,6 +154,7 @@ export interface Player {
   action: string | null;
   isReady: boolean;
   joinedAt: number;
+  updatedAt?: number;
 }
 
 export interface Message {

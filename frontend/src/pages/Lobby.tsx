@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FlaskConical } from 'lucide-react';
 import { UsersIcon } from '@heroicons/react/24/outline';
 import { joinRoom } from '../services/api';
-import Layout from '../components/layout/Layout';
+import { PrivateLayout } from '../components/layout';
 import { useI18n } from '../i18n';
 
 /**
@@ -64,36 +64,39 @@ export default function LobbyPage() {
   };
 
   return (
-    <Layout showRoomInfo={false}>
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center gap-12 px-6 py-16 sm:px-10 lg:px-12">
+    <PrivateLayout showRoomInfo={false}>
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col justify-center gap-14 px-6 py-20 sm:px-10 lg:px-14">
         <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-10">
+          <div className="space-y-12">
             <div className="flex flex-col items-center gap-8 text-center lg:flex-row lg:text-left">
-              <div className="flex h-32 w-32 items-center justify-center rounded-full border border-aurora-500/40 bg-midnight-600/40 shadow-[0_20px_45px_rgba(4,7,12,0.5)]">
+              <div className="flex h-36 w-36 items-center justify-center rounded-full border border-accent/35 bg-midnight-700/60 shadow-[0_28px_55px_rgba(7,5,10,0.55)]">
                 <UsersIcon className="h-20 w-20 text-aurora-300" aria-hidden="true" />
                 <span className="sr-only">Adventuring party lobby icon</span>
               </div>
               <div className="space-y-4">
-                <h1 className="font-display text-3xl uppercase tracking-[0.4em] text-aurora-300 sm:text-4xl">
+                <h1 className="font-display text-3xl uppercase tracking-[0.32em] text-aurora-200 sm:text-4xl">
                   {t('lobby.title')}
                 </h1>
-                <p className="text-lg leading-relaxed text-shadow-100">{t('lobby.description')}</p>
+                <p className="text-lg leading-relaxed text-shadow-100/90">{t('lobby.description')}</p>
               </div>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {highlightCards.map((card) => (
                 <div
                   key={card.title}
-                  className="rounded-xl border border-midnight-500/60 bg-midnight-500/35 p-6 shadow-xl flex flex-col gap-4"
+                  className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-accent/25 bg-midnight-900/75 p-6 shadow-[0_25px_45px_rgba(7,5,10,0.55)] transition-transform duration-300 hover:-translate-y-1 hover:border-accent/45"
                 >
-                  <p className="font-display text-xs uppercase tracking-[0.35em] text-aurora-400">{card.title}</p>
-                  <p className="mt-3 leading-relaxed text-shadow-200">{card.body}</p>
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-aurora-400/50 via-accent/40 to-nebula-400/50 opacity-70" />
+                  <div className="space-y-3 pt-2">
+                    <p className="font-display text-sm uppercase tracking-[0.38em] text-aurora-200">{card.title}</p>
+                    <p className="text-base leading-relaxed text-shadow-100">{card.body}</p>
+                  </div>
                   {card.onAction && card.actionLabel && (
                     <button
                       type="button"
                       onClick={card.onAction}
-                      className="self-start px-4 py-2 bg-nebula-600 hover:bg-nebula-500 text-white text-xs font-semibold uppercase tracking-[0.3em] rounded-lg transition"
+                      className="inline-flex items-center gap-2 self-start rounded-lg border border-accent/40 bg-gradient-to-r from-aurora-500 via-accent to-aurora-400 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-midnight-100 shadow-[0_15px_30px_rgba(122,73,217,0.28)] transition hover:from-aurora-400 hover:via-accent/90 hover:to-aurora-300"
                     >
                       {card.actionLabel}
                     </button>
@@ -103,8 +106,13 @@ export default function LobbyPage() {
             </div>
           </div>
 
-          <div className="card space-y-6 p-10">
-            <button type="button" onClick={handleCreateRoom} disabled={loading} className="btn-primary w-full py-4">
+          <div className="card space-y-7 p-12">
+            <button
+              type="button"
+              onClick={handleCreateRoom}
+              disabled={loading}
+              className="btn-primary w-full py-5 text-base"
+            >
               {t('lobby.createButton')}
             </button>
 
@@ -113,16 +121,16 @@ export default function LobbyPage() {
                 <div className="w-full border-t border-midnight-600/50" />
               </div>
               <div className="relative flex justify-center">
-                <span className="rounded-full bg-midnight-400/90 px-4 py-1 text-xs font-semibold tracking-[0.35em] text-shadow-300">
+                <span className="rounded-full bg-midnight-400/90 px-4 py-1 text-xs font-semibold tracking-[0.38em] text-shadow-300">
                   {t('lobby.orDivider')}
                 </span>
               </div>
             </div>
 
-            <form onSubmit={handleJoinRoom} className="space-y-4">
+            <form onSubmit={handleJoinRoom} className="space-y-5">
               <label
                 htmlFor="room-code-input"
-                className="block text-xs font-semibold uppercase tracking-[0.35em] text-shadow-300"
+                className="block text-xs font-semibold uppercase tracking-[0.38em] text-shadow-300"
               >
                 {t('lobby.inputLabel')}
               </label>
@@ -133,9 +141,13 @@ export default function LobbyPage() {
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 placeholder={t('lobby.codePlaceholder')}
                 maxLength={6}
-                className="w-full rounded-lg border border-midnight-500 bg-midnight-500/70 px-4 py-4 text-center font-mono text-2xl tracking-[0.75em] text-shadow-50 transition focus:border-aurora-400 focus:ring-2 focus:ring-aurora-400/40 focus:outline-none"
+                className="w-full rounded-2xl border border-midnight-600 bg-midnight-700/70 px-4 py-5 text-center font-mono text-3xl tracking-[0.8em] text-shadow-50 transition focus:border-accent focus:ring-2 focus:ring-accent/40 focus:outline-none"
               />
-              <button type="submit" disabled={loading || !roomCode.trim()} className="btn-secondary w-full py-3">
+              <button
+                type="submit"
+                disabled={loading || !roomCode.trim()}
+                className="btn-secondary w-full py-4 text-base"
+              >
                 {loading ? t('lobby.joining') : t('lobby.joinButton')}
               </button>
             </form>
@@ -159,6 +171,6 @@ export default function LobbyPage() {
           </div>
         )}
       </div>
-    </Layout>
+    </PrivateLayout>
   );
 }

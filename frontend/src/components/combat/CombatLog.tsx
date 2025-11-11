@@ -75,25 +75,25 @@ export function CombatLog({ log, diceHistory }: CombatLogProps) {
   const getLogTypeColor = (type: string): string => {
     switch (type) {
       case 'attack':
-        return 'text-orange-400';
+        return 'text-aurora-300';
       case 'damage':
-        return 'text-red-400';
+        return 'text-destructive-300';
       case 'move':
-        return 'text-blue-400';
+        return 'text-nebula-300';
       case 'turn':
-        return 'text-nebula-400';
+        return 'text-shadow-200';
       case 'round':
-        return 'text-aurora-400';
+        return 'text-aurora-200';
       case 'victory':
-        return 'text-yellow-400';
+        return 'text-aurora-100';
       default:
         return 'text-shadow-300';
     }
   };
 
   return (
-    <div className="bg-midnight-300 rounded-lg border border-shadow-800 overflow-hidden flex flex-col h-full">
-      <div className="p-3 border-b border-shadow-800">
+    <div className="bg-midnight-700/80 rounded-lg border border-midnight-600 overflow-hidden flex flex-col h-full">
+      <div className="p-3 border-b border-midnight-600">
         <h3 className="text-lg font-bold text-shadow-50">Combat Log</h3>
       </div>
 
@@ -130,7 +130,7 @@ export function CombatLog({ log, diceHistory }: CombatLogProps) {
                           </button>
 
                           {isExpanded && (
-                            <div className="ml-4 mt-1 p-2 bg-shadow-900/50 rounded text-shadow-300">
+                            <div className="ml-4 mt-1 p-2 bg-midnight-800/60 rounded text-shadow-300">
                               <div>{formatRoll(roll)}</div>
                             </div>
                           )}

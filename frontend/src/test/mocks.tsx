@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 /**
  * @file frontend/src/test/mocks.tsx
  * @description Shared test mocks and utilities

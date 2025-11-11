@@ -59,6 +59,9 @@ function formatValue(value: unknown): string {
 
 export function ToolNotificationToast({ toolCall, onDismiss, duration = 4000 }: ToolNotificationToastProps) {
   const [isExiting, setIsExiting] = useState(false);
+  const parameterEntries = Object.entries(toolCall.parameters);
+  const hasParameters = parameterEntries.length > 0;
+  const hasResult = toolCall.result !== undefined && toolCall.result !== null;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -106,9 +109,9 @@ export function ToolNotificationToast({ toolCall, onDismiss, duration = 4000 }: 
             </button>
           </div>
 
-          {Object.keys(toolCall.parameters).length > 0 && (
+          {hasParameters && (
             <div className="text-xs text-gray-300 space-y-1">
-              {Object.entries(toolCall.parameters).map(([key, value]) => (
+              {parameterEntries.map(([key, value]) => (
                 <div key={key} className="flex gap-2">
                   <span className="text-gray-400 font-medium">{key}:</span>
                   <span className="text-white font-mono break-all">{formatValue(value)}</span>
@@ -117,7 +120,7 @@ export function ToolNotificationToast({ toolCall, onDismiss, duration = 4000 }: 
             </div>
           )}
 
-          {toolCall.result && (
+          {hasResult && (
             <div className="mt-2 pt-2 border-t border-white/20">
               <div className="text-xs text-gray-400 font-medium mb-1">Result:</div>
               <div className="text-xs text-green-300 font-mono">{formatValue(toolCall.result)}</div>

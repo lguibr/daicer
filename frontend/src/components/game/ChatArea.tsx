@@ -22,7 +22,7 @@ export default function ChatArea({ messages, worldDescription }: ChatAreaProps) 
     <div className="p-3 md:p-4 space-y-4">
       {/* World Description */}
       {worldDescription && (
-        <div className="p-4 card border border-shadow-700/50">
+        <div className="p-4 card border border-midnight-600/70">
           <h3 className="text-lg font-bold text-aurora-300 mb-2">The World</h3>
           <div className="text-shadow-200">
             <MarkdownMessage content={worldDescription} />
@@ -40,21 +40,21 @@ export default function ChatArea({ messages, worldDescription }: ChatAreaProps) 
             <div
               className={`max-w-full md:max-w-3xl p-3 md:p-4 rounded-xl shadow-lg border ${
                 isPrivate
-                  ? 'bg-purple-950/80 border-purple-700/50'
+                  ? 'bg-nebula-900/70 border-nebula-600/50'
                   : isDM
-                    ? 'bg-zinc-800/85 border-zinc-700'
-                    : 'bg-blue-950/80 border-blue-700/50'
+                    ? 'bg-midnight-700/85 border-midnight-600'
+                    : 'bg-aurora-900/40 border-aurora-500/30'
               }`}
             >
               <div className="flex items-center gap-3 mb-2">
-                <p className={`font-bold text-sm ${isDM ? 'text-blue-400' : 'text-green-400'}`}>{msg.sender}</p>
+                <p className={`font-bold text-sm ${isDM ? 'text-aurora-200' : 'text-shadow-100'}`}>{msg.sender}</p>
                 {isPrivate && (
-                  <span className="text-xs text-purple-400 flex items-center gap-1 font-semibold">
+                  <span className="text-xs text-nebula-300 flex items-center gap-1 font-semibold">
                     🔒 Your Perspective
                   </span>
                 )}
               </div>
-              <div className="prose prose-invert max-w-none text-zinc-50">
+              <div className="prose prose-invert max-w-none text-shadow-50">
                 {isDM ? (
                   <MarkdownMessage content={msg.text} />
                 ) : (
@@ -75,7 +75,7 @@ export default function ChatArea({ messages, worldDescription }: ChatAreaProps) 
                 </div>
               )}
 
-              <p className="text-xs text-zinc-500 mt-2">{new Date(msg.timestamp).toLocaleTimeString()}</p>
+              <p className="text-xs text-shadow-500 mt-2">{new Date(msg.timestamp).toLocaleTimeString()}</p>
             </div>
           </div>
         );

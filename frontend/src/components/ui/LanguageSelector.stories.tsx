@@ -40,7 +40,7 @@ export const InNavbar: Story = {
   render: () => (
     <div className="bg-slate-800 p-4 rounded-lg w-[600px]">
       <div className="flex items-center justify-between">
-        <h2 className="text-white text-lg font-semibold">dAIcer</h2>
+        <h2 className="text-white text-lg font-semibold">DAIcer</h2>
         <div className="flex items-center gap-4">
           <span className="text-gray-300 text-sm">Welcome, Player</span>
           <LanguageSelector />

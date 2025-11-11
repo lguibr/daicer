@@ -45,7 +45,7 @@ export const WithContent: Story = {
       <AnimatedBackground />
       <div className="relative z-10 p-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          <h1 className="text-5xl font-bold text-white">dAIcer</h1>
+          <h1 className="text-5xl font-bold text-white">DAIcer</h1>
           <p className="text-xl text-gray-200">
             Experience the magic of AI-powered Dungeons & Dragons storytelling with our immersive animated interface.
           </p>

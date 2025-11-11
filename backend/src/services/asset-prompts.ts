@@ -12,12 +12,11 @@ const cleanSentence = (value?: string): string => {
   return value.trim().replace(/\s+/g, ' ');
 };
 
-const joinSentences = (parts: Array<string | undefined>): string => {
-  return parts
+const joinSentences = (parts: Array<string | undefined>): string =>
+  parts
     .map((part) => cleanSentence(part))
     .filter((part) => part.length > 0)
     .join(' ');
-};
 
 const formatAppearance = (appearance?: AppearanceAttributes): string => {
   if (!appearance) {
@@ -39,7 +38,7 @@ const formatAppearance = (appearance?: AppearanceAttributes): string => {
 };
 
 const describeNarrative = (payload: AvatarGenerationPayload | ActionFramePayload): string => {
-  const narrative = payload.narrative;
+  const { narrative } = payload;
   if (!narrative) {
     return '';
   }
@@ -54,9 +53,12 @@ const describeNarrative = (payload: AvatarGenerationPayload | ActionFramePayload
 export type AvatarView = 'portrait' | 'upper-body' | 'full-body';
 
 const viewDirectives: Record<AvatarView, string> = {
-  portrait: 'Tight portrait framing. Show the head and shoulders only.',
-  'upper-body': 'Mid-shot framing. Show the character from head to waist, including arms.',
-  'full-body': 'Full body framing. Show boots, stance, and weaponry if present.',
+  portrait:
+    'Extreme close-up, perfectly frontal face. Crop at forehead and chin; exclude neck, shoulders, and background clutter.',
+  'upper-body':
+    'Mid-shot framing. Show the character from head to just below the hips, including arms and hands. Do not reveal legs below mid-thigh. Maintain continuity with the portrait reference while expanding costume detail.',
+  'full-body':
+    'Wide framing, head-to-toe. Include legs, feet, and immediate ground plane; never crop at knees or ankles. Maintain facial and torso continuity with the portrait and upper-body references while extending the outfit and pose across the entire figure.',
 };
 
 export const buildAvatarPrompt = (payload: AvatarGenerationPayload, view: AvatarView): string => {

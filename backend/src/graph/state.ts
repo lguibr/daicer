@@ -229,6 +229,47 @@ export const DiceRollResultSchema = z.object({
 });
 
 /**
+ * Spell preview snapshot stored in combat state
+ */
+export const SpellPreviewSchema = z.object({
+  spellId: z.string(),
+  spellName: z.string(),
+  casterId: z.string(),
+  spellLevel: z.number().int().min(0).max(9),
+  school: z.string().optional(),
+  effectShape: z.string(),
+  range: z.string().optional(),
+  casterPosition: PositionSchema,
+  targetPosition: PositionSchema,
+  affectedSquares: z.array(PositionSchema),
+  validTargets: z.array(PositionSchema),
+  friendlyFireRisk: z.boolean(),
+  requiresLineOfSight: z.boolean(),
+  lineOfSightBlocked: z.boolean(),
+  obstacles: z.array(PositionSchema).optional(),
+  metadata: z
+    .object({
+      description: z.string().optional(),
+    })
+    .partial()
+    .optional(),
+});
+
+/**
+ * Spell resolution snapshot after casting
+ */
+export const SpellResolutionSchema = z.object({
+  spellId: z.string(),
+  casterId: z.string(),
+  affectedCharacterIds: z.array(z.string()),
+  summary: z.string(),
+  damageRolls: z.array(DiceRollResultSchema),
+  savingThrows: z.array(DiceRollResultSchema),
+  attackRolls: z.array(DiceRollResultSchema),
+  friendlyFireOccurred: z.boolean(),
+});
+
+/**
  * Combat log entry
  */
 export const CombatLogEntrySchema = z.object({
@@ -297,6 +338,12 @@ export const CombatStateSchema = z.object({
 
   // Dice roller seed for determinism
   diceRollerSeed: z.number(),
+
+  // Current spell preview (if any)
+  spellPreview: SpellPreviewSchema.nullable().default(null),
+
+  // Last spell resolution snapshot
+  lastSpellResolution: SpellResolutionSchema.nullable().default(null),
 });
 
 export type CombatState = z.infer<typeof CombatStateSchema>;

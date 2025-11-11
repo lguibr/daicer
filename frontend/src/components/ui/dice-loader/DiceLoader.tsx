@@ -3,24 +3,188 @@ import * as THREE from 'three';
 
 import { createDie } from './createDie';
 import type { DiceLoaderProps, DieType } from './types';
-import { generateRandomDieColor } from './utils';
+import { AVAILABLE_DIE_TYPES, generateRandomDieColor, generateRandomDieType } from './utils';
+import { useI18n } from '../../../i18n';
+
+interface DieInstance {
+  group: THREE.Group;
+  rotationSpeed: THREE.Vector3;
+}
 
 interface ThreeState {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  die?: THREE.Group;
   axes?: THREE.AxesHelper;
+  diceGroup?: THREE.Group;
+  dice: DieInstance[];
 }
 
-const SIZE_MAP: Record<Required<DiceLoaderProps>['size'], number> = {
-  small: 0.7,
-  medium: 1,
-  large: 1.4,
+interface DiceDescriptor {
+  id: string;
+  type: DieType;
+  color: string;
+  scale: number;
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  rotationSpeed: { x: number; y: number; z: number };
+}
+
+const MESSAGE_KEYS = [
+  'diceLoader.messages.summoning',
+  'diceLoader.messages.rattling',
+  'diceLoader.messages.focusing',
+  'diceLoader.messages.calibrating',
+] as const;
+
+const FALLBACK_MESSAGES: Record<string, readonly string[]> = {
+  en: [
+    'Summoning shiny math rocks...',
+    'Rattling the dice tray of destiny...',
+    'Consulting the probability spirits...',
+    'Calibrating critical hit chances...',
+  ],
+  es: [
+    'Invocando dados brillantes...',
+    'Agitando la bandeja del destino...',
+    'Consultando a los espíritus de la probabilidad...',
+    'Calibrando las tiradas críticas...',
+  ],
+  'pt-BR': [
+    'Invocando dados reluzentes...',
+    'Chacoalhando a bandeja do destino...',
+    'Consultando os espíritus da probabilidade...',
+    'Calibrando as chances de crítico...',
+  ],
 };
 
-const DIE_ROTATION_SPEED = { x: 0.01, y: 0.015 };
-const DEFAULT_DIE_TYPE: DieType = 20;
+const MIN_DICE_COUNT = 1;
+const MAX_DICE_COUNT = 6;
+const DEFAULT_MAX_DICE_COUNT = 4;
+
+const SIZE_MAP: Record<Required<DiceLoaderProps>['size'], number> = {
+  small: 0.8,
+  medium: 1,
+  large: 1.3,
+};
+
+const CONTAINER_SIZE_MAP: Record<Required<DiceLoaderProps>['size'], number> = {
+  small: 200,
+  medium: 280,
+  large: 380,
+};
+
+const MIN_ROTATION_SPEED = { x: 0.02, y: 0.03, z: 0.018 };
+const ROTATION_VARIATION = { x: 0.028, y: 0.035, z: 0.025 };
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+const MIN_POSITION_SEPARATION = 0.9;
+const MAX_POSITION_ATTEMPTS = 12;
+
+function randomBetween(min: number, max: number): number {
+  return min + Math.random() * (max - min);
+}
+
+function randomSigned(min: number, max: number): number {
+  const magnitude = randomBetween(min, max);
+  return Math.random() > 0.5 ? magnitude : -magnitude;
+}
+
+function clampDiceCount(value?: number): number | undefined {
+  if (value === undefined || Number.isNaN(value)) {
+    return undefined;
+  }
+  const floored = Math.floor(value);
+  if (floored < MIN_DICE_COUNT) {
+    return MIN_DICE_COUNT;
+  }
+  if (floored > MAX_DICE_COUNT) {
+    return MAX_DICE_COUNT;
+  }
+  return floored;
+}
+
+function randomInt(min: number, max: number): number {
+  const lower = Math.ceil(min);
+  const upper = Math.floor(max);
+  return Math.max(lower, Math.floor(Math.random() * (upper - lower + 1)) + lower);
+}
+
+function createDiceDescriptors(
+  diceCount: number | undefined,
+  maxDiceCount: number | undefined,
+  dieType: DieType | undefined,
+  color: string | undefined
+): DiceDescriptor[] {
+  const exact = clampDiceCount(diceCount);
+  const maxCount = clampDiceCount(maxDiceCount) ?? DEFAULT_MAX_DICE_COUNT;
+  const total = exact ?? randomInt(MIN_DICE_COUNT, maxCount);
+  const placedPositions: Array<{ x: number; y: number; z: number; scale: number }> = [];
+
+  return Array.from({ length: total }, (_, index) => {
+    const type = dieType ?? generateRandomDieType();
+    const diceColor = color ?? generateRandomDieColor();
+    const baseScale = 0.65 + index * 0.04;
+    const scale = randomBetween(baseScale, baseScale + 0.5);
+
+    let positionAttempts = 0;
+    let x = 0;
+    let y = 0;
+    let z = 0;
+
+    const placeDie = () => {
+      const angle = index * GOLDEN_ANGLE + randomBetween(-0.35, 0.35);
+      const radiusBase = 1 + index * 0.22;
+      const radius = total === 1 ? 0 : radiusBase + randomBetween(-0.1, 0.45);
+      x = Math.cos(angle) * radius;
+      z = Math.sin(angle) * radius;
+      y = randomBetween(-0.75, 0.75) + index * 0.05;
+    };
+
+    placeDie();
+
+    while (positionAttempts < MAX_POSITION_ATTEMPTS) {
+      const tooClose = placedPositions.some((pos) => {
+        const dx = pos.x - x;
+        const dy = pos.y - y;
+        const dz = pos.z - z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const separation = Math.max(MIN_POSITION_SEPARATION, (pos.scale + scale) * 0.55);
+        return distance < separation;
+      });
+      if (!tooClose) {
+        placedPositions.push({ x, y, z, scale });
+        break;
+      }
+      positionAttempts += 1;
+      placeDie();
+    }
+
+    const rotation = {
+      x: randomBetween(0, Math.PI * 2),
+      y: randomBetween(0, Math.PI * 2),
+      z: randomBetween(0, Math.PI * 2),
+    };
+
+    const rotationSpeed = {
+      x: randomSigned(MIN_ROTATION_SPEED.x, MIN_ROTATION_SPEED.x + ROTATION_VARIATION.x + index * 0.01),
+      y: randomSigned(MIN_ROTATION_SPEED.y, MIN_ROTATION_SPEED.y + ROTATION_VARIATION.y + index * 0.015),
+      z: randomSigned(MIN_ROTATION_SPEED.z, MIN_ROTATION_SPEED.z + ROTATION_VARIATION.z + index * 0.008),
+    };
+
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `die-${Date.now()}-${index}`;
+
+    return {
+      id,
+      type,
+      color: diceColor,
+      scale,
+      position: { x, y, z },
+      rotation,
+      rotationSpeed,
+    } satisfies DiceDescriptor;
+  });
+}
 
 function disposeMaterial(material: THREE.Material | THREE.Material[]): void {
   if (Array.isArray(material)) {
@@ -34,19 +198,77 @@ function disposeMaterial(material: THREE.Material | THREE.Material[]): void {
   material.dispose();
 }
 
+function disposeDieGroup(group: THREE.Group | undefined): void {
+  if (!group) {
+    return;
+  }
+  group.traverse((object: THREE.Object3D) => {
+    if (object instanceof THREE.Mesh) {
+      object.geometry.dispose();
+      const { material } = object;
+      if (material) {
+        disposeMaterial(material);
+      }
+    }
+  });
+}
+
 export function DiceLoader({
   size = 'medium',
-  dieType = DEFAULT_DIE_TYPE,
+  dieType,
   color,
+  message,
   showAxes = false,
   className,
   style,
+  diceCount,
+  maxDiceCount,
 }: DiceLoaderProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number>();
   const stateRef = useRef<ThreeState | null>(null);
+  const { t, language } = useI18n();
 
-  const selectedColor = useMemo(() => color ?? generateRandomDieColor(), [color]);
+  const diceDescriptors = useMemo(
+    () => createDiceDescriptors(diceCount, maxDiceCount, dieType, color),
+    [color, diceCount, dieType, maxDiceCount]
+  );
+
+  const localizedMessages = useMemo(() => {
+    const translatedMessages = MESSAGE_KEYS.map((key) => {
+      const translation = t(key);
+      return translation !== key ? translation : null;
+    }).filter((value): value is string => Boolean(value));
+
+    if (translatedMessages.length > 0) {
+      return translatedMessages;
+    }
+    return FALLBACK_MESSAGES[language] ?? FALLBACK_MESSAGES.en;
+  }, [language, t]);
+
+  const randomLocalizedMessage = useMemo(() => {
+    const options = localizedMessages.length > 0 ? localizedMessages : FALLBACK_MESSAGES.en;
+    const index = Math.floor(Math.random() * options.length);
+    return options[index];
+  }, [localizedMessages]);
+
+  const displayedMessage = message ?? randomLocalizedMessage;
+
+  const canvasStyle = useMemo(() => {
+    const baseSize = CONTAINER_SIZE_MAP[size] ?? CONTAINER_SIZE_MAP.medium;
+    return {
+      width: `${baseSize}px`,
+      height: `${baseSize}px`,
+      position: 'relative' as const,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    };
+  }, [size]);
+
+  const rootClassName = className
+    ? `flex flex-col items-center gap-3 ${className}`
+    : 'flex flex-col items-center gap-3';
 
   useEffect(() => {
     if (!mountRef.current) {
@@ -56,22 +278,22 @@ export function DiceLoader({
     const mountElement = mountRef.current;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, mountElement.clientWidth / mountElement.clientHeight, 0.1, 100);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 7.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(mountElement.clientWidth, mountElement.clientHeight, false);
     mountElement.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.3);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.9);
     directionalLight.position.set(4, 6, 5);
     scene.add(ambientLight, directionalLight);
 
-    const axes = new THREE.AxesHelper(2);
+    const axes = new THREE.AxesHelper(2.5);
     scene.add(axes);
 
-    stateRef.current = { scene, camera, renderer, axes };
+    stateRef.current = { scene, camera, renderer, axes, dice: [] };
 
     const handleResize = () => {
       if (!mountElement || !stateRef.current) return;
@@ -86,17 +308,27 @@ export function DiceLoader({
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate);
       const currentState = stateRef.current;
-      if (currentState?.die) {
-        currentState.die.rotation.x += DIE_ROTATION_SPEED.x;
-        currentState.die.rotation.y += DIE_ROTATION_SPEED.y;
+      if (currentState?.dice.length) {
+        currentState.dice.forEach(({ group, rotationSpeed }) => {
+          group.rotation.x += rotationSpeed.x;
+          group.rotation.y += rotationSpeed.y;
+          group.rotation.z += rotationSpeed.z;
+        });
       }
       renderer.render(scene, camera);
     };
 
     animate();
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => handleResize()) : null;
+    if (resizeObserver) {
+      resizeObserver.observe(mountElement);
+    }
     window.addEventListener('resize', handleResize);
 
     return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       window.removeEventListener('resize', handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -104,7 +336,11 @@ export function DiceLoader({
       if (!stateRef.current) {
         return;
       }
-      const { scene: currentScene, renderer: currentRenderer } = stateRef.current;
+      const { scene: currentScene, renderer: currentRenderer, diceGroup } = stateRef.current;
+      if (diceGroup) {
+        currentScene.remove(diceGroup);
+        disposeDieGroup(diceGroup);
+      }
       currentScene.traverse((object: THREE.Object3D) => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
@@ -124,41 +360,78 @@ export function DiceLoader({
 
   useEffect(() => {
     if (!stateRef.current) return;
-    const { scene, die: currentDie } = stateRef.current;
-    if (currentDie) {
-      scene.remove(currentDie);
-      currentDie.traverse((object: THREE.Object3D) => {
-        if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
-          const { material } = object;
-          if (material) {
-            disposeMaterial(material);
-          }
-        }
+
+    const currentState = stateRef.current;
+    const { scene } = currentState;
+
+    if (!currentState.diceGroup) {
+      currentState.diceGroup = new THREE.Group();
+      currentState.diceGroup.name = 'dice-collection';
+      scene.add(currentState.diceGroup);
+    }
+
+    currentState.diceGroup.scale.set(1, 1, 1);
+    currentState.diceGroup.position.set(0, 0, 0);
+
+    if (currentState.dice.length) {
+      currentState.dice.forEach(({ group }) => {
+        currentState.diceGroup?.remove(group);
+        disposeDieGroup(group);
       });
     }
 
-    const die = createDie(dieType, selectedColor);
-    scene.add(die);
-    stateRef.current.die = die;
-  }, [dieType, selectedColor]);
+    const sizeMultiplier = SIZE_MAP[size] ?? SIZE_MAP.medium;
+    const diceInstances = diceDescriptors.map((descriptor) => {
+      const die = createDie(descriptor.type, descriptor.color);
+      die.scale.set(descriptor.scale, descriptor.scale, descriptor.scale);
+      die.position.set(descriptor.position.x, descriptor.position.y, descriptor.position.z);
+      die.rotation.set(descriptor.rotation.x, descriptor.rotation.y, descriptor.rotation.z);
+      currentState.diceGroup?.add(die);
 
-  useEffect(() => {
-    if (!stateRef.current?.die) return;
-    const scale = SIZE_MAP[size] ?? SIZE_MAP.medium;
-    stateRef.current.die.scale.set(scale, scale, scale);
-  }, [size]);
+      return {
+        group: die,
+        rotationSpeed: new THREE.Vector3(
+          descriptor.rotationSpeed.x,
+          descriptor.rotationSpeed.y,
+          descriptor.rotationSpeed.z
+        ),
+      } satisfies DieInstance;
+    });
 
-  useEffect(() => {
-    if (mountRef.current) {
-      mountRef.current.dataset.diceColor = selectedColor;
+    currentState.dice = diceInstances;
+
+    if (currentState.diceGroup) {
+      const boundingBox = new THREE.Box3().setFromObject(currentState.diceGroup);
+      const sizeVector = boundingBox.getSize(new THREE.Vector3());
+      const maxAxis = Math.max(sizeVector.x, sizeVector.y, sizeVector.z, 1);
+      const baseMultiplier = SIZE_MAP[size] ?? SIZE_MAP.medium;
+      const desiredMax = baseMultiplier * 2.6;
+      const uniformScale = Math.min(baseMultiplier, desiredMax / maxAxis);
+      currentState.diceGroup.scale.set(uniformScale, uniformScale, uniformScale);
+      const center = boundingBox.getCenter(new THREE.Vector3());
+      currentState.diceGroup.position.set(-center.x, -center.y, -center.z);
     }
-  }, [selectedColor]);
+  }, [diceDescriptors, size]);
 
   useEffect(() => {
     if (!stateRef.current?.axes) return;
     stateRef.current.axes.visible = showAxes;
   }, [showAxes]);
 
-  return <div ref={mountRef} className={className} style={style} />;
+  return (
+    <div className={rootClassName} style={style}>
+      <div
+        ref={mountRef}
+        className="relative flex items-center justify-center"
+        style={canvasStyle}
+        data-dice-count={diceDescriptors.length}
+        data-dice-types={
+          diceDescriptors.map((descriptor) => descriptor.type).join(',') || AVAILABLE_DIE_TYPES.join(',')
+        }
+      />
+      <div className="text-center text-sm text-shadow-300" role="status" aria-live="polite">
+        {displayedMessage}
+      </div>
+    </div>
+  );
 }

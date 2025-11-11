@@ -9,6 +9,9 @@ export interface DiceLoaderProps {
   dieType?: DieType;
   color?: string;
   showAxes?: boolean;
+  message?: string;
   className?: string;
   style?: CSSProperties;
+  diceCount?: number;
+  maxDiceCount?: number;
 }

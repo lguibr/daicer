@@ -1,4 +1,4 @@
-import { GamePhase } from '../types/shared';
+import { GamePhase, type Message } from '../types/shared';
 import { AppState } from './types';
 import { AppAction, ActionType } from './actions';
 
@@ -81,15 +81,19 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           // Check if it's a player
           newState.players = newState.players.map((p) => {
             if (p.character.name === characterName) {
-              const newChar = { ...p.character, [attribute]: value };
-              return { ...p, character: newChar };
+              if (attribute in p.character) {
+                const key = attribute as keyof typeof p.character;
+                const newChar = { ...p.character, [key]: value };
+                return { ...p, character: newChar };
+              }
             }
             return p;
           });
           // Check if it's a creature
           newState.creatures = newState.creatures.map((c) => {
-            if (c.name === characterName) {
-              return { ...c, [attribute]: value };
+            if (c.name === characterName && attribute in c) {
+              const key = attribute as keyof typeof c;
+              return { ...c, [key]: value };
             }
             return c;
           });

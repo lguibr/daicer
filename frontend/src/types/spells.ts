@@ -42,6 +42,7 @@ export interface SpellData {
   name: string;
   level: number;
   school: string;
+  imageUrl?: string | null;
   castingTime: string;
   range: string;
   components: {

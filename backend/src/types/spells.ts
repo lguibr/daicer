@@ -233,6 +233,9 @@ export interface SpellData {
   /** School of magic */
   school: MagicSchool;
 
+  /** Optional image reference */
+  imageUrl?: string | null;
+
   // ===== CASTING =====
   /** Casting time (action, bonus action, reaction, etc.) */
   castingTime: string;

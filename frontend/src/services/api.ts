@@ -4,6 +4,7 @@
 
 import { auth } from './firebase';
 import type { Room, WorldSettings, Player, Message } from '../types/shared';
+import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse } from '../types/assets';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -123,7 +124,11 @@ export async function generateWorld(roomId: string, language: string): Promise<R
  * @param character - Character data
  * @returns Created player
  */
-export async function addCharacter(roomId: string, character: Partial<Player['character']>): Promise<Player> {
+export type CreateCharacterPayload = Partial<Player['character']> & {
+  avatarPreview?: AvatarPreviewResponse;
+};
+
+export async function addCharacter(roomId: string, character: CreateCharacterPayload): Promise<Player> {
   return apiRequest<Player>(`/api/game/${roomId}/character`, {
     method: 'POST',
     body: JSON.stringify(character),
@@ -140,5 +145,33 @@ export async function startGame(roomId: string, language: string): Promise<Messa
   return apiRequest<Message>(`/api/game/${roomId}/start`, {
     method: 'POST',
     body: JSON.stringify({ language }),
+  });
+}
+
+export async function generateAvatarPortrait(payload: AvatarGenerationPayload): Promise<AvatarPreviewImage> {
+  return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/portrait', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function generateAvatarUpperBody(
+  payload: AvatarGenerationPayload,
+  portrait: AvatarPreviewImage
+): Promise<AvatarPreviewImage> {
+  return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/upper', {
+    method: 'POST',
+    body: JSON.stringify({ payload, portrait }),
+  });
+}
+
+export async function generateAvatarFullBody(
+  payload: AvatarGenerationPayload,
+  portrait: AvatarPreviewImage,
+  upperBody: AvatarPreviewImage
+): Promise<AvatarPreviewImage> {
+  return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/full', {
+    method: 'POST',
+    body: JSON.stringify({ payload, portrait, upperBody }),
   });
 }

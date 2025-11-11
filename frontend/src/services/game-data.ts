@@ -11,6 +11,7 @@ export interface Alignment {
   name: string;
   abbreviation: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface Ability {
@@ -20,6 +21,7 @@ export interface Ability {
   fullName: string;
   description: string;
   skills: string[];
+  imageUrl?: string | null;
 }
 
 export interface Skill {
@@ -28,6 +30,7 @@ export interface Skill {
   name: string;
   description: string;
   abilityScore: string;
+  imageUrl?: string | null;
 }
 
 export interface Race {
@@ -36,6 +39,7 @@ export interface Race {
   description: string;
   speed: number;
   size: string;
+  imageUrl?: string | null;
 }
 
 export interface CharacterClass {
@@ -45,6 +49,7 @@ export interface CharacterClass {
   hitDie: number;
   primaryAbility: string;
   savingThrows: string[];
+  imageUrl?: string | null;
 }
 
 export interface Background {
@@ -52,6 +57,7 @@ export interface Background {
   name: string;
   description: string;
   skillProficiencies: string[];
+  imageUrl?: string | null;
 }
 
 export interface Language {
@@ -60,6 +66,7 @@ export interface Language {
   name: string;
   isRare: boolean;
   note: string;
+  imageUrl?: string | null;
 }
 
 export interface MagicSchool {
@@ -67,6 +74,7 @@ export interface MagicSchool {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface Condition {
@@ -74,6 +82,7 @@ export interface Condition {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface DamageType {
@@ -81,6 +90,7 @@ export interface DamageType {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface WeaponProperty {
@@ -88,6 +98,7 @@ export interface WeaponProperty {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface EquipmentCategory {
@@ -95,6 +106,7 @@ export interface EquipmentCategory {
   index: string;
   name: string;
   description: string;
+  imageUrl?: string | null;
 }
 
 export interface EquipmentItem {
@@ -108,6 +120,7 @@ export interface EquipmentItem {
   armorClass?: number | { base: number; dexBonus: boolean; maxBonus?: number };
   range?: { normal: number; long?: number };
   properties?: string[];
+  imageUrl?: string | null;
 }
 
 /**

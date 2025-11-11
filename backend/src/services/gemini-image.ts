@@ -67,15 +67,13 @@ const buildContents = (request: ImageGenerationRequest) => {
   ];
 };
 
-const buildResponseConfig = (config?: ImageGenerationConfig) => {
-  return {
-    responseModalities: ['IMAGE' as const],
-    imageConfig: {
-      imageSize: config?.size ?? '1K',
-    },
-    ...(config?.temperature !== undefined && { temperature: config.temperature }),
-  };
-};
+const buildResponseConfig = (config?: ImageGenerationConfig) => ({
+  responseModalities: ['IMAGE' as const],
+  imageConfig: {
+    imageSize: config?.size ?? '1K',
+  },
+  ...(config?.temperature !== undefined && { temperature: config.temperature }),
+});
 
 const resolveInlineImage = async (
   request: ImageGenerationRequest,

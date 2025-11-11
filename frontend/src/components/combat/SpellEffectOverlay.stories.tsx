@@ -720,7 +720,7 @@ export const InteractiveSpellSelector: Story = {
         }
       };
 
-      void loadSpells();
+      loadSpells();
 
       return () => {
         isMounted = false;

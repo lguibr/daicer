@@ -30,7 +30,7 @@ export default function DiscreteSlider({ id, label, value, onChange, marks, desc
         <label htmlFor={id} className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-300">
           {label}
         </label>
-        <span className="rounded-full border border-aurora-500/40 bg-aurora-500/10 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-aurora-200">
+        <span className="rounded-full border border-accent/35 bg-accent/15 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.4em] text-accent">
           {activeMark?.label}
         </span>
       </div>
@@ -39,7 +39,7 @@ export default function DiscreteSlider({ id, label, value, onChange, marks, desc
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
           <div className="h-[6px] rounded-full bg-midnight-600/60">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-aurora-400 via-aurora-500 to-nebula-400 transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-aurora-400 via-accent to-nebula-400 transition-all duration-300"
               style={{ width: `${((value - min) / (max - min || 1)) * 100}%` }}
             />
           </div>
@@ -54,7 +54,7 @@ export default function DiscreteSlider({ id, label, value, onChange, marks, desc
           value={value}
           onChange={(event) => onChange(Number.parseInt(event.target.value, 10))}
           className="relative z-10 w-full appearance-none bg-transparent focus:outline-none"
-          style={{ accentColor: '#d38f1f' }}
+          style={{ accentColor: 'hsl(var(--accent))' }}
         />
 
         <div
@@ -68,13 +68,13 @@ export default function DiscreteSlider({ id, label, value, onChange, marks, desc
               onClick={() => onChange(mark.value)}
               className={clsx(
                 'flex flex-col items-center gap-1 transition-transform duration-150',
-                value === mark.value ? 'scale-105 text-aurora-300' : 'text-shadow-500 hover:text-shadow-200'
+                value === mark.value ? 'scale-105 text-accent' : 'text-shadow-500 hover:text-shadow-200'
               )}
             >
               <span
                 className={clsx(
-                  'h-2 w-2 rounded-full border border-aurora-400/40',
-                  value === mark.value ? 'bg-aurora-400 shadow-[0_0_12px_rgba(211,143,31,0.45)]' : 'bg-midnight-500'
+                  'h-2 w-2 rounded-full border border-accent/40',
+                  value === mark.value ? 'bg-accent shadow-[0_0_14px_rgba(122,73,217,0.45)]' : 'bg-midnight-500'
                 )}
               />
               {mark.label}

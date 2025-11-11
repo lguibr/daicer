@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import DebugPanel from './components/debug/DebugPanel';
 import LandingPage from './pages/Landing';
 import LobbyPage from './pages/Lobby';
 import CreateRoomPage from './pages/CreateRoom';
 import GameRoomPage from './pages/GameRoom';
 import TestSetupPage from './pages/TestSetup';
 import CombatDemoPage from './pages/CombatDemo';
+import ExplorePage from './pages/Explore';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 export default function App() {
@@ -53,9 +53,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/explore"
+          element={
+            <ProtectedRoute>
+              <ExplorePage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <DebugPanel />
     </BrowserRouter>
   );
 }

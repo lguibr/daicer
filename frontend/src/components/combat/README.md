@@ -1,211 +1,136 @@
 # Combat Components
 
-D&D 5e combat system UI components for tactical grid-based battles with time-travel debugging.
+React components that render tactical encounters, visualize dice-driven outcomes, and enable combat time-travel.
 
-## Architecture
+---
+
+## Module Overview
 
 ```mermaid
-graph TB
-    A[Combat System] --> B[Grid View]
-    A --> C[Character Display]
-    A --> D[Combat Log]
-    A --> E[Time Travel]
+flowchart LR
+    CombatScreen --> CombatGrid
+    CombatScreen --> CharacterTray[CharacterCardList]
+    CombatScreen --> Log[CombatLog]
+    CombatScreen --> Timeline[TimeTravelPanel]
+    CombatScreen --> Overlays[Overlays]
 
-    B --> B1[CombatGrid]
-    C --> C1[CharacterCard]
-    D --> D1[CombatLog]
-    E --> E1[TimeTravelPanel]
+    CombatGrid --> GridCell
+    CombatGrid --> ReachableSquares
+    CombatGrid --> SpellOverlay
 
-    B1 --> F[Position State]
-    B1 --> G[Movement Calc]
-
-    C1 --> H[HP Display]
-    C1 --> I[Stats Display]
-    C1 --> J[Conditions]
-
-    D1 --> K[Log Entries]
-    D1 --> L[Dice Rolls]
-
-    E1 --> M[History Stack]
-    E1 --> N[State Restoration]
-
-    style A fill:#4a5568
-    style B fill:#2d3748
-    style C fill:#2d3748
-    style D fill:#2d3748
-    style E fill:#2d3748
+    Timeline --> HistoryDots
+    Timeline --> RestoreButton
 ```
 
-## Components
+- `CombatScreen.tsx` orchestrates layout, data fetching (via `useCombat`), and event wiring.
+- Components consume shared types from `@/types/combat` and selectors exposed by the `useCombat` hook.
+- Visual state derives from deterministic combat snapshots produced by the backend.
 
-### CombatGrid
+---
 
-Tactical grid for character positioning and movement visualization.
+## Component Matrix
 
-**Features:**
+| Component            | Responsibility                         | Key Props                                                                    |
+| -------------------- | -------------------------------------- | ---------------------------------------------------------------------------- |
+| `CombatGrid`         | Grid rendering, square interaction     | `gridWidth`, `gridHeight`, `characters`, `reachableSquares`, `onSquareClick` |
+| `CharacterCard`      | Display combatant stats and status     | `character`, `isActive`, `isSelected`, `onClick`                             |
+| `CharacterTray`      | Group of `CharacterCard`s with filters | `characters`, `activeCharacterId`, `onSelect`                                |
+| `CombatLog`          | Scrollable log with dice details       | `entries`, `diceHistory`, `onExpand`                                         |
+| `TimeTravelPanel`    | Timeline of past turns/states          | `history`, `currentIndex`, `onRestore`, `isOpen`                             |
+| `CombatToolbar`      | Controls (end turn, undo, debug)       | `onEndTurn`, `canUndo`, `onUndo`, `isDm`                                     |
+| `SpellEffectOverlay` | AoE visualizations                     | `effect`, `gridSize`, `origin`, `target`                                     |
 
-- Dynamic grid sizing (configurable width/height)
-- Character placement with player/enemy differentiation
-- Reachable square highlighting
-- Click handlers for movement and targeting
-- Coordinate display
-
-```tsx
-import { CombatGrid } from '@/components/combat';
-
-<CombatGrid
-  characters={combatState.characters}
-  gridWidth={10}
-  gridHeight={10}
-  activeCharacterId={activeCharacter?.id}
-  selectedCharacterId={selectedId}
-  reachableSquares={moveableSquares}
-  onSquareClick={handleMove}
-  onCharacterClick={handleSelect}
-/>;
-```
-
-### CharacterCard
-
-Displays character stats, HP, and combat status.
-
-**Features:**
-
-- HP bar with color coding (green > 50%, yellow 25-50%, red < 25%)
-- Temporary HP display
-- Ability score modifiers
-- Active/selected state indicators
-- Turn action status (moved, acted)
-- Condition badges
-- Player vs enemy styling
-
-```tsx
-import { CharacterCard } from '@/components/combat';
-
-<CharacterCard
-  character={combatCharacter}
-  isActive={character.id === activeId}
-  isSelected={character.id === selectedId}
-  onClick={() => handleCharacterClick(character.id)}
-/>;
-```
-
-### CombatLog
-
-Scrollable log of combat events with expandable dice rolls.
-
-**Features:**
-
-- Icon-coded log types (attack ⚔️, damage 💥, move 🏃, etc.)
-- Color-coded by event type
-- Expandable dice roll details
-- Advantage/disadvantage display
-- Markdown formatting support
-- Auto-scroll to latest
-
-```tsx
-import { CombatLog } from '@/components/combat';
-
-<CombatLog log={combatState.log} diceHistory={combatState.diceHistory} />;
-```
-
-### TimeTravelPanel
-
-Debug panel for navigating combat history and restoring states.
-
-**Features:**
-
-- Visual timeline with dots
-- Past/current/future state indicators
-- Round and character count display
-- Prev/Next navigation buttons
-- Direct state restoration on click
-- Collapsible floating panel
-
-```tsx
-import { TimeTravelPanel } from '@/components/combat';
-
-<TimeTravelPanel
-  history={combatHistory}
-  currentIndex={historyIndex}
-  onRestore={restoreToIndex}
-  isOpen={isPanelOpen}
-  onToggle={togglePanel}
-/>;
-```
+---
 
 ## Data Flow
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant CombatGrid
-    participant CharacterCard
-    participant CombatLog
-    participant State
+    participant Hook as useCombat
+    participant Grid as CombatGrid
+    participant Tray as CharacterTray
+    participant Log as CombatLog
+    participant Timeline as TimeTravelPanel
 
-    User->>CharacterCard: Click character
-    CharacterCard->>State: Select character
-    State->>CombatGrid: Update reachable squares
+    Hook-->>Grid: reachableSquares, activeCharacter
+    Hook-->>Tray: characters[], statuses
+    Hook-->>Log: logEntries, diceHistory
+    Hook-->>Timeline: history[], index
 
-    User->>CombatGrid: Click square
-    CombatGrid->>State: Move action
-    State->>State: Process movement
-    State->>CombatLog: Log movement
-    State->>CharacterCard: Update position
+    Grid->>Hook: onSquareClick(target)
+    Tray->>Hook: onSelect(characterId)
+    Timeline->>Hook: onRestore(index)
+    Hook-->>Grid: refreshed state snapshot
+    Hook-->>Log: new entries
 ```
 
-## Combat State Types
+State contract:
 
-All components use shared types from `useCombat` hook:
+- `useCombat` returns immutable snapshots; components operate on read-only data.
+- Mutating actions (move, cast spell, restore) route back through the hook, which emits socket events.
+- Hook ensures optimistic updates revert if server rejects action (via version numbers).
 
-```typescript
-interface CombatCharacter {
-  id: string;
-  name: string;
-  hp: number;
-  maxHp: number;
-  tempHp: number;
-  armorClass: number;
-  position: Position;
-  initiative: number;
-  // ... ability scores, conditions, etc.
-}
+---
 
-interface CombatLogEntry {
-  id: string;
-  timestamp: number;
-  message: string;
-  type: string;
-  relatedRolls: string[];
-}
-```
+## Styling & Visual Rules
+
+- Grid squares size (px) derived from container width; maintain 1:1 aspect ratio.
+- Friendly vs hostile tokens use aurora (cyan) vs ember (orange) palettes.
+- Selected squares animate with subtle pulse (`animate-pulse`), but respect `prefers-reduced-motion`.
+- Time-travel panel overlays on top-right for desktop; mobile collapses to bottom sheet.
+
+---
+
+## Accessibility
+
+- `CombatGrid` renders using `<button>` elements for squares to guarantee keyboard navigation.
+- Arrow keys move focus across grid; hitting `Enter` triggers `onSquareClick`.
+- `CombatLog` uses `aria-live="polite"` for fresh narration.
+- Timeline dots expose `aria-label` with round/turn info.
+
+---
 
 ## Testing
 
 ```bash
-# Run combat component tests
-yarn test combat/__tests__
+yarn test frontend/src/components/combat/__tests__
 ```
 
-## Storybook
+- Use Testing Library to simulate keyboard + mouse interactions.
+- Mock `useCombat` hook to deliver deterministic snapshots.
+- Snapshot tests for overlays ensure geometry accuracy (with seeded fixtures).
+
+---
+
+## Storybook Coverage
 
 ```bash
 yarn storybook
 ```
 
-Navigate to `Combat/` section to view:
+Available stories under `Combat/`:
 
-- Character cards in various states
-- Grid layouts with different sizes
-- Combat log with dice rolls
-- Time travel panel interactions
+- Combat grid at multiple sizes with reachable moves.
+- Character cards (ally/enemy, active, unconscious).
+- Combat log entries with expanded dice history.
+- Time travel panel with branching history.
 
-## Integration
+Use stories to validate new visual states before wiring them into live data.
 
-Combat components integrate with:
+---
 
-- `useCombat` hook for state management
-- LangGraph backend for combat resolution
-- Socket.IO for real-time updates
-- Firestore checkpointer for history persistence
+## Integration Notes
+
+- Backend emits `combat:timeline` events; `useCombat` merges them into history state.
+- Spell overlays consume backend-provided geometry arrays (`affectedSquares`).
+- Ensure `CombatScreen` renders `DebugPanel` hooks in dev mode only to avoid leaking secrets in production.
+
+---
+
+## Extending Combat UI
+
+1. Update shared types (`@/types/combat`) if payloads change.
+2. Extend `useCombat` to expose new selectors or actions.
+3. Add component stories + tests for new scenario.
+4. Document behavior here (props, state dependencies).
+5. Sync with backend docs (`backend/src/types/README-SPELLS.md`) for geometry alignment.

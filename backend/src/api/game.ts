@@ -21,26 +21,46 @@ import { ApiError } from '@/middleware/error';
 import { NEW_CHARACTER_TEMPLATE } from '@/constants';
 import { GamePhase, type Player, type Message, type CharacterSheet } from '@/types/index';
 import { io } from '@/server';
+import { characterSheetSchema } from '@/schemas/character';
+import { mergeCharacterSheet } from '@/utils/character';
+import { storeCharacterAvatarPreviews } from '@/services/character-assets';
 
 const router = Router();
 
 /**
  * Character creation schema
  */
+const baseAttributesSchema = z.object({
+  Strength: z.number().min(1).max(30),
+  Dexterity: z.number().min(1).max(30),
+  Constitution: z.number().min(1).max(30),
+  Intelligence: z.number().min(1).max(30),
+  Wisdom: z.number().min(1).max(30),
+  Charisma: z.number().min(1).max(30),
+});
+
+const avatarPreviewImageSchema = z.object({
+  mimeType: z.string().min(1),
+  data: z.string().min(1),
+  prompt: z.string().min(1),
+});
+
+const avatarPreviewSchema = z.object({
+  portrait: avatarPreviewImageSchema,
+  upperBody: avatarPreviewImageSchema,
+  fullBody: avatarPreviewImageSchema,
+});
+
 const characterSchema = z.object({
   name: z.string().min(1),
   race: z.string().min(1),
   characterClass: z.string().min(1),
   alignment: z.string().min(1),
-  attributes: z.object({
-    Strength: z.number().min(1).max(30),
-    Dexterity: z.number().min(1).max(30),
-    Constitution: z.number().min(1).max(30),
-    Intelligence: z.number().min(1).max(30),
-    Wisdom: z.number().min(1).max(30),
-    Charisma: z.number().min(1).max(30),
-  }),
+  background: z.string().optional(),
+  attributes: baseAttributesSchema,
   armorClass: z.number().min(1),
+  sheet: characterSheetSchema.partial({ deep: true }).optional(),
+  avatarPreview: avatarPreviewSchema.optional(),
 });
 
 /**
@@ -95,11 +115,31 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
     throw new ApiError(400, 'Not in character creation phase');
   }
 
-  const charData = characterSchema.parse(req.body);
-  const character: CharacterSheet = {
-    ...NEW_CHARACTER_TEMPLATE,
-    ...charData,
+  const { sheet, avatarPreview, ...coreData } = characterSchema.parse(req.body);
+
+  const overrides: Partial<CharacterSheet> = {
+    ...sheet,
+    ...coreData,
   };
+
+  overrides.attributes = {
+    ...NEW_CHARACTER_TEMPLATE.attributes,
+    ...coreData.attributes,
+    ...(sheet?.attributes ?? {}),
+  };
+
+  if (sheet?.savingThrows || coreData.attributes) {
+    overrides.savingThrows = {
+      ...NEW_CHARACTER_TEMPLATE.savingThrows,
+      ...(sheet?.savingThrows ?? {}),
+    };
+  }
+
+  const character = mergeCharacterSheet(NEW_CHARACTER_TEMPLATE, overrides);
+
+  if (avatarPreview) {
+    character.avatarAssets = await storeCharacterAvatarPreviews(character, avatarPreview);
+  }
 
   const player: Player = {
     id: req.user!.uid,

@@ -10,8 +10,7 @@ import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
 import GameplayScreen from '../components/game/GameplayScreen';
 import { CombatScreen } from '../components/game/CombatScreen';
-import Layout from '../components/layout/Layout';
-import ToolsPanel from '../components/debug/ToolsPanel';
+import { PrivateLayout } from '../components/layout';
 import { ToolNotificationContainer } from '../components/ui/ToolNotificationToast';
 import type { Room, Player } from '../types/shared';
 
@@ -26,7 +25,6 @@ export default function GameRoomPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toolsPanelOpen, setToolsPanelOpen] = useState(false);
   const [recentToolCalls, setRecentToolCalls] = useState<typeof socket.toolCalls>([]);
 
   const socket = useSocket(roomId);
@@ -78,17 +76,17 @@ export default function GameRoomPage() {
 
   if (loading) {
     return (
-      <Layout showNavbar={false}>
+      <PrivateLayout showNavbar={false}>
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-aurora-300" />
         </div>
-      </Layout>
+      </PrivateLayout>
     );
   }
 
   if (error || !room) {
     return (
-      <Layout showRoomInfo={false}>
+      <PrivateLayout showRoomInfo={false}>
         <div className="min-h-screen flex items-center justify-center p-4">
           <div className="max-w-md p-6 card">
             <h2 className="text-2xl font-bold text-red-400 mb-2">Error</h2>
@@ -98,7 +96,7 @@ export default function GameRoomPage() {
             </button>
           </div>
         </div>
-      </Layout>
+      </PrivateLayout>
     );
   }
 
@@ -131,14 +129,9 @@ export default function GameRoomPage() {
   }
 
   return (
-    <Layout room={room} playerCount={players.length} showRoomInfo={room.phase !== 'COMBAT'}>
+    <PrivateLayout room={room} playerCount={players.length} showRoomInfo={room.phase !== 'COMBAT'}>
       {content}
       <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={handleDismissToast} />
-      <ToolsPanel
-        toolCalls={socket.toolCalls}
-        isOpen={toolsPanelOpen}
-        onToggle={() => setToolsPanelOpen(!toolsPanelOpen)}
-      />
-    </Layout>
+    </PrivateLayout>
   );
 }

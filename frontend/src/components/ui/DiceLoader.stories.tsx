@@ -19,6 +19,7 @@ const meta: Meta<typeof DiceLoader> = {
     },
     color: { control: 'color' },
     showAxes: { control: 'boolean' },
+    message: { control: 'text' },
   },
 };
 
@@ -29,6 +30,7 @@ type Story = StoryObj<typeof DiceLoader>;
 export const Default: Story = {
   args: {
     size: 'medium',
+    message: undefined,
   },
 };
 

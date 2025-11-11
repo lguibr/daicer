@@ -10,6 +10,7 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { default as Input } from './input';
 export { default as Label } from './label';
 export { default as Textarea } from './textarea';
+export { default as NumericStepper } from './NumericStepper';
 
 export {
   Select,
@@ -26,5 +27,6 @@ export {
 
 export { default as AnimatedBackground } from './AnimatedBackground';
 export { default as LanguageSelector } from './LanguageSelector';
+export { default as ImageThumbnail } from './ImageThumbnail';
 export * from './dice-loader';
 export * from './LoadingOverlay';

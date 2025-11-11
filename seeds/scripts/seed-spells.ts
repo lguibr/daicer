@@ -39,7 +39,10 @@ async function seedSpells() {
 
   for (const spell of spells) {
     const docRef = db.collection('spells').doc(spell.id);
-    batch.set(docRef, spell);
+    batch.set(docRef, {
+      ...spell,
+      imageUrl: spell.imageUrl ?? null,
+    });
     count++;
 
     if (count % 100 === 0) {

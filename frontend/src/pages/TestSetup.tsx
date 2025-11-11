@@ -9,7 +9,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Swords, Flame, Puzzle, Ship, FlaskConical } from 'lucide-react';
 import { createRoom, updateRoomSettings, addCharacter } from '../services/api';
 import { setReady } from '../services/socket';
-import Layout from '../components/layout/Layout';
+import { PrivateLayout } from '../components/layout';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import type { WorldSettings, CharacterSheet, Attribute } from '../types/shared';
 import { useI18n } from '../i18n';
@@ -95,7 +95,7 @@ const TEST_SCENARIOS: TestScenario[] = [
       },
       playerCount: 1,
       adventureLength: 'medium',
-      difficulty: 'hard',
+      difficulty: 'challenging',
       startingLevel: 10,
       attributePointBudget: 27,
       language: 'en',
@@ -339,7 +339,7 @@ export default function TestSetupPage() {
   }
 
   return (
-    <Layout showRoomInfo={false}>
+    <PrivateLayout showRoomInfo={false}>
       {loading && <LoadingOverlay message="Setting up test scenario..." />}
       <div className="min-h-screen p-8">
         <div className="max-w-6xl mx-auto">
@@ -420,6 +420,6 @@ export default function TestSetupPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </PrivateLayout>
   );
 }

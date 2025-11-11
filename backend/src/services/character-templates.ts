@@ -5,7 +5,233 @@
  */
 
 import { faker } from '@faker-js/faker';
-import type { CharacterSheet } from '@/types/index';
+import {
+  Attribute,
+  type BackgroundDetails,
+  type CharacterSheet,
+  type ResourcePool,
+  type SkillDetail,
+  type SkillProficiency,
+  type Talent,
+} from '@/types/index';
+
+const SKILL_LIST: Array<{ name: string; ability: Attribute }> = [
+  { name: 'Acrobatics', ability: Attribute.DEX },
+  { name: 'Animal Handling', ability: Attribute.WIS },
+  { name: 'Arcana', ability: Attribute.INT },
+  { name: 'Athletics', ability: Attribute.STR },
+  { name: 'Deception', ability: Attribute.CHA },
+  { name: 'History', ability: Attribute.INT },
+  { name: 'Insight', ability: Attribute.WIS },
+  { name: 'Intimidation', ability: Attribute.CHA },
+  { name: 'Investigation', ability: Attribute.INT },
+  { name: 'Medicine', ability: Attribute.WIS },
+  { name: 'Nature', ability: Attribute.INT },
+  { name: 'Perception', ability: Attribute.WIS },
+  { name: 'Performance', ability: Attribute.CHA },
+  { name: 'Persuasion', ability: Attribute.CHA },
+  { name: 'Religion', ability: Attribute.INT },
+  { name: 'Sleight of Hand', ability: Attribute.DEX },
+  { name: 'Stealth', ability: Attribute.DEX },
+  { name: 'Survival', ability: Attribute.WIS },
+];
+
+const CLASS_SKILL_PROFICIENCIES: Record<string, string[]> = {
+  Barbarian: ['Athletics', 'Survival', 'Intimidation'],
+  Bard: ['Performance', 'Persuasion', 'Deception', 'History', 'Insight'],
+  Cleric: ['Religion', 'Insight', 'Medicine', 'History'],
+  Druid: ['Nature', 'Survival', 'Animal Handling', 'Perception'],
+  Fighter: ['Athletics', 'Intimidation', 'Perception'],
+  Monk: ['Acrobatics', 'Athletics', 'Stealth', 'Insight'],
+  Paladin: ['Religion', 'Athletics', 'Persuasion'],
+  Ranger: ['Survival', 'Perception', 'Stealth', 'Animal Handling'],
+  Rogue: ['Stealth', 'Acrobatics', 'Sleight of Hand', 'Perception', 'Deception'],
+  Sorcerer: ['Arcana', 'Persuasion', 'Deception'],
+  Warlock: ['Arcana', 'Intimidation', 'Deception'],
+  Wizard: ['Arcana', 'History', 'Investigation', 'Religion'],
+};
+
+const CLASS_SKILL_EXPERTISE: Record<string, string[]> = {
+  Rogue: ['Stealth', 'Sleight of Hand'],
+  Bard: ['Performance', 'Persuasion'],
+};
+
+const CLASS_TALENTS: Record<string, Talent[]> = {
+  Barbarian: [
+    { name: 'Rage', category: 'class', description: 'Enter a primal fury that grants bonus damage and resistance.' },
+    { name: 'Danger Sense', category: 'class', description: 'Advantage on Dexterity saves against seen effects.' },
+  ],
+  Bard: [
+    { name: 'Bardic Inspiration', category: 'class', description: 'Bolster allies with inspiring words or music.' },
+    {
+      name: 'Jack of All Trades',
+      category: 'class',
+      description: 'Add half proficiency to ability checks you lack proficiency in.',
+    },
+  ],
+  Cleric: [
+    { name: 'Channel Divinity', category: 'class', description: 'Invoke divine energy for potent miracles.' },
+    { name: 'Turn Undead', category: 'class', description: 'Force undead creatures to flee holy radiance.' },
+  ],
+  Druid: [
+    { name: 'Wild Shape', category: 'class', description: 'Transform into beast forms learned through druidic study.' },
+    { name: 'Druidic Circle', category: 'class', description: 'Harness the teachings of your chosen circle.' },
+  ],
+  Fighter: [
+    { name: 'Second Wind', category: 'class', description: 'Recover vitality once per short rest.' },
+    { name: 'Action Surge', category: 'class', description: 'Push beyond limits to take an extra action.' },
+  ],
+  Monk: [
+    { name: 'Martial Arts', category: 'class', description: 'Strike swiftly with disciplined techniques.' },
+    { name: 'Ki Techniques', category: 'class', description: 'Channel ki to flurry, dodge, or stun.' },
+  ],
+  Paladin: [
+    { name: 'Lay on Hands', category: 'class', description: 'Heal wounds with divine energy.' },
+    { name: 'Divine Smite', category: 'class', description: 'Empower strikes with holy wrath.' },
+  ],
+  Ranger: [
+    { name: 'Favored Foe', category: 'class', description: 'Mark prey to deal additional damage.' },
+    { name: 'Natural Explorer', category: 'class', description: 'Master travel through chosen terrains.' },
+  ],
+  Rogue: [
+    { name: 'Sneak Attack', category: 'class', description: 'Exploit openings for extra damage.' },
+    { name: 'Cunning Action', category: 'class', description: 'Dash, Disengage, or Hide as a bonus action.' },
+  ],
+  Sorcerer: [
+    { name: 'Font of Magic', category: 'class', description: 'Manipulate sorcery points for flexible casting.' },
+    { name: 'Metamagic', category: 'class', description: 'Twist spells to suit the moment.' },
+  ],
+  Warlock: [
+    { name: 'Eldritch Invocations', category: 'class', description: 'Supernatural favors granted by your patron.' },
+    { name: 'Pact Boon', category: 'class', description: 'Unique gift defining your pact relationship.' },
+  ],
+  Wizard: [
+    { name: 'Arcane Recovery', category: 'class', description: 'Refresh spell slots after a short rest.' },
+    { name: 'Arcane Tradition', category: 'class', description: 'Specialised school magic expertise.' },
+  ],
+};
+
+const CLASS_RESOURCE_POOLS: Record<
+  string,
+  Array<Omit<ResourcePool, 'current'> & Partial<Pick<ResourcePool, 'current'>>>
+> = {
+  Barbarian: [
+    { name: 'Rage', current: 2, max: 2, refresh: 'long-rest', description: 'Number of times you can rage per day.' },
+  ],
+  Bard: [
+    { name: 'Bardic Inspiration', current: 2, max: 2, refresh: 'short-rest', description: 'Inspiration dice pool.' },
+  ],
+  Cleric: [
+    { name: 'Channel Divinity', current: 1, max: 1, refresh: 'short-rest', description: 'Uses of divine channeling.' },
+  ],
+  Druid: [{ name: 'Wild Shape', current: 2, max: 2, refresh: 'short-rest', description: 'Beast shape uses.' }],
+  Fighter: [
+    { name: 'Second Wind', current: 1, max: 1, refresh: 'short-rest', description: 'Renew stamina once per rest.' },
+    { name: 'Action Surge', current: 1, max: 1, refresh: 'short-rest', description: 'Push beyond normal limits.' },
+  ],
+  Monk: [
+    {
+      name: 'Ki Points',
+      current: 2,
+      max: 2,
+      refresh: 'short-rest',
+      description: 'Ki resource for martial techniques.',
+    },
+  ],
+  Paladin: [
+    { name: 'Lay on Hands', current: 5, max: 5, refresh: 'long-rest', description: 'Healing pool equal to level ×5.' },
+  ],
+  Ranger: [
+    { name: 'Spell Slots', current: 2, max: 2, refresh: 'long-rest', description: '1st-level spell slots available.' },
+  ],
+  Rogue: [
+    {
+      name: 'Superiority Edge',
+      current: 2,
+      max: 2,
+      refresh: 'short-rest',
+      description: 'Reserve for daring maneuvers.',
+    },
+  ],
+  Sorcerer: [
+    { name: 'Sorcery Points', current: 2, max: 2, refresh: 'long-rest', description: 'Fuel for metamagic options.' },
+  ],
+  Warlock: [
+    {
+      name: 'Pact Magic Slots',
+      current: 1,
+      max: 1,
+      refresh: 'short-rest',
+      description: 'Slot level based on warlock level.',
+    },
+  ],
+  Wizard: [
+    { name: 'Arcane Recovery', current: 1, max: 1, refresh: 'daily', description: 'Regain spell slots after rest.' },
+  ],
+};
+
+function getAbilityModifier(attributes: Record<string, number>, ability: Attribute): number {
+  const score = attributes[ability] ?? 10;
+  return Math.floor((score - 10) / 2);
+}
+
+function resolveProficiency(className: string, skillName: string): SkillProficiency {
+  const expertise = CLASS_SKILL_EXPERTISE[className] || [];
+  if (expertise.includes(skillName)) {
+    return 'expertise';
+  }
+
+  const proficiencies = CLASS_SKILL_PROFICIENCIES[className] || [];
+  if (proficiencies.includes(skillName)) {
+    return 'proficient';
+  }
+
+  return 'trained';
+}
+
+function buildSkillDetails(archetype: CharacterArchetype, proficiencyBonus: number): SkillDetail[] {
+  return SKILL_LIST.map((skill) => {
+    const abilityModifier = getAbilityModifier(archetype.attributes, skill.ability);
+    const proficiency = resolveProficiency(archetype.class, skill.name);
+    const modifier =
+      abilityModifier +
+      (proficiency === 'expertise' ? proficiencyBonus * 2 : proficiency === 'proficient' ? proficiencyBonus : 0);
+
+    return {
+      name: skill.name,
+      ability: skill.ability,
+      modifier,
+      proficiency,
+    };
+  });
+}
+
+function buildBackgroundDetails(archetype: CharacterArchetype): BackgroundDetails {
+  const sentences = archetype.backstory
+    .split('.')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const keyEvents = sentences.slice(0, 3).map((sentence) => (sentence.endsWith('.') ? sentence : `${sentence}.`));
+
+  return {
+    origin: archetype.background,
+    upbringing: `Shaped by ${archetype.background.toLowerCase()} traditions and duties.`,
+    motivation: archetype.personality.ideals,
+    keyEvents,
+    allies: archetype.personality.bonds ? [archetype.personality.bonds] : [],
+  };
+}
+
+function buildResourcePools(className: string): ResourcePool[] {
+  const pools = CLASS_RESOURCE_POOLS[className] || [];
+  return pools.map((pool) => ({
+    name: pool.name,
+    current: pool.current ?? pool.max,
+    max: pool.max,
+    refresh: pool.refresh,
+    description: pool.description,
+  }));
+}
 
 /**
  * Character archetypes with optimized attributes and backgrounds
@@ -468,6 +694,16 @@ export function generateCharacterFromArchetype(archetypeKey: string): CharacterS
   // Calculate derived stats
   const conModifier = Math.floor(((archetype.attributes.Constitution ?? 10) - 10) / 2);
   const dexModifier = Math.floor(((archetype.attributes.Dexterity ?? 10) - 10) / 2);
+  const proficiencyBonus = 2;
+  const skillDetails = buildSkillDetails(archetype, proficiencyBonus);
+  const skills = skillDetails.reduce<Record<string, number>>((acc, skill) => {
+    acc[skill.name] = skill.modifier;
+    return acc;
+  }, {});
+  const talents = CLASS_TALENTS[archetype.class] || [];
+  const resourcePools = buildResourcePools(archetype.class);
+  const backgroundDetails = buildBackgroundDetails(archetype);
+  const expertises = skillDetails.filter((skill) => skill.proficiency === 'expertise').map((skill) => skill.name);
 
   return {
     name,
@@ -498,7 +734,9 @@ export function generateCharacterFromArchetype(archetypeKey: string): CharacterS
       reflex: dexModifier,
       will: 0,
     },
-    skills: {},
+    skills,
+    skillDetails,
+    expertises,
     baseAttackBonus: 1,
     attacks: [],
     equipment: 'Standard adventuring gear',
@@ -511,11 +749,20 @@ export function generateCharacterFromArchetype(archetypeKey: string): CharacterS
     },
     proficienciesAndLanguages: 'Common, and racial languages',
     features: `${archetype.class} features and ${archetype.race} racial traits`,
+    talents,
     appearance: archetype.appearance,
     personality: archetype.personality,
     backstory: archetype.backstory,
+    backgroundDetails,
     alliesAndOrganizations: '',
     treasure: '',
+    resourcePools,
+    advancementPoints: {
+      ability: 0,
+      skill: 0,
+      talent: 0,
+    },
+    avatarAssets: null,
     spellcasting: {
       class: '',
       ability: '',

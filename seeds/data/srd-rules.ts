@@ -9,6 +9,7 @@ export interface SRDRule {
   category: 'combat' | 'spells' | 'exploration' | 'conditions' | 'abilities' | 'general';
   content: string;
   tags: string[];
+  imageUrl?: string | null;
 }
 
 export const SRD_RULES: SRDRule[] = [

@@ -1,6 +1,6 @@
 {
   "auth": {
-    "title": "dAIcer",
+    "title": "DAIcer",
     "subtitle": "AI Dungeon Master for tabletop legends",
     "heroDescription": "Forge a living campaign with an AI Dungeon Master trained to honour lore, tension, and teamwork.",
     "cards": {
@@ -193,6 +193,14 @@
   "debug": {
     "title": "Debug Panel",
     "close": "Close"
+  },
+  "diceLoader": {
+    "messages": {
+      "summoning": "Summoning shiny math rocks...",
+      "rattling": "Rattling the dice tray of destiny...",
+      "focusing": "Consulting the probability spirits...",
+      "calibrating": "Calibrating critical hit chances..."
+    }
   },
   "common": {
     "loading": "Loading...",
