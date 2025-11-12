@@ -27,10 +27,10 @@ export default function BaseLayout({
   contentClassName,
 }: BaseLayoutProps) {
   return (
-    <div className={cn('relative min-h-screen overflow-hidden bg-background', className)}>
+    <div className={cn('relative min-h-dvh overflow-hidden bg-background', className)}>
       {showBackground && <AnimatedBackground />}
       <div className={cn('absolute inset-0 pointer-events-none', toneOverlay[tone])} aria-hidden />
-      <div className={cn('relative z-10 flex min-h-screen flex-col', contentClassName)}>{children}</div>
+      <div className={cn('relative z-10 flex min-h-dvh flex-col', contentClassName)}>{children}</div>
     </div>
   );
 }

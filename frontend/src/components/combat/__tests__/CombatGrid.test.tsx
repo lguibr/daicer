@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CombatGrid } from '../CombatGrid';
-import type { CombatCharacter, Position } from '../../../hooks/useCombat';
+import type { CombatCharacter, Position } from '../../../types/combat';
 
 describe('CombatGrid', () => {
   const mockCharacters: CombatCharacter[] = [

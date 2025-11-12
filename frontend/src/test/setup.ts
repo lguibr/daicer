@@ -3,6 +3,7 @@
  * @description Test environment setup for Vitest
  */
 
+import React from 'react';
 import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 
@@ -29,4 +30,14 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+});
+
+// Mock DiceLoader to avoid WebGL dependency in tests
+vi.mock('../components/ui/dice-loader', () => {
+  const DiceLoader = ({ message }: { message?: string }) =>
+    React.createElement('div', { 'data-testid': 'dice-loader' }, message ?? null);
+
+  return {
+    DiceLoader,
+  };
 });

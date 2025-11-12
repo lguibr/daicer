@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { TimeTravelPanel } from './TimeTravelPanel';
-import type { CombatHistory, CombatState, CombatCharacter } from '../../hooks/useCombat';
+import type { CombatHistory, CombatState, CombatCharacter } from '../../types/combat';
 
 const createBaseState = (): CombatState => ({
   sessionId: 'test',
@@ -35,6 +35,8 @@ const createBaseState = (): CombatState => ({
   phase: 'setup',
   pendingOpportunityAttacks: [],
   diceRollerSeed: 42,
+  spellPreview: null,
+  lastSpellResolution: null,
 });
 
 const createHistory = (count: number): CombatHistory[] =>

@@ -10,6 +10,8 @@ import type { CombatCharacter, GameplayState } from '@/graph/state';
 import type { Player } from '@/types/index';
 import { v4 as uuidv4 } from 'uuid';
 import { createCombatSession } from './graph';
+import { getSpellByIdOrThrow } from './spell-catalog';
+import type { GridPosition } from '../types/spells';
 
 /**
  * Schema for starting combat
@@ -50,6 +52,35 @@ const EndTurnSchema = z.object({
  */
 const EndCombatSchema = z.object({
   reason: z.string().describe('Reason for ending combat (e.g., "enemies defeated", "players fled")'),
+});
+
+const GridPositionSchema = z.object({
+  x: z.number().int().min(0),
+  y: z.number().int().min(0),
+});
+
+const SpellTargetSchema = z.object({
+  type: z.enum(['point', 'direction']).optional(),
+  x: z.number().int().min(0).optional(),
+  y: z.number().int().min(0).optional(),
+  direction: z.number().int().min(1).max(9).optional(),
+});
+
+const SpellScenarioSchema = z.object({
+  obstacles: z.array(GridPositionSchema).optional(),
+  gridWidth: z.number().int().min(5).max(60).optional(),
+  gridHeight: z.number().int().min(5).max(60).optional(),
+});
+
+const SpellPreviewSchema = z.object({
+  casterName: z.string(),
+  spellId: z.string(),
+  target: SpellTargetSchema.optional(),
+  scenario: SpellScenarioSchema.optional(),
+});
+
+const SpellCastSchema = SpellPreviewSchema.extend({
+  confirmFriendlyFire: z.boolean().default(false),
 });
 
 /**
@@ -317,7 +348,151 @@ export const endCombatTool = tool(
   }
 );
 
+function buildSpellTarget(
+  input: z.infer<typeof SpellTargetSchema>
+): { type?: 'point' | 'direction'; position?: GridPosition; direction?: number } | undefined {
+  if (!input) return undefined;
+
+  if (input.type === 'direction' || input.direction) {
+    return {
+      type: 'direction',
+      direction: input.direction ?? 6,
+    };
+  }
+
+  if (typeof input.x === 'number' && typeof input.y === 'number') {
+    return {
+      type: 'point',
+      position: { x: input.x, y: input.y },
+    };
+  }
+
+  return undefined;
+}
+
+function mapObstacles(obstacles?: z.infer<typeof GridPositionSchema>[]): GridPosition[] | undefined {
+  if (!obstacles || obstacles.length === 0) return undefined;
+  return obstacles.map((o) => ({ x: o.x, y: o.y }));
+}
+
+/**
+ * Tool: Preview Spell
+ * Generates a deterministic spell preview snapshot with affected squares.
+ */
+export const spellPreviewTool = tool(
+  async (input: z.infer<typeof SpellPreviewSchema>, config: LangGraphRunnableConfig): Promise<Command> => {
+    const roomId = config.configurable?.roomId as string;
+    const session = getCombatSession(roomId);
+
+    const state = session.getState();
+    const caster = state.characters.find((c) => c.name === input.casterName);
+    if (!caster) {
+      throw new Error(`Character not found: ${input.casterName}`);
+    }
+
+    const spell = getSpellByIdOrThrow(input.spellId);
+    const target = buildSpellTarget(input.target ?? {});
+    const obstacles = mapObstacles(input.scenario?.obstacles);
+    const gridWidth = input.scenario?.gridWidth;
+    const gridHeight = input.scenario?.gridHeight;
+
+    const updatedState = await session.previewSpell({
+      casterId: caster.id,
+      spell,
+      target,
+      obstacles,
+      gridWidth,
+      gridHeight,
+    });
+
+    return new Command({
+      update: {
+        combatState: updatedState,
+      } as Partial<GameplayState>,
+    });
+  },
+  {
+    name: 'combat_spell_preview',
+    description: 'Preview a spell effect on the combat grid, returning affected squares and warnings.',
+    schema: SpellPreviewSchema,
+  }
+);
+
+/**
+ * Tool: Cast Spell
+ * Resolves spell damage and updates combat state deterministically.
+ */
+export const spellCastTool = tool(
+  async (input: z.infer<typeof SpellCastSchema>, config: LangGraphRunnableConfig): Promise<Command> => {
+    const roomId = config.configurable?.roomId as string;
+    const session = getCombatSession(roomId);
+
+    const state = session.getState();
+    const caster = state.characters.find((c) => c.name === input.casterName);
+    if (!caster) {
+      throw new Error(`Character not found: ${input.casterName}`);
+    }
+
+    const spell = getSpellByIdOrThrow(input.spellId);
+    const preview = state.spellPreview;
+
+    const target = buildSpellTarget(input.target ?? {});
+    const resolvedTarget =
+      target ??
+      (preview && preview.spellId === spell.id && preview.casterId === caster.id
+        ? {
+            type: 'point',
+            position: preview.targetPosition,
+          }
+        : undefined);
+
+    if (!resolvedTarget) {
+      throw new Error('Spell target required for casting. Call combat_spell_preview first or provide a target.');
+    }
+
+    const previewConflicts =
+      preview && preview.spellId === spell.id && preview.casterId === caster.id && preview.friendlyFireRisk;
+
+    if (previewConflicts && !input.confirmFriendlyFire) {
+      throw new Error(`Spell ${spell.name} may hit allies. Pass confirmFriendlyFire=true to proceed intentionally.`);
+    }
+
+    const obstacles = mapObstacles(input.scenario?.obstacles) ?? preview?.obstacles;
+    const gridWidth = input.scenario?.gridWidth;
+    const gridHeight = input.scenario?.gridHeight;
+
+    const updatedState = await session.castSpell({
+      casterId: caster.id,
+      spell,
+      target: resolvedTarget,
+      obstacles,
+      gridWidth,
+      gridHeight,
+    });
+
+    return new Command({
+      update: {
+        combatState: updatedState,
+      } as Partial<GameplayState>,
+    });
+  },
+  {
+    name: 'combat_spell_cast',
+    description:
+      'Cast a spell in combat. Requires prior preview or explicit target. Returns deterministic rolls and updates HP/log.',
+    schema: SpellCastSchema,
+  }
+);
+
 /**
  * All combat tools for the DM agent
  */
-export const combatTools = [startCombatTool, attackTool, moveTool, endTurnTool, endCombatTool];
+export const combatTools = [
+  startCombatTool,
+  attackTool,
+  moveTool,
+  endTurnTool,
+  endCombatTool,
+  spellPreviewTool,
+  spellCastTool,
+];

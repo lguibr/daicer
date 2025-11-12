@@ -1,9 +1,13 @@
 {
   "auth": {
     "title": "DAIcer",
-    "subtitle": "AI Dungeon Master for tabletop legends",
+    "subtitle": "Digital Arcanist Interactive Creative Experience Roleplay",
     "heroDescription": "Forge a living campaign with an AI Dungeon Master trained to honour lore, tension, and teamwork.",
     "cards": {
+      "eyebrow": "Feature Spotlight",
+      "sectionTitle": "Shape Your Campaign Instantly",
+      "sectionDescription": "Swipe through the pillars that keep every table immersed—lore sync, tactical pacing, and party cohesion.",
+      "sectionLabel": "Landing feature highlights",
       "lore": {
         "title": "Curated Lore",
         "body": "Sync realms, factions, relic histories, and prophecies—the DM remembers every secret."
@@ -21,6 +25,27 @@
       "heading": "Gate of Entry",
       "copy": "Sign in with your adventuring charter to gather the party in moments."
     },
+    "secondary": {
+      "title": "Beyond the Gate",
+      "subtitle": "Keep your table inspired between sessions.",
+      "description": "Deliver actionable lore drops, session prep, and player prompts so the next gathering starts at full momentum.",
+      "carouselLabel": "Campaign support highlights",
+      "tracks": {
+        "eyebrow": "CAMPAIGN TRACKS",
+        "title": "Living Storylines",
+        "body": "Surface evolving plot threads and faction agendas so everyone knows which sparks are ready to ignite."
+      },
+      "guidance": {
+        "eyebrow": "SESSION GUIDANCE",
+        "title": "Precision Prep",
+        "body": "Turn encounter notes into ready scenes with pacing tips, boxed text, and suggested complications."
+      },
+      "readiness": {
+        "eyebrow": "PARTY READINESS",
+        "title": "Signal Boosts",
+        "body": "Share player-facing spotlights, downtime hooks, and inventory reminders to keep the party aligned."
+      }
+    },
     "login": "Continue with Google",
     "loggingIn": "Logging in...",
     "emulatorNote": "Using development emulators",
@@ -30,6 +55,8 @@
     "title": "Lobby",
     "subtitle": "Choose your course",
     "description": "Rally a brand-new table or join a sworn fellowship. The citadel syncs settings, lore, and rosters instantly.",
+    "carouselTitle": "Choose Your Path",
+    "carouselDescription": "Cycle through the key ways to launch a fresh realm, rejoin your party, or open focused sandboxes.",
     "cards": {
       "create": {
         "title": "Create",
@@ -43,15 +70,22 @@
         "title": "Combat Demo",
         "body": "Watch a deterministic battle replay to understand the tactical engine at a glance.",
         "action": "Open Combat Demo"
+      },
+      "test": {
+        "title": "Dev Test Mode",
+        "body": "Boot the sandbox to iterate on combat, tool calls, and narrative pacing without affecting live tables.",
+        "action": "Open Test Mode"
       }
     },
     "createButton": "Create New Adventure",
+    "enterCode": "Join with Room Code",
     "joinButton": "Join Room",
     "inputLabel": "Enter Room Code",
     "codePlaceholder": "CODE",
     "joining": "Joining...",
     "orDivider": "OR",
-    "devButton": "Dev Test Mode"
+    "devButton": "Dev Test Mode",
+    "carouselLabel": "Lobby options carousel"
   },
   "worldSettings": {
     "title": "Create Adventure",

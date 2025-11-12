@@ -5,35 +5,10 @@
 
 import { Router } from 'express';
 import type { Request, Response } from 'express';
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import type { SpellData } from '../types/spells';
 import { SpellEffectShape } from '../types/spells';
-
-/* eslint-disable no-underscore-dangle */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-/* eslint-enable no-underscore-dangle */
+import { getAllSpells } from '../combat/spell-catalog';
 
 const router = Router();
-
-// Load spells from JSON
-let spellsCache: SpellData[] | null = null;
-
-function loadSpells(): SpellData[] {
-  if (spellsCache) return spellsCache;
-
-  try {
-    const spellsPath = join(__dirname, '../../../seeds/game-data/spells.json');
-    const data = readFileSync(spellsPath, 'utf-8');
-    spellsCache = JSON.parse(data) as SpellData[];
-    return spellsCache;
-  } catch (error) {
-    console.error('Failed to load spells:', error);
-    return [];
-  }
-}
 
 /**
  * GET /api/spells
@@ -41,7 +16,7 @@ function loadSpells(): SpellData[] {
  */
 router.get('/', (req: Request, res: Response) => {
   try {
-    let spells = loadSpells();
+    let spells = getAllSpells();
 
     // Filter by level
     if (req.query.level) {
@@ -100,7 +75,7 @@ router.get('/', (req: Request, res: Response) => {
  */
 router.get('/:id', (req: Request, res: Response) => {
   try {
-    const spells = loadSpells();
+    const spells = getAllSpells();
     const spell = spells.find((s) => s.id === req.params.id);
 
     if (!spell) {
@@ -128,7 +103,7 @@ router.get('/search/query', (req: Request, res: Response) => {
       return;
     }
 
-    const spells = loadSpells();
+    const spells = getAllSpells();
     const results = spells.filter(
       (s) => s.name.toLowerCase().includes(query) || s.description.toLowerCase().includes(query)
     );
@@ -151,7 +126,7 @@ router.get('/search/query', (req: Request, res: Response) => {
 router.get('/shapes/:shape', (req: Request, res: Response) => {
   try {
     const shape = req.params.shape as SpellEffectShape;
-    const spells = loadSpells();
+    const spells = getAllSpells();
     const results = spells.filter((s) => s.effectShape === shape);
 
     res.json({
@@ -178,7 +153,7 @@ router.get('/levels/:level', (req: Request, res: Response) => {
       return;
     }
 
-    const spells = loadSpells();
+    const spells = getAllSpells();
     const results = spells.filter((s) => s.level === level);
 
     res.json({

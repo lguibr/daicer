@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CombatLog } from '../CombatLog';
-import type { CombatLogEntry, DiceRollResult } from '../../../hooks/useCombat';
+import type { CombatLogEntry, DiceRollResult } from '../../../types/combat';
 
 const mockDiceRoll: DiceRollResult = {
   id: 'roll-1',

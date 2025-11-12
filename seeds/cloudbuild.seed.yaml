@@ -1,0 +1,19 @@
+# Cloud Build job to seed Firestore with production data.
+
+substitutions:
+  _FIREBASE_PROJECT_ID: "daicer-prod"
+
+steps:
+  - name: gcr.io/cloud-builders/yarn
+    entrypoint: bash
+    env:
+      - FIREBASE_PROJECT_ID=${_FIREBASE_PROJECT_ID}
+    args:
+      - -c
+      - |
+        yarn install --frozen-lockfile
+        cd backend
+        yarn seed
+
+timeout: 900s
+

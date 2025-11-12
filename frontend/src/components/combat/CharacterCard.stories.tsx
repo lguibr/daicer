@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { CharacterCard } from './CharacterCard';
-import type { CombatCharacter } from '../../hooks/useCombat';
+import type { CombatCharacter } from '../../types/combat';
 
 const baseCharacter: CombatCharacter = {
   id: 'char-1',

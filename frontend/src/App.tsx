@@ -5,6 +5,7 @@ import CreateRoomPage from './pages/CreateRoom';
 import GameRoomPage from './pages/GameRoom';
 import TestSetupPage from './pages/TestSetup';
 import CombatDemoPage from './pages/CombatDemo';
+import SpellbookDemoPage from './pages/SpellbookDemo';
 import ExplorePage from './pages/Explore';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
@@ -50,6 +51,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CombatDemoPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/spellbook-demo"
+          element={
+            <ProtectedRoute>
+              <SpellbookDemoPage />
             </ProtectedRoute>
           }
         />

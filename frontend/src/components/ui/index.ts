@@ -30,3 +30,4 @@ export { default as LanguageSelector } from './LanguageSelector';
 export { default as ImageThumbnail } from './ImageThumbnail';
 export * from './dice-loader';
 export * from './LoadingOverlay';
+export * from './Carousel';

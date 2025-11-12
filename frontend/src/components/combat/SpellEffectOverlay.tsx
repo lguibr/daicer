@@ -6,6 +6,13 @@
 
 import type { GridPosition, SpellEffectShape } from '../../types/spells';
 
+interface OverlayCharacter {
+  id: string;
+  position: GridPosition;
+  icon?: string;
+  role?: 'ally' | 'enemy' | 'caster' | 'neutral';
+}
+
 interface SpellEffectOverlayProps {
   /** Grid dimensions */
   gridWidth: number;
@@ -20,11 +27,36 @@ interface SpellEffectOverlayProps {
   /** Squares affected by spell */
   affectedSquares: GridPosition[];
 
+  /** Optional squares representing projectile path */
+  pathSquares?: GridPosition[];
+
+  /** Optional squares representing notable highlights (e.g., allies) */
+  highlightSquares?: GridPosition[];
+
+  /** Squares that are blocked/obstacles */
+  obstacles?: GridPosition[];
+
+  /** Characters rendered on the grid */
+  characters?: OverlayCharacter[];
+
+  /** Optional square click handler */
+  onSquareClick?: (position: GridPosition) => void;
+
   /** Spell effect shape type */
   effectShape: SpellEffectShape;
 
   /** Color for the effect (based on damage type) */
   effectColor?: string;
+
+  /** Override the affected squares label */
+  squaresLabel?: string;
+
+  /** Additional metadata to display */
+  summary?: {
+    friendlyFireRisk?: boolean;
+    requiresLineOfSight?: boolean;
+    lineOfSightBlocked?: boolean;
+  };
 }
 
 /**
@@ -36,8 +68,15 @@ export function SpellEffectOverlay({
   casterPosition,
   targetPosition,
   affectedSquares,
+  pathSquares = [],
+  highlightSquares = [],
+  obstacles = [],
+  characters = [],
+  onSquareClick,
   effectShape,
   effectColor = 'rgba(255, 100, 100, 0.3)',
+  squaresLabel,
+  summary,
 }: SpellEffectOverlayProps) {
   const isSquareAffected = (x: number, y: number): boolean => affectedSquares.some((sq) => sq.x === x && sq.y === y);
 
@@ -45,6 +84,15 @@ export function SpellEffectOverlay({
 
   const isTarget = (x: number, y: number): boolean =>
     targetPosition ? targetPosition.x === x && targetPosition.y === y : false;
+
+  const isObstacle = (x: number, y: number): boolean => obstacles.some((sq) => sq.x === x && sq.y === y);
+
+  const isPathSquare = (x: number, y: number): boolean => pathSquares.some((sq) => sq.x === x && sq.y === y);
+
+  const isHighlighted = (x: number, y: number): boolean => highlightSquares.some((sq) => sq.x === x && sq.y === y);
+
+  const getOccupant = (x: number, y: number): OverlayCharacter | undefined =>
+    characters.find((char) => char.position.x === x && char.position.y === y);
 
   // Get effect shape icon/label
   const getShapeLabel = (): string => {
@@ -83,8 +131,17 @@ export function SpellEffectOverlay({
 
       {/* Affected Squares Count */}
       <div className="absolute top-2 right-2 bg-black/70 text-white px-3 py-1 rounded text-sm z-20">
-        {affectedSquares.length} squares
+        {squaresLabel ?? `${affectedSquares.length} squares`}
       </div>
+
+      {/* Summary */}
+      {summary && (
+        <div className="absolute left-2 bottom-2 space-y-1 text-xs text-white bg-black/60 px-3 py-2 rounded-md z-20 max-w-[240px]">
+          {summary.friendlyFireRisk && <div>⚠️ Friendly fire possible</div>}
+          {summary.requiresLineOfSight && !summary.lineOfSightBlocked && <div>👁️ Line of sight required</div>}
+          {summary.lineOfSightBlocked && <div>🚫 Line of sight blocked</div>}
+        </div>
+      )}
 
       {/* Grid Overlay */}
       <div
@@ -96,26 +153,67 @@ export function SpellEffectOverlay({
         {Array.from({ length: gridHeight }, (_row, y) =>
           Array.from({ length: gridWidth }, (_col, x) => {
             const affected = isSquareAffected(x, y);
+            const obstacle = isObstacle(x, y);
+            const onPath = isPathSquare(x, y);
+            const highlighted = isHighlighted(x, y);
             const casterHere = isCaster(x, y);
             const targetHere = isTarget(x, y);
+            const occupant = getOccupant(x, y);
+
+            const ringClass =
+              occupant?.role === 'ally'
+                ? 'ring-2 ring-emerald-400'
+                : occupant?.role === 'enemy'
+                  ? 'ring-2 ring-rose-500'
+                  : occupant?.role === 'caster'
+                    ? 'ring-2 ring-sky-400'
+                    : '';
 
             return (
               <div
                 key={`${x}-${y}`}
                 className={`
-                  aspect-square border border-gray-700
-                  ${affected ? 'opacity-70' : 'opacity-20'}
-                  ${casterHere ? 'ring-2 ring-blue-400' : ''}
-                  ${targetHere ? 'ring-2 ring-yellow-400' : ''}
-                  transition-all
+                  relative aspect-square border border-gray-700
+                  ${affected ? 'opacity-80' : 'opacity-20'}
+                  ${ringClass}
+                  ${casterHere ? 'outline outline-2 outline-blue-400' : ''}
+                  ${targetHere ? 'outline outline-2 outline-yellow-400' : ''}
+                  ${highlighted ? 'shadow-inner shadow-emerald-400/60' : ''}
+                  transition-all overflow-hidden
+                  ${onSquareClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-aurora-300' : ''}
                 `}
                 style={{
                   backgroundColor: affected ? effectColor : 'transparent',
                 }}
+                role={onSquareClick ? 'button' : undefined}
+                tabIndex={onSquareClick ? 0 : undefined}
+                onClick={() => onSquareClick?.({ x, y })}
+                onKeyDown={(event) => {
+                  if (!onSquareClick) return;
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onSquareClick({ x, y });
+                  }
+                }}
               >
+                {onPath && !casterHere && !targetHere && (
+                  <div className="absolute inset-[3px] rounded-sm border-2 border-sky-400 pointer-events-none" />
+                )}
+
+                {obstacle && (
+                  <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-sm text-red-200">
+                    ⛔
+                  </div>
+                )}
+
                 {casterHere && <div className="w-full h-full flex items-center justify-center text-2xl">🧙</div>}
                 {targetHere && !casterHere && (
                   <div className="w-full h-full flex items-center justify-center text-xl">🎯</div>
+                )}
+                {occupant && !casterHere && !targetHere && !obstacle && (
+                  <div className="absolute inset-0 flex items-center justify-center text-xl pointer-events-none">
+                    {occupant.icon ?? (occupant.role === 'ally' ? '🛡️' : occupant.role === 'enemy' ? '💀' : '⚑')}
+                  </div>
                 )}
               </div>
             );

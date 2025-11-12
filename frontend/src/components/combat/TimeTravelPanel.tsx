@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import type { CombatHistory } from '../../hooks/useCombat';
+import type { CombatHistory } from '../../types/combat';
 
 interface TimeTravelPanelProps {
   history: CombatHistory[];

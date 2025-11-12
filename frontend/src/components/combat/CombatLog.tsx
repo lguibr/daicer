@@ -4,7 +4,7 @@
  */
 
 import { useRef, useEffect, useState } from 'react';
-import type { CombatLogEntry, DiceRollResult } from '../../hooks/useCombat';
+import type { CombatLogEntry, DiceRollResult } from '../../types/combat';
 
 interface CombatLogProps {
   log: CombatLogEntry[];

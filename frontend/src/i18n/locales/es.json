@@ -1,9 +1,13 @@
 {
   "auth": {
     "title": "DAIcer",
-    "subtitle": "Maestro de mazmorras con IA para leyendas de mesa",
+    "subtitle": "Director Artificial Inteligente para Campañas Épicas de Rol",
     "heroDescription": "Forja una campaña viva con un Maestro de Mazmorras que honra la historia, la tensión y el trabajo en equipo.",
     "cards": {
+      "eyebrow": "Destacado principal",
+      "sectionTitle": "Moldea tu campaña al instante",
+      "sectionDescription": "Recorre los pilares que mantienen a la mesa inmersa: lore sincronizado, ritmo táctico y cohesión del grupo.",
+      "sectionLabel": "Destacados de funciones del inicio",
       "lore": {
         "title": "Lore Curado",
         "body": "Sincroniza reinos, facciones, reliquias y profecías: la IA recuerda cada secreto."
@@ -21,6 +25,27 @@
       "heading": "Puerta de Entrada",
       "copy": "Firma con tu carta de aventura y reúne a la compañía en cuestión de instantes."
     },
+    "secondary": {
+      "title": "Más Allá de la Puerta",
+      "subtitle": "Mantén a tu mesa inspirada entre sesiones.",
+      "description": "Entrega gotas de lore accionables, preparación de sesión y señales para jugadores para que la próxima reunión comience con impulso total.",
+      "carouselLabel": "Momentos clave de soporte de campaña",
+      "tracks": {
+        "eyebrow": "CRÓNICAS DE CAMPAÑA",
+        "title": "Tramas Vivas",
+        "body": "Destaca hilos de trama en evolución y agendas de facciones para que todos sepan qué chispas están listas para encenderse."
+      },
+      "guidance": {
+        "eyebrow": "GUÍA DE SESIÓN",
+        "title": "Preparación Precisa",
+        "body": "Convierte notas de encuentros en escenas listas con sugerencias de ritmo, texto evocador y complicaciones sugeridas."
+      },
+      "readiness": {
+        "eyebrow": "PREPARACIÓN DEL GRUPO",
+        "title": "Impulso Compartido",
+        "body": "Comparte focos para jugadores, ganchos de tiempo libre y recordatorios de inventario para mantener al grupo alineado."
+      }
+    },
     "login": "Continuar con Google",
     "loggingIn": "Iniciando sesión...",
     "emulatorNote": "Usando emuladores de desarrollo",
@@ -30,6 +55,8 @@
     "title": "Lobby",
     "subtitle": "Elige tu rumbo",
     "description": "Reúne una mesa nueva o únete a una compañía juramentada. La ciudadela sincroniza ajustes, lore y expedientes al instante.",
+    "carouselTitle": "Elige tu vía",
+    "carouselDescription": "Recorre las formas clave de lanzar un reino nuevo, reunirte con tu grupo o abrir sandboxes enfocados.",
     "cards": {
       "create": {
         "title": "Crear",
@@ -43,15 +70,22 @@
         "title": "Demo de Combate",
         "body": "Observa una batalla determinista para comprender el motor táctico.",
         "action": "Abrir demo de combate"
+      },
+      "test": {
+        "title": "Modo de prueba dev",
+        "body": "Inicia el sandbox para iterar combate, herramientas y ritmo narrativo sin tocar mesas en vivo.",
+        "action": "Abrir modo de prueba"
       }
     },
     "createButton": "Crear nueva aventura",
+    "enterCode": "Unirse con código de sala",
     "joinButton": "Unirse a la sala",
     "inputLabel": "Introduce el código de la sala",
     "codePlaceholder": "CÓDIGO",
     "joining": "Uniéndose...",
     "orDivider": "O",
-    "devButton": "Modo de prueba"
+    "devButton": "Modo de prueba",
+    "carouselLabel": "Carrusel de opciones del lobby"
   },
   "worldSettings": {
     "title": "Crear Aventura",

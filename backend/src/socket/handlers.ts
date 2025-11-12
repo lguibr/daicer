@@ -19,6 +19,7 @@ import {
 import { invokeCharacterCreationGraph } from '@/graph/character-creation-graph';
 import { invokeGameplayGraph } from '@/graph/gameplay-graph';
 import { getActiveCombatSession } from '@/combat/tools';
+import { getSpellByIdOrThrow } from '@/combat/spell-catalog';
 import { logger } from '@/utils/logger';
 import { DEFAULT_WORLD_SETTINGS } from '@/constants';
 import { GamePhase, type Language, type WorldSettings } from '@/types/index';
@@ -431,7 +432,7 @@ async function handleCombatAction(
   _userId: string,
   data: {
     roomId: string;
-    action: 'attack' | 'move' | 'end_turn' | 'start_combat' | 'end_combat';
+    action: 'attack' | 'move' | 'end_turn' | 'start_combat' | 'end_combat' | 'spell_preview' | 'spell_cast';
     params: Record<string, unknown>;
   }
 ) {
@@ -439,6 +440,51 @@ async function handleCombatAction(
     const { roomId, action, params } = data;
 
     logger.info(`Combat action: ${action} in room ${roomId}`);
+
+    const parseTarget = (
+      raw: unknown
+    ):
+      | {
+          type?: 'point' | 'direction';
+          position?: { x: number; y: number };
+          direction?: number;
+        }
+      | undefined => {
+      if (!raw || typeof raw !== 'object') {
+        return undefined;
+      }
+
+      const target = raw as Record<string, unknown>;
+      if (target.type === 'direction' || typeof target.direction === 'number') {
+        return {
+          type: 'direction',
+          direction: Number(target.direction ?? 6),
+        };
+      }
+
+      if (typeof target.x === 'number' && typeof target.y === 'number') {
+        return {
+          type: 'point',
+          position: { x: Number(target.x), y: Number(target.y) },
+        };
+      }
+
+      return undefined;
+    };
+
+    const parseObstacles = (raw: unknown): Array<{ x: number; y: number }> | undefined => {
+      if (!Array.isArray(raw)) return undefined;
+      return raw
+        .map((value) => {
+          if (!value || typeof value !== 'object') return null;
+          const obstacle = value as Record<string, unknown>;
+          if (typeof obstacle.x !== 'number' || typeof obstacle.y !== 'number') {
+            return null;
+          }
+          return { x: obstacle.x, y: obstacle.y };
+        })
+        .filter((value): value is { x: number; y: number } => value !== null);
+    };
 
     const session = getActiveCombatSession(roomId);
     if (!session && action !== 'start_combat') {
@@ -470,6 +516,48 @@ async function handleCombatAction(
       case 'end_turn':
         if (session) {
           updatedState = await session.endTurn();
+        }
+        break;
+
+      case 'spell_preview':
+        if (session) {
+          const spellId = params.spellId as string | undefined;
+          const casterId = params.casterId as string | undefined;
+          if (!spellId || !casterId) {
+            socket.emit('error', { message: 'Spell preview requires spellId and casterId' });
+            return;
+          }
+
+          const spell = getSpellByIdOrThrow(spellId);
+          updatedState = await session.previewSpell({
+            casterId,
+            spell,
+            target: parseTarget(params.target),
+            obstacles: parseObstacles(params.obstacles),
+            gridWidth: typeof params.gridWidth === 'number' ? (params.gridWidth as number) : undefined,
+            gridHeight: typeof params.gridHeight === 'number' ? (params.gridHeight as number) : undefined,
+          });
+        }
+        break;
+
+      case 'spell_cast':
+        if (session) {
+          const spellId = params.spellId as string | undefined;
+          const casterId = params.casterId as string | undefined;
+          if (!spellId || !casterId) {
+            socket.emit('error', { message: 'Spell cast requires spellId and casterId' });
+            return;
+          }
+
+          const spell = getSpellByIdOrThrow(spellId);
+          updatedState = await session.castSpell({
+            casterId,
+            spell,
+            target: parseTarget(params.target),
+            obstacles: parseObstacles(params.obstacles),
+            gridWidth: typeof params.gridWidth === 'number' ? (params.gridWidth as number) : undefined,
+            gridHeight: typeof params.gridHeight === 'number' ? (params.gridHeight as number) : undefined,
+          });
         }
         break;
 

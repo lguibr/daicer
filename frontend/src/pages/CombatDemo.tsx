@@ -6,7 +6,7 @@ import { CharacterCard } from '../components/combat/CharacterCard';
 import { CombatLog } from '../components/combat/CombatLog';
 import type { CombatSimulation, CombatSimulationSummary } from '../types/combat-sim';
 import { fetchCombatSimulation, fetchCombatSimulationSummaries } from '../services/simulations';
-import type { CombatCharacter, CombatState } from '../hooks/useCombat';
+import type { CombatCharacter, CombatState } from '../types/combat';
 
 const AUTO_PLAY_INTERVAL_MS = 2000;
 

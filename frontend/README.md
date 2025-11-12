@@ -1,5 +1,19 @@
 # Daicer Frontend
 
+<p align="center">
+  <img src="./public/logo.png" alt="Daicer logo" width="220" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/lguibr/daice/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/lguibr/daice/ci.yml?label=CI&logo=github" alt="CI status"></a>
+  <a href="https://github.com/lguibr/daice/releases"><img src="https://img.shields.io/github/v/release/lguibr/daice?display_name=tag&logo=semanticweb" alt="Release tag"></a>
+  <img src="https://img.shields.io/badge/tests-Vitest-green?logo=vitest" alt="Vitest">
+  <img src="https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=codecov" alt="Coverage">
+  <img src="https://img.shields.io/badge/lint-ESLint-4b32c3?logo=eslint" alt="ESLint">
+  <img src="https://img.shields.io/badge/format-Prettier-ff69b4?logo=prettier" alt="Prettier">
+  <img src="https://img.shields.io/badge/build-Vercel-000000?logo=vercel" alt="Vercel">
+</p>
+
 React + TypeScript client that renders the AI-driven tabletop experience: world creation, real-time narrative, and tactical combat.
 
 ---

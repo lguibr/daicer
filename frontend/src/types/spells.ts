@@ -3,6 +3,8 @@
  * @description Spell types for frontend (mirrors backend)
  */
 
+import type { DiceRollResult } from './combat';
+
 export enum SpellEffectShape {
   MELEE_TOUCH = 'melee_touch',
   RANGED_SINGLE = 'ranged_single',
@@ -63,4 +65,34 @@ export interface SpellTargetingVisualization {
   targetPosition: GridPosition;
   affectedSquares: GridPosition[];
   validTargets: GridPosition[];
+}
+
+export interface SpellPreviewSnapshot {
+  spellId: string;
+  spellName: string;
+  casterId: string;
+  spellLevel: number;
+  school?: string;
+  effectShape: SpellEffectShape;
+  range?: string;
+  casterPosition: GridPosition;
+  targetPosition: GridPosition;
+  affectedSquares: GridPosition[];
+  validTargets: GridPosition[];
+  friendlyFireRisk: boolean;
+  requiresLineOfSight: boolean;
+  lineOfSightBlocked: boolean;
+  obstacles?: GridPosition[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface SpellResolutionSnapshot {
+  spellId: string;
+  casterId: string;
+  affectedCharacterIds: string[];
+  summary: string;
+  damageRolls: DiceRollResult[];
+  savingThrows: DiceRollResult[];
+  attackRolls: DiceRollResult[];
+  friendlyFireOccurred: boolean;
 }

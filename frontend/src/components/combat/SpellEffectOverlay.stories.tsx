@@ -6,83 +6,34 @@
 
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import {
+  calculateConeArea,
+  calculateSphereArea,
+  calculateCubeArea,
+  calculateLineArea,
+  calculateCylinderArea,
+  calculateSelfAuraArea,
+  calculateMeleeTouchArea,
+} from 'daicer/backend/src/shared/spell-geometry';
 import { SpellEffectOverlay } from './SpellEffectOverlay';
 import type { GridPosition } from '../../types/spells';
 import { SpellEffectShape } from '../../types/spells';
 
 // Helper to calculate cone area (simplified frontend version)
 function calculateCone(caster: GridPosition, target: GridPosition, length: number): GridPosition[] {
-  const affected: GridPosition[] = [];
-  const dx = target.x - caster.x;
-  const dy = target.y - caster.y;
-  const mag = Math.sqrt(dx ** 2 + dy ** 2);
-  const dirX = dx / mag;
-  const dirY = dy / mag;
-
-  const squares = Math.floor(length / 5);
-
-  for (let d = 1; d <= squares; d++) {
-    const spread = Math.floor(d / 2);
-    for (let p = -spread; p <= spread; p++) {
-      const px = -dirY * p;
-      const py = dirX * p;
-      const x = Math.round(caster.x + dirX * d + px);
-      const y = Math.round(caster.y + dirY * d + py);
-      affected.push({ x, y });
-    }
-  }
-
-  return affected;
+  return calculateConeArea(caster, { x: target.x - caster.x, y: target.y - caster.y }, length);
 }
 
-// Helper to calculate sphere
-function calculateSphere(center: GridPosition, radius: number): GridPosition[] {
-  const affected: GridPosition[] = [];
-  const r = Math.floor(radius / 5);
-
-  for (let x = center.x - r; x <= center.x + r; x++) {
-    for (let y = center.y - r; y <= center.y + r; y++) {
-      const dist = Math.sqrt((x - center.x) ** 2 + (y - center.y) ** 2);
-      if (dist <= r) {
-        affected.push({ x, y });
-      }
-    }
-  }
-
-  return affected;
+function calculateSphere(center: GridPosition, radius: number, gridWidth = 24, gridHeight = 24): GridPosition[] {
+  return calculateSphereArea(center, radius, gridWidth, gridHeight);
 }
 
-// Helper for cube
 function calculateCube(corner: GridPosition, size: number): GridPosition[] {
-  const affected: GridPosition[] = [];
-  const squares = Math.floor(size / 5);
-
-  for (let x = corner.x - Math.floor(squares / 2); x < corner.x + Math.ceil(squares / 2); x++) {
-    for (let y = corner.y - Math.floor(squares / 2); y < corner.y + Math.ceil(squares / 2); y++) {
-      affected.push({ x, y });
-    }
-  }
-
-  return affected;
+  return calculateCubeArea(corner, size, true);
 }
 
-// Helper for line
-function calculateLine(start: GridPosition, end: GridPosition, length: number): GridPosition[] {
-  const affected: GridPosition[] = [];
-  const squares = Math.floor(length / 5);
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const mag = Math.sqrt(dx ** 2 + dy ** 2);
-  const dirX = dx / mag;
-  const dirY = dy / mag;
-
-  for (let d = 0; d <= squares; d++) {
-    const x = Math.round(start.x + dirX * d);
-    const y = Math.round(start.y + dirY * d);
-    affected.push({ x, y });
-  }
-
-  return affected;
+function calculateLine(start: GridPosition, end: GridPosition, length: number, width = 5): GridPosition[] {
+  return calculateLineArea(start, end, length, width);
 }
 
 const meta = {
@@ -355,7 +306,7 @@ export const Cylinder10FtRadius: Story = {
     gridHeight: 12,
     casterPosition: { x: 2, y: 2 },
     targetPosition: { x: 7, y: 7 },
-    affectedSquares: calculateSphere({ x: 7, y: 7 }, 10),
+    affectedSquares: calculateCylinderArea({ x: 7, y: 7 }, 10, 0, 12, 12),
     effectShape: SpellEffectShape.CYLINDER,
     effectColor: 'rgba(100, 255, 200, 0.4)',
   },
@@ -367,7 +318,7 @@ export const Cylinder20FtRadius: Story = {
     gridHeight: 16,
     casterPosition: { x: 3, y: 3 },
     targetPosition: { x: 10, y: 10 },
-    affectedSquares: calculateSphere({ x: 10, y: 10 }, 20),
+    affectedSquares: calculateCylinderArea({ x: 10, y: 10 }, 20, 0, 16, 16),
     effectShape: SpellEffectShape.CYLINDER,
     effectColor: 'rgba(100, 200, 200, 0.4)',
   },
@@ -381,7 +332,7 @@ export const MeleeTouchAdjacent: Story = {
     gridHeight: 8,
     casterPosition: { x: 4, y: 4 },
     targetPosition: { x: 5, y: 4 },
-    affectedSquares: [{ x: 5, y: 4 }],
+    affectedSquares: calculateMeleeTouchArea({ x: 4, y: 4 }),
     effectShape: SpellEffectShape.MELEE_TOUCH,
     effectColor: 'rgba(255, 215, 0, 0.5)',
   },
@@ -417,7 +368,7 @@ export const SelfAura10ft: Story = {
     gridWidth: 10,
     gridHeight: 10,
     casterPosition: { x: 5, y: 5 },
-    affectedSquares: calculateSphere({ x: 5, y: 5 }, 10),
+    affectedSquares: calculateSelfAuraArea({ x: 5, y: 5 }, 10, 10, 10),
     effectShape: SpellEffectShape.SELF_AURA,
     effectColor: 'rgba(255, 215, 0, 0.35)',
   },
@@ -428,7 +379,7 @@ export const SelfAura15ft: Story = {
     gridWidth: 12,
     gridHeight: 12,
     casterPosition: { x: 6, y: 6 },
-    affectedSquares: calculateSphere({ x: 6, y: 6 }, 15),
+    affectedSquares: calculateSelfAuraArea({ x: 6, y: 6 }, 15, 12, 12),
     effectShape: SpellEffectShape.SELF_AURA,
     effectColor: 'rgba(200, 200, 255, 0.35)',
   },

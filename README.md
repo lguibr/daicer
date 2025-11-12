@@ -1,5 +1,20 @@
 # Daicer
 
+<p align="center">
+  <img src="./frontend/public/logo.png" alt="Daicer logo" width="240" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/lguibr/daice/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/lguibr/daice/ci.yml?label=CI&logo=github" alt="CI status"></a>
+  <a href="https://github.com/lguibr/daice/releases"><img src="https://img.shields.io/github/v/release/lguibr/daice?display_name=tag&logo=semanticweb" alt="Latest release"></a>
+  <a href="https://github.com/lguibr/daice/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/lguibr/daice/release.yml?label=Release&logo=googlecloud" alt="Release status"></a>
+  <img src="https://img.shields.io/badge/tests-Jest%20%E2%80%A2%20Vitest-blue?logo=jest" alt="Tests">
+  <img src="https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=codecov" alt="Coverage">
+  <img src="https://img.shields.io/badge/format-Prettier-ff69b4?logo=prettier" alt="Prettier">
+  <img src="https://img.shields.io/badge/lint-ESLint-4b32c3?logo=eslint" alt="ESLint">
+  <img src="https://img.shields.io/badge/deploy-Cloud%20Run%20%26%20Vercel-4285f4?logo=googlecloud" alt="Deployment targets">
+</p>
+
 Multiplayer tabletop RPG powered by an AI Dungeon Master. Daicer fuses deterministic dice mechanics, LangGraph orchestration, and a modern React client to deliver cooperative storytelling that stays faithful to D&D 5e.
 
 ---
@@ -155,24 +170,39 @@ Testing stack:
 
 ---
 
+## Release & Deployment
+
+### One-click Release (tags starting with `v`)
+
+1. Prepare release notes and ensure `main` is green.
+2. Tag the desired commit:
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+3. GitHub Actions `release.yml` workflow will:
+   - Build backend container via Cloud Build.
+   - Deploy backend to Cloud Run (`daicer-backend`).
+   - Trigger Vercel production deployment for frontend.
+   - Run database seeds using `seeds/cloudbuild.seed.yaml`.
+
+### Manual Deployment
+
+- Backend: see `docs/deployment.md#backend-on-google-cloud`.
+- Frontend: see `docs/deployment.md#frontend-on-vercel`.
+- Seeds: run from your machine or Cloud Build as documented in `docs/deployment.md#firestore-seeding`.
+
+### CI Triggers
+
+- `ci.yml`: Pull Requests, pushes to feature/release branches.
+- `release.yml`: Tags matching `v*`.
+
 ## Observability & Ops
 
 - Structured logging via Winston (`backend/src/utils/logger.ts`).
 - LangGraph emits per-node traces stored in Firestore (`turn_history` collection).
 - Health check at `GET /health` validates Firestore + LangGraph readiness.
-- Cloud Run deployment pipeline defined in `backend/cloudbuild.yaml`.
-
-Deployment steps (summary):
-
-```bash
-gcloud builds submit --config backend/cloudbuild.yaml
-gcloud run deploy daicer-backend \
-  --image gcr.io/<PROJECT_ID>/daicer-backend \
-  --region us-central1 \
-  --allow-unauthenticated
-```
-
-Refer to `backend/README.md` for full instructions.
+- Cloud Run deployment pipeline defined in `backend/cloudbuild.yaml` and automated in `release.yml`.
 
 ---
 

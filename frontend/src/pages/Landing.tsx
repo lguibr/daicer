@@ -6,7 +6,6 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import { useI18n } from '../i18n';
-import LanguageSelector from '../components/ui/LanguageSelector';
 import { PublicLayout } from '../components/layout';
 
 /**
@@ -17,21 +16,6 @@ export default function LandingPage() {
   const { user, loading, signInWithGoogle, error } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const featureCards = [
-    {
-      title: t('auth.cards.lore.title'),
-      body: t('auth.cards.lore.body'),
-    },
-    {
-      title: t('auth.cards.encounters.title'),
-      body: t('auth.cards.encounters.body'),
-    },
-    {
-      title: t('auth.cards.party.title'),
-      body: t('auth.cards.party.body'),
-    },
-  ];
-
   useEffect(() => {
     if (user) {
       navigate('/lobby');
@@ -40,56 +24,33 @@ export default function LandingPage() {
 
   return (
     <PublicLayout>
-      <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col justify-center gap-14 px-6 py-20 sm:px-10 lg:px-16">
-        <div className="absolute right-6 top-6">
-          <LanguageSelector />
-        </div>
+      <div className="relative mx-auto flex min-h-screen w-full flex-col items-center gap-12 overflow-hidden px-6 pb-24 pt-16 sm:px-10 lg:px-16">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(46,127,197,0.18),transparent_55%),radial-gradient(circle_at_bottom,_rgba(123,44,191,0.22),transparent_60%)]" />
 
-        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="relative space-y-12">
-            <div className="absolute -left-6 -top-10 hidden h-32 w-32 rounded-full bg-accent/25 blur-3xl lg:block" />
-            <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-start">
-              <img
-                src="/logo.png"
-                alt="DAIcer logo"
-                className="h-44 w-44 rounded-full border border-aurora-500/40 shadow-[0_35px_70px_rgba(4,7,12,0.55)]"
-              />
-              <div className="space-y-6 text-center lg:text-left">
-                <p className="text-sm uppercase tracking-[0.55em] text-aurora-200/80">{t('auth.subtitle')}</p>
-                <h1 className="font-display text-4xl tracking-[0.28em] text-aurora-200 sm:text-5xl lg:text-6xl">
-                  {t('auth.title')}
-                </h1>
-                <p className="max-w-2xl text-lg leading-relaxed text-shadow-100/90">{t('auth.heroDescription')}</p>
-              </div>
-            </div>
-
-            <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {featureCards.map((card, index) => (
-                <div
-                  key={card.title}
-                  className="group relative overflow-hidden rounded-2xl border border-accent/25 bg-midnight-900/75 p-6 sm:p-7 shadow-[0_25px_45px_rgba(7,5,10,0.55)] transition-transform duration-300 hover:-translate-y-1 hover:border-accent/45"
-                >
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-aurora-400/60 via-accent/50 to-nebula-400/60 opacity-60" />
-                  <div className="space-y-3 pt-2">
-                    <span className="text-[0.65rem] uppercase tracking-[0.45em] text-aurora-200/70">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-                    <h3 className="font-display text-lg uppercase tracking-[0.32em] text-aurora-200">{card.title}</h3>
-                    <p className="text-base leading-relaxed text-shadow-100/95">{card.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <section className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-8 text-center">
+          <div className="absolute -top-24 left-1/2 hidden h-56 w-56 -translate-x-1/2 rounded-full bg-accent/30 blur-3xl md:block" />
+          <img
+            src="/logo.png"
+            alt="DAIcer logo"
+            className="h-48 w-48 rounded-full border border-aurora-500/45 shadow-[0_45px_85px_rgba(3,8,14,0.6)]"
+          />
+          <div className="space-y-6">
+            <p className="text-xs uppercase tracking-[0.62em] text-aurora-200/80">{t('auth.subtitle')}</p>
+            <h1 className="font-display text-4xl tracking-[0.24em] text-aurora-100 sm:text-5xl lg:text-6xl">
+              {t('auth.title')}
+            </h1>
+            <p className="mx-auto max-w-3xl text-lg leading-relaxed text-shadow-100/90">{t('auth.heroDescription')}</p>
           </div>
+        </section>
 
-          <div className="card relative overflow-hidden p-12">
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-aurora-400 via-accent to-nebula-400" />
-            <div className="space-y-10">
-              <div>
-                <h2 className="font-display text-center text-xl uppercase tracking-[0.42em] text-aurora-200">
+        <section className="z-10 flex w-full max-w-3xl flex-col items-center gap-6 text-center">
+          <div className="w-full rounded-3xl border border-aurora-400/30 bg-midnight-900/80 p-10 shadow-[0_32px_64px_rgba(5,9,18,0.55)] backdrop-blur">
+            <div className="space-y-8">
+              <div className="space-y-4">
+                <h2 className="font-display text-lg uppercase tracking-[0.42em] text-aurora-200">
                   {t('auth.cta.heading')}
                 </h2>
-                <p className="mt-4 text-center text-base leading-relaxed text-shadow-200">{t('auth.cta.copy')}</p>
+                <p className="text-base leading-relaxed text-shadow-200">{t('auth.cta.copy')}</p>
               </div>
 
               <button
@@ -120,14 +81,16 @@ export default function LandingPage() {
               </button>
 
               {error && <p className="text-center text-sm text-red-300">{error}</p>}
-
-              <div className="rounded-xl border border-midnight-500/60 bg-midnight-500/35 p-4 text-xs text-shadow-400">
-                <p className="font-semibold uppercase tracking-[0.32em] text-shadow-200">{t('auth.emulatorNote')}</p>
-                <p className="mt-2 leading-relaxed text-shadow-300">{t('auth.emulatorTip')}</p>
-              </div>
             </div>
           </div>
-        </div>
+
+          <div className="w-full rounded-2xl border border-midnight-500/60 bg-midnight-500/35 p-5 text-xs text-shadow-400">
+            <p className="font-semibold uppercase tracking-[0.32em] text-shadow-200">{t('auth.emulatorNote')}</p>
+            <p className="mt-2 leading-relaxed text-shadow-300">{t('auth.emulatorTip')}</p>
+          </div>
+        </section>
+
+        <div className="pointer-events-none absolute -bottom-24 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-nebula-400/25 blur-3xl" />
       </div>
     </PublicLayout>
   );

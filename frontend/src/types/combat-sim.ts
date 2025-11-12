@@ -1,4 +1,4 @@
-import type { CombatState } from '../hooks/useCombat';
+import type { CombatState } from './combat';
 
 export interface CombatSimulationStep {
   index: number;

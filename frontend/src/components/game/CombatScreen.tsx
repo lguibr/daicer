@@ -4,7 +4,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useCombat, type Position } from '../../hooks/useCombat';
+import { useCombat } from '../../hooks/useCombat';
+import type { Position } from '../../types/combat';
 import { CombatGrid } from '../combat/CombatGrid';
 import { CharacterCard } from '../combat/CharacterCard';
 import { CombatLog } from '../combat/CombatLog';

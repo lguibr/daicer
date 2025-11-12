@@ -1,15 +1,14 @@
+import clsx from 'clsx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { Mountain, Waves, Sun, Snowflake, Flame, Trees, Cloud, Gem, Sparkles } from 'lucide-react';
 import { createRoom, updateRoomSettings, generateWorld } from '../services/api';
 import { useI18n } from '../i18n';
-import LanguageSelector from '../components/ui/LanguageSelector';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import { PrivateLayout } from '../components/layout';
 import { WORLD_ARCHETYPES, type ArchetypeSigil } from '../constants/worldArchetypes';
 import DiscreteSlider, { type SliderMark } from '../components/forms/DiscreteSlider';
-import NumericStepper from '../components/ui/NumericStepper';
 import type {
   AdventureLength,
   Difficulty,
@@ -32,36 +31,6 @@ const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {
   abyss: Gem,
   custom: Sparkles,
 };
-
-interface OptionTileProps {
-  label: string;
-  detail: string;
-  description: string;
-  active: boolean;
-  onSelect: () => void;
-}
-
-function OptionTile({ label, detail, description, active, onSelect }: OptionTileProps) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`w-full rounded-xl border px-4 py-4 text-left transition-all duration-200 ${
-        active
-          ? 'border-accent/45 bg-gradient-to-br from-aurora-500/25 via-accent/15 to-midnight-700/40 shadow-[0_22px_45px_rgba(122,73,217,0.28)]'
-          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-accent/30 hover:bg-midnight-400/40'
-      }`}
-    >
-      <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-shadow-400">
-        <span>{label}</span>
-        <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-1 text-[0.6rem] text-accent">
-          {detail}
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-relaxed text-shadow-100">{description}</p>
-    </button>
-  );
-}
 
 const VERBOSITY_MARKS: SliderMark[] = [
   { value: 0, label: 'Whisper', description: 'Compact phrases; battle reports without flourish.' },
@@ -170,6 +139,59 @@ const WORLD_SIZE_OPTIONS: Array<{
   { value: 'epic', label: 'Mythic', detail: 'Planes', description: 'Interplanar odyssey with cosmic stakes.' },
 ];
 
+const WORLD_SIZE_MARKS: SliderMark[] = WORLD_SIZE_OPTIONS.map((option, index) => ({
+  value: index,
+  label: option.label,
+  description: `${option.detail} — ${option.description}`,
+}));
+
+const ADVENTURE_LENGTH_MARKS: SliderMark[] = ADVENTURE_LENGTH_OPTIONS.map((option, index) => ({
+  value: index,
+  label: option.label,
+  description: `${option.detail} — ${option.description}`,
+}));
+
+const DIFFICULTY_MARKS: SliderMark[] = DIFFICULTY_OPTIONS.map((option, index) => ({
+  value: index,
+  label: option.label,
+  description: `${option.detail} — ${option.description}`,
+}));
+
+const PARTY_SIZE_MARKS: SliderMark[] = Array.from({ length: 8 }, (_, index) => {
+  const value = index + 1;
+  return {
+    value,
+    label: String(value),
+    description: value === 4 ? 'Classic balanced party size.' : undefined,
+  };
+});
+
+const STARTING_LEVEL_MARKS: SliderMark[] = Array.from({ length: 20 }, (_, index) => {
+  const value = index + 1;
+  const isMilestone = value === 1 || value === 20 || value % 5 === 0;
+  return {
+    value,
+    label: String(value),
+    description: isMilestone
+      ? value === 1
+        ? 'Heroic origin.'
+        : value === 20
+          ? 'Legendary tier play.'
+          : `Milestone level ${value}.`
+      : undefined,
+  };
+});
+
+type WizardStepId = 'world' | 'story' | 'scope' | 'dm' | 'preview';
+
+const WIZARD_STEPS: Array<{ id: WizardStepId; label: string }> = [
+  { id: 'world', label: 'World Archetype' },
+  { id: 'story', label: 'Storyframe' },
+  { id: 'scope', label: 'Scope & Stakes' },
+  { id: 'dm', label: 'DM Personality Suite' },
+  { id: 'preview', label: 'Prompt Preview' },
+];
+
 function findDescription<T extends { value: string; description: string }>(collection: T[], value: string): string {
   return collection.find((item) => item.value === value)?.description ?? '';
 }
@@ -233,6 +255,7 @@ export default function CreateRoomPage() {
   const { t, language } = useI18n();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const defaultArchetype = WORLD_ARCHETYPES.terra;
   const [settings, setSettings] = useState<WorldSettings>({
@@ -258,6 +281,17 @@ export default function CreateRoomPage() {
     attributePointBudget: 27,
     language,
   });
+
+  const totalSteps = WIZARD_STEPS.length;
+  const currentStepId = WIZARD_STEPS[Math.min(currentStep, totalSteps - 1)]?.id ?? 'world';
+  const isFinalStep = currentStep === totalSteps - 1;
+
+  const goToStep = (index: number) => {
+    setCurrentStep(() => Math.max(0, Math.min(index, totalSteps - 1)));
+  };
+
+  const goToNextStep = () => goToStep(currentStep + 1);
+  const goToPreviousStep = () => goToStep(currentStep - 1);
 
   const systemPrompt = useMemo(() => buildSystemPrompt(settings), [settings]);
 
@@ -295,6 +329,11 @@ export default function CreateRoomPage() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (!isFinalStep) {
+      goToNextStep();
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -311,13 +350,334 @@ export default function CreateRoomPage() {
     }
   };
 
+  const renderStepContent = () => {
+    switch (currentStepId) {
+      case 'world': {
+        return (
+          <section className="card space-y-6 p-8">
+            <div className="space-y-2">
+              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">World Archetype</h2>
+              <p className="text-sm text-shadow-300">
+                Select the foundational archetype to seed the realm&apos;s tone, mood, and lore baseline.
+              </p>
+            </div>
+            <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {(Object.keys(WORLD_ARCHETYPES) as WorldType[]).map((type) => {
+                const archetype = WORLD_ARCHETYPES[type];
+                const isActive = settings.worldType === type;
+                const Sigil = ARCHETYPE_SIGILS[archetype.sigil];
+
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleArchetypeChange(type)}
+                    className={clsx(
+                      'group flex h-full flex-col justify-between gap-4 overflow-hidden rounded-xl border px-5 py-6 text-left transition-all duration-200',
+                      isActive
+                        ? 'border-aurora-500/60 bg-aurora-500/15 shadow-[0_20px_35px_rgba(211,143,31,0.25)]'
+                        : 'border-midnight-500/60 bg-midnight-500/30 hover:border-aurora-400/40 hover:bg-midnight-400/40'
+                    )}
+                    title={archetype.description}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        {Sigil ? <Sigil className="h-6 w-6 text-aurora-300" aria-hidden /> : null}
+                        <span className="font-semibold uppercase tracking-[0.3em] text-shadow-300">{type}</span>
+                      </div>
+                      <span className="rounded-full border border-midnight-400/50 bg-midnight-500/60 px-2 py-1 text-[0.6rem] text-shadow-200">
+                        {archetype.mood ?? 'Atmosphere'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs uppercase tracking-[0.35em] text-shadow-500">
+                      <span>{archetype.theme}</span>
+                      <span>{archetype.tone}</span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-shadow-100 transition-colors duration-200 group-hover:text-shadow-50">
+                      {archetype.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        );
+      }
+      case 'story': {
+        return (
+          <section className="card space-y-6 p-8">
+            <div className="space-y-2">
+              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Storyframe</h2>
+              <p className="text-sm text-shadow-300">
+                Define the campaign&apos;s high-level creative pillars. These shape how the AI frames scenes and lore.
+              </p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="theme-input"
+                  className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+                >
+                  Theme
+                </label>
+                <input
+                  id="theme-input"
+                  type="text"
+                  value={settings.theme}
+                  onChange={(event) => updateSetting('theme', event.target.value)}
+                  className="input-style w-full"
+                  placeholder="High fantasy intrigue"
+                />
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="tone-input"
+                  className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+                >
+                  Tone
+                </label>
+                <input
+                  id="tone-input"
+                  type="text"
+                  value={settings.tone}
+                  onChange={(event) => updateSetting('tone', event.target.value)}
+                  className="input-style w-full"
+                  placeholder="Somber gothic heroism"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="setting-input"
+                className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+              >
+                Primary Setting
+              </label>
+              <input
+                id="setting-input"
+                type="text"
+                value={settings.setting}
+                onChange={(event) => updateSetting('setting', event.target.value)}
+                className="input-style w-full"
+                placeholder="Hollowspire Citadel"
+              />
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="background-input"
+                className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+              >
+                Background Lore
+              </label>
+              <textarea
+                id="background-input"
+                value={settings.worldBackground}
+                onChange={(event) => updateSetting('worldBackground', event.target.value)}
+                className="input-style w-full min-h-[140px] resize-y"
+                placeholder="Write the cadence of the realm: ancestral wars, looming prophecies, factions at play..."
+              />
+            </div>
+          </section>
+        );
+      }
+      case 'scope': {
+        const worldSizeIndex = Math.max(
+          0,
+          WORLD_SIZE_OPTIONS.findIndex((option) => option.value === settings.worldSize)
+        );
+        const adventureLengthIndex = Math.max(
+          0,
+          ADVENTURE_LENGTH_OPTIONS.findIndex((option) => option.value === settings.adventureLength)
+        );
+        const difficultyIndex = Math.max(
+          0,
+          DIFFICULTY_OPTIONS.findIndex((option) => option.value === settings.difficulty)
+        );
+
+        return (
+          <section className="card space-y-8 p-8">
+            <div className="space-y-2">
+              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Scope & Stakes</h2>
+              <p className="text-sm text-shadow-300">
+                Calibrate the campaign&apos;s breadth, pacing, and challenge using linear sliders.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <DiscreteSlider
+                id="player-count-slider"
+                label="Party Size"
+                value={settings.playerCount}
+                onChange={(next) => updateSetting('playerCount', Math.max(1, Math.min(next, 8)))}
+                marks={PARTY_SIZE_MARKS}
+                description="Number of active adventurers."
+              />
+              <DiscreteSlider
+                id="starting-level-slider"
+                label="Starting Level"
+                value={settings.startingLevel}
+                onChange={(next) => updateSetting('startingLevel', Math.max(1, Math.min(next, 20)))}
+                marks={STARTING_LEVEL_MARKS}
+                description="Entry tier for character sheets."
+              />
+            </div>
+
+            <DiscreteSlider
+              id="world-size-slider"
+              label="World Scale"
+              value={worldSizeIndex}
+              onChange={(index) => {
+                const clampedIndex = Math.max(0, Math.min(index, WORLD_SIZE_OPTIONS.length - 1));
+                const option = WORLD_SIZE_OPTIONS[clampedIndex] ?? WORLD_SIZE_OPTIONS[0];
+                if (!option) {
+                  return;
+                }
+                updateSetting('worldSize', option.value);
+              }}
+              marks={WORLD_SIZE_MARKS}
+            />
+
+            <DiscreteSlider
+              id="adventure-length-slider"
+              label="Adventure Length"
+              value={adventureLengthIndex}
+              onChange={(index) => {
+                const clampedIndex = Math.max(0, Math.min(index, ADVENTURE_LENGTH_OPTIONS.length - 1));
+                const option = ADVENTURE_LENGTH_OPTIONS[clampedIndex] ?? ADVENTURE_LENGTH_OPTIONS[0];
+                if (!option) {
+                  return;
+                }
+                updateSetting('adventureLength', option.value);
+              }}
+              marks={ADVENTURE_LENGTH_MARKS}
+            />
+
+            <DiscreteSlider
+              id="difficulty-slider"
+              label="Difficulty Target"
+              value={difficultyIndex}
+              onChange={(index) => {
+                const clampedIndex = Math.max(0, Math.min(index, DIFFICULTY_OPTIONS.length - 1));
+                const option = DIFFICULTY_OPTIONS[clampedIndex] ?? DIFFICULTY_OPTIONS[0];
+                if (!option) {
+                  return;
+                }
+                updateSetting('difficulty', option.value);
+              }}
+              marks={DIFFICULTY_MARKS}
+            />
+          </section>
+        );
+      }
+      case 'dm': {
+        return (
+          <section className="card space-y-6 p-8">
+            <div className="space-y-2">
+              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">DM Personality Suite</h2>
+              <p className="text-sm text-shadow-300">
+                Tune the Dungeon Master&apos;s cadence, narrative weight, and player engagement. Each slider maps
+                directly to the system prompt.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <DiscreteSlider
+                id="verbosity-slider"
+                label="Verbosity"
+                value={settings.dmStyle.verbosity}
+                onChange={(value) => updateDMStyle('verbosity', value as ScaleLevel)}
+                marks={VERBOSITY_MARKS}
+              />
+              <DiscreteSlider
+                id="detail-slider"
+                label="Descriptive Detail"
+                value={settings.dmStyle.detail}
+                onChange={(value) => updateDMStyle('detail', value as ScaleLevel)}
+                marks={DETAIL_MARKS}
+              />
+              <DiscreteSlider
+                id="engagement-slider"
+                label="Player Engagement"
+                value={settings.dmStyle.engagement}
+                onChange={(value) => updateDMStyle('engagement', value as ScaleLevel)}
+                marks={ENGAGEMENT_MARKS}
+              />
+              <DiscreteSlider
+                id="narrative-slider"
+                label="Narrative Guidance"
+                value={settings.dmStyle.narrative}
+                onChange={(value) => updateDMStyle('narrative', value as ScaleLevel)}
+                marks={NARRATIVE_MARKS}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                Performance Mode
+              </span>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {SPECIAL_MODE_OPTIONS.map((option) => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    onClick={() => updateDMStyle('specialMode', option.id)}
+                    className={clsx(
+                      'rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200',
+                      settings.dmStyle.specialMode === option.id
+                        ? 'border-accent/40 bg-gradient-to-br from-accent/15 via-aurora-500/20 to-midnight-700/40 shadow-[0_20px_40px_rgba(122,73,217,0.25)]'
+                        : 'border-midnight-500/60 bg-midnight-500/30 hover:border-accent/30 hover:bg-midnight-400/40'
+                    )}
+                  >
+                    <p className="font-semibold text-accent">{option.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-shadow-200">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="dm-directives"
+                className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+              >
+                Custom Directives
+              </label>
+              <textarea
+                id="dm-directives"
+                value={settings.dmStyle.customDirectives}
+                onChange={(event) => updateDMStyle('customDirectives', event.target.value)}
+                className="input-style w-full min-h-[100px] resize-y"
+                placeholder="List bespoke instructions or table rules the DM must honor."
+              />
+            </div>
+          </section>
+        );
+      }
+      case 'preview':
+      default: {
+        return (
+          <section className="card space-y-6 p-8">
+            <div className="space-y-2">
+              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">
+                System Prompt Preview
+              </h2>
+              <p className="text-xs uppercase tracking-[0.4em] text-shadow-500">
+                This is the exact instruction block sent to the Dungeon Master agent.
+              </p>
+            </div>
+            <pre className="max-h-96 overflow-auto rounded-lg border border-midnight-500/60 bg-midnight-400/40 p-6 text-sm leading-relaxed text-shadow-100">
+              {systemPrompt}
+            </pre>
+          </section>
+        );
+      }
+    }
+  };
+
   return (
     <PrivateLayout showNavbar={false}>
       {loading && <LoadingOverlay message={t('worldSettings.creating')} />}
       <div className="relative mx-auto min-h-screen max-w-6xl px-6 py-16 sm:px-10 lg:px-12">
-        <div className="absolute right-6 top-6">
-          <LanguageSelector />
-        </div>
 
         <div className="space-y-10">
           <header className="space-y-3 text-center">
@@ -332,308 +692,84 @@ export default function CreateRoomPage() {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-10">
-            <section className="card space-y-6 p-8">
-              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">World Archetype</h2>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {(Object.keys(WORLD_ARCHETYPES) as WorldType[]).map((type) => {
-                  const archetype = WORLD_ARCHETYPES[type];
-                  const isActive = settings.worldType === type;
-                  const Sigil = ARCHETYPE_SIGILS[archetype.sigil];
-
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => handleArchetypeChange(type)}
-                      className={`rounded-xl border px-4 py-5 text-left transition-all duration-200 ${
-                        isActive
-                          ? 'border-aurora-500/60 bg-aurora-500/15 shadow-[0_20px_35px_rgba(211,143,31,0.25)]'
-                          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-aurora-400/40 hover:bg-midnight-400/40'
-                      }`}
-                      title={archetype.description}
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {Sigil ? <Sigil className="h-6 w-6 text-aurora-300" aria-hidden /> : null}
-                          <span className="font-semibold uppercase tracking-[0.3em] text-shadow-300">{type}</span>
-                        </div>
-                        <span className="rounded-full border border-midnight-400/50 bg-midnight-500/60 px-2 py-1 text-[0.6rem] text-shadow-200">
-                          {archetype.mood ?? 'Atmosphere'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs uppercase tracking-[0.35em] text-shadow-500">
-                        <span>{archetype.theme}</span>
-                        <span>{archetype.tone}</span>
-                      </div>
-                      <p className="mt-3 text-sm leading-relaxed text-shadow-100">{archetype.description}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="card space-y-6 p-8">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Storyframe</h2>
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="theme-input"
-                      className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                    >
-                      Theme
-                    </label>
-                    <input
-                      id="theme-input"
-                      type="text"
-                      value={settings.theme}
-                      onChange={(event) => updateSetting('theme', event.target.value)}
-                      className="input-style w-full"
-                      placeholder="High fantasy intrigue"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="tone-input"
-                      className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                    >
-                      Tone
-                    </label>
-                    <input
-                      id="tone-input"
-                      type="text"
-                      value={settings.tone}
-                      onChange={(event) => updateSetting('tone', event.target.value)}
-                      className="input-style w-full"
-                      placeholder="Somber gothic heroism"
-                    />
-                  </div>
+            <div className="rounded-2xl border border-midnight-500/60 bg-midnight-500/30 p-5 sm:p-6">
+              <nav aria-label="Create adventure steps" className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs uppercase tracking-[0.4em] text-shadow-400">Creation Steps</span>
+                  <span className="text-xs uppercase tracking-[0.35em] text-shadow-300">
+                    Step {currentStep + 1} of {totalSteps}
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="setting-input"
-                    className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                  >
-                    Primary Setting
-                  </label>
-                  <input
-                    id="setting-input"
-                    type="text"
-                    value={settings.setting}
-                    onChange={(event) => updateSetting('setting', event.target.value)}
-                    className="input-style w-full"
-                    placeholder="Hollowspire Citadel"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="background-input"
-                    className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                  >
-                    Background Lore
-                  </label>
-                  <textarea
-                    id="background-input"
-                    value={settings.worldBackground}
-                    onChange={(event) => updateSetting('worldBackground', event.target.value)}
-                    className="input-style w-full min-h-[120px] resize-y"
-                    placeholder="Write the cadence of the realm: ancestral wars, looming prophecies, factions at play..."
-                  />
-                </div>
-              </div>
+                <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                  {WIZARD_STEPS.map((step, index) => {
+                    const status =
+                      index === currentStep ? 'current' : index < currentStep ? 'complete' : ('upcoming' as const);
+                    return (
+                      <li key={step.id}>
+                        <button
+                          type="button"
+                          onClick={() => goToStep(index)}
+                          className={clsx(
+                            'flex w-full flex-col gap-2 rounded-xl border px-4 py-3 text-left transition-all duration-200',
+                            status === 'current' &&
+                              'border-accent/60 bg-gradient-to-br from-accent/15 via-nebula-500/25 to-midnight-700/40 text-accent',
+                            status === 'complete' &&
+                              'border-aurora-500/60 bg-aurora-500/10 text-aurora-200 hover:border-aurora-400/70',
+                            status === 'upcoming' &&
+                              'border-midnight-500/60 bg-midnight-500/20 text-shadow-400 hover:border-midnight-400/60 hover:text-shadow-200'
+                          )}
+                        >
+                          <span
+                            className={clsx(
+                              'flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold uppercase tracking-[0.35em]',
+                              status === 'current'
+                                ? 'border-accent/60 bg-accent/20 text-accent'
+                                : status === 'complete'
+                                  ? 'border-aurora-400/60 bg-aurora-400/20 text-aurora-100'
+                                  : 'border-midnight-500/60 bg-midnight-500/30 text-shadow-300'
+                            )}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="text-xs font-semibold uppercase tracking-[0.35em]">{step.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
+            </div>
 
-              <div className="card space-y-6 p-8">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Scope & Stakes</h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="player-count-input"
-                      className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                    >
-                      Party Size
-                    </label>
-                    <NumericStepper
-                      id="player-count-input"
-                      value={settings.playerCount}
-                      onChange={(next) => updateSetting('playerCount', next)}
-                      min={1}
-                      max={8}
-                      step={1}
-                      wrapperClassName="border border-midnight-600 bg-midnight-700/60"
-                      inputClassName="text-base font-semibold text-shadow-50"
-                      decreaseLabel="Decrease party size"
-                      increaseLabel="Increase party size"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="starting-level-input"
-                      className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                    >
-                      Starting Level
-                    </label>
-                    <NumericStepper
-                      id="starting-level-input"
-                      value={settings.startingLevel}
-                      onChange={(next) => updateSetting('startingLevel', next)}
-                      min={1}
-                      max={20}
-                      step={1}
-                      wrapperClassName="border border-midnight-600 bg-midnight-700/60"
-                      inputClassName="text-base font-semibold text-shadow-50"
-                      decreaseLabel="Decrease starting level"
-                      increaseLabel="Increase starting level"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {WORLD_SIZE_OPTIONS.map((option) => (
-                    <OptionTile
-                      key={option.value}
-                      label={option.label}
-                      detail={option.detail}
-                      description={option.description}
-                      active={settings.worldSize === option.value}
-                      onSelect={() => updateSetting('worldSize', option.value)}
-                    />
-                  ))}
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {ADVENTURE_LENGTH_OPTIONS.map((option) => (
-                    <OptionTile
-                      key={option.value}
-                      label={option.label}
-                      detail={option.detail}
-                      description={option.description}
-                      active={settings.adventureLength === option.value}
-                      onSelect={() => updateSetting('adventureLength', option.value)}
-                    />
-                  ))}
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {DIFFICULTY_OPTIONS.map((option) => (
-                    <OptionTile
-                      key={option.value}
-                      label={option.label}
-                      detail={option.detail}
-                      description={option.description}
-                      active={settings.difficulty === option.value}
-                      onSelect={() => updateSetting('difficulty', option.value)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="card space-y-6 p-8">
-              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">DM Personality Suite</h2>
-              <p className="text-sm text-shadow-300">
-                Tune the Dungeon Master&apos;s cadence, narrative weight, and player engagement. Each slider maps
-                directly to the system prompt.
-              </p>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <DiscreteSlider
-                  id="verbosity-slider"
-                  label="Verbosity"
-                  value={settings.dmStyle.verbosity}
-                  onChange={(value) => updateDMStyle('verbosity', value as ScaleLevel)}
-                  marks={VERBOSITY_MARKS}
-                />
-                <DiscreteSlider
-                  id="detail-slider"
-                  label="Descriptive Detail"
-                  value={settings.dmStyle.detail}
-                  onChange={(value) => updateDMStyle('detail', value as ScaleLevel)}
-                  marks={DETAIL_MARKS}
-                />
-                <DiscreteSlider
-                  id="engagement-slider"
-                  label="Player Engagement"
-                  value={settings.dmStyle.engagement}
-                  onChange={(value) => updateDMStyle('engagement', value as ScaleLevel)}
-                  marks={ENGAGEMENT_MARKS}
-                />
-                <DiscreteSlider
-                  id="narrative-slider"
-                  label="Narrative Guidance"
-                  value={settings.dmStyle.narrative}
-                  onChange={(value) => updateDMStyle('narrative', value as ScaleLevel)}
-                  marks={NARRATIVE_MARKS}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
-                  Performance Mode
-                </span>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {SPECIAL_MODE_OPTIONS.map((option) => (
-                    <button
-                      key={option.label}
-                      type="button"
-                      onClick={() => updateDMStyle('specialMode', option.id)}
-                      className={`rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200 ${
-                        settings.dmStyle.specialMode === option.id
-                          ? 'border-accent/40 bg-gradient-to-br from-accent/15 via-aurora-500/20 to-midnight-700/40 shadow-[0_20px_40px_rgba(122,73,217,0.25)]'
-                          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-accent/30 hover:bg-midnight-400/40'
-                      }`}
-                    >
-                      <p className="font-semibold text-accent">{option.label}</p>
-                      <p className="mt-1 text-xs leading-relaxed text-shadow-200">{option.description}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="dm-directives"
-                  className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
-                >
-                  Custom Directives
-                </label>
-                <textarea
-                  id="dm-directives"
-                  value={settings.dmStyle.customDirectives}
-                  onChange={(event) => updateDMStyle('customDirectives', event.target.value)}
-                  className="input-style w-full min-h-[100px] resize-y"
-                  placeholder="List bespoke instructions or table rules the DM must honor."
-                />
-              </div>
-            </section>
-
-            <section className="card space-y-6 p-8">
-              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">
-                System Prompt Preview
-              </h2>
-              <p className="text-xs uppercase tracking-[0.4em] text-shadow-500">
-                This is the exact instruction block sent to the Dungeon Master agent.
-              </p>
-              <pre className="max-h-80 overflow-auto rounded-lg border border-midnight-500/60 bg-midnight-400/40 p-6 text-sm leading-relaxed text-shadow-100">
-                {systemPrompt}
-              </pre>
-            </section>
+            {renderStepContent()}
 
             {error && (
               <div className="rounded-lg border border-red-500/50 bg-red-900/40 p-4 text-sm text-red-200">{error}</div>
             )}
 
-            <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <button
                 type="button"
                 onClick={() => navigate('/lobby')}
                 disabled={loading}
-                className="btn-secondary sm:flex-1"
+                className="btn-secondary sm:flex-none sm:self-start"
               >
                 {t('worldSettings.cancel')}
               </button>
-              <button type="submit" disabled={loading} className="btn-primary sm:flex-1">
-                {loading ? t('worldSettings.creating') : t('worldSettings.create')}
-              </button>
+              <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-end">
+                {currentStep > 0 && (
+                  <button
+                    type="button"
+                    onClick={goToPreviousStep}
+                    disabled={loading}
+                    className="btn-secondary sm:min-w-[150px]"
+                  >
+                    Previous Step
+                  </button>
+                )}
+                <button type="submit" disabled={loading} className="btn-primary sm:min-w-[170px]">
+                  {isFinalStep ? (loading ? t('worldSettings.creating') : t('worldSettings.create')) : 'Next Step'}
+                </button>
+              </div>
             </div>
           </form>
         </div>

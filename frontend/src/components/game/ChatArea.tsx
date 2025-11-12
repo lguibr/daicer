@@ -1,10 +1,15 @@
+import { useEffect, useMemo, useRef } from 'react';
 import type { Message } from '../../types/shared';
 import MarkdownMessage from './MarkdownMessage';
 import useAuth from '../../hooks/useAuth';
+import { useI18n } from '../../i18n';
+import cn from '../../lib/utils';
+import { DiceLoader } from '../ui/dice-loader';
 
 interface ChatAreaProps {
   messages: Message[];
   worldDescription: string;
+  isProcessing: boolean;
 }
 
 /**
@@ -12,17 +17,28 @@ interface ChatAreaProps {
  * @param props - Component props
  * @returns Chat UI
  */
-export default function ChatArea({ messages, worldDescription }: ChatAreaProps) {
+export default function ChatArea({ messages, worldDescription, isProcessing }: ChatAreaProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   // Filter messages to show public and user-specific private messages
-  const visibleMessages = messages.filter((msg) => !msg.recipientId || msg.recipientId === user?.uid);
+  const visibleMessages = useMemo(
+    () => messages.filter((msg) => !msg.recipientId || msg.recipientId === user?.uid),
+    [messages, user?.uid]
+  );
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [visibleMessages.length, isProcessing]);
+
+  const showLoader = visibleMessages.length === 0 || isProcessing;
 
   return (
-    <div className="p-3 md:p-4 space-y-4">
+    <div className="flex h-full flex-col gap-6 px-4 py-4 sm:px-6 sm:py-6">
       {/* World Description */}
       {worldDescription && (
-        <div className="p-4 card border border-midnight-600/70">
+        <div className="rounded-3xl border border-midnight-600/70 bg-midnight-800/60 p-6 shadow-[0_22px_44px_rgba(5,9,18,0.45)]">
           <h3 className="text-lg font-bold text-aurora-300 mb-2">The World</h3>
           <div className="text-shadow-200">
             <MarkdownMessage content={worldDescription} />
@@ -36,56 +52,64 @@ export default function ChatArea({ messages, worldDescription }: ChatAreaProps) 
         const isPrivate = !!msg.recipientId;
 
         return (
-          <div key={msg.id} className={`flex flex-col ${isDM ? 'items-start' : 'items-end'}`}>
+          <div key={msg.id} className={cn('flex w-full', isDM ? 'justify-start' : 'justify-end')}>
             <div
-              className={`max-w-full md:max-w-3xl p-3 md:p-4 rounded-xl shadow-lg border ${
+              className={cn(
+                'relative flex w-full max-w-4xl flex-col gap-3 rounded-3xl border px-5 py-4 shadow-[0_24px_38px_rgba(6,10,18,0.45)] backdrop-blur-sm transition',
                 isPrivate
-                  ? 'bg-nebula-900/70 border-nebula-600/50'
+                  ? 'border-nebula-500/40 bg-nebula-900/60'
                   : isDM
-                    ? 'bg-midnight-700/85 border-midnight-600'
-                    : 'bg-aurora-900/40 border-aurora-500/30'
-              }`}
+                    ? 'border-midnight-600/60 bg-midnight-700/80'
+                    : 'border-aurora-500/30 bg-aurora-900/35'
+              )}
             >
-              <div className="flex items-center gap-3 mb-2">
-                <p className={`font-bold text-sm ${isDM ? 'text-aurora-200' : 'text-shadow-100'}`}>{msg.sender}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <p className={cn('text-sm font-semibold uppercase tracking-[0.22em]', isDM ? 'text-aurora-200' : 'text-shadow-100')}>
+                    {msg.sender}
+                  </p>
                 {isPrivate && (
-                  <span className="text-xs text-nebula-300 flex items-center gap-1 font-semibold">
-                    🔒 Your Perspective
-                  </span>
+                    <span className="flex items-center gap-1 rounded-full bg-nebula-500/25 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-nebula-200">
+                      🔒 Your Perspective
+                    </span>
                 )}
               </div>
+                <p className="text-xs text-shadow-500">{new Date(msg.timestamp).toLocaleTimeString()}</p>
+              </div>
+
               <div className="prose prose-invert max-w-none text-shadow-50">
-                {isDM ? (
-                  <MarkdownMessage content={msg.text} />
-                ) : (
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-                )}
+                {isDM ? <MarkdownMessage content={msg.text} /> : <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>}
               </div>
 
               {msg.images && msg.images.length > 0 && (
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {msg.images.map((img) => (
                     <img
                       key={img.slice(0, 16)}
                       src={`data:image/png;base64,${img}`}
-                      className="rounded-lg shadow-lg w-full"
+                      className="h-full w-full rounded-2xl border border-midnight-600/60 object-cover object-center shadow-lg"
                       alt="Generated scene"
                     />
                   ))}
                 </div>
               )}
-
-              <p className="text-xs text-shadow-500 mt-2">{new Date(msg.timestamp).toLocaleTimeString()}</p>
             </div>
           </div>
         );
       })}
 
-      {messages.length === 0 && (
-        <div className="text-center p-8 md:p-12 text-shadow-500">
-          <p>The adventure begins...</p>
+      {showLoader && (
+        <div className="flex justify-center py-10">
+          <DiceLoader
+            size="medium"
+            diceCount={3}
+            message={isProcessing ? t('gameplay.processing') : t('gameplay.adventureBegins')}
+            maxDiceCount={5}
+          />
         </div>
       )}
+
+      <div ref={bottomRef} />
     </div>
   );
 }

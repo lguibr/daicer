@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { CombatLog } from './CombatLog';
-import type { CombatLogEntry, DiceRollResult } from '../../hooks/useCombat';
+import type { CombatLogEntry, DiceRollResult } from '../../types/combat';
 
 const createDiceRoll = (overrides: Partial<DiceRollResult>): DiceRollResult => ({
   id: 'roll-1',

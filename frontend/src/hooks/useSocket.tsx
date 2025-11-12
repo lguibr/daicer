@@ -13,6 +13,7 @@ interface SocketState {
   messages: Message[];
   creatures: Creature[];
   toolCalls: ToolCall[];
+  isProcessing: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export default function useSocket(roomId?: string) {
     messages: [],
     creatures: [],
     toolCalls: [],
+    isProcessing: false,
   });
 
   const updateState = useCallback((updates: Partial<SocketState>) => {
@@ -58,6 +60,7 @@ export default function useSocket(roomId?: string) {
               players: data.players,
               messages: data.messages,
               creatures: data.creatures,
+              isProcessing: false,
             });
           },
           onRoomUpdated: () => {
@@ -98,10 +101,17 @@ export default function useSocket(roomId?: string) {
             }));
           },
           onTurnProcessing: () => {
-            // Turn processing
+            setState((prev) => ({
+              ...prev,
+              isProcessing: true,
+            }));
           },
-          onTurnComplete: () => {
-            // Turn complete - messages will arrive via message:new events
+          onTurnComplete: (data) => {
+            setState((prev) => ({
+              ...prev,
+              isProcessing: false,
+              messages: data?.messages && data.messages.length > 0 ? data.messages : prev.messages,
+            }));
           },
           onToolCalls: (toolCalls) => {
             // Add new tool calls to state
@@ -137,5 +147,6 @@ export default function useSocket(roomId?: string) {
     creatures: state.creatures,
     toolCalls: state.toolCalls,
     socket: getSocket(),
+    isProcessing: state.isProcessing,
   };
 }

@@ -8,6 +8,7 @@
     "dev": "echo '🚀 Starting backend dev server on http://localhost:3001' && tsx watch src/server.ts",
     "build": "echo '📦 Building backend...' && tsc && echo '✅ Backend build complete! Output: dist/'",
     "start": "echo '🌐 Starting production server...' && node dist/server.js",
+    "seed": "yarn seed:gamedata && yarn seed:srd && yarn seed:spells",
     "seed:gamedata": "echo '🌱 Seeding game data...' && tsx ../seeds/scripts/seed-game-data.ts && echo '✅ Game data seeded!'",
     "seed:srd": "echo '📚 Seeding SRD rules...' && tsx ../seeds/scripts/seed-srd-rules.ts && echo '✅ SRD rules seeded!'",
     "seed:spells": "echo '🔮 Seeding spells...' && tsx ../seeds/scripts/seed-spells.ts && echo '✅ Spells seeded!'",

@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import { CombatGrid } from './CombatGrid';
-import type { CombatCharacter } from '../../hooks/useCombat';
+import type { CombatCharacter } from '../../types/combat';
 
 const createCharacter = (overrides: Partial<CombatCharacter>): CombatCharacter => ({
   id: 'char-1',

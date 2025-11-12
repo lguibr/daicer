@@ -3,7 +3,7 @@
  * Displays the tactical grid for D&D combat
  */
 
-import type { CombatCharacter, Position } from '../../hooks/useCombat';
+import type { CombatCharacter, Position } from '../../types/combat';
 
 interface CombatGridProps {
   characters: CombatCharacter[];

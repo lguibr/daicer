@@ -11,7 +11,7 @@ import type {
   CombatLogEntry,
   CombatState,
   CombatHistory,
-} from '../../hooks/useCombat';
+} from '../../types/combat';
 
 export type { Position, Condition, CombatCharacter, DiceRollResult, CombatLogEntry, CombatState, CombatHistory };
 

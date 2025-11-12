@@ -12,6 +12,8 @@ import { turnStartNode } from './nodes/TurnStartNode';
 import { turnEndNode } from './nodes/TurnEndNode';
 import { moveNode } from './nodes/MoveNode';
 import { attackNode } from './nodes/AttackNode';
+import { spellPreviewNode, spellCastNode, SpellPreviewNodeInput, SpellCastNodeInput } from './nodes/SpellCastNode';
+import type { SpellData } from '../types/spells';
 
 /**
  * Task for rolling initiative (wraps dice rolling for determinism)
@@ -114,6 +116,8 @@ export class CombatSession {
       phase: 'setup',
       pendingOpportunityAttacks: [],
       diceRollerSeed: seed,
+      spellPreview: null,
+      lastSpellResolution: null,
     };
   }
 
@@ -129,6 +133,56 @@ export class CombatSession {
     this.state = { ...this.state, ...result };
     this.recordState('Combat started');
 
+    return this.state;
+  }
+
+  /**
+   * Override grid dimensions for visualization or custom scenarios
+   */
+  setGridDimensions(gridWidth: number, gridHeight: number): CombatState {
+    this.state = {
+      ...this.state,
+      gridWidth,
+      gridHeight,
+    };
+    return this.state;
+  }
+
+  /**
+   * Preview a spell effect on the grid
+   */
+  async previewSpell(options: Omit<SpellPreviewNodeInput, 'spell'> & { spell: SpellData }): Promise<CombatState> {
+    const result = spellPreviewNode(this.state, options);
+    this.state = {
+      ...this.state,
+      ...result,
+      log: result.log ?? this.state.log,
+      spellPreview: result.spellPreview ?? this.state.spellPreview,
+    };
+    this.recordState(`${options.casterId} previews spell ${options.spell.name}`);
+    return this.state;
+  }
+
+  /**
+   * Cast a spell, applying damage and logging rolls
+   */
+  async castSpell(
+    options: Omit<SpellCastNodeInput, 'diceRoller' | 'spell'> & { spell: SpellData }
+  ): Promise<CombatState> {
+    const result = spellCastNode(this.state, { ...options, diceRoller: this.diceRoller, spell: options.spell });
+    this.state = {
+      ...this.state,
+      ...result,
+      log: result.log ?? this.state.log,
+      diceHistory: result.diceHistory ?? this.state.diceHistory,
+      spellPreview: result.spellPreview ?? null,
+      lastSpellResolution: result.lastSpellResolution ?? this.state.lastSpellResolution,
+      characters: result.characters ?? this.state.characters,
+      isCombatOver: result.isCombatOver ?? this.state.isCombatOver,
+      winner: result.winner ?? this.state.winner,
+      phase: result.phase ?? this.state.phase,
+    };
+    this.recordState(`${options.casterId} casts spell ${options.spell.name}`);
     return this.state;
   }
 

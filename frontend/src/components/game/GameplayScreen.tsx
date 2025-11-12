@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Room, Player } from '../../types/shared';
 import useSocket from '../../hooks/useSocket';
 import { submitAction, processTurn } from '../../services/socket';
@@ -73,6 +73,12 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
     }
   };
 
+  useEffect(() => {
+    if (!socket.isProcessing) {
+      setSubmitting(false);
+    }
+  }, [socket.isProcessing]);
+
   const renderActionInput = () => {
     if (hasSubmitted) {
       if (allSubmitted && room.ownerId === user?.uid) {
@@ -119,8 +125,10 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
 
   return (
     <>
-      {submitting && <LoadingOverlay message={t('gameplay.adventureBegins')} size="medium" />}
-      <div className="flex flex-col lg:grid lg:grid-cols-5 h-[calc(100vh-4rem)] lg:h-screen w-full gap-0">
+      {submitting && socket.isProcessing && (
+        <LoadingOverlay message={t('gameplay.processing')} size="small" maxDiceCount={4} />
+      )}
+      <div className="flex h-[calc(100vh-4rem)] w-full flex-col gap-0 lg:grid lg:h-screen lg:grid-cols-5">
         {/* Sidebar - Collapsed on mobile, visible on desktop */}
         <div className="hidden lg:block lg:col-span-1 border-r border-shadow-800/70 overflow-y-auto">
           <PlayerSidebar
@@ -131,7 +139,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
         </div>
 
         {/* Main Chat Area */}
-        <div className="lg:col-span-4 flex flex-col h-full">
+        <div className="flex h-full flex-col gap-0 lg:col-span-4">
           <div className="flex flex-col gap-3 border-b border-shadow-800/70 bg-midnight-400/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-shadow-50">Adventure Feed</h2>
@@ -153,8 +161,12 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto">
-            <ChatArea messages={socket.messages} worldDescription={room.worldDescription} />
+          <div className="flex-1 overflow-y-auto bg-midnight-950/30">
+            <ChatArea
+              messages={socket.messages}
+              worldDescription={room.worldDescription}
+              isProcessing={socket.isProcessing}
+            />
           </div>
 
           {/* Action Input */}

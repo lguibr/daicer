@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TimeTravelPanel } from '../TimeTravelPanel';
-import type { CombatHistory } from '../../../hooks/useCombat';
+import type { CombatHistory } from '../../../types/combat';
 
 describe('TimeTravelPanel', () => {
   const mockHistory: CombatHistory[] = [

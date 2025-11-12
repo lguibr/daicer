@@ -121,7 +121,8 @@ describe('GameplayScreen', () => {
 
     render(<GameplayScreen room={mockRoom} players={partialSubmit} />);
 
-    expect(screen.getByText(/Actions submitted\s*:\s*1\s*\/\s*2/i)).toBeInTheDocument();
+    const actionCounts = screen.getAllByText(/Actions submitted\s*:\s*1\s*\/\s*2/i);
+    expect(actionCounts.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows "your turn" message when not submitted', () => {

@@ -20,11 +20,10 @@ concurrency:
 
 env:
   NODE_VERSION: '22.13'
-  NODE_MODULES_ARTIFACT: node-modules-${{ github.run_id }}
 
 jobs:
-  # Install dependencies once and cache for all jobs
-  setup:
+  # Parallel quality checks
+  format:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -38,66 +37,13 @@ jobs:
           cache: yarn
           cache-dependency-path: yarn.lock
 
-      - name: Restore node_modules cache
-        id: node-modules-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-
-      - name: Save node_modules cache
-        if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-
-      - name: Upload dependencies artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: |
-            node_modules
-            frontend/node_modules
-            backend/node_modules
-          retention-days: 1
-
-  # Parallel quality checks
-  format:
-    needs: setup
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
 
       - name: Check code formatting
         run: yarn format:check
 
   lint-frontend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -108,18 +54,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Lint frontend
         run: yarn lint:check:frontend
 
   lint-backend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -130,18 +74,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Lint backend
         run: yarn lint:check:backend
 
   typecheck-frontend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -152,18 +94,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Typecheck frontend
         run: yarn typecheck:frontend
 
   typecheck-backend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -174,18 +114,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Typecheck backend
         run: yarn typecheck:backend
 
   test-frontend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -196,12 +134,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Run frontend tests
         run: yarn test:ci:frontend
@@ -215,7 +152,6 @@ jobs:
           path: frontend/coverage
 
   test-backend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -226,12 +162,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Run backend tests
         run: yarn test:ci:backend
@@ -245,7 +180,6 @@ jobs:
           path: backend/coverage
 
   build-frontend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -256,12 +190,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Build frontend
         run: yarn build:frontend
@@ -274,7 +207,6 @@ jobs:
           path: frontend/dist
 
   build-backend:
-    needs: setup
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -285,12 +217,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
-      - name: Download dependencies artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ env.NODE_MODULES_ARTIFACT }}
-          path: .
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Build backend
         run: yarn build:backend

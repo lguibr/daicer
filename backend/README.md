@@ -1,5 +1,20 @@
 # Daicer Backend
 
+<p align="center">
+  <img src="../frontend/public/logo.png" alt="Daicer logo" width="220" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/lguibr/daice/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/lguibr/daice/ci.yml?label=CI&logo=github" alt="CI status"></a>
+  <a href="https://github.com/lguibr/daice/releases"><img src="https://img.shields.io/github/v/release/lguibr/daice?display_name=tag&logo=semanticweb" alt="Release tag"></a>
+  <img src="https://img.shields.io/badge/tests-Jest-blue?logo=jest" alt="Jest">
+  <img src="https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen?logo=codecov" alt="Coverage">
+  <img src="https://img.shields.io/badge/lint-ESLint-4b32c3?logo=eslint" alt="ESLint">
+  <img src="https://img.shields.io/badge/format-Prettier-ff69b4?logo=prettier" alt="Prettier">
+  <img src="https://img.shields.io/badge/deploy-Cloud%20Run-4285f4?logo=googlecloud" alt="Cloud Run">
+  <img src="https://img.shields.io/badge/seeds-Cloud%20Build-34a853?logo=googlecloud" alt="Seeds via Cloud Build">
+</p>
+
 Purpose-built orchestration layer for the AI Dungeon Master: REST + WebSocket APIs, LangGraph-tuned services, and Firebase persistence.
 
 ---
@@ -198,30 +213,36 @@ Testing layers:
 
 ## Deployment (Cloud Run)
 
-1. Build and push container via Cloud Build:
+### Automated Release Flow
 
-   ```bash
-   gcloud builds submit --config cloudbuild.yaml
-   ```
+Tags prefixed with `v` (e.g., `v1.2.3`) trigger `release.yml`:
 
-2. Deploy latest image:
+- Builds backend via Cloud Build using `backend/cloudbuild.yaml`.
+- Deploys Cloud Run service `daicer-backend` in `us-central1`.
+- Runs Firestore seeds by invoking `seeds/cloudbuild.seed.yaml`.
+- Notifies Vercel to promote the latest frontend build.
 
-   ```bash
-   gcloud run deploy daicer-backend \
-     --image gcr.io/<PROJECT_ID>/daicer-backend \
-     --region us-central1 \
-     --allow-unauthenticated
-   ```
+### Manual Commands
 
-3. Configure environment:
-   - Secrets: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `FIREBASE_PRIVATE_KEY`.
-   - Vars: `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `LOG_LEVEL`, `ALLOWED_ORIGINS`.
-   - Minimum instances: `1` (cold-start mitigation), concurrency: `80`.
+```bash
+gcloud builds submit --config cloudbuild.yaml
+gcloud run deploy daicer-backend \
+  --image gcr.io/<PROJECT_ID>/daicer-backend \
+  --region us-central1 \
+  --allow-unauthenticated
+```
 
-4. Post-deploy checklist:
-   - Run smoke test `yarn test:e2e` against deployed URL.
-   - Verify Firestore indexes (`firestore.indexes.json`) synced.
-   - Review Cloud Logging filters for error spikes.
+Configure environment:
+
+- Secrets: `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `FIREBASE_PRIVATE_KEY`.
+- Vars: `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `LOG_LEVEL`, `ALLOWED_ORIGINS`.
+- Minimum instances: `1`, concurrency: `80`.
+
+Post-deploy:
+
+- Smoke test with `yarn test:e2e`.
+- Verify Firestore indexes (`firestore.indexes.json`).
+- Review Cloud Logging for errors.
 
 ---
 

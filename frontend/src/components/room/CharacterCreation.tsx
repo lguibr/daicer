@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Room, Player, Attribute, Talent, ResourcePool, CharacterSheet } from '../../types/shared';
 import {
@@ -15,7 +16,6 @@ import { LoadingOverlay } from '../ui/LoadingOverlay';
 import Input from '../ui/input';
 import Label from '../ui/label';
 import Textarea from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import NumericStepper from '../ui/NumericStepper';
 import type {
   AvatarGenerationPayload,
@@ -65,6 +65,13 @@ function getPointCost(score: number): number {
 function calculateTotalPoints(attributes: Record<string, number>): number {
   return Object.values(attributes).reduce((sum, score) => sum + getPointCost(score), 0);
 }
+
+const parseAppearanceNumber = (value: string, fallback: number): number => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const formatModifier = (modifier: number): string => (modifier >= 0 ? `+${modifier}` : `${modifier}`);
 
 type CharacterFormState = {
   name: string;
@@ -121,6 +128,13 @@ const MAX_PREVIEW_DIMENSION = 512;
 const PREVIEW_OUTPUT_MIME = 'image/webp';
 const PREVIEW_OUTPUT_QUALITY = 0.85;
 
+const EYE_COLOR_OPTIONS = ['Amber', 'Blue', 'Brown', 'Gray', 'Green', 'Hazel', 'Violet'];
+const SKIN_TONE_OPTIONS = ['Pale', 'Fair', 'Olive', 'Sun-kissed', 'Bronze', 'Deep', 'Otherworldly'];
+const HAIR_STYLE_OPTIONS = ['Black', 'Brown', 'Blonde', 'Red', 'White', 'Silver', 'Bald', 'Vibrant'];
+const DEFAULT_APPEARANCE_AGE = 24;
+const DEFAULT_APPEARANCE_HEIGHT = 170;
+const DEFAULT_APPEARANCE_WEIGHT = 72;
+
 const PLACEHOLDER_REFERENCES: Record<
   keyof AvatarPreviewResponse,
   { src: string; description: string; mimeType: string }
@@ -129,6 +143,63 @@ const PLACEHOLDER_REFERENCES: Record<
   upperBody: { src: '/upper.png', description: 'Upper body framing reference', mimeType: 'image/png' },
   fullBody: { src: '/full.png', description: 'Full body framing reference', mimeType: 'image/png' },
 };
+
+interface SelectionCardProps {
+  label: string;
+  description?: string;
+  detail?: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+function SelectionCard({ label, description, detail, selected, onSelect }: SelectionCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={clsx(
+        'flex h-full flex-col gap-2 rounded-xl border p-4 text-left transition-shadow duration-200',
+        selected
+          ? 'border-aurora-400/70 bg-aurora-500/15 shadow-[0_12px_30px_rgba(183,142,33,0.25)]'
+          : 'border-midnight-600 bg-midnight-800/70 hover:border-aurora-300/50 hover:bg-midnight-700/70'
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold uppercase tracking-[0.35em] text-shadow-200">{label}</span>
+        {detail ? (
+          <span className="rounded-full border border-midnight-500/60 bg-midnight-600/70 px-2 py-0.5 text-[0.6rem] uppercase tracking-[0.3em] text-shadow-400">
+            {detail}
+          </span>
+        ) : null}
+      </div>
+      {description ? <p className="text-xs leading-relaxed text-shadow-400">{description}</p> : null}
+    </button>
+  );
+}
+
+interface OptionPillProps {
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+function OptionPill({ label, selected, onSelect }: OptionPillProps) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={clsx(
+        'rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] transition-colors duration-150',
+        selected
+          ? 'border-accent/60 bg-accent/20 text-accent'
+          : 'border-midnight-600 bg-midnight-700/60 text-shadow-300 hover:border-accent/40 hover:text-shadow-100'
+      )}
+    >
+      {label}
+    </button>
+  );
+}
 
 const appendReference = (base: AvatarGenerationPayload, extra?: ReferenceImagePayload): AvatarGenerationPayload => {
   if (!extra) {
@@ -297,6 +368,10 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
 
   const pointsUsed = useMemo(() => calculateTotalPoints(formData.attributes), [formData.attributes]);
   const pointsRemaining = attributeBudget - pointsUsed;
+
+  const ageValue = parseAppearanceNumber(formData.appearance.age, DEFAULT_APPEARANCE_AGE);
+  const heightValue = parseAppearanceNumber(formData.appearance.height, DEFAULT_APPEARANCE_HEIGHT);
+  const weightValue = parseAppearanceNumber(formData.appearance.weight, DEFAULT_APPEARANCE_WEIGHT);
 
   const updateField = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -822,9 +897,67 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-10">
+            {/* Adventuring Party */}
+            <section className="rounded-lg border border-midnight-600 bg-midnight-700/90 p-6">
+              <h2 className="text-2xl font-bold text-aurora-300 mb-4">Adventuring Party</h2>
+              <div className="space-y-3">
+                {players.length === 0 && (
+                  <p className="text-shadow-500 text-center p-8">Waiting for players to create characters...</p>
+                )}
+                {players.map((player) => {
+                  const playerAvatar =
+                    player.userId === user?.uid && currentUserAvatar ? currentUserAvatar : '/face.png';
+
+                  return (
+                    <div key={player.id} className="p-4 bg-midnight-700 rounded-lg border border-midnight-600">
+                      <div className="flex items-center justify-between mb-3 gap-3">
+                        <div className="flex items-center gap-3">
+                          {player.character.avatarAssets?.portrait?.publicUrl ? (
+                            <img
+                              src={player.character.avatarAssets.portrait.publicUrl}
+                              alt={`${player.character.name} portrait`}
+                              className="h-10 w-10 flex-shrink-0 rounded-full border border-accent/40 object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={playerAvatar}
+                              alt={`${player.name} avatar`}
+                              className="h-10 w-10 flex-shrink-0 rounded-full border border-accent/30 object-cover"
+                              loading="lazy"
+                            />
+                          )}
+                          <div>
+                            <h3 className="font-bold text-lg text-shadow-50">{player.character.name}</h3>
+                            <p className="text-shadow-300 text-sm">
+                              Level {player.character.level} {player.character.race} {player.character.characterClass}
+                            </p>
+                          </div>
+                        </div>
+                        {player.isReady && <span className="text-aurora-200 text-sm font-semibold">✓ Ready</span>}
+                      </div>
+                      <p className="text-shadow-500 text-xs">{player.character.alignment}</p>
+                      {player.character.backstory && (
+                        <p className="text-shadow-400 text-xs mt-2 italic line-clamp-2">{player.character.backstory}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {hasCharacter && (
+                <div className="mt-6 p-4 bg-midnight-800/40 border border-aurora-500/30 rounded-lg">
+                  <p className="text-aurora-200 text-sm font-semibold">
+                    {players.filter((p) => p.isReady).length} /{room.settings?.playerCount || players.length} players
+                    ready
+                  </p>
+                  <p className="text-shadow-500 text-xs mt-1">Game starts when all players are ready</p>
+                </div>
+              )}
+            </section>
+
             {/* Character Creation Form */}
-            <div>
+            <section>
               <h2 className="text-2xl font-bold text-aurora-300 mb-4">
                 {hasCharacter ? 'Your Character' : 'Create Your Character'}
               </h2>
@@ -927,57 +1060,72 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
                     <strong>Starting Level:</strong> {startingLevel}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="race">Race *</Label>
-                      <Select value={formData.race} onValueChange={(value) => updateField('race', value)}>
-                        <SelectTrigger id="race">
-                          <SelectValue placeholder="Select race" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {races?.map((race) => (
-                            <SelectItem key={race.id} value={race.name}>
-                              {race.name}
-                            </SelectItem>
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <Label>Race *</Label>
+                      {races ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {races.map((race) => (
+                            <SelectionCard
+                              key={race.id}
+                              label={race.name}
+                              description={race.description}
+                              detail={`${race.size} • ${race.speed} ft`}
+                              selected={formData.race === race.name}
+                              onSelect={() => updateField('race', race.name)}
+                            />
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center rounded-lg border border-midnight-600 bg-midnight-700/70 p-6">
+                          <DiceLoader size="small" diceCount={2} />
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="class">Class *</Label>
-                      <Select
-                        value={formData.characterClass}
-                        onValueChange={(value) => updateField('characterClass', value)}
-                      >
-                        <SelectTrigger id="class">
-                          <SelectValue placeholder="Select class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {classes?.map((cls) => (
-                            <SelectItem key={cls.id} value={cls.name}>
-                              {cls.name}
-                            </SelectItem>
+                    <div className="space-y-3">
+                      <Label>Class *</Label>
+                      {classes ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {classes.map((cls) => (
+                            <SelectionCard
+                              key={cls.id}
+                              label={cls.name}
+                              description={cls.description}
+                              detail={`d${cls.hitDie} • ${cls.primaryAbility}`}
+                              selected={formData.characterClass === cls.name}
+                              onSelect={() => updateField('characterClass', cls.name)}
+                            />
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center rounded-lg border border-midnight-600 bg-midnight-700/70 p-6">
+                          <DiceLoader size="small" diceCount={2} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="alignment">Alignment *</Label>
-                    <Select value={formData.alignment} onValueChange={(value) => updateField('alignment', value)}>
-                      <SelectTrigger id="alignment">
-                        <SelectValue placeholder="Select alignment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {alignments?.map((alignment) => (
-                          <SelectItem key={alignment.id} value={alignment.name}>
-                            {alignment.name}
-                          </SelectItem>
+                  <div className="space-y-3">
+                    <Label>Alignment *</Label>
+                    {alignments ? (
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {alignments.map((alignment) => (
+                          <SelectionCard
+                            key={alignment.id}
+                            label={alignment.name}
+                            description={alignment.description}
+                            detail={alignment.abbreviation}
+                            selected={formData.alignment === alignment.name}
+                            onSelect={() => updateField('alignment', alignment.name)}
+                          />
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center rounded-lg border border-midnight-600 bg-midnight-700/70 p-6">
+                        <DiceLoader size="small" diceCount={2} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Background Story */}
@@ -1049,9 +1197,18 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
                               wrapperClassName="border border-midnight-700 bg-midnight-900/60 px-3 py-2"
                               inputClassName="text-xl font-semibold text-shadow-50"
                             />
-                            <div className="text-xs text-center text-shadow-400">
-                              Mod {modifier >= 0 ? '+' : ''}
-                              {modifier}
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-[0.6rem] font-semibold uppercase tracking-[0.35em] text-shadow-500">
+                                Mod
+                              </span>
+                              <span
+                                className={clsx(
+                                  'text-2xl font-black tracking-wide',
+                                  modifier > 0 ? 'text-aurora-200' : modifier === 0 ? 'text-shadow-100' : 'text-red-300'
+                                )}
+                              >
+                                {formatModifier(modifier)}
+                              </span>
                             </div>
                           </div>
                         );
@@ -1065,60 +1222,117 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
 
                   {/* Appearance (Optional) */}
                   <details className="border-t border-midnight-600 pt-4">
-                    <summary className="text-sm font-medium text-shadow-400 mb-3 cursor-pointer hover:text-shadow-200">
+                    <summary className="mb-3 cursor-pointer text-sm font-medium text-shadow-400 hover:text-shadow-200">
                       Appearance (Optional) ▼
                     </summary>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-                      <Input
-                        type="text"
-                        value={formData.appearance.age}
-                        onChange={(e) => updateAppearance('age', e.target.value)}
-                        placeholder="Age"
-                        className="text-sm"
-                      />
-                      <Input
-                        type="text"
-                        value={formData.appearance.height}
-                        onChange={(e) => updateAppearance('height', e.target.value)}
-                        placeholder="Height"
-                        className="text-sm"
-                      />
-                      <Input
-                        type="text"
-                        value={formData.appearance.weight}
-                        onChange={(e) => updateAppearance('weight', e.target.value)}
-                        placeholder="Weight"
-                        className="text-sm"
-                      />
-                      <Input
-                        type="text"
-                        value={formData.appearance.eyes}
-                        onChange={(e) => updateAppearance('eyes', e.target.value)}
-                        placeholder="Eyes"
-                        className="text-sm"
-                      />
-                      <Input
-                        type="text"
-                        value={formData.appearance.skin}
-                        onChange={(e) => updateAppearance('skin', e.target.value)}
-                        placeholder="Skin"
-                        className="text-sm"
-                      />
-                      <Input
-                        type="text"
-                        value={formData.appearance.hair}
-                        onChange={(e) => updateAppearance('hair', e.target.value)}
-                        placeholder="Hair"
-                        className="text-sm"
+                    <div className="space-y-6">
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="rounded-lg border border-midnight-600 bg-midnight-800/70 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                              Age
+                            </span>
+                            <span className="text-sm font-bold text-shadow-100">{ageValue} yrs</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={10}
+                            max={120}
+                            value={ageValue}
+                            onChange={(event) => updateAppearance('age', event.target.value)}
+                            className="w-full accent-[hsl(var(--aurora-400))]"
+                          />
+                        </div>
+                        <div className="rounded-lg border border-midnight-600 bg-midnight-800/70 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                              Height
+                            </span>
+                            <span className="text-sm font-bold text-shadow-100">{heightValue} cm</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={120}
+                            max={220}
+                            value={heightValue}
+                            onChange={(event) => updateAppearance('height', event.target.value)}
+                            className="w-full accent-[hsl(var(--aurora-400))]"
+                          />
+                        </div>
+                        <div className="rounded-lg border border-midnight-600 bg-midnight-800/70 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                              Weight
+                            </span>
+                            <span className="text-sm font-bold text-shadow-100">{weightValue} kg</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={40}
+                            max={200}
+                            value={weightValue}
+                            onChange={(event) => updateAppearance('weight', event.target.value)}
+                            className="w-full accent-[hsl(var(--aurora-400))]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="space-y-3">
+                          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                            Eyes
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {EYE_COLOR_OPTIONS.map((option) => (
+                              <OptionPill
+                                key={option}
+                                label={option}
+                                selected={formData.appearance.eyes === option}
+                                onSelect={() => updateAppearance('eyes', option)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                            Skin
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {SKIN_TONE_OPTIONS.map((option) => (
+                              <OptionPill
+                                key={option}
+                                label={option}
+                                selected={formData.appearance.skin === option}
+                                onSelect={() => updateAppearance('skin', option)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                            Hair
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {HAIR_STYLE_OPTIONS.map((option) => (
+                              <OptionPill
+                                key={option}
+                                label={option}
+                                selected={formData.appearance.hair === option}
+                                onSelect={() => updateAppearance('hair', option)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Textarea
+                        value={formData.appearance.description}
+                        onChange={(event) => updateAppearance('description', event.target.value)}
+                        placeholder="Add flourish: notable markings, posture, fashion, or other visual details."
+                        rows={3}
+                        className="text-sm resize-none"
                       />
                     </div>
-                    <Textarea
-                      value={formData.appearance.description}
-                      onChange={(e) => updateAppearance('description', e.target.value)}
-                      placeholder="Physical description..."
-                      rows={2}
-                      className="mt-3 text-sm resize-none"
-                    />
                   </details>
 
                   {/* Avatar Portrait Generation */}
@@ -1274,65 +1488,7 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
                   </Button>
                 </form>
               )}
-            </div>
-
-            {/* Player List */}
-            <div>
-              <h2 className="text-2xl font-bold text-aurora-300 mb-4">Adventuring Party</h2>
-              <div className="space-y-3">
-                {players.length === 0 && (
-                  <p className="text-shadow-500 text-center p-8">Waiting for players to create characters...</p>
-                )}
-                {players.map((player) => {
-                  const playerAvatar =
-                    player.userId === user?.uid && currentUserAvatar ? currentUserAvatar : '/face.png';
-
-                  return (
-                    <div key={player.id} className="p-4 bg-midnight-700 rounded-lg border border-midnight-600">
-                      <div className="flex items-center justify-between mb-3 gap-3">
-                        <div className="flex items-center gap-3">
-                          {player.character.avatarAssets?.portrait?.publicUrl ? (
-                            <img
-                              src={player.character.avatarAssets.portrait.publicUrl}
-                              alt={`${player.character.name} portrait`}
-                              className="h-10 w-10 flex-shrink-0 rounded-full border border-accent/40 object-cover"
-                            />
-                          ) : (
-                            <img
-                              src={playerAvatar}
-                              alt={`${player.name} avatar`}
-                              className="h-10 w-10 flex-shrink-0 rounded-full border border-accent/30 object-cover"
-                              loading="lazy"
-                            />
-                          )}
-                          <div>
-                            <h3 className="font-bold text-lg text-shadow-50">{player.character.name}</h3>
-                            <p className="text-shadow-300 text-sm">
-                              Level {player.character.level} {player.character.race} {player.character.characterClass}
-                            </p>
-                          </div>
-                        </div>
-                        {player.isReady && <span className="text-aurora-200 text-sm font-semibold">✓ Ready</span>}
-                      </div>
-                      <p className="text-shadow-500 text-xs">{player.character.alignment}</p>
-                      {player.character.backstory && (
-                        <p className="text-shadow-400 text-xs mt-2 italic line-clamp-2">{player.character.backstory}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {hasCharacter && (
-                <div className="mt-6 p-4 bg-midnight-800/40 border border-aurora-500/30 rounded-lg">
-                  <p className="text-aurora-200 text-sm font-semibold">
-                    {players.filter((p) => p.isReady).length} /{room.settings?.playerCount || players.length} players
-                    ready
-                  </p>
-                  <p className="text-shadow-500 text-xs mt-1">Game starts when all players are ready</p>
-                </div>
-              )}
-            </div>
+            </section>
           </div>
         </div>
       </div>

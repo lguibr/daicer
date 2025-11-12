@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import LanguageSelector from '../ui/LanguageSelector';
 import type { Room } from '../../types/shared';
 
 interface NavbarProps {
@@ -67,6 +68,13 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
           >
             Explore
           </button>
+          <button
+            type="button"
+            onClick={() => navigate('/spellbook-demo')}
+            className="hidden rounded-lg border border-nebula-400/40 bg-nebula-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-nebula-100 transition hover:bg-nebula-400/15 sm:inline-flex"
+          >
+            Spellbook
+          </button>
         </div>
 
         {/* Center - Room Info (Desktop) */}
@@ -96,8 +104,9 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
           </div>
         )}
 
-        {/* Right - User Menu (Desktop) */}
+        {/* Right - Controls & User Menu (Desktop) */}
         <div className="hidden items-center gap-4 md:flex">
+          <LanguageSelector />
           {user && (
             <>
               <div className="flex items-center gap-3">
@@ -155,6 +164,9 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-aurora-500/20 bg-midnight-400/80 backdrop-blur-md">
           <div className="px-4 py-4 space-y-4">
+            <div className="flex justify-end">
+              <LanguageSelector />
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -164,6 +176,16 @@ export default function Navbar({ room = null, playerCount = 0, showRoomInfo = fa
               className="w-full rounded-lg border border-aurora-400/30 bg-aurora-500/10 px-4 py-3 text-sm font-medium text-aurora-100 transition-colors hover:bg-aurora-500/20"
             >
               Explore
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/spellbook-demo');
+                setMobileMenuOpen(false);
+              }}
+              className="w-full rounded-lg border border-nebula-400/30 bg-nebula-500/10 px-4 py-3 text-sm font-medium text-nebula-100 transition-colors hover:bg-nebula-500/20"
+            >
+              Spellbook
             </button>
 
             {/* Room Info Mobile */}

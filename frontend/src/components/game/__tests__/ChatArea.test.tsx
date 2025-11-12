@@ -10,6 +10,20 @@ vi.mock('../../../hooks/useAuth', () => ({
   }),
 }));
 
+const translationMap: Record<string, string> = {
+  'gameplay.adventureBegins': 'The adventure begins...',
+  'gameplay.processing': 'Processing...',
+};
+
+vi.mock('../../../i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => translationMap[key] ?? key,
+    language: 'en',
+    setLanguage: vi.fn(),
+    availableLanguages: [],
+  }),
+}));
+
 const mockMessages: Message[] = [
   {
     id: 'msg-1',
@@ -33,39 +47,36 @@ const mockMessages: Message[] = [
 
 describe('ChatArea', () => {
   it('renders world description when provided', () => {
-    render(<ChatArea messages={[]} worldDescription="A dark and mysterious forest" />);
+    render(<ChatArea messages={[]} worldDescription="A dark and mysterious forest" isProcessing={false} />);
 
     expect(screen.getByText('The World')).toBeInTheDocument();
     expect(screen.getByText('A dark and mysterious forest')).toBeInTheDocument();
   });
 
   it('does not render world description when empty', () => {
-    render(<ChatArea messages={[]} worldDescription="" />);
+    render(<ChatArea messages={[]} worldDescription="" isProcessing={false} />);
 
     expect(screen.queryByText('The World')).not.toBeInTheDocument();
   });
 
   it('displays all public messages', () => {
-    render(<ChatArea messages={mockMessages} worldDescription="" />);
+    render(<ChatArea messages={mockMessages} worldDescription="" isProcessing={false} />);
 
     expect(screen.getByText('Welcome to the adventure!')).toBeInTheDocument();
     expect(screen.getByText('I search the room.')).toBeInTheDocument();
   });
 
   it('differentiates DM messages from player messages', () => {
-    const { container } = render(<ChatArea messages={mockMessages} worldDescription="" />);
+    const { container } = render(<ChatArea messages={mockMessages} worldDescription="" isProcessing={false} />);
 
-    // DM messages should have specific styling
-    const dmMessages = container.querySelectorAll('.bg-zinc-800\\/85');
+    const dmMessages = container.querySelectorAll('.justify-start');
+    const playerMessages = container.querySelectorAll('.justify-end');
     expect(dmMessages.length).toBeGreaterThan(0);
-
-    // Player messages should have different styling
-    const playerMessages = container.querySelectorAll('.bg-blue-950\\/80');
     expect(playerMessages.length).toBeGreaterThan(0);
   });
 
   it('renders markdown in DM messages', () => {
-    render(<ChatArea messages={mockMessages} worldDescription="" />);
+    render(<ChatArea messages={mockMessages} worldDescription="" isProcessing={false} />);
 
     // The markdown-rendered content should exist
     // react-markdown will render "**a hidden door**" as <strong>
@@ -73,7 +84,7 @@ describe('ChatArea', () => {
   });
 
   it('displays timestamps for messages', () => {
-    render(<ChatArea messages={mockMessages} worldDescription="" />);
+    render(<ChatArea messages={mockMessages} worldDescription="" isProcessing={false} />);
 
     // Each message should have a timestamp
     const timestamps = screen.getAllByText(/\d{1,2}:\d{2}:\d{2}/);
@@ -89,7 +100,7 @@ describe('ChatArea', () => {
       recipientId: 'user-1',
     };
 
-    render(<ChatArea messages={[privateMessage]} worldDescription="" />);
+    render(<ChatArea messages={[privateMessage]} worldDescription="" isProcessing={false} />);
 
     expect(screen.getByText('🔒 Your Perspective')).toBeInTheDocument();
   });
@@ -103,7 +114,7 @@ describe('ChatArea', () => {
       recipientId: 'user-2',
     };
 
-    render(<ChatArea messages={[...mockMessages, privateForOther]} worldDescription="" />);
+    render(<ChatArea messages={[...mockMessages, privateForOther]} worldDescription="" isProcessing={false} />);
 
     expect(screen.queryByText('Secret message for someone else')).not.toBeInTheDocument();
   });
@@ -117,7 +128,7 @@ describe('ChatArea', () => {
       recipientId: 'user-1',
     };
 
-    render(<ChatArea messages={[privateForUser]} worldDescription="" />);
+    render(<ChatArea messages={[privateForUser]} worldDescription="" isProcessing={false} />);
 
     expect(screen.getByText('Secret message for you')).toBeInTheDocument();
   });
@@ -131,20 +142,20 @@ describe('ChatArea', () => {
       images: ['base64imagedata1', 'base64imagedata2'],
     };
 
-    render(<ChatArea messages={[messageWithImage]} worldDescription="" />);
+    render(<ChatArea messages={[messageWithImage]} worldDescription="" isProcessing={false} />);
 
     const images = screen.getAllByAltText('Generated scene');
     expect(images).toHaveLength(2);
   });
 
   it('shows empty state when no messages', () => {
-    render(<ChatArea messages={[]} worldDescription="" />);
+    render(<ChatArea messages={[]} worldDescription="" isProcessing={false} />);
 
     expect(screen.getByText('The adventure begins...')).toBeInTheDocument();
   });
 
   it('displays player names correctly', () => {
-    render(<ChatArea messages={mockMessages} worldDescription="" />);
+    render(<ChatArea messages={mockMessages} worldDescription="" isProcessing={false} />);
 
     const senders = screen.getAllByText(/DM|Player 1/);
     expect(senders.length).toBeGreaterThan(0);
@@ -160,31 +171,42 @@ describe('ChatArea', () => {
       recipientId: 'user-1',
     };
 
-    const { container } = render(<ChatArea messages={[privateMsg]} worldDescription="" />);
+    render(<ChatArea messages={[privateMsg]} worldDescription="" isProcessing={false} />);
 
     // Private messages should have purple styling
-    const privateBox = container.querySelector('.bg-purple-950\\/80');
-    expect(privateBox).toBeInTheDocument();
+    const privateBadge = screen.getByText('🔒 Your Perspective');
+    const privateBubble = privateBadge.closest('[class*="bg-nebula-900"]');
+    expect(privateBubble).not.toBeNull();
   });
 
   it('aligns DM messages to the left', () => {
-    const { container } = render(<ChatArea messages={[mockMessages[0]]} worldDescription="" />);
+    const { container } = render(
+      <ChatArea messages={[mockMessages[0]]} worldDescription="" isProcessing={false} />
+    );
 
-    const messageContainer = container.querySelector('.items-start');
+    const messageContainer = container.querySelector('.justify-start');
     expect(messageContainer).toBeInTheDocument();
   });
 
   it('aligns player messages to the right', () => {
-    const { container } = render(<ChatArea messages={[mockMessages[1]]} worldDescription="" />);
+    const { container } = render(
+      <ChatArea messages={[mockMessages[1]]} worldDescription="" isProcessing={false} />
+    );
 
-    const messageContainer = container.querySelector('.items-end');
+    const messageContainer = container.querySelector('.justify-end');
     expect(messageContainer).toBeInTheDocument();
   });
 
   it('handles plain text in player messages', () => {
-    render(<ChatArea messages={[mockMessages[1]]} worldDescription="" />);
+    render(<ChatArea messages={[mockMessages[1]]} worldDescription="" isProcessing={false} />);
 
     // Player messages should render as plain text with whitespace preserved
     expect(screen.getByText('I search the room.')).toBeInTheDocument();
+  });
+
+  it('shows processing loader when inference is running', () => {
+    render(<ChatArea messages={mockMessages} worldDescription="" isProcessing />);
+
+    expect(screen.getByText('Processing...')).toBeInTheDocument();
   });
 });

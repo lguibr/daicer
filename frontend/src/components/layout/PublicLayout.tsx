@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 
+import cn from '@/lib/utils';
+
+import LanguageSelector from '../ui/LanguageSelector';
 import BaseLayout from './BaseLayout';
 
 interface PublicLayoutProps {
@@ -10,8 +13,11 @@ interface PublicLayoutProps {
 
 export default function PublicLayout({ children, className, mainClassName }: PublicLayoutProps) {
   return (
-    <BaseLayout tone="public" contentClassName={className}>
-      <main className={mainClassName ?? 'flex-1'}>{children}</main>
+    <BaseLayout tone="public" contentClassName={cn('relative flex min-h-dvh flex-col', className)}>
+      <div className="absolute right-6 top-6 z-20">
+        <LanguageSelector />
+      </div>
+      <main className={cn('flex-1', mainClassName)}>{children}</main>
     </BaseLayout>
   );
 }

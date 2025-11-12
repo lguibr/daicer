@@ -4,7 +4,7 @@
  * @note Update README.md in this directory when modifying component behavior or props
  */
 
-import type { CombatCharacter } from '../../hooks/useCombat';
+import type { CombatCharacter } from '../../types/combat';
 
 interface CharacterCardProps {
   character: CombatCharacter;
