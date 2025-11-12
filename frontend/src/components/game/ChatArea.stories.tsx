@@ -10,6 +10,11 @@ import type { Message } from '../../types/shared';
 const meta = {
   title: 'Game/ChatArea',
   component: ChatArea,
+  args: {
+    isProcessing: false,
+    messages: [],
+    worldDescription: '',
+  },
   parameters: {
     layout: 'padded',
   },

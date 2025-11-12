@@ -16,8 +16,8 @@ import { generateImage } from '@/services/gemini-image';
 // eslint-disable-next-line import/first
 import { saveAsset } from '@/services/asset-storage';
 
-const mockedGenerateImage = generateImage as jest.Mock;
-const mockedSaveAsset = saveAsset as jest.Mock;
+const mockedGenerateImage = generateImage as jest.MockedFunction<typeof generateImage>;
+const mockedSaveAsset = saveAsset as jest.MockedFunction<typeof saveAsset>;
 
 describe('Asset API', () => {
   beforeEach(() => {
@@ -30,9 +30,9 @@ describe('Asset API', () => {
       prompt: 'prompt',
     });
 
-    mockedSaveAsset.mockImplementation(async ({ filename }) => ({
-      path: `test/${filename}`,
-      url: `http://localhost/test/${filename}`,
+    mockedSaveAsset.mockImplementation(async (params) => ({
+      path: `test/${params.filename}`,
+      url: `http://localhost/test/${params.filename}`,
       bucket: 'test-bucket',
     }));
   });

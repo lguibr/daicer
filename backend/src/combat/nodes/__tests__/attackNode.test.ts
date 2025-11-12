@@ -50,6 +50,8 @@ function createState(characters: CombatCharacter[]): CombatState {
     phase: 'action_selection',
     pendingOpportunityAttacks: [],
     diceRollerSeed: 123,
+    spellPreview: null,
+    lastSpellResolution: null,
   };
 }
 

@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { createCombatSession } from '../../graph';
+import { getSimulationById } from '../../simulations/demoSimulation';
+import { combatDemoSpellLoadouts } from '../../../../../shared/combat-demo/spellLoadouts';
 import type { CombatCharacter } from '@/graph/state';
 
 describe('Combat Scenarios', () => {
@@ -219,5 +221,23 @@ describe('Combat Scenarios', () => {
     expect(restoredState.characters.find((c) => c.id === fighter.id)?.position).toEqual(
       state1.characters.find((c) => c.id === fighter.id)?.position
     );
+  });
+
+  it('should include spell previews and resolutions in scripted simulations', async () => {
+    const simulation = await getSimulationById('demo-classic');
+    expect(simulation).not.toBeNull();
+    if (!simulation) return;
+
+    const [primarySpell] = combatDemoSpellLoadouts['demo-classic'] ?? [];
+    expect(primarySpell).toBeTruthy();
+    if (!primarySpell) return;
+
+    const burningHandsPreview = simulation.steps.find((step) => step.state.spellPreview !== null);
+    expect(burningHandsPreview?.state.spellPreview?.spellId).toBe(primarySpell.spellId);
+    expect(burningHandsPreview?.state.spellPreview?.affectedSquares.length ?? 0).toBeGreaterThan(0);
+
+    const burningHandsCast = simulation.steps.find((step) => step.state.lastSpellResolution !== null);
+    expect(burningHandsCast?.state.lastSpellResolution?.spellId).toBe(primarySpell.spellId);
+    expect(burningHandsCast?.state.lastSpellResolution?.affectedCharacterIds.length ?? 0).toBeGreaterThan(0);
   });
 });

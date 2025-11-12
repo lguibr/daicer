@@ -154,4 +154,4 @@ export const characterSheetSchema = z.object({
   }),
 });
 
-export const characterSheetUpdateSchema = characterSheetSchema.partial({ deep: true });
+export const characterSheetUpdateSchema = z.record(z.string(), z.unknown());

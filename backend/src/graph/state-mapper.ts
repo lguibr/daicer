@@ -49,12 +49,30 @@ export function fromGraphState(
   graphState: CharacterCreationState | GameplayState,
   phase: GamePhase
 ): Partial<GameState> {
+  let normalizedSettings: GameState['settings'];
+  if (graphState.settings) {
+    const language: 'en' | 'es' | 'pt-BR' = graphState.settings.language ?? 'en';
+    normalizedSettings = {
+      theme: graphState.settings.theme,
+      setting: graphState.settings.setting,
+      tone: graphState.settings.tone,
+      playerCount: graphState.settings.playerCount,
+      adventureLength: graphState.settings.adventureLength,
+      difficulty: graphState.settings.difficulty,
+      startingLevel: graphState.settings.startingLevel,
+      attributePointBudget: graphState.settings.attributePointBudget,
+      language,
+    } as unknown as GameState['settings'];
+  } else {
+    normalizedSettings = null;
+  }
+
   // Common fields present in all graph states
   const baseState: Partial<GameState> = {
     roomId: graphState.roomId,
     ownerId: graphState.ownerId,
     code: graphState.code,
-    settings: graphState.settings,
+    settings: normalizedSettings,
     worldDescription: graphState.worldDescription,
     players: graphState.players,
     messages: graphState.messages,

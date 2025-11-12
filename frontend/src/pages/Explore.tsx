@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import {
   AcademicCapIcon,
   AdjustmentsHorizontalIcon,
@@ -13,7 +13,8 @@ import {
   SparklesIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { SRD_RULES, type SRDRule } from 'daicer/seeds/data/srd-rules.ts';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { SRD_RULES, type SRDRule } from 'daicer/seeds/data/srd-rules';
 import { PrivateLayout } from '../components/layout';
 import { DiceLoader, ImageThumbnail } from '../components/ui';
 import {
@@ -58,7 +59,7 @@ interface ExploreSection {
   id: string;
   title: string;
   description: string;
-  icon: (props: { className?: string }) => JSX.Element;
+  icon: ComponentType<{ className?: string }>;
   items: ExploreCard[];
 }
 
@@ -344,8 +345,18 @@ export default function ExplorePage() {
           meta: [
             { label: 'Cost', value: formatCost(item.cost) },
             { label: 'Weight', value: item.weight ? `${item.weight} lb` : '—' },
-            item.weaponCategory ? { label: 'Weapon Category', value: item.weaponCategory } : null,
-            item.armorCategory ? { label: 'Armor Category', value: item.armorCategory } : null,
+            (() => {
+              if ('weaponCategory' in item && typeof item.weaponCategory === 'string') {
+                return { label: 'Weapon Category', value: item.weaponCategory };
+              }
+              return null;
+            })(),
+            (() => {
+              if ('armorCategory' in item && typeof item.armorCategory === 'string') {
+                return { label: 'Armor Category', value: item.armorCategory };
+              }
+              return null;
+            })(),
           ].filter((entry): entry is { label: string; value: string } => Boolean(entry)),
         })),
       },

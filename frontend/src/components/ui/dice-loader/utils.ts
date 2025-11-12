@@ -14,11 +14,17 @@ export const AVAILABLE_DIE_COLORS: readonly string[] = [
 ];
 
 export function generateRandomDieColor(): string {
+  if (AVAILABLE_DIE_COLORS.length === 0) {
+    return '#ffffff';
+  }
   const index = Math.floor(Math.random() * AVAILABLE_DIE_COLORS.length);
-  return AVAILABLE_DIE_COLORS[index % AVAILABLE_DIE_COLORS.length];
+  return AVAILABLE_DIE_COLORS[index] ?? '#ffffff';
 }
 
 export function generateRandomDieType(): DieType {
+  if (AVAILABLE_DIE_TYPES.length === 0) {
+    return 20;
+  }
   const index = Math.floor(Math.random() * AVAILABLE_DIE_TYPES.length);
-  return AVAILABLE_DIE_TYPES[index % AVAILABLE_DIE_TYPES.length];
+  return AVAILABLE_DIE_TYPES[index] ?? 20;
 }

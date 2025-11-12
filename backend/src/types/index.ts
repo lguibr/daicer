@@ -178,6 +178,14 @@ export interface Message {
   targetPlayer?: string;
 }
 
+export interface ToolCallEvent {
+  id: string;
+  toolName: string;
+  parameters: Record<string, unknown>;
+  result?: unknown;
+  timestamp: number;
+}
+
 export type ScaleLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /**

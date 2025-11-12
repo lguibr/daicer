@@ -5,6 +5,7 @@ import { createDie } from './createDie';
 import type { DiceLoaderProps, DieType } from './types';
 import { AVAILABLE_DIE_TYPES, generateRandomDieColor, generateRandomDieType } from './utils';
 import { useI18n } from '../../../i18n';
+import type { Language } from '../../../types/shared';
 
 interface DieInstance {
   group: THREE.Group;
@@ -30,6 +31,13 @@ interface DiceDescriptor {
   rotationSpeed: { x: number; y: number; z: number };
 }
 
+interface PositionedDie {
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+}
+
 const MESSAGE_KEYS = [
   'diceLoader.messages.summoning',
   'diceLoader.messages.rattling',
@@ -37,7 +45,7 @@ const MESSAGE_KEYS = [
   'diceLoader.messages.calibrating',
 ] as const;
 
-const FALLBACK_MESSAGES: Record<string, readonly string[]> = {
+const FALLBACK_MESSAGES: Record<Language, readonly string[]> = {
   en: [
     'Summoning shiny math rocks...',
     'Rattling the dice tray of destiny...',
@@ -109,6 +117,16 @@ function randomInt(min: number, max: number): number {
   return Math.max(lower, Math.floor(Math.random() * (upper - lower + 1)) + lower);
 }
 
+const isPositionTooClose = (positions: PositionedDie[], candidate: PositionedDie): boolean =>
+  positions.some((pos) => {
+    const dx = pos.x - candidate.x;
+    const dy = pos.y - candidate.y;
+    const dz = pos.z - candidate.z;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const separation = Math.max(MIN_POSITION_SEPARATION, (pos.scale + candidate.scale) * 0.55);
+    return distance < separation;
+  });
+
 function createDiceDescriptors(
   diceCount: number | undefined,
   maxDiceCount: number | undefined,
@@ -118,7 +136,7 @@ function createDiceDescriptors(
   const exact = clampDiceCount(diceCount);
   const maxCount = clampDiceCount(maxDiceCount) ?? DEFAULT_MAX_DICE_COUNT;
   const total = exact ?? randomInt(MIN_DICE_COUNT, maxCount);
-  const placedPositions: Array<{ x: number; y: number; z: number; scale: number }> = [];
+  const placedPositions: PositionedDie[] = [];
 
   return Array.from({ length: total }, (_, index) => {
     const type = dieType ?? generateRandomDieType();
@@ -127,36 +145,31 @@ function createDiceDescriptors(
     const scale = randomBetween(baseScale, baseScale + 0.5);
 
     let positionAttempts = 0;
-    let x = 0;
-    let y = 0;
-    let z = 0;
+    let positionFound = false;
+    let candidate: PositionedDie = { x: 0, y: 0, z: 0, scale };
 
-    const placeDie = () => {
+    while (positionAttempts < MAX_POSITION_ATTEMPTS && !positionFound) {
       const angle = index * GOLDEN_ANGLE + randomBetween(-0.35, 0.35);
       const radiusBase = 1 + index * 0.22;
       const radius = total === 1 ? 0 : radiusBase + randomBetween(-0.1, 0.45);
-      x = Math.cos(angle) * radius;
-      z = Math.sin(angle) * radius;
-      y = randomBetween(-0.75, 0.75) + index * 0.05;
-    };
 
-    placeDie();
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const y = randomBetween(-0.75, 0.75) + index * 0.05;
 
-    while (positionAttempts < MAX_POSITION_ATTEMPTS) {
-      const tooClose = placedPositions.some((pos) => {
-        const dx = pos.x - x;
-        const dy = pos.y - y;
-        const dz = pos.z - z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        const separation = Math.max(MIN_POSITION_SEPARATION, (pos.scale + scale) * 0.55);
-        return distance < separation;
-      });
+      candidate = { x, y, z, scale };
+      const tooClose = isPositionTooClose(placedPositions, candidate);
+
       if (!tooClose) {
-        placedPositions.push({ x, y, z, scale });
-        break;
+        placedPositions.push(candidate);
+        positionFound = true;
       }
+
       positionAttempts += 1;
-      placeDie();
+    }
+
+    if (!positionFound) {
+      placedPositions.push(candidate);
     }
 
     const rotation = {
@@ -174,12 +187,14 @@ function createDiceDescriptors(
     const id =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `die-${Date.now()}-${index}`;
 
+    const finalPosition = candidate;
+
     return {
       id,
       type,
       color: diceColor,
       scale,
-      position: { x, y, z },
+      position: { x: finalPosition.x, y: finalPosition.y, z: finalPosition.z },
       rotation,
       rotationSpeed,
     } satisfies DiceDescriptor;
@@ -234,7 +249,7 @@ export function DiceLoader({
     [color, diceCount, dieType, maxDiceCount]
   );
 
-  const localizedMessages = useMemo(() => {
+  const localizedMessages = useMemo<string[]>(() => {
     const translatedMessages = MESSAGE_KEYS.map((key) => {
       const translation = t(key);
       return translation !== key ? translation : null;
@@ -243,11 +258,15 @@ export function DiceLoader({
     if (translatedMessages.length > 0) {
       return translatedMessages;
     }
-    return FALLBACK_MESSAGES[language] ?? FALLBACK_MESSAGES.en;
+    const fallback = FALLBACK_MESSAGES[language];
+    if (fallback && fallback.length > 0) {
+      return Array.from(fallback);
+    }
+    return Array.from(FALLBACK_MESSAGES.en);
   }, [language, t]);
 
   const randomLocalizedMessage = useMemo(() => {
-    const options = localizedMessages.length > 0 ? localizedMessages : FALLBACK_MESSAGES.en;
+    const options = localizedMessages.length > 0 ? localizedMessages : Array.from(FALLBACK_MESSAGES.en);
     const index = Math.floor(Math.random() * options.length);
     return options[index];
   }, [localizedMessages]);
@@ -309,10 +328,11 @@ export function DiceLoader({
       animationFrameRef.current = requestAnimationFrame(animate);
       const currentState = stateRef.current;
       if (currentState?.dice.length) {
-        currentState.dice.forEach(({ group, rotationSpeed }) => {
-          group.rotation.x += rotationSpeed.x;
-          group.rotation.y += rotationSpeed.y;
-          group.rotation.z += rotationSpeed.z;
+        currentState.dice.forEach((instance) => {
+          const { group: dieGroup, rotationSpeed } = instance;
+          dieGroup.rotation.x += rotationSpeed.x;
+          dieGroup.rotation.y += rotationSpeed.y;
+          dieGroup.rotation.z += rotationSpeed.z;
         });
       }
       renderer.render(scene, camera);
@@ -380,7 +400,6 @@ export function DiceLoader({
       });
     }
 
-    const sizeMultiplier = SIZE_MAP[size] ?? SIZE_MAP.medium;
     const diceInstances = diceDescriptors.map((descriptor) => {
       const die = createDie(descriptor.type, descriptor.color);
       die.scale.set(descriptor.scale, descriptor.scale, descriptor.scale);

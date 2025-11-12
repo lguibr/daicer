@@ -146,9 +146,15 @@ router.get('/shapes/:shape', (req: Request, res: Response) => {
  */
 router.get('/levels/:level', (req: Request, res: Response) => {
   try {
-    const level = parseInt(req.params.level, 10);
+    const { level: levelParam } = req.params;
+    if (typeof levelParam !== 'string') {
+      res.status(400).json({ error: 'Missing spell level parameter' });
+      return;
+    }
 
-    if (level < 0 || level > 9) {
+    const level = Number.parseInt(levelParam, 10);
+
+    if (Number.isNaN(level) || level < 0 || level > 9) {
       res.status(400).json({ error: 'Invalid spell level (must be 0-9)' });
       return;
     }

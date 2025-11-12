@@ -43,6 +43,8 @@
     "typecheck:frontend": "echo '  🔬 Frontend...' && cd frontend && yarn typecheck",
     "typecheck:backend": "echo '  🔬 Backend...' && cd backend && yarn typecheck",
     "test": "echo '🧪 Running all tests...' && yarn test:frontend && yarn test:backend && echo '✅ All tests passed!'",
+    "test:frontend": "cd frontend && yarn test",
+    "test:backend": "cd backend && yarn test",
     "test:watch": "echo '👀 Running all tests in watch mode...' && concurrently -n \"frontend,backend\" -c \"green,blue\" \"yarn test:watch:frontend\" \"yarn test:watch:backend\"",
     "test:watch:frontend": "cd frontend && yarn test:watch",
     "test:watch:backend": "cd backend && yarn test:watch",

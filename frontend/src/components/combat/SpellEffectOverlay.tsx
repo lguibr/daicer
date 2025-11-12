@@ -169,6 +169,49 @@ export function SpellEffectOverlay({
                     ? 'ring-2 ring-sky-400'
                     : '';
 
+            if (typeof onSquareClick === 'function') {
+              return (
+                <button
+                  key={`${x}-${y}`}
+                  type="button"
+                  aria-label={`Grid square ${x},${y}`}
+                  className={`
+                    relative aspect-square border border-gray-700
+                    ${affected ? 'opacity-80' : 'opacity-20'}
+                    ${ringClass}
+                    ${casterHere ? 'outline outline-2 outline-blue-400' : ''}
+                    ${targetHere ? 'outline outline-2 outline-yellow-400' : ''}
+                    ${highlighted ? 'shadow-inner shadow-emerald-400/60' : ''}
+                    transition-all overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-aurora-300
+                  `}
+                  style={{
+                    backgroundColor: affected ? effectColor : 'transparent',
+                  }}
+                  onClick={() => onSquareClick({ x, y })}
+                >
+                  {onPath && !casterHere && !targetHere && (
+                    <div className="absolute inset-[3px] rounded-sm border-2 border-sky-400 pointer-events-none" />
+                  )}
+
+                  {obstacle && (
+                    <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-sm text-red-200">
+                      ⛔
+                    </div>
+                  )}
+
+                  {casterHere && <div className="w-full h-full flex items-center justify-center text-2xl">🧙</div>}
+                  {targetHere && !casterHere && (
+                    <div className="w-full h-full flex items-center justify-center text-xl">🎯</div>
+                  )}
+                  {occupant && !casterHere && !targetHere && !obstacle && (
+                    <div className="absolute inset-0 flex items-center justify-center text-xl pointer-events-none">
+                      {occupant.icon ?? (occupant.role === 'ally' ? '🛡️' : occupant.role === 'enemy' ? '💀' : '⚑')}
+                    </div>
+                  )}
+                </button>
+              );
+            }
+
             return (
               <div
                 key={`${x}-${y}`}
@@ -180,20 +223,9 @@ export function SpellEffectOverlay({
                   ${targetHere ? 'outline outline-2 outline-yellow-400' : ''}
                   ${highlighted ? 'shadow-inner shadow-emerald-400/60' : ''}
                   transition-all overflow-hidden
-                  ${onSquareClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-aurora-300' : ''}
                 `}
                 style={{
                   backgroundColor: affected ? effectColor : 'transparent',
-                }}
-                role={onSquareClick ? 'button' : undefined}
-                tabIndex={onSquareClick ? 0 : undefined}
-                onClick={() => onSquareClick?.({ x, y })}
-                onKeyDown={(event) => {
-                  if (!onSquareClick) return;
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    onSquareClick({ x, y });
-                  }
                 }}
               >
                 {onPath && !casterHere && !targetHere && (

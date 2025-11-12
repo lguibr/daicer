@@ -3,7 +3,7 @@
  * Displays combat events and dice rolls
  */
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, type ReactNode } from 'react';
 import type { CombatLogEntry, DiceRollResult } from '../../types/combat';
 
 interface CombatLogProps {
@@ -75,20 +75,44 @@ export function CombatLog({ log, diceHistory }: CombatLogProps) {
   const getLogTypeColor = (type: string): string => {
     switch (type) {
       case 'attack':
-        return 'text-aurora-300';
+        return 'text-orange-400';
       case 'damage':
-        return 'text-destructive-300';
+        return 'text-red-400';
       case 'move':
-        return 'text-nebula-300';
+        return 'text-sky-300';
       case 'turn':
         return 'text-shadow-200';
       case 'round':
         return 'text-aurora-200';
       case 'victory':
-        return 'text-aurora-100';
+        return 'text-emerald-300';
       default:
         return 'text-shadow-300';
     }
+  };
+
+  const formatMarkdownToNodes = (text: string): ReactNode[] => {
+    const nodes: ReactNode[] = [];
+    const boldPattern = /\*\*(.+?)\*\*/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null = boldPattern.exec(text);
+
+    while (match !== null) {
+      if (match.index > lastIndex) {
+        const plainSegment = text.slice(lastIndex, match.index);
+        nodes.push(<span key={`text-${match.index}-${nodes.length}`}>{plainSegment}</span>);
+      }
+
+      nodes.push(<strong key={`bold-${match.index}`}>{match[1]}</strong>);
+      lastIndex = match.index + match[0].length;
+      match = boldPattern.exec(text);
+    }
+
+    if (lastIndex < text.length) {
+      nodes.push(<span key={`text-${lastIndex}-end`}>{text.slice(lastIndex)}</span>);
+    }
+
+    return nodes.length > 0 ? nodes : [text];
   };
 
   return (
@@ -103,11 +127,7 @@ export function CombatLog({ log, diceHistory }: CombatLogProps) {
             <div className={`flex items-start gap-2 ${getLogTypeColor(entry.type)}`}>
               <span className="text-base">{getLogTypeIcon(entry.type)}</span>
               <div className="flex-1">
-                {/* eslint-disable-next-line react/no-danger */}
-                <div
-                  className="prose prose-invert max-w-none prose-sm"
-                  dangerouslySetInnerHTML={{ __html: entry.message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}
-                />
+                <div className="text-shadow-50 leading-relaxed">{formatMarkdownToNodes(entry.message)}</div>
 
                 {/* Show related rolls */}
                 {entry.relatedRolls.length > 0 && (
@@ -131,7 +151,7 @@ export function CombatLog({ log, diceHistory }: CombatLogProps) {
 
                           {isExpanded && (
                             <div className="ml-4 mt-1 p-2 bg-midnight-800/60 rounded text-shadow-300">
-                              <div>{formatRoll(roll)}</div>
+                              <div className="space-x-1">{formatMarkdownToNodes(formatRoll(roll))}</div>
                             </div>
                           )}
                         </div>

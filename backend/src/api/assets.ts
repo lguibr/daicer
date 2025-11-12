@@ -147,6 +147,22 @@ const TARGET_SPECS = {
   fullBody: { width: 640, fit: 'contain' as const },
 } as const;
 
+const TARGET_SPEC_MAP: Record<keyof AvatarAssetResponse, (typeof TARGET_SPECS)[keyof AvatarAssetResponse]> = {
+  portrait: TARGET_SPECS.portrait,
+  upperBody: TARGET_SPECS.upperBody,
+  fullBody: TARGET_SPECS.fullBody,
+};
+
+const resolveVariantSlug = (variant: keyof AvatarAssetResponse): string => {
+  if (variant === 'upperBody') {
+    return 'upper-body';
+  }
+  if (variant === 'fullBody') {
+    return 'full-body';
+  }
+  return variant;
+};
+
 type NormalizedPreview = {
   mimeType: string;
   data: string;
@@ -250,14 +266,9 @@ router.post('/avatar', async (req, res, next) => {
       });
 
       const optimized = await optimizeImage(result.buffer, result.mimeType, {
-        target:
-          key === 'portrait'
-            ? TARGET_SPECS.portrait
-            : key === 'upperBody'
-              ? TARGET_SPECS.upperBody
-              : TARGET_SPECS.fullBody,
+        target: TARGET_SPEC_MAP[key],
       });
-      const filename = buildFilename(key === 'upperBody' ? 'upper-body' : key === 'fullBody' ? 'full-body' : key);
+      const filename = buildFilename(resolveVariantSlug(key));
 
       responses[key] = await toAssetResponse(
         {

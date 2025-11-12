@@ -65,20 +65,29 @@ export default function ChatArea({ messages, worldDescription, isProcessing }: C
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <p className={cn('text-sm font-semibold uppercase tracking-[0.22em]', isDM ? 'text-aurora-200' : 'text-shadow-100')}>
+                  <p
+                    className={cn(
+                      'text-sm font-semibold uppercase tracking-[0.22em]',
+                      isDM ? 'text-aurora-200' : 'text-shadow-100'
+                    )}
+                  >
                     {msg.sender}
                   </p>
-                {isPrivate && (
+                  {isPrivate && (
                     <span className="flex items-center gap-1 rounded-full bg-nebula-500/25 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-nebula-200">
                       🔒 Your Perspective
                     </span>
-                )}
-              </div>
+                  )}
+                </div>
                 <p className="text-xs text-shadow-500">{new Date(msg.timestamp).toLocaleTimeString()}</p>
               </div>
 
               <div className="prose prose-invert max-w-none text-shadow-50">
-                {isDM ? <MarkdownMessage content={msg.text} /> : <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>}
+                {isDM ? (
+                  <MarkdownMessage content={msg.text} />
+                ) : (
+                  <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                )}
               </div>
 
               {msg.images && msg.images.length > 0 && (

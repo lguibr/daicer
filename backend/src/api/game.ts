@@ -21,7 +21,6 @@ import { ApiError } from '@/middleware/error';
 import { NEW_CHARACTER_TEMPLATE } from '@/constants';
 import { GamePhase, type Player, type Message, type CharacterSheet } from '@/types/index';
 import { io } from '@/server';
-import { characterSheetSchema } from '@/schemas/character';
 import { mergeCharacterSheet } from '@/utils/character';
 import { storeCharacterAvatarPreviews } from '@/services/character-assets';
 
@@ -43,6 +42,8 @@ const avatarPreviewImageSchema = z.object({
   mimeType: z.string().min(1),
   data: z.string().min(1),
   prompt: z.string().min(1),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
 });
 
 const avatarPreviewSchema = z.object({
@@ -59,7 +60,7 @@ const characterSchema = z.object({
   background: z.string().optional(),
   attributes: baseAttributesSchema,
   armorClass: z.number().min(1),
-  sheet: characterSheetSchema.partial({ deep: true }).optional(),
+  sheet: z.record(z.string(), z.unknown()).optional(),
   avatarPreview: avatarPreviewSchema.optional(),
 });
 
@@ -117,21 +118,23 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
 
   const { sheet, avatarPreview, ...coreData } = characterSchema.parse(req.body);
 
+  const sheetOverrides = (sheet ?? {}) as Partial<CharacterSheet>;
+
   const overrides: Partial<CharacterSheet> = {
-    ...sheet,
+    ...sheetOverrides,
     ...coreData,
   };
 
   overrides.attributes = {
     ...NEW_CHARACTER_TEMPLATE.attributes,
     ...coreData.attributes,
-    ...(sheet?.attributes ?? {}),
+    ...(sheetOverrides.attributes ?? {}),
   };
 
-  if (sheet?.savingThrows || coreData.attributes) {
+  if (sheetOverrides.savingThrows || coreData.attributes) {
     overrides.savingThrows = {
       ...NEW_CHARACTER_TEMPLATE.savingThrows,
-      ...(sheet?.savingThrows ?? {}),
+      ...(sheetOverrides.savingThrows ?? {}),
     };
   }
 

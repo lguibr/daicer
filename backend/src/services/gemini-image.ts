@@ -30,6 +30,31 @@ type InlineDataPart = {
   text?: string;
 };
 
+type GeminiCandidate = {
+  content?: {
+    parts?: InlineDataPart[];
+  };
+};
+
+type GeminiStreamChunk = {
+  candidates?: GeminiCandidate[];
+};
+
+type GeminiStreamWrapper = {
+  stream: AsyncIterable<unknown>;
+};
+
+const isGeminiStreamChunk = (value: unknown): value is GeminiStreamChunk => {
+  if (typeof value !== 'object' || value === null || !('candidates' in value)) {
+    return false;
+  }
+  const { candidates } = value as { candidates: unknown };
+  return Array.isArray(candidates);
+};
+
+const isGeminiStreamWrapper = (value: unknown): value is GeminiStreamWrapper =>
+  typeof value === 'object' && value !== null && 'stream' in value;
+
 let client: GoogleGenAI | null = null;
 
 const getClient = (): GoogleGenAI => {
@@ -80,16 +105,19 @@ const resolveInlineImage = async (
   iterable: AsyncIterable<unknown>
 ): Promise<GeneratedImage> => {
   for await (const chunk of iterable) {
-    const candidate = (chunk as any)?.candidates?.[0];
-    const part = candidate?.content?.parts?.find((p: InlineDataPart) => p.inlineData);
-    if (part?.inlineData?.data) {
-      const mimeType = part.inlineData.mimeType ?? 'image/png';
-      const buffer = Buffer.from(part.inlineData.data, 'base64');
-      return {
-        buffer,
-        mimeType,
-        prompt: request.prompt,
-      };
+    if (isGeminiStreamChunk(chunk)) {
+      const [candidate] = chunk.candidates ?? [];
+      const part = candidate?.content?.parts?.find((p) => p.inlineData);
+      const inlineData = part?.inlineData;
+      if (inlineData?.data) {
+        const mimeType = inlineData.mimeType ?? 'image/png';
+        const buffer = Buffer.from(inlineData.data, 'base64');
+        return {
+          buffer,
+          mimeType,
+          prompt: request.prompt,
+        };
+      }
     }
   }
 
@@ -118,7 +146,7 @@ export const generateImage = async (request: ImageGenerationRequest): Promise<Ge
       contents: buildContents(request),
     });
 
-    const stream = (response as any).stream ?? response;
+    const stream = isGeminiStreamWrapper(response) ? response.stream : response;
 
     return await resolveInlineImage(request, stream);
   } catch (error) {

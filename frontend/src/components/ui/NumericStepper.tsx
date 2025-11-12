@@ -137,6 +137,7 @@ const NumericStepper = React.forwardRef<HTMLInputElement, NumericStepperProps>((
         onBlur={handleBlur}
         inputMode="decimal"
         pattern={pattern.source}
+        role="spinbutton"
         aria-valuenow={value}
         aria-valuemin={min}
         aria-valuemax={max}

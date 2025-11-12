@@ -498,7 +498,9 @@ export default function CharacterCreation({ room, players }: CharacterCreationPr
   }, [placeholderRefs]);
 
   useEffect(() => {
-    void ensurePlaceholderReferences();
+    ensurePlaceholderReferences().catch((_error) => {
+      console.error('Failed to prepare placeholder references', _error);
+    });
   }, [ensurePlaceholderReferences]);
 
   const loadTemplate = async (archetype: string) => {

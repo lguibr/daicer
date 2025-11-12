@@ -52,7 +52,7 @@ export async function turnProcessingNode(state: GameplayState): Promise<Partial<
     }));
 
   // Get language from settings with fallback
-  const language = state.settings?.language || state.language || 'en';
+  const language = state.settings?.language || 'en';
 
   logger.info(`Turn processing using language: ${language}`);
 

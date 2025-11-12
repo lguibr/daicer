@@ -14,7 +14,7 @@ import {
   calculateCylinderArea,
   calculateSelfAuraArea,
   calculateMeleeTouchArea,
-} from 'daicer/backend/src/shared/spell-geometry';
+} from '../../utils/spellGeometry';
 import { SpellEffectOverlay } from './SpellEffectOverlay';
 import type { GridPosition } from '../../types/spells';
 import { SpellEffectShape } from '../../types/spells';

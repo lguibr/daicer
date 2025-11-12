@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface DebouncedBusyOptions {
   enterDelayMs?: number;
@@ -10,8 +10,8 @@ export interface DebouncedBusyResult {
   pending: boolean;
 }
 
-const DEFAULT_ENTER_DELAY = 150;
-const DEFAULT_MIN_VISIBLE = 666;
+const DEFAULT_ENTER_DELAY = 350;
+const DEFAULT_MIN_VISIBLE = 333;
 
 export function useDebouncedBusy(active: boolean, options?: DebouncedBusyOptions): DebouncedBusyResult {
   const { enterDelayMs = DEFAULT_ENTER_DELAY, minVisibleMs = DEFAULT_MIN_VISIBLE } = options ?? {};
@@ -22,21 +22,28 @@ export function useDebouncedBusy(active: boolean, options?: DebouncedBusyOptions
   const visibleSinceRef = useRef<number | null>(null);
   const activeRef = useRef<boolean>(active);
 
-  const markVisible = () => {
-    if (!visible) {
-      visibleSinceRef.current = Date.now();
-      setVisible(true);
-    } else if (!visibleSinceRef.current) {
-      visibleSinceRef.current = Date.now();
-    }
-  };
+  const markVisible = useCallback(() => {
+    setVisible((currentVisible) => {
+      if (!currentVisible) {
+        visibleSinceRef.current = Date.now();
+        return true;
+      }
+      if (!visibleSinceRef.current) {
+        visibleSinceRef.current = Date.now();
+      }
+      return currentVisible;
+    });
+  }, []);
 
-  const markHidden = () => {
-    if (visible) {
-      visibleSinceRef.current = null;
-      setVisible(false);
-    }
-  };
+  const markHidden = useCallback(() => {
+    setVisible((currentVisible) => {
+      if (currentVisible) {
+        visibleSinceRef.current = null;
+        return false;
+      }
+      return currentVisible;
+    });
+  }, []);
 
   const clearEnterTimer = () => {
     if (enterTimerRef.current) {
@@ -106,7 +113,7 @@ export function useDebouncedBusy(active: boolean, options?: DebouncedBusyOptions
         markHidden();
       }
     }, remaining);
-  }, [active, enterDelayMs, minVisibleMs, visible]);
+  }, [active, enterDelayMs, markHidden, markVisible, minVisibleMs, visible]);
 
   useEffect(
     () => () => {

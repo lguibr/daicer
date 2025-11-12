@@ -1,14 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Play, Pause, StepForward, StepBack, RotateCcw, Loader2 } from 'lucide-react';
+
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { combatDemoSpellLoadouts, type CombatDemoSpellScript } from 'daicer/shared/combat-demo/spellLoadouts';
 import { PrivateLayout } from '../components/layout';
 import { CombatGrid } from '../components/combat/CombatGrid';
 import { CharacterCard } from '../components/combat/CharacterCard';
 import { CombatLog } from '../components/combat/CombatLog';
+import { SpellEffectOverlay } from '../components/combat/SpellEffectOverlay';
+import { SpellSummaryPanel } from '../components/combat/SpellSummaryPanel';
+import { CombatCharacterSheet } from '../components/combat/CombatCharacterSheet';
 import type { CombatSimulation, CombatSimulationSummary } from '../types/combat-sim';
 import { fetchCombatSimulation, fetchCombatSimulationSummaries } from '../services/simulations';
 import type { CombatCharacter, CombatState } from '../types/combat';
+import { getAllSpells } from '../services/spells';
+import type { SpellData, SpellPreviewSnapshot, SpellResolutionSnapshot, GridPosition } from '../types/spells';
+
+type OverlayRole = 'ally' | 'enemy' | 'caster' | 'neutral';
 
 const AUTO_PLAY_INTERVAL_MS = 2000;
+
+const SPELL_SCHOOL_COLORS: Record<string, string> = {
+  evocation: 'rgba(255, 120, 80, 0.5)',
+  abjuration: 'rgba(120, 180, 255, 0.45)',
+  conjuration: 'rgba(160, 120, 255, 0.45)',
+  enchantment: 'rgba(255, 135, 200, 0.45)',
+  illusion: 'rgba(200, 160, 255, 0.4)',
+  necromancy: 'rgba(120, 255, 120, 0.45)',
+  transmutation: 'rgba(255, 210, 120, 0.45)',
+  divination: 'rgba(200, 200, 255, 0.4)',
+};
+
+const getSpellEffectColor = (spell?: SpellData): string => {
+  if (!spell) return 'rgba(255, 100, 100, 0.3)';
+  return SPELL_SCHOOL_COLORS[spell.school] ?? 'rgba(255, 100, 100, 0.3)';
+};
 
 export default function CombatDemoPage() {
   const [scenarios, setScenarios] = useState<CombatSimulationSummary[]>([]);
@@ -19,6 +45,14 @@ export default function CombatDemoPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
+
+  const spells = useMemo(() => getAllSpells(), []);
+  const spellLookup = useMemo(() => new Map(spells.map((spell) => [spell.id, spell])), [spells]);
+  const activeLoadout: CombatDemoSpellScript[] = useMemo(
+    () => (selectedScenarioId ? (combatDemoSpellLoadouts[selectedScenarioId] ?? []) : []),
+    [selectedScenarioId]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +96,7 @@ export default function CombatDemoPage() {
         setSimulation(null);
         setStepIndex(0);
         setIsPlaying(false);
+        setSelectedCharacterId(null);
         const data = await fetchCombatSimulation(selectedScenarioId);
         if (cancelled) return;
         setSimulation(data);
@@ -128,7 +163,113 @@ export default function CombatDemoPage() {
     ? (currentState.characters.find((c) => c.id === currentState.activeCharacterId) ?? null)
     : null;
 
+  const selectedCharacter = currentState
+    ? (currentState.characters.find((character) => character.id === selectedCharacterId) ?? null)
+    : null;
+
   const totalSteps = simulation?.steps.length ?? 0;
+
+  const resolvedSpellPreview = useMemo<SpellPreviewSnapshot | null>(() => {
+    if (currentState?.spellPreview) {
+      return currentState.spellPreview;
+    }
+    if (!simulation || simulation.steps.length === 0) {
+      return null;
+    }
+    const clampedIndex = Math.min(stepIndex, simulation.steps.length - 1);
+    for (let idx = clampedIndex; idx >= 0; idx -= 1) {
+      const preview = simulation.steps[idx]?.state?.spellPreview ?? null;
+      if (preview) {
+        return preview;
+      }
+    }
+    return simulation.finalState?.spellPreview ?? null;
+  }, [currentState, simulation, stepIndex]);
+
+  const resolvedSpellResolution = useMemo<SpellResolutionSnapshot | null>(() => {
+    if (currentState?.lastSpellResolution) {
+      return currentState.lastSpellResolution;
+    }
+    if (!simulation || simulation.steps.length === 0) {
+      return null;
+    }
+    const clampedIndex = Math.min(stepIndex, simulation.steps.length - 1);
+    for (let idx = clampedIndex; idx >= 0; idx -= 1) {
+      const resolution = simulation.steps[idx]?.state?.lastSpellResolution ?? null;
+      if (resolution) {
+        return resolution;
+      }
+    }
+    return simulation.finalState?.lastSpellResolution ?? null;
+  }, [currentState, simulation, stepIndex]);
+
+  const activeSpellId = resolvedSpellPreview?.spellId ?? resolvedSpellResolution?.spellId ?? null;
+  const activeSpell: SpellData | null = useMemo(
+    () => (activeSpellId ? (spellLookup.get(activeSpellId) ?? null) : null),
+    [activeSpellId, spellLookup]
+  );
+
+  const activeSpellCaster: CombatCharacter | null = useMemo(() => {
+    const casterId = resolvedSpellPreview?.casterId ?? resolvedSpellResolution?.casterId;
+    if (!currentState || !casterId) {
+      return null;
+    }
+    return currentState.characters.find((character) => character.id === casterId) ?? null;
+  }, [currentState, resolvedSpellPreview, resolvedSpellResolution]);
+
+  const affectedCharacters = useMemo<CombatCharacter[]>(() => {
+    if (!currentState || !resolvedSpellResolution) {
+      return [];
+    }
+    return resolvedSpellResolution.affectedCharacterIds
+      .map((id) => currentState.characters.find((character) => character.id === id) ?? null)
+      .filter((character): character is CombatCharacter => character !== null);
+  }, [currentState, resolvedSpellResolution]);
+
+  const overlayCharacters = useMemo<Array<{ id: string; position: GridPosition; role: OverlayRole }>>(
+    () =>
+      currentState
+        ? currentState.characters.map((character) => {
+            const casterId = resolvedSpellPreview?.casterId ?? resolvedSpellResolution?.casterId ?? null;
+            const role: OverlayRole = character.id === casterId ? 'caster' : character.isPlayer ? 'ally' : 'enemy';
+            return {
+              id: character.id,
+              position: character.position,
+              role,
+            };
+          })
+        : [],
+    [currentState, resolvedSpellPreview, resolvedSpellResolution]
+  );
+
+  const overlayHighlightSquares = useMemo(
+    () =>
+      currentState
+        ? currentState.characters.filter((character) => !character.isPlayer).map((character) => character.position)
+        : [],
+    [currentState]
+  );
+
+  const overlayEffectColor = useMemo(() => getSpellEffectColor(activeSpell ?? undefined), [activeSpell]);
+
+  const loadoutDetails = useMemo(
+    () =>
+      activeLoadout.map((script) => ({
+        script,
+        spell: spellLookup.get(script.spellId) ?? null,
+      })),
+    [activeLoadout, spellLookup]
+  );
+
+  const overlaySquaresLabel = useMemo(() => {
+    if (resolvedSpellPreview) {
+      return `${resolvedSpellPreview.affectedSquares.length} affected squares`;
+    }
+    if (resolvedSpellResolution) {
+      return `${resolvedSpellResolution.affectedCharacterIds.length} affected targets`;
+    }
+    return undefined;
+  }, [resolvedSpellPreview, resolvedSpellResolution]);
 
   const clampStep = (value: number): number => {
     if (!simulation) return 0;
@@ -342,14 +483,14 @@ export default function CombatDemoPage() {
                           key={char.id}
                           character={char}
                           isActive={char.id === currentState.activeCharacterId}
-                          isSelected={false}
-                          onClick={() => {}}
+                          isSelected={char.id === selectedCharacterId}
+                          onClick={() => setSelectedCharacterId(char.id)}
                         />
                       ))}
                     </div>
                   </div>
 
-                  <div className="lg:col-span-6">
+                  <div className="lg:col-span-6 space-y-4">
                     <div className="bg-midnight-400/30 border border-shadow-800 rounded-lg p-4">
                       <div className="text-sm text-shadow-200 mb-3">
                         Visualizing deterministic grid state at step {stepIndex + 1}
@@ -359,12 +500,51 @@ export default function CombatDemoPage() {
                         gridWidth={currentState.gridWidth}
                         gridHeight={currentState.gridHeight}
                         activeCharacterId={currentState.activeCharacterId}
-                        selectedCharacterId={null}
+                        selectedCharacterId={selectedCharacterId}
                         reachableSquares={[]}
-                        onSquareClick={() => {}}
-                        onCharacterClick={() => {}}
+                        onSquareClick={() => setSelectedCharacterId(null)}
+                        onCharacterClick={(characterId) => setSelectedCharacterId(characterId)}
                       />
                     </div>
+                    {resolvedSpellPreview && (
+                      <div className="bg-midnight-400/30 border border-shadow-800 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-sm font-semibold uppercase tracking-[0.3em] text-shadow-300">
+                            Spell Overlay
+                          </div>
+                          {activeSpell && (
+                            <div className="text-xs text-shadow-300">
+                              {activeSpell.name} • {activeSpell.effectShape}
+                            </div>
+                          )}
+                        </div>
+                        <div className="h-[360px]">
+                          <SpellEffectOverlay
+                            gridWidth={currentState.gridWidth}
+                            gridHeight={currentState.gridHeight}
+                            casterPosition={resolvedSpellPreview.casterPosition}
+                            targetPosition={resolvedSpellPreview.targetPosition}
+                            affectedSquares={resolvedSpellPreview.affectedSquares}
+                            pathSquares={
+                              resolvedSpellPreview.effectShape === 'projectile_straight'
+                                ? resolvedSpellPreview.affectedSquares
+                                : []
+                            }
+                            highlightSquares={overlayHighlightSquares}
+                            obstacles={resolvedSpellPreview.obstacles ?? []}
+                            characters={overlayCharacters}
+                            effectShape={resolvedSpellPreview.effectShape}
+                            effectColor={overlayEffectColor}
+                            squaresLabel={overlaySquaresLabel}
+                            summary={{
+                              friendlyFireRisk: resolvedSpellPreview.friendlyFireRisk,
+                              requiresLineOfSight: resolvedSpellPreview.requiresLineOfSight,
+                              lineOfSightBlocked: resolvedSpellPreview.lineOfSightBlocked,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-3 lg:col-span-3">
@@ -375,8 +555,8 @@ export default function CombatDemoPage() {
                           key={char.id}
                           character={char}
                           isActive={char.id === currentState.activeCharacterId}
-                          isSelected={false}
-                          onClick={() => {}}
+                          isSelected={char.id === selectedCharacterId}
+                          onClick={() => setSelectedCharacterId(char.id)}
                         />
                       ))}
                     </div>
@@ -386,6 +566,16 @@ export default function CombatDemoPage() {
 
               <aside className="space-y-4 lg:sticky lg:top-6">
                 <CombatLog log={currentState.log} diceHistory={currentState.diceHistory} />
+
+                <SpellSummaryPanel
+                  spell={activeSpell}
+                  preview={resolvedSpellPreview}
+                  resolution={resolvedSpellResolution}
+                  caster={activeSpellCaster}
+                  affectedCharacters={affectedCharacters}
+                  loadout={loadoutDetails}
+                  activeSpellId={activeSpellId}
+                />
 
                 <section className="bg-midnight-400/30 border border-shadow-800 rounded-lg p-4 space-y-3">
                   <h3 className="text-sm font-bold text-shadow-300 uppercase tracking-[0.3em]">Timeline Overview</h3>
@@ -415,6 +605,9 @@ export default function CombatDemoPage() {
           )}
         </div>
       </div>
+      {selectedCharacter && (
+        <CombatCharacterSheet character={selectedCharacter} onClose={() => setSelectedCharacterId(null)} />
+      )}
     </PrivateLayout>
   );
 }

@@ -34,8 +34,9 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock DiceLoader to avoid WebGL dependency in tests
 vi.mock('../components/ui/dice-loader', () => {
-  const DiceLoader = ({ message }: { message?: string }) =>
-    React.createElement('div', { 'data-testid': 'dice-loader' }, message ?? null);
+  function DiceLoader({ message }: { message?: string }) {
+    return React.createElement('div', { 'data-testid': 'dice-loader' }, message ?? null);
+  }
 
   return {
     DiceLoader,

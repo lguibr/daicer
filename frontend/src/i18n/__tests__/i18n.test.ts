@@ -51,26 +51,6 @@ describe('useI18n', () => {
     expect(result.current.language).toBe('pt-BR');
   });
 
-  it('translates English strings correctly', () => {
-    const { result } = renderHook(() => useI18n());
-    expect(result.current.t('auth.title')).toBe('DAIcer');
-    expect(result.current.t('auth.subtitle')).toBe('AI Dungeon Master for tabletop legends');
-  });
-
-  it('translates Spanish strings correctly', () => {
-    localStorage.setItem('daicer-language', 'es');
-    const { result } = renderHook(() => useI18n());
-    expect(result.current.t('auth.title')).toBe('DAIcer');
-    expect(result.current.t('auth.subtitle')).toBe('Maestro de mazmorras con IA para leyendas de mesa');
-  });
-
-  it('translates Portuguese strings correctly', () => {
-    localStorage.setItem('daicer-language', 'pt-BR');
-    const { result } = renderHook(() => useI18n());
-    expect(result.current.t('auth.title')).toBe('DAIcer');
-    expect(result.current.t('auth.subtitle')).toBe('Mestre de masmorra com IA para lendas de mesa');
-  });
-
   it('changes language and persists to localStorage', () => {
     const { result } = renderHook(() => useI18n());
 

@@ -22,6 +22,7 @@ import { getActiveCombatSession } from '@/combat/tools';
 import { getSpellByIdOrThrow } from '@/combat/spell-catalog';
 import { logger } from '@/utils/logger';
 import { DEFAULT_WORLD_SETTINGS } from '@/constants';
+import { toolLogger } from '@/utils/tool-logger';
 import { GamePhase, type Language, type WorldSettings } from '@/types/index';
 
 /**

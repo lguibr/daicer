@@ -36,7 +36,7 @@ const generateOpeningsTask = task(
  */
 export async function characterOpeningsNode(state: CharacterCreationState): Promise<Partial<CharacterCreationState>> {
   // Get language from settings with fallback chain
-  const language = state.settings?.language || state.language || 'en';
+  const language = state.settings?.language || 'en';
 
   logger.info(`Character openings using language: ${language}`);
 

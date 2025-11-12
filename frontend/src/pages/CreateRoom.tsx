@@ -678,7 +678,6 @@ export default function CreateRoomPage() {
     <PrivateLayout showNavbar={false}>
       {loading && <LoadingOverlay message={t('worldSettings.creating')} />}
       <div className="relative mx-auto min-h-screen max-w-6xl px-6 py-16 sm:px-10 lg:px-12">
-
         <div className="space-y-10">
           <header className="space-y-3 text-center">
             <p className="text-xs uppercase tracking-[0.45em] text-shadow-500">Forge Your Campaign</p>

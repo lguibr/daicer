@@ -180,18 +180,14 @@ describe('ChatArea', () => {
   });
 
   it('aligns DM messages to the left', () => {
-    const { container } = render(
-      <ChatArea messages={[mockMessages[0]]} worldDescription="" isProcessing={false} />
-    );
+    const { container } = render(<ChatArea messages={[mockMessages[0]]} worldDescription="" isProcessing={false} />);
 
     const messageContainer = container.querySelector('.justify-start');
     expect(messageContainer).toBeInTheDocument();
   });
 
   it('aligns player messages to the right', () => {
-    const { container } = render(
-      <ChatArea messages={[mockMessages[1]]} worldDescription="" isProcessing={false} />
-    );
+    const { container } = render(<ChatArea messages={[mockMessages[1]]} worldDescription="" isProcessing={false} />);
 
     const messageContainer = container.querySelector('.justify-end');
     expect(messageContainer).toBeInTheDocument();

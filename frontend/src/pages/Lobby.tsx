@@ -111,13 +111,17 @@ export default function LobbyPage() {
                     className="inline-flex items-center gap-2 rounded-full border border-transparent px-4 py-2 text-shadow-400 transition hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                   >
                     <FlaskConical className="h-4 w-4 text-nebula-200" aria-hidden="true" />
-                    <span className="underline decoration-dotted underline-offset-4">{t('lobby.cards.demo.title')}</span>
+                    <span className="underline decoration-dotted underline-offset-4">
+                      {t('lobby.cards.demo.title')}
+                    </span>
                   </button>
                 </div>
               </div>
             </form>
             {error && (
-              <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-900/40 p-4 text-sm text-red-200">{error}</div>
+              <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-900/40 p-4 text-sm text-red-200">
+                {error}
+              </div>
             )}
           </div>
         </section>

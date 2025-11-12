@@ -13,7 +13,7 @@ describe('MarkdownMessage', () => {
 
     const h1 = container.querySelector('h1');
     expect(h1).toBeInTheDocument();
-    expect(h1).toHaveClass('text-2xl', 'font-bold', 'text-cyan-400');
+    expect(h1).toHaveClass('text-2xl', 'font-bold', 'text-aurora-300');
   });
 
   it('renders paragraphs', () => {
@@ -28,7 +28,7 @@ describe('MarkdownMessage', () => {
 
     const bold = screen.getByText('bold text');
     expect(bold.tagName).toBe('STRONG');
-    expect(bold).toHaveClass('text-cyan-300');
+    expect(bold).toHaveClass('text-aurora-200', 'font-bold');
   });
 
   it('renders italic text', () => {
@@ -76,7 +76,7 @@ describe('MarkdownMessage', () => {
 
     const code = screen.getByText('code');
     expect(code.tagName).toBe('CODE');
-    expect(code).toHaveClass('bg-slate-700');
+    expect(code).toHaveClass('bg-midnight-800');
   });
 
   it('renders code blocks', () => {
@@ -84,7 +84,7 @@ describe('MarkdownMessage', () => {
 
     const code = container.querySelector('code');
     expect(code).toBeInTheDocument();
-    expect(code).toHaveClass('bg-slate-700');
+    expect(code).toHaveClass('bg-midnight-800');
   });
 
   it('renders links with correct attributes', () => {

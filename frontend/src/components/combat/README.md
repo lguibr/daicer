@@ -30,15 +30,17 @@ flowchart LR
 
 ## Component Matrix
 
-| Component            | Responsibility                         | Key Props                                                                    |
-| -------------------- | -------------------------------------- | ---------------------------------------------------------------------------- |
-| `CombatGrid`         | Grid rendering, square interaction     | `gridWidth`, `gridHeight`, `characters`, `reachableSquares`, `onSquareClick` |
-| `CharacterCard`      | Display combatant stats and status     | `character`, `isActive`, `isSelected`, `onClick`                             |
-| `CharacterTray`      | Group of `CharacterCard`s with filters | `characters`, `activeCharacterId`, `onSelect`                                |
-| `CombatLog`          | Scrollable log with dice details       | `entries`, `diceHistory`, `onExpand`                                         |
-| `TimeTravelPanel`    | Timeline of past turns/states          | `history`, `currentIndex`, `onRestore`, `isOpen`                             |
-| `CombatToolbar`      | Controls (end turn, undo, debug)       | `onEndTurn`, `canUndo`, `onUndo`, `isDm`                                     |
-| `SpellEffectOverlay` | AoE visualizations                     | `effect`, `gridSize`, `origin`, `target`                                     |
+| Component              | Responsibility                         | Key Props                                                                        |
+| ---------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| `CombatGrid`           | Grid rendering, square interaction     | `gridWidth`, `gridHeight`, `characters`, `reachableSquares`, `onSquareClick`     |
+| `CharacterCard`        | Display combatant stats and status     | `character`, `isActive`, `isSelected`, `onClick`                                 |
+| `CharacterTray`        | Group of `CharacterCard`s with filters | `characters`, `activeCharacterId`, `onSelect`                                    |
+| `CombatLog`            | Scrollable log with dice details       | `entries`, `diceHistory`, `onExpand`                                             |
+| `TimeTravelPanel`      | Timeline of past turns/states          | `history`, `currentIndex`, `onRestore`, `isOpen`                                 |
+| `CombatToolbar`        | Controls (end turn, undo, debug)       | `onEndTurn`, `canUndo`, `onUndo`, `isDm`                                         |
+| `SpellEffectOverlay`   | AoE visualizations                     | `gridWidth`, `gridHeight`, `casterPosition`, `targetPosition`, `affectedSquares` |
+| `SpellSummaryPanel`    | Active spell overview + loadout status | `spell`, `preview`, `resolution`, `caster`, `loadout`, `activeSpellId`           |
+| `CombatCharacterSheet` | Modal sheet for a combatant            | `character`, `onClose`                                                           |
 
 ---
 
@@ -123,6 +125,7 @@ Use stories to validate new visual states before wiring them into live data.
 
 - Backend emits `combat:timeline` events; `useCombat` merges them into history state.
 - Spell overlays consume backend-provided geometry arrays (`affectedSquares`).
+- Shared spell loadouts live in `daicer/shared/combat-demo/spellLoadouts.ts`; frontend and backend both consume this map to stay in sync.
 - Ensure `CombatScreen` renders `DebugPanel` hooks in dev mode only to avoid leaking secrets in production.
 
 ---
@@ -134,3 +137,14 @@ Use stories to validate new visual states before wiring them into live data.
 3. Add component stories + tests for new scenario.
 4. Document behavior here (props, state dependencies).
 5. Sync with backend docs (`backend/src/types/README-SPELLS.md`) for geometry alignment.
+
+---
+
+## Smoke Test Checklist
+
+1. Start backend + frontend, then open `http://localhost:3000/combat-demo`.
+   - Step through each timeline entry and ensure spell overlay highlights affected squares.
+   - Click multiple character cards (players + enemies) and confirm the character sheet modal renders stats and closes.
+2. Navigate to `http://localhost:3000/spellbook-demo`.
+   - Preview and cast a spell; verify effect colors and geometry match the combat demo overlay.
+   - Ensure scenario placement controls still operate (targeting, placing allies/enemies).

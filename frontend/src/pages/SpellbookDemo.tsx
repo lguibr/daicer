@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PrivateLayout } from '../components/layout';
 import { SpellEffectOverlay } from '../components/combat/SpellEffectOverlay';
-import type { SpellData, GridPosition , SpellEffectShape } from '../types/spells';
+import type { SpellData, GridPosition, SpellEffectShape } from '../types/spells';
 import type { CombatState, CombatCharacter } from '../types/combat';
 import { getAllSpells } from '../services/spells';
 import {
@@ -430,8 +430,8 @@ export default function SpellbookDemoPage() {
       setTargetDirection(defaultTarget.direction as SpellDirectionInput);
     }
     if (defaultTarget?.type === 'point') {
-      setTargetX(defaultTarget.x ?? targetX);
-      setTargetY(defaultTarget.y ?? targetY);
+      setTargetX((prev) => defaultTarget.x ?? prev);
+      setTargetY((prev) => defaultTarget.y ?? prev);
     }
     setPreviewData(null);
     setCastData(null);
@@ -439,20 +439,20 @@ export default function SpellbookDemoPage() {
     setError(null);
     setBlockedFriendlyFire(false);
     setPlacementMode('target');
-  }, [selectedScenarioId]);
+  }, [selectedScenario]);
 
   useEffect(() => {
     if (selectedSpell && !isDirectionalShape(selectedSpell.effectShape)) {
       const pointTarget = selectedScenario?.defaultTarget;
       if (pointTarget?.type === 'point') {
-        setTargetX(pointTarget.x ?? targetX);
-        setTargetY(pointTarget.y ?? targetY);
+        setTargetX((prev) => pointTarget.x ?? prev);
+        setTargetY((prev) => pointTarget.y ?? prev);
       }
     }
 
     setCastData(null);
     setBlockedFriendlyFire(false);
-  }, [selectedSpellId]);
+  }, [selectedScenario, selectedSpell]);
 
   const casterCharacter = useMemo(() => {
     if (!selectedScenario) return undefined;
@@ -573,12 +573,7 @@ export default function SpellbookDemoPage() {
     setScenarioCharacters((prev) => {
       const existingIndex = prev.findIndex((character) => character.id === template.id);
       if (existingIndex >= 0) {
-        const next = [...prev];
-        next[existingIndex] = {
-          ...next[existingIndex],
-          position,
-        };
-        return next;
+        return prev.map((character, index) => (index === existingIndex ? { ...character, position } : character));
       }
       return [
         ...prev,
@@ -596,12 +591,7 @@ export default function SpellbookDemoPage() {
     setScenarioCharacters((prev) => {
       const index = prev.findIndex((character) => character.id === characterId);
       if (index >= 0) {
-        const next = [...prev];
-        next[index] = {
-          ...next[index],
-          position,
-        };
-        return next;
+        return prev.map((character, idx) => (idx === index ? { ...character, position } : character));
       }
 
       const fallback = selectedScenario?.characters.find((character) => character.id === characterId);

@@ -2,8 +2,10 @@
  * UI components barrel export
  */
 
-export { Button, buttonVariants } from './button';
+export { Button } from './button';
 export type { ButtonProps } from './button';
+export { buttonVariants } from './button-variants';
+export type { ButtonVariantProps } from './button-variants';
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './card';
 

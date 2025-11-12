@@ -393,12 +393,15 @@ export function useI18n() {
 
     const findTranslation = (langObj: (typeof translations)[Language]): string | null => {
       let current: unknown = langObj;
-      for (const currentKey of keys) {
-        if (typeof current === 'object' && current !== null && currentKey in current) {
-          current = (current as Record<string, unknown>)[currentKey];
-        } else {
+      for (let index = 0; index < keys.length; index += 1) {
+        const currentKey = keys[index];
+        if (typeof currentKey !== 'string') {
           return null;
         }
+        if (typeof current !== 'object' || current === null || !(currentKey in current)) {
+          return null;
+        }
+        current = (current as Record<string, unknown>)[currentKey];
       }
       return typeof current === 'string' ? current : null;
     };

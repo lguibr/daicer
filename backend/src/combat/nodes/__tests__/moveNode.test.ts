@@ -54,6 +54,8 @@ function createState(
     phase: 'action_selection',
     pendingOpportunityAttacks: [],
     diceRollerSeed: 123,
+    spellPreview: null,
+    lastSpellResolution: null,
   };
 }
 

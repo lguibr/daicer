@@ -20,7 +20,7 @@ import type { SpellData } from '../../types/spells';
 import type { SRDRule } from 'daicer/seeds/data/srd-rules.ts';
 import ExplorePage from '../Explore';
 
-const mockClasses: CharacterClass[] = [
+const mockClasses = vi.hoisted<CharacterClass[]>(() => [
   {
     id: 'fighter',
     name: 'Fighter',
@@ -30,9 +30,9 @@ const mockClasses: CharacterClass[] = [
     savingThrows: ['Strength', 'Constitution'],
     imageUrl: null,
   },
-];
+]);
 
-const mockRaces: Race[] = [
+const mockRaces = vi.hoisted<Race[]>(() => [
   {
     id: 'human',
     name: 'Human',
@@ -41,9 +41,9 @@ const mockRaces: Race[] = [
     size: 'Medium',
     imageUrl: null,
   },
-];
+]);
 
-const mockBackgrounds: Background[] = [
+const mockBackgrounds = vi.hoisted<Background[]>(() => [
   {
     id: 'acolyte',
     name: 'Acolyte',
@@ -51,9 +51,9 @@ const mockBackgrounds: Background[] = [
     skillProficiencies: ['Insight', 'Religion'],
     imageUrl: null,
   },
-];
+]);
 
-const mockAbilities: Ability[] = [
+const mockAbilities = vi.hoisted<Ability[]>(() => [
   {
     id: 'strength',
     index: 'strength',
@@ -63,9 +63,9 @@ const mockAbilities: Ability[] = [
     skills: ['Athletics'],
     imageUrl: null,
   },
-];
+]);
 
-const mockSkills: Skill[] = [
+const mockSkills = vi.hoisted<Skill[]>(() => [
   {
     id: 'athletics',
     index: 'athletics',
@@ -74,9 +74,9 @@ const mockSkills: Skill[] = [
     abilityScore: 'Strength',
     imageUrl: null,
   },
-];
+]);
 
-const mockAlignments: Alignment[] = [
+const mockAlignments = vi.hoisted<Alignment[]>(() => [
   {
     id: 'lg',
     name: 'Lawful Good',
@@ -84,9 +84,9 @@ const mockAlignments: Alignment[] = [
     description: 'Always strives to do the right thing.',
     imageUrl: null,
   },
-];
+]);
 
-const mockLanguages: Language[] = [
+const mockLanguages = vi.hoisted<Language[]>(() => [
   {
     id: 'common',
     index: 'common',
@@ -95,9 +95,9 @@ const mockLanguages: Language[] = [
     note: 'Spoken across most regions.',
     imageUrl: null,
   },
-];
+]);
 
-const mockMagicSchools: MagicSchool[] = [
+const mockMagicSchools = vi.hoisted<MagicSchool[]>(() => [
   {
     id: 'evocation',
     index: 'evocation',
@@ -105,9 +105,9 @@ const mockMagicSchools: MagicSchool[] = [
     description: 'Manipulates energy to create powerful effects.',
     imageUrl: null,
   },
-];
+]);
 
-const mockConditions: Condition[] = [
+const mockConditions = vi.hoisted<Condition[]>(() => [
   {
     id: 'blinded',
     index: 'blinded',
@@ -115,9 +115,9 @@ const mockConditions: Condition[] = [
     description: 'Cannot see and automatically fails checks requiring sight.',
     imageUrl: null,
   },
-];
+]);
 
-const mockDamageTypes: DamageType[] = [
+const mockDamageTypes = vi.hoisted<DamageType[]>(() => [
   {
     id: 'fire',
     index: 'fire',
@@ -125,9 +125,9 @@ const mockDamageTypes: DamageType[] = [
     description: 'Scorching flames.',
     imageUrl: null,
   },
-];
+]);
 
-const mockEquipment: EquipmentItem[] = [
+const mockEquipment = vi.hoisted<EquipmentItem[]>(() => [
   {
     index: 'longsword',
     name: 'Longsword',
@@ -139,9 +139,9 @@ const mockEquipment: EquipmentItem[] = [
     weaponCategory: 'Martial',
     imageUrl: null,
   },
-];
+]);
 
-const mockWeaponProperties: WeaponProperty[] = [
+const mockWeaponProperties = vi.hoisted<WeaponProperty[]>(() => [
   {
     id: 'versatile',
     index: 'versatile',
@@ -149,9 +149,9 @@ const mockWeaponProperties: WeaponProperty[] = [
     description: 'Can be used with one or two hands.',
     imageUrl: null,
   },
-];
+]);
 
-const mockSpells: SpellData[] = [
+const mockSpells = vi.hoisted<SpellData[]>(() => [
   {
     id: 'fire-bolt',
     name: 'Fire Bolt',
@@ -168,12 +168,12 @@ const mockSpells: SpellData[] = [
     duration: 'Instantaneous',
     description: 'A bolt of fire streaks toward a creature.',
     isRitual: false,
-    effectShape: SpellEffectShape.RANGED_SINGLE,
+    effectShape: 'ranged_single' as SpellEffectShape,
     effectDimensions: {},
   },
-];
+]);
 
-const mockRules: SRDRule[] = [
+const mockRules = vi.hoisted<SRDRule[]>(() => [
   {
     id: 'initiative',
     title: 'Initiative',
@@ -182,7 +182,7 @@ const mockRules: SRDRule[] = [
     tags: ['turn-order'],
     imageUrl: null,
   },
-];
+]);
 
 vi.mock('../../hooks/useAuth', () => ({
   default: () => ({
@@ -221,7 +221,7 @@ vi.mock('../../services/spells', () => ({
   getAllSpells: vi.fn(() => mockSpells),
 }));
 
-vi.mock('daicer/seeds/data/srd-rules.ts', () => ({
+vi.mock('daicer/seeds/data/srd-rules', () => ({
   SRD_RULES: mockRules,
 }));
 
@@ -240,9 +240,9 @@ describe('ExplorePage', () => {
     expect(screen.getByText(/Retrieving tomes from the library/i)).toBeInTheDocument();
 
     expect(await screen.findByText('Character Classes')).toBeInTheDocument();
-    expect(screen.getByText('Fighter')).toBeInTheDocument();
+    expect(screen.getAllByText('Fighter')).not.toHaveLength(0);
     expect(screen.getByText('Ancestries')).toBeInTheDocument();
-    expect(screen.getByText('Longsword')).toBeInTheDocument();
+    expect(screen.getAllByText('Longsword')).not.toHaveLength(0);
     expect(screen.getByText('Rules Compendium')).toBeInTheDocument();
   });
 });

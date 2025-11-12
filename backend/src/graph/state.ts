@@ -5,6 +5,10 @@
 
 import * as z from 'zod';
 
+const AdventureLengthSchema = z.enum(['flash', 'short', 'medium', 'long', 'epic', 'legendary']);
+const DifficultySchema = z.enum(['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']);
+const LanguageSchema = z.enum(['en', 'es', 'pt-BR']);
+
 /**
  * Message schema with MessagesZodMeta for proper message handling
  */
@@ -367,11 +371,11 @@ export const GameStateSchema = z.object({
       setting: z.string(),
       tone: z.string(),
       playerCount: z.number(),
-      adventureLength: z.enum(['short', 'medium', 'epic']),
-      difficulty: z.enum(['easy', 'medium', 'hard']),
+      adventureLength: AdventureLengthSchema,
+      difficulty: DifficultySchema,
       startingLevel: z.number(),
       attributePointBudget: z.number(),
-      language: z.enum(['en', 'es', 'pt-BR']).optional(),
+      language: LanguageSchema.default('en'),
     })
     .nullable(),
 
@@ -414,11 +418,11 @@ export const CharacterCreationStateSchema = z.object({
       setting: z.string(),
       tone: z.string(),
       playerCount: z.number(),
-      adventureLength: z.enum(['short', 'medium', 'epic']),
-      difficulty: z.enum(['easy', 'medium', 'hard']),
+      adventureLength: AdventureLengthSchema,
+      difficulty: DifficultySchema,
       startingLevel: z.number(),
       attributePointBudget: z.number(),
-      language: z.enum(['en', 'es', 'pt-BR']).optional(),
+      language: LanguageSchema.default('en'),
     })
     .nullable(),
   worldDescription: z.string(),
@@ -444,11 +448,11 @@ export const GameplayStateSchema = z.object({
       setting: z.string(),
       tone: z.string(),
       playerCount: z.number(),
-      adventureLength: z.enum(['short', 'medium', 'epic']),
-      difficulty: z.enum(['easy', 'medium', 'hard']),
+      adventureLength: AdventureLengthSchema,
+      difficulty: DifficultySchema,
       startingLevel: z.number(),
       attributePointBudget: z.number(),
-      language: z.enum(['en', 'es', 'pt-BR']).default('en'),
+      language: LanguageSchema.default('en'),
     })
     .nullable(),
   worldDescription: z.string(),

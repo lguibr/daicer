@@ -53,8 +53,8 @@ function parseLevelAndSchool(ecoleText: string): { level: number; school: string
   const isRitual = text.includes('ritual');
 
   return {
-    level: levelMatch ? parseInt(levelMatch[1], 10) : 0,
-    school: schoolMatch ? schoolMatch[1] : 'unknown',
+    level: Number.parseInt(levelMatch?.[1] ?? '0', 10),
+    school: schoolMatch?.[1] ?? 'unknown',
     isRitual,
   };
 }
@@ -75,118 +75,138 @@ function parseComponents(componentText: string): {
   return {
     verbal: hasVerbal,
     somatic: hasSomatic,
-    material: materialMatch ? materialMatch[1] : null,
+    material: materialMatch?.[1] ?? null,
   };
 }
+
+type EffectDimensions = Record<string, number>;
+
+interface EffectContext {
+  desc: string;
+  rangeText: string;
+}
+
+type EffectDetection = (context: EffectContext) => { shape: string; dimensions: EffectDimensions } | null;
+
+const parseFeetValue = (source: string, pattern: RegExp, defaultValue = 0): number => {
+  const match = source.match(pattern);
+  return Number.parseInt(match?.[1] ?? `${defaultValue}`, 10);
+};
 
 /**
  * Categorize spell effect shape based on description keywords
  */
-function categorizeEffectShape(
-  description: string,
-  range: string
-): {
-  shape: string;
-  dimensions: Record<string, number>;
-} {
-  const desc = description.toLowerCase();
-  const rangeText = range.toLowerCase();
+function categorizeEffectShape(description: string, range: string): { shape: string; dimensions: EffectDimensions } {
+  const context: EffectContext = {
+    desc: description.toLowerCase(),
+    rangeText: range.toLowerCase(),
+  };
 
-  // Self-only (no area effect)
-  if (rangeText === 'self' && !desc.includes('radius') && !desc.includes('aura') && !desc.includes('cone')) {
-    return { shape: 'self_only', dimensions: {} };
-  }
+  const detections: EffectDetection[] = [
+    ({ rangeText, desc }) => {
+      if (rangeText === 'self' && !desc.includes('radius') && !desc.includes('aura') && !desc.includes('cone')) {
+        return { shape: 'self_only', dimensions: {} };
+      }
+      return null;
+    },
+    ({ rangeText, desc }) => {
+      if ((rangeText.includes('self') && desc.includes('radius')) || desc.includes('aura')) {
+        return {
+          shape: 'self_aura',
+          dimensions: { radius: parseFeetValue(desc, /(\d+)[- ]foot[- ]radius/) },
+        };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('cone')) {
+        return {
+          shape: 'cone',
+          dimensions: { length: parseFeetValue(desc, /(\d+)[- ]foot[- ]cone/) },
+        };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('line') && !desc.includes('line of sight')) {
+        return {
+          shape: 'line',
+          dimensions: {
+            length: parseFeetValue(desc, /(\d+)[- ]foot[- ]long/),
+            width: parseFeetValue(desc, /(\d+)[- ]foot[- ]wide/, 5),
+          },
+        };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('radius') && desc.includes('sphere')) {
+        return {
+          shape: 'sphere',
+          dimensions: { radius: parseFeetValue(desc, /(\d+)[- ]foot[- ]radius/) },
+        };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('cylinder')) {
+        return {
+          shape: 'cylinder',
+          dimensions: {
+            radius: parseFeetValue(desc, /(\d+)[- ]foot[- ]radius/),
+            height: parseFeetValue(desc, /(\d+)[- ]foot[- ](high|tall)/),
+          },
+        };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('cube')) {
+        return {
+          shape: 'cube',
+          dimensions: { size: parseFeetValue(desc, /(\d+)[- ]foot[- ]cube/) },
+        };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('wall')) {
+        return {
+          shape: 'wall',
+          dimensions: {
+            maxLength: parseFeetValue(desc, /(\d+)[- ]feet long/),
+            height: parseFeetValue(desc, /(\d+)[- ]feet (high|tall)/),
+            thickness: parseFeetValue(desc, /(\d+)[- ]foot thick/),
+          },
+        };
+      }
+      return null;
+    },
+    ({ rangeText, desc }) => {
+      if (rangeText === 'touch' || desc.includes('creature within your reach')) {
+        return { shape: 'melee_touch', dimensions: {} };
+      }
+      return null;
+    },
+    ({ desc }) => {
+      if (desc.includes('ranged spell attack') || desc.includes('make a ranged spell attack')) {
+        return { shape: 'ranged_single', dimensions: {} };
+      }
+      return null;
+    },
+    ({ rangeText }) => {
+      if (rangeText.includes('feet')) {
+        return { shape: 'ranged_single', dimensions: {} };
+      }
+      return null;
+    },
+  ];
 
-  // Self aura (moves with caster)
-  if ((rangeText.includes('self') && desc.includes('radius')) || desc.includes('aura')) {
-    const radiusMatch = desc.match(/(\d+)[- ]foot[- ]radius/);
-    return {
-      shape: 'self_aura',
-      dimensions: { radius: radiusMatch ? parseInt(radiusMatch[1], 10) : 0 },
-    };
-  }
-
-  // Cone
-  if (desc.includes('cone')) {
-    const lengthMatch = desc.match(/(\d+)[- ]foot[- ]cone/);
-    return {
-      shape: 'cone',
-      dimensions: { length: lengthMatch ? parseInt(lengthMatch[1], 10) : 0 },
-    };
-  }
-
-  // Line (straight through)
-  if (desc.includes('line') && !desc.includes('line of sight')) {
-    const lengthMatch = desc.match(/(\d+)[- ]foot[- ]long/);
-    const widthMatch = desc.match(/(\d+)[- ]foot[- ]wide/);
-    return {
-      shape: 'line',
-      dimensions: {
-        length: lengthMatch ? parseInt(lengthMatch[1], 10) : 0,
-        width: widthMatch ? parseInt(widthMatch[1], 10) : 5,
-      },
-    };
-  }
-
-  // Sphere/radius
-  if (desc.includes('radius') && desc.includes('sphere')) {
-    const radiusMatch = desc.match(/(\d+)[- ]foot[- ]radius/);
-    return {
-      shape: 'sphere',
-      dimensions: { radius: radiusMatch ? parseInt(radiusMatch[1], 10) : 0 },
-    };
-  }
-
-  // Cylinder
-  if (desc.includes('cylinder')) {
-    const radiusMatch = desc.match(/(\d+)[- ]foot[- ]radius/);
-    const heightMatch = desc.match(/(\d+)[- ]foot[- ](high|tall)/);
-    return {
-      shape: 'cylinder',
-      dimensions: {
-        radius: radiusMatch ? parseInt(radiusMatch[1], 10) : 0,
-        height: heightMatch ? parseInt(heightMatch[1], 10) : 0,
-      },
-    };
-  }
-
-  // Cube
-  if (desc.includes('cube')) {
-    const sizeMatch = desc.match(/(\d+)[- ]foot[- ]cube/);
-    return {
-      shape: 'cube',
-      dimensions: { size: sizeMatch ? parseInt(sizeMatch[1], 10) : 0 },
-    };
-  }
-
-  // Wall
-  if (desc.includes('wall')) {
-    const lengthMatch = desc.match(/(\d+)[- ]feet long/);
-    const heightMatch = desc.match(/(\d+)[- ]feet (high|tall)/);
-    const thickMatch = desc.match(/(\d+)[- ]foot thick/);
-    return {
-      shape: 'wall',
-      dimensions: {
-        maxLength: lengthMatch ? parseInt(lengthMatch[1], 10) : 0,
-        height: heightMatch ? parseInt(heightMatch[1], 10) : 0,
-        thickness: thickMatch ? parseInt(thickMatch[1], 10) : 0,
-      },
-    };
-  }
-
-  // Melee touch
-  if (rangeText === 'touch' || desc.includes('creature within your reach')) {
-    return { shape: 'melee_touch', dimensions: {} };
-  }
-
-  // Ranged single target (spell attack)
-  if (desc.includes('ranged spell attack') || desc.includes('make a ranged spell attack')) {
-    return { shape: 'ranged_single', dimensions: {} };
-  }
-
-  // Default to ranged single if has range in feet
-  if (rangeText.includes('feet')) {
-    return { shape: 'ranged_single', dimensions: {} };
+  for (const detect of detections) {
+    const result = detect(context);
+    if (result) {
+      return result;
+    }
   }
 
   return { shape: 'custom', dimensions: {} };
@@ -211,39 +231,37 @@ function parseSpellCard(cardHtml: string): ParsedSpell | null {
     // Extract name
     const nameMatch = cardHtml.match(/<h1>([^<]+)<\/h1>/);
     if (!nameMatch) return null;
-    const name = extractText(nameMatch[1]);
+    const name = extractText(nameMatch[1] ?? '');
 
     // Extract school and level
     const ecoleMatch = cardHtml.match(/<div class="ecole">([^<]+)<\/div>/);
     // eslint-disable-next-line no-continue
     if (!ecoleMatch) return null;
-    const { level, school, isRitual } = parseLevelAndSchool(ecoleMatch[1]);
+    const { level, school, isRitual } = parseLevelAndSchool(ecoleMatch[1] ?? '');
 
     // Extract casting time
     const castingTimeMatch = cardHtml.match(/<strong>Casting Time<\/strong>:\s*([^<]+)/);
-    const castingTime = castingTimeMatch ? extractText(castingTimeMatch[1]) : '';
+    const castingTime = extractText(castingTimeMatch?.[1] ?? '');
 
     // Extract range
     const rangeMatch = cardHtml.match(/<strong>Range<\/strong>:\s*([^<]+)/);
-    const range = rangeMatch ? extractText(rangeMatch[1]) : '';
+    const range = extractText(rangeMatch?.[1] ?? '');
 
     // Extract components
     const componentsMatch = cardHtml.match(/<strong>Components<\/strong>:\s*([^<]+(?:<[^>]+>[^<]*<\/[^>]+>)?[^<]*)/);
-    const components = componentsMatch
-      ? parseComponents(componentsMatch[1])
-      : { verbal: false, somatic: false, material: null };
+    const components = parseComponents(componentsMatch?.[1] ?? '');
 
     // Extract duration
     const durationMatch = cardHtml.match(/<strong>Duration<\/strong>:\s*([^<]+)/);
-    const duration = durationMatch ? extractText(durationMatch[1]) : '';
+    const duration = extractText(durationMatch?.[1] ?? '');
 
     // Extract description
     const descMatch = cardHtml.match(/<div class="description">([\s\S]+?)<\/div>/);
-    const description = descMatch ? extractText(descMatch[1]) : '';
+    const description = extractText(descMatch?.[1] ?? '');
 
     // Extract "At Higher Levels" section
     const higherLevelsMatch = description.match(/At Higher Levels[.\s]+(.*?)$/i);
-    const higherLevels = higherLevelsMatch ? higherLevelsMatch[1] : undefined;
+    const higherLevels = higherLevelsMatch?.[1];
 
     // Categorize effect shape
     const { shape, dimensions } = categorizeEffectShape(description, range);
@@ -286,7 +304,7 @@ function parseSpellBook(): void {
   let skipped = 0;
 
   for (const match of cardMatches) {
-    const spell = parseSpellCard(match[1]);
+    const spell = parseSpellCard(match[1] ?? '');
     if (spell) {
       spells.push(spell);
       console.log(`✓ Parsed: ${spell.name} (Level ${spell.level}, ${spell.effectShape})`);

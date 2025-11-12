@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { createGameGraph } from '../game-graph';
+import { createGameplayGraph } from '../gameplay-graph';
 import type { GameState } from '../state';
 
 describe('Game Graph', () => {
@@ -29,11 +29,12 @@ describe('Game Graph', () => {
       combatState: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      waitingForAction: false,
     };
   });
 
   it('should create game graph successfully', () => {
-    const graph = createGameGraph();
+    const graph = createGameplayGraph();
     expect(graph).toBeDefined();
   });
 
@@ -52,7 +53,7 @@ describe('Game Graph', () => {
   });
 
   it('should compile with checkpointer', () => {
-    const graph = createGameGraph();
+    const graph = createGameplayGraph();
 
     // Graph should be compiled and ready to invoke
     expect(typeof graph.invoke).toBe('function');
@@ -81,6 +82,8 @@ describe('Game State Management', () => {
         phase: 'setup',
         pendingOpportunityAttacks: [],
         diceRollerSeed: 42,
+        spellPreview: null,
+        lastSpellResolution: null,
       },
     };
 

@@ -176,12 +176,7 @@ interface CarouselHeaderProps {
 
 export function CarouselHeader({ eyebrow, title, description, alignment = 'center' }: CarouselHeaderProps) {
   return (
-    <div
-      className={cn(
-        'space-y-5 max-w-3xl',
-        alignment === 'center' ? 'mx-auto text-center' : 'text-left'
-      )}
-    >
+    <div className={cn('space-y-5 max-w-3xl', alignment === 'center' ? 'mx-auto text-center' : 'text-left')}>
       {eyebrow && <p className="text-[0.62rem] uppercase tracking-[0.48em] text-aurora-200/70">{eyebrow}</p>}
       <h2 className="font-display text-3xl tracking-[0.26em] text-aurora-100 sm:text-4xl">{title}</h2>
       {description && <p className="text-base leading-relaxed text-shadow-100/95">{description}</p>}

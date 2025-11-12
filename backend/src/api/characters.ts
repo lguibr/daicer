@@ -4,6 +4,7 @@ import { authenticate, type AuthRequest } from '@/middleware/auth';
 import { ApiError } from '@/middleware/error';
 import { getRoom, getPlayers, getPlayer, updatePlayerCharacter } from '@/services/firestore';
 import { characterSheetSchema, characterSheetUpdateSchema } from '@/schemas/character';
+import type { CharacterSheet } from '@/types/index';
 import { mergeCharacterSheet } from '@/utils/character';
 
 const router = Router();
@@ -66,7 +67,7 @@ router.put('/:roomId/:playerId', authenticate, async (req: AuthRequest, res: Res
     throw new ApiError(404, 'Player not found');
   }
 
-  const updates = updateSchema.parse(req.body);
+  const updates = updateSchema.parse(req.body) as Partial<CharacterSheet>;
   const mergedCharacter = mergeCharacterSheet(player.character, updates);
 
   const updatedPlayer = await updatePlayerCharacter(roomId, playerId, mergedCharacter);

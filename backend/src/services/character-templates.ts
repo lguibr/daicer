@@ -189,18 +189,45 @@ function resolveProficiency(className: string, skillName: string): SkillProficie
   return 'trained';
 }
 
+interface CharacterArchetype {
+  class: string;
+  race: string;
+  alignment: string;
+  background: string;
+  attributes: Record<string, number>;
+  backstory: string;
+  personality: {
+    traits: string;
+    ideals: string;
+    bonds: string;
+    flaws: string;
+  };
+  appearance: {
+    age: string;
+    height: string;
+    weight: string;
+    eyes: string;
+    skin: string;
+    hair: string;
+    description: string;
+  };
+}
+
 function buildSkillDetails(archetype: CharacterArchetype, proficiencyBonus: number): SkillDetail[] {
   return SKILL_LIST.map((skill) => {
     const abilityModifier = getAbilityModifier(archetype.attributes, skill.ability);
     const proficiency = resolveProficiency(archetype.class, skill.name);
-    const modifier =
-      abilityModifier +
-      (proficiency === 'expertise' ? proficiencyBonus * 2 : proficiency === 'proficient' ? proficiencyBonus : 0);
+    let proficiencyContribution = 0;
+    if (proficiency === 'expertise') {
+      proficiencyContribution = proficiencyBonus * 2;
+    } else if (proficiency === 'proficient') {
+      proficiencyContribution = proficiencyBonus;
+    }
 
     return {
       name: skill.name,
       ability: skill.ability,
-      modifier,
+      modifier: abilityModifier + proficiencyContribution,
       proficiency,
     };
   });
@@ -231,33 +258,6 @@ function buildResourcePools(className: string): ResourcePool[] {
     refresh: pool.refresh,
     description: pool.description,
   }));
-}
-
-/**
- * Character archetypes with optimized attributes and backgrounds
- */
-interface CharacterArchetype {
-  class: string;
-  race: string;
-  alignment: string;
-  background: string;
-  attributes: Record<string, number>;
-  backstory: string;
-  personality: {
-    traits: string;
-    ideals: string;
-    bonds: string;
-    flaws: string;
-  };
-  appearance: {
-    age: string;
-    height: string;
-    weight: string;
-    eyes: string;
-    skin: string;
-    hair: string;
-    description: string;
-  };
 }
 
 const ARCHETYPES: Record<string, CharacterArchetype> = {

@@ -24,16 +24,16 @@ export default meta;
 
 type Story = StoryObj<typeof NumericStepper>;
 
-function StatefulStepper(props: NumericStepperProps) {
-  const [value, setValue] = useState<number>(props.value ?? 0);
+function StatefulStepper({ value: initialValue = 0, onChange, ...rest }: NumericStepperProps) {
+  const [value, setValue] = useState<number>(initialValue);
 
   return (
     <NumericStepper
-      {...props}
+      {...rest}
       value={value}
       onChange={(next) => {
         setValue(next);
-        props.onChange?.(next);
+        onChange?.(next);
       }}
     />
   );

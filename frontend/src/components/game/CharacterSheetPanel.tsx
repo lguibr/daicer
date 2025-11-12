@@ -64,14 +64,11 @@ function TalentCard({ talent }: { talent: Talent }) {
 }
 
 export default function CharacterSheetPanel({ player, onClose }: CharacterSheetPanelProps) {
-  if (!player) return null;
-
-  const { character } = player;
-  const { attributes } = character;
-  const skillDetails = character.skillDetails?.length ? character.skillDetails : undefined;
-  const { avatarAssets } = character;
-
   useEffect(() => {
+    if (!player) {
+      return undefined;
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
@@ -86,11 +83,23 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow;
     };
-  }, [onClose]);
+  }, [onClose, player]);
+
+  if (!player) return null;
+
+  const { character } = player;
+  const { attributes } = character;
+  const skillDetails = character.skillDetails?.length ? character.skillDetails : undefined;
+  const { avatarAssets } = character;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-6">
-      <div className="absolute inset-0 bg-midnight-950/80 backdrop-blur-sm" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Close character sheet"
+        onClick={onClose}
+        className="absolute inset-0 bg-midnight-950/80 backdrop-blur-sm focus:outline-none"
+      />
       <div className="relative z-10 h-full w-full max-w-5xl">
         <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-shadow-700 bg-midnight-300/95 shadow-2xl">
           <header className="flex flex-col gap-2 border-b border-shadow-700 bg-midnight-500/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -346,8 +355,8 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                       <div>
                         <span className="font-semibold text-shadow-50">Key Events:</span>
                         <ul className="mt-1 list-disc space-y-1 pl-4 text-shadow-300">
-                          {character.backgroundDetails.keyEvents.map((event, index) => (
-                            <li key={`${event}-${index}`}>{event}</li>
+                          {character.backgroundDetails.keyEvents.map((event) => (
+                            <li key={event}>{event}</li>
                           ))}
                         </ul>
                       </div>

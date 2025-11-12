@@ -3,15 +3,23 @@
  * @description Shared spell catalog loader for combat nodes and tools
  */
 
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
 import type { SpellData } from '../types/spells';
 
-/* eslint-disable no-underscore-dangle */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-/* eslint-enable no-underscore-dangle */
+function resolveSpellsPath(): string {
+  const candidates = [
+    '../seeds/game-data/spells.json',
+    '../../seeds/game-data/spells.json',
+    'seeds/game-data/spells.json',
+  ].map((relativePath) => resolve(process.cwd(), relativePath));
+
+  const match = candidates.find((candidate) => existsSync(candidate));
+  if (!match) {
+    throw new Error('Unable to locate seeds/game-data/spells.json for spell catalog.');
+  }
+  return match;
+}
 
 let spellCache: SpellData[] | null = null;
 
@@ -20,7 +28,7 @@ function loadSpellData(): SpellData[] {
     return spellCache;
   }
 
-  const spellsPath = join(__dirname, '../../../seeds/game-data/spells.json');
+  const spellsPath = resolveSpellsPath();
   const raw = readFileSync(spellsPath, 'utf-8');
   spellCache = JSON.parse(raw) as SpellData[];
   return spellCache;

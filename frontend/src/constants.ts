@@ -80,11 +80,14 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
     acc[skill] = 0;
     return acc;
   }, {}),
+  skillDetails: [],
+  expertises: [],
   attacks: [],
   equipment: "Standard adventurer's pack, a weapon, and 10 gold pieces.",
   currency: { cp: 0, sp: 0, ep: 0, gp: 10, pp: 0 },
   proficienciesAndLanguages: 'Common',
   features: '',
+  talents: [],
   appearance: {
     age: 'Unknown',
     height: '5\'8"',
@@ -101,8 +104,21 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
     flaws: '',
   },
   backstory: '',
+  backgroundDetails: {
+    origin: '',
+    upbringing: '',
+    motivation: '',
+    keyEvents: [],
+    allies: [],
+  },
   alliesAndOrganizations: '',
   treasure: '',
+  resourcePools: [],
+  advancementPoints: {
+    ability: 0,
+    skill: 0,
+    talent: 0,
+  },
   spellcasting: {
     class: '',
     ability: '',
