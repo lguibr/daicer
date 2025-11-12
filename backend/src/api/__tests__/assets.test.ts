@@ -3,6 +3,8 @@ import request from 'supertest';
 
 import { app } from '@/server';
 
+jest.mock('mime');
+
 jest.mock('@/services/gemini-image', () => ({
   generateImage: jest.fn(),
 }));

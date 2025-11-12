@@ -2,9 +2,11 @@
  * Room API endpoint tests
  */
 
-import { describe, test, expect, beforeAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, jest } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../server';
+
+jest.mock('mime');
 
 describe('Room API', () => {
   let authToken: string;

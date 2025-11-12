@@ -2,10 +2,12 @@
  * Game Data API endpoint tests
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, jest } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../server';
 import { initializeFirebase, getDb } from '@/config/firebase';
+
+jest.mock('mime');
 
 describe('Game Data API', () => {
   beforeAll(async () => {
