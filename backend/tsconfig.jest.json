@@ -3,7 +3,6 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "outDir": "./dist-jest"
+    "isolatedModules": true
   }
 }
-
