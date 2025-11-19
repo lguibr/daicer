@@ -1,0 +1,152 @@
+/**
+ * Character Creation Helper Components
+ * Reusable UI components for character creation wizard
+ */
+
+import { useEffect } from 'react';
+import { Bird, Feather, Flame, Gem, Leaf, Shield, Sparkles, Swords, Users, Wand2 } from 'lucide-react';
+import clsx from 'clsx';
+import { useFormWizard } from '../../ui/FormWizard';
+import { DiceLoader } from '../../ui/dice-loader';
+import type { CharacterSheetAsset } from './characterSheetAsset';
+
+interface StepValidationGateProps {
+  valid: boolean;
+}
+
+export function StepValidationGate({ valid }: StepValidationGateProps) {
+  const { setCanGoNext } = useFormWizard();
+  useEffect(() => {
+    setCanGoNext(valid);
+  }, [valid, setCanGoNext]);
+  return null;
+}
+
+type RaceOption = {
+  id: string;
+  name: string;
+  description?: string;
+  size?: string;
+  speed?: number;
+};
+
+export function resolveRaceIcon(name: string) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('elf')) return Leaf;
+  if (normalized.includes('dwarf')) return Gem;
+  if (normalized.includes('dragon')) return Flame;
+  if (normalized.includes('orc')) return Swords;
+  if (normalized.includes('halfling')) return Feather;
+  if (normalized.includes('gnome')) return Sparkles;
+  if (normalized.includes('tiefling')) return Flame;
+  if (normalized.includes('aarakocra') || normalized.includes('bird')) return Bird;
+  if (normalized.includes('human')) return Users;
+  if (normalized.includes('goliath') || normalized.includes('giant')) return Shield;
+  return Wand2;
+}
+
+interface RaceSelectionGridProps {
+  options: RaceOption[];
+  selectedRace: string;
+  onSelect: (race: string) => void;
+  loading: boolean;
+}
+
+export function RaceSelectionGrid({ options, selectedRace, onSelect, loading }: RaceSelectionGridProps) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-midnight-600 bg-midnight-700/60 p-6">
+        <DiceLoader size="small" diceCount={3} />
+      </div>
+    );
+  }
+
+  if (options.length === 0) {
+    return (
+      <p className="text-sm text-shadow-500">No races available yet. Configure the ruleset to unlock racial options.</p>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {options.map((race, index) => {
+        const Icon = resolveRaceIcon(race.name);
+        const isSelected = race.name === selectedRace;
+        const gradientIndex = index % 6;
+        const gradientPalettes = [
+          'from-aurora-500/25 via-aurora-400/10 to-midnight-800/70',
+          'from-nebula-500/25 via-nebula-400/10 to-midnight-800/70',
+          'from-amber-500/25 via-amber-400/10 to-midnight-800/70',
+          'from-emerald-500/25 via-emerald-400/10 to-midnight-800/70',
+          'from-indigo-500/25 via-indigo-400/10 to-midnight-800/70',
+          'from-rose-500/25 via-rose-400/10 to-midnight-800/70',
+        ];
+
+        return (
+          <button
+            key={race.id}
+            type="button"
+            onClick={() => onSelect(race.name)}
+            className={clsx(
+              'group relative overflow-hidden rounded-2xl border px-5 py-6 text-left transition-all duration-200',
+              'border-midnight-600 bg-midnight-800/80 hover:border-aurora-400/60 hover:bg-midnight-700/90',
+              isSelected && 'border-aurora-400/80 bg-gradient-to-br shadow-[0_12px_28px_rgba(29,143,242,0.25)]',
+              isSelected && gradientPalettes[gradientIndex]
+            )}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className={clsx(
+                  'flex h-12 w-12 items-center justify-center rounded-xl border-2 transition-all',
+                  isSelected ? 'border-white/70 bg-white/10 text-white' : 'border-aurora-400/30 text-aurora-200'
+                )}
+              >
+                <Icon className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-lg font-semibold text-shadow-50 group-hover:text-aurora-100">{race.name}</p>
+                  {(race.size || race.speed) && (
+                    <p className="text-xs font-medium uppercase tracking-[0.35em] text-shadow-400">
+                      {[race.size, race.speed ? `${race.speed} ft` : undefined].filter(Boolean).join(' • ')}
+                    </p>
+                  )}
+                </div>
+                {race.description ? (
+                  <p className="line-clamp-3 text-sm leading-relaxed text-shadow-300">{race.description}</p>
+                ) : null}
+              </div>
+            </div>
+            {isSelected && (
+              <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/10 shadow-[0_18px_32px_rgba(29,143,242,0.35)]" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function formatAlignmentOption(name: string) {
+  const [ethics, morality] = name.split(' ');
+  return `${ethics?.charAt(0)}${morality ? `-${morality?.charAt(0)}` : ''}`.toUpperCase();
+}
+
+export function CharacterAssetPreview({ asset }: { asset: CharacterSheetAsset }) {
+  return (
+    <div className="rounded-3xl border border-aurora-400/20 bg-midnight-900/70 p-6 shadow-[0_18px_40px_rgba(7,5,10,0.55)]">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-3">
+          <h3 className="text-2xl font-bold text-shadow-50">{asset.name}</h3>
+          <p className="text-sm text-shadow-300">{asset.metadata.summary}</p>
+        </div>
+        <div className="text-sm text-shadow-400">
+          <div>Level {asset.metadata.level}</div>
+          <div>
+            {asset.metadata.race} {asset.metadata.class}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

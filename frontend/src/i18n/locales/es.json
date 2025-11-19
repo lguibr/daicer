@@ -1,0 +1,1069 @@
+{
+  "auth": {
+    "title": "DAIcer",
+    "subtitle": "Director Artificial Inteligente para Campañas Épicas de Rol",
+    "heroDescription": "Forja una campaña viva con un Maestro de Mazmorras que honra la historia, la tensión y el trabajo en equipo.",
+    "cards": {
+      "eyebrow": "Destacado principal",
+      "sectionTitle": "Moldea tu campaña al instante",
+      "sectionDescription": "Recorre los pilares que mantienen a la mesa inmersa: lore sincronizado, ritmo táctico y cohesión del grupo.",
+      "sectionLabel": "Destacados de funciones del inicio",
+      "lore": {
+        "title": "Lore Curado",
+        "body": "Sincroniza reinos, facciones, reliquias y profecías: la IA recuerda cada secreto."
+      },
+      "encounters": {
+        "title": "Encuentros Adaptativos",
+        "body": "Ajusta con precisión la dificultad, el tono y el ritmo narrativo de cada sesión."
+      },
+      "party": {
+        "title": "Enfoque en la Compañía",
+        "body": "Destaca la cooperación y teje gloria compartida y tácticas combinadas en cada escena."
+      }
+    },
+    "navigation": {
+      "previous": "Paso Anterior",
+      "next": "Siguiente Paso"
+    },
+    "cta": {
+      "heading": "Puerta de Entrada",
+      "copy": "Firma con tu carta de aventura y reúne a la compañía en cuestión de instantes."
+    },
+    "secondary": {
+      "title": "Más Allá de la Puerta",
+      "subtitle": "Mantén a tu mesa inspirada entre sesiones.",
+      "description": "Entrega gotas de lore accionables, preparación de sesión y señales para jugadores para que la próxima reunión comience con impulso total.",
+      "carouselLabel": "Momentos clave de soporte de campaña",
+      "tracks": {
+        "eyebrow": "CRÓNICAS DE CAMPAÑA",
+        "title": "Tramas Vivas",
+        "body": "Destaca hilos de trama en evolución y agendas de facciones para que todos sepan qué chispas están listas para encenderse."
+      },
+      "guidance": {
+        "eyebrow": "GUÍA DE SESIÓN",
+        "title": "Preparación Precisa",
+        "body": "Convierte notas de encuentros en escenas listas con sugerencias de ritmo, texto evocador y complicaciones sugeridas."
+      },
+      "readiness": {
+        "eyebrow": "PREPARACIÓN DEL GRUPO",
+        "title": "Impulso Compartido",
+        "body": "Comparte focos para jugadores, ganchos de tiempo libre y recordatorios de inventario para mantener al grupo alineado."
+      }
+    },
+    "login": "Continuar con Google",
+    "loggingIn": "Iniciando sesión...",
+    "emulatorNote": "Usando emuladores de desarrollo",
+    "emulatorTip": "Cualquier correo funciona en este reino."
+  },
+  "navbar": {
+    "brandAlt": "Logotipo de DAIcer",
+    "links": {
+      "rooms": "Salas",
+      "explore": "Explorar",
+      "spellbook": "Libro de Hechizos",
+      "combatDemo": "Demostración de Combate"
+    },
+    "labels": {
+      "account": "Cuenta",
+      "room": "Sala",
+      "roomCode": "Código de Sala",
+      "phase": "Fase",
+      "players": "Jugadores"
+    },
+    "actions": {
+      "leaveRoom": "Salir de la Sala",
+      "logout": "Cerrar Sesión"
+    },
+    "phase": {
+      "setup": "Preparación",
+      "characterCreation": "Creación de Personaje",
+      "gameplay": "En Juego",
+      "combat": "Combate"
+    }
+  },
+  "ui": {
+    "dataTable": {
+      "filter": {
+        "placeholder": "Filtrar filas..."
+      },
+      "view": {
+        "trigger": "Columnas",
+        "label": "Alternar columnas"
+      },
+      "sort": {
+        "asc": "Orden ascendente",
+        "desc": "Orden descendente",
+        "hide": "Ocultar columna"
+      },
+      "pagination": {
+        "rowsPerPage": "Filas por página",
+        "page": "Página",
+        "of": "de",
+        "first": "Primera",
+        "previous": "Anterior",
+        "next": "Siguiente",
+        "last": "Última"
+      },
+      "selection": "{{selected}} de {{total}} fila(s) seleccionadas.",
+      "noResults": "No hay registros que coincidan con los filtros actuales.",
+      "columns": {
+        "adventure": "Aventura",
+        "status": "Estado",
+        "players": "Jugadores",
+        "updated": "Actualizado",
+        "name": "Nombre",
+        "category": "Categoría"
+      },
+      "status": {
+        "draft": "Borrador",
+        "active": "Activa",
+        "completed": "Completada"
+      },
+      "demo": {
+        "filter": "Buscar aventuras...",
+        "toolbar": {
+          "new": "Forjar nueva aventura"
+        },
+        "rows": {
+          "hollowspire": {
+            "title": "Ciudadela Hollowspire",
+            "theme": "Bastión dorado de alta fantasía"
+          },
+          "ashenRift": {
+            "title": "Expedición a la Falla de Ceniza",
+            "theme": "Prueba volcánica de supervivencia"
+          },
+          "luminousDepths": {
+            "title": "Profundidades Luminosas",
+            "theme": "Intriga radiante bajo el mar"
+          }
+        }
+      },
+      "test": {
+        "columns": {
+          "name": "Nombre",
+          "category": "Categoría"
+        }
+      }
+    }
+  },
+  "statusPages": {
+    "generic": {
+      "eyebrow": "Monitor de señal",
+      "loader": "Sincronizando resonancia de dados...",
+      "prompt": "Los resultados siguen siendo deterministas para depurar.",
+      "ready": "CANAL LISTO",
+      "toastErrorTitle": "Portapapeles bloqueado",
+      "toastErrorDescription": "Permite el acceso al portapapeles e inténtalo de nuevo."
+    },
+    "notFound": {
+      "title": "Ruta fuera del mapa",
+      "description": "No encontramos esa dirección en este reino. Regresa al inicio o verifica tu invitación.",
+      "helper": "Registramos automáticamente las rutas rotas para investigarlas.",
+      "primaryCta": "Volver al inicio",
+      "secondaryCta": "Copiar enlace roto",
+      "toastTitle": "Enlace copiado",
+      "toastDescription": "Comparte este rastro con tu GM: {path}"
+    },
+    "error": {
+      "eyebrow": "Estabilidad del shard",
+      "title": "Ocurrió una falla interna",
+      "description": "El servidor tropezó con esta solicitud. Recarga para intentarlo de nuevo.",
+      "helper": "Si persiste, envía el ID de incidente a support@daicer.dev.",
+      "primaryCta": "Recargar experiencia",
+      "secondaryCta": "Copiar ID de incidente",
+      "toastTitle": "Incidente copiado",
+      "toastDescription": "Menciona el ticket {incidentId} cuando nos contactes.",
+      "incident": "ID de incidente",
+      "timestamp": "Hora"
+    }
+  },
+  "assets": {
+    "hero": {
+      "eyebrow": "Biblioteca de Recursos",
+      "title": "Generación de Recursos",
+      "subtitle": "Genera imágenes, modelos 3D, mapas y fichas de personajes para tu campaña."
+    },
+    "cards": {
+      "images": {
+        "title": "Imágenes 2D",
+        "body": "Genera retratos de personajes, iconos de objetos e ilustraciones de escenas.",
+        "action": "Crear Imágenes",
+        "ariaLabel": "Abrir generador de imágenes 2D"
+      },
+      "models": {
+        "title": "Modelos 3D",
+        "body": "Crea miniaturas voxel para criaturas, objetos y terreno.",
+        "action": "Crear Modelos",
+        "ariaLabel": "Abrir generador de modelos 3D"
+      },
+      "maps": {
+        "title": "Mapas",
+        "body": "Genera mapas de batalla y localizaciones para tus aventuras.",
+        "action": "Crear Mapas",
+        "ariaLabel": "Abrir generador de mapas"
+      },
+      "characterSheets": {
+        "title": "Fichas de Personaje",
+        "body": "Crea bloques de estadísticas para personajes jugadores, NPCs y monstruos.",
+        "action": "Crear Fichas",
+        "ariaLabel": "Abrir creador de fichas de personaje"
+      }
+    }
+  },
+  "roomInfo": {
+    "characters": "Personajes"
+  },
+  "lobby": {
+    "title": "Lobby",
+    "subtitle": "Elige tu rumbo",
+    "description": "Reúne una mesa nueva o únete a una compañía juramentada. La ciudadela sincroniza ajustes, lore y expedientes al instante.",
+    "carouselTitle": "Elige tu vía",
+    "carouselDescription": "Recorre las formas clave de lanzar un reino nuevo, reunirte con tu grupo o abrir sandboxes enfocados.",
+    "cards": {
+      "create": {
+        "title": "Crear",
+        "body": "Diseña un reino a medida con tono, dificultad y personalidad de DM para tu grupo."
+      },
+      "join": {
+        "title": "Unirse",
+        "body": "Introduce un código de invitación y regresa a una saga en curso—tu leyenda continúa."
+      },
+      "demo": {
+        "title": "Demo de Combate",
+        "body": "Observa una batalla determinista para comprender el motor táctico.",
+        "action": "Abrir demo de combate"
+      },
+      "test": {
+        "title": "Modo de prueba dev",
+        "body": "Inicia el sandbox para iterar combate, herramientas y ritmo narrativo sin tocar mesas en vivo.",
+        "action": "Abrir modo de prueba"
+      }
+    },
+    "createButton": "Crear nueva aventura",
+    "joinHero": {
+      "overline": "Regresa a la saga",
+      "heading": "Ingresa al sanctum",
+      "copy": "Escribe el sigilo de seis runas que compartió tu Director de Juego para retomar la crónica en progreso.",
+      "guardianCallout": "Canal cifrado",
+      "slides": {
+        "spellbook": {
+          "eyebrow": "Demo del grimorio",
+          "title": "Domina cada conjuro",
+          "description": "Previsualiza listas de hechizos, gestión de espacios y preparación asistida por IA dentro del grimorio vivo.",
+          "accent": "Biblioteca arcana interactiva",
+          "cta": "Abrir grimorio"
+        },
+        "combat": {
+          "eyebrow": "Demostración de combate",
+          "title": "Mira encuentros tácticos",
+          "description": "Observa cómo el motor por turnos resuelve posicionamiento, tiradas y acciones en tiempo real.",
+          "accent": "Flujo de encuentros compatible con 5e",
+          "cta": "Ver demo de combate"
+        },
+        "assets": {
+          "eyebrow": "Crea tus recursos",
+          "title": "Forja mundos y elementos",
+          "description": "Genera mapas, miniaturas, cartas de lore y arte de referencia con los constructores integrados.",
+          "accent": "Suite para mapas, minis y lore",
+          "cta": "Abrir forja de recursos"
+        },
+        "rules": {
+          "eyebrow": "Explora las reglas",
+          "title": "Consulta el SRD al instante",
+          "description": "Busca, filtra y guarda entradas del SRD 5e para tener siempre el ruling correcto a mano.",
+          "accent": "Compendio de reglas vinculado",
+          "cta": "Explorar SRD"
+        }
+      },
+      "inputLabel": "Código de seis runas",
+      "codePlaceholder": "AURORA",
+      "joinButton": "Entrar al sanctum",
+      "joining": "Abriendo portal...",
+      "helpText": "Solo tu grupo puede acceder a esta sala. Los códigos se renuevan cada vez que se forja un nuevo reino.",
+      "carouselAria": "Carrusel del viaje para unirse al lobby"
+    },
+    "devButton": "Modo de prueba",
+    "carouselLabel": "Carrusel de opciones del lobby"
+  },
+  "rooms": {
+    "title": "Tus Salas",
+    "subtitle": "Sigue cada mesa en la que participas y regresa a la historia al instante.",
+    "actions": {
+      "open": "Abrir Sala",
+      "viewSheet": "Ver Ficha",
+      "leave": "Salir de la Sala",
+      "leaving": "Saliendo...",
+      "retry": "Reintentar"
+    },
+    "status": {
+      "owner": "Anfitrión",
+      "player": "Jugador",
+      "ownerNoCharacter": "Aún no has creado un personaje para esta sala.",
+      "noCharacter": "No hay información de personaje disponible."
+    },
+    "labels": {
+      "code": "Código de Sala",
+      "phase": "Fase Actual",
+      "lastUpdated": "Actualizado"
+    },
+    "character": {
+      "name": "Nombre del Personaje",
+      "identity": "Raza y Clase",
+      "level": "Nivel"
+    },
+    "phases": {
+      "SETUP": "Preparación",
+      "CHARACTER_CREATION": "Creación de Personajes",
+      "GAMEPLAY": "En Juego",
+      "COMBAT": "Combate"
+    },
+    "empty": {
+      "title": "Sin salas aún",
+      "description": "Crea una nueva aventura o únete a un grupo existente para verla aquí.",
+      "cta": "Ir al Lobby"
+    },
+    "messages": {
+      "error": "No se pueden cargar las salas en este momento."
+    }
+  },
+  "worldSettings": {
+    "title": "Crear Aventura",
+    "subtitle": "Configurar mundo",
+    "story": "Historia",
+    "scope": "Alcance",
+    "theme": "Tema",
+    "themePlaceholder": "p.ej., Alta Fantasía",
+    "setting": "Escenario",
+    "settingPlaceholder": "p.ej., Ruinas Antiguas",
+    "tone": "Tono",
+    "tonePlaceholder": "p.ej., Oscuro y Realista",
+    "playerCount": "Número de Jugadores",
+    "adventureLength": "Duración de Aventura",
+    "lengthShort": "Corta",
+    "lengthMedium": "Media",
+    "lengthEpic": "Épica",
+    "difficulty": "Dificultad",
+    "difficultyEasy": "Fácil",
+    "difficultyMedium": "Media",
+    "difficultyHard": "Difícil",
+    "cancel": "Cancelar",
+    "create": "Crear Mundo",
+    "creating": "Creando mundo..."
+  },
+  "createWizard": {
+    "hero": {
+      "eyebrow": "Forja tu Campaña",
+      "description": "Da forma al reino, calibra al Director de Juego y prévisualiza el prompt exacto que guiará la leyenda de tu mesa."
+    },
+    "steps": {
+      "title": "Pasos de Creación",
+      "counterPrefix": "Paso",
+      "counterSeparator": "de",
+      "ariaLabel": "Pasos para crear la aventura",
+      "items": {
+        "world": "Arquetipo de Mundo",
+        "story": "Marco Narrativo",
+        "scope": "Alcance y Riesgos",
+        "dm": "Suite de Personalidad del DJ",
+        "prompt": "Vista Previa del Prompt",
+        "history": "Historia del Mundo",
+        "structures": "Estructuras",
+        "terrain": "Terreno y Caminos",
+        "worldPreview": "Vista Previa del Mundo"
+      }
+    },
+    "world": {
+      "description": "Elige el arquetipo fundamental para fijar el tono, ambiente y base de lore del reino.",
+      "moodFallback": "Atmósfera"
+    },
+    "story": {
+      "description": "Define los pilares creativos de alto nivel. Determinan cómo la IA encuadra escenas y lore.",
+      "primarySetting": "Escenario Principal",
+      "settingPlaceholder": "Ciudadela Hollowspire",
+      "backgroundLabel": "Lore de Fondo",
+      "backgroundPlaceholder": "Escribe la cadencia del reino: guerras ancestrales, profecías inminentes, facciones en juego..."
+    },
+    "scope": {
+      "description": "Calibra amplitud, ritmo y desafío de la campaña con controles lineales.",
+      "partySize": "Tamaño del Grupo",
+      "partySizeDescription": "Número de aventureros activos.",
+      "startingLevel": "Nivel Inicial",
+      "startingLevelDescription": "Rango de entrada para las hojas.",
+      "worldSize": "Escala del Mundo",
+      "adventureLength": "Duración de la Aventura",
+      "difficulty": "Objetivo de Dificultad"
+    },
+    "dm": {
+      "description": "Ajusta la cadencia, peso narrativo y compromiso del Director. Cada control alimenta el prompt del sistema.",
+      "verbosity": "Verbosidad",
+      "detail": "Detalle Descriptivo",
+      "engagement": "Participación de Jugadores",
+      "narrative": "Guía Narrativa",
+      "specialMode": "Modo de Interpretación",
+      "customDirectives": "Directrices Personalizadas",
+      "customDirectivesPlaceholder": "Enumera instrucciones o reglas de mesa que el DJ debe respetar."
+    },
+    "prompt": {
+      "title": "Vista Previa del Prompt del Sistema",
+      "caption": "Este es el bloque exacto enviado al agente Director de Juego."
+    },
+    "history": {
+      "title": "Configuración de Historia del Mundo",
+      "caption": "Define la profundidad y estructura de la línea temporal histórica de tu mundo.",
+      "historyDepth": "Profundidad de Historia (Años)",
+      "eraCount": "Número de Eras",
+      "noHistory": "Sin Historia"
+    },
+    "structures": {
+      "title": "Configuración de Estructuras",
+      "caption": "Personaliza la densidad y tipos de estructuras en tu mundo.",
+      "density": "Densidad de Estructuras",
+      "types": "Tipos de Estructuras",
+      "sparse": "Escaso",
+      "moderate": "Moderado",
+      "dense": "Denso",
+      "veryDense": "Muy Denso"
+    },
+    "terrain": {
+      "title": "Configuración de Terreno y Caminos",
+      "caption": "Configura redes de caminos y complejidad del terreno.",
+      "enableRoads": "Activar Generación de Caminos",
+      "enableRoadsDesc": "Conecta estructuras con caminos procedurales",
+      "roadQuality": "Calidad de Caminos",
+      "trail": "Sendero",
+      "path": "Camino",
+      "road": "Carretera",
+      "highway": "Autopista",
+      "complexity": "Complejidad del Terreno",
+      "simple": "Simple",
+      "moderate": "Moderado",
+      "complex": "Complejo"
+    },
+    "preview": {
+      "caption": "Este es el bloque exacto enviado al agente Director de Juego."
+    },
+    "marks": {
+      "verbosity": {
+        "whisper": {
+          "label": "Susurro",
+          "description": "Frases compactas; reportes de combate sin adornos."
+        },
+        "terse": {
+          "label": "Conciso",
+          "description": "Narración breve con beats sensoriales esenciales."
+        },
+        "measured": {
+          "label": "Medido",
+          "description": "Cadencia equilibrada, párrafos cortos que anclan escenas."
+        },
+        "storied": {
+          "label": "Narrado",
+          "description": "Flujo narrativo con ganchos y embellecimientos periódicos."
+        },
+        "lyrical": {
+          "label": "Lírico",
+          "description": "Lenguaje rico con metáforas y cadencia trabajada."
+        },
+        "epic": {
+          "label": "Épico",
+          "description": "Descripción en capas, presagios y gravedad heroica."
+        },
+        "operatic": {
+          "label": "Operático",
+          "description": "Entrega grandilocuente digna de sagas bardas."
+        }
+      },
+      "detail": {
+        "minimal": {
+          "label": "Minimalista",
+          "description": "Claridad centrada en reglas; contexto estrictamente esencial."
+        },
+        "lean": {
+          "label": "Ligero",
+          "description": "Destaca solo utilería y obstáculos clave."
+        },
+        "focused": {
+          "label": "Focalizado",
+          "description": "Mezcla riesgos mecánicos con hitos vívidos."
+        },
+        "balanced": {
+          "label": "Equilibrado",
+          "description": "Partes iguales de mecánica, atmósfera y tono sensorial."
+        },
+        "textured": {
+          "label": "Texturizado",
+          "description": "Descripción en capas de sonidos, vistas y cultura."
+        },
+        "immersive": {
+          "label": "Inmersivo",
+          "description": "Cada escena pintada con matices históricos y emocionales."
+        },
+        "cinematic": {
+          "label": "Cinemático",
+          "description": "Detalle panorámico, simbolismo e imágenes prolongadas."
+        }
+      },
+      "engagement": {
+        "observer": {
+          "label": "Observador",
+          "description": "Relata resultados; casi sin preguntas a los jugadores."
+        },
+        "facilitator": {
+          "label": "Facilitador",
+          "description": "Invita aportes solo en momentos de decisión."
+        },
+        "guide": {
+          "label": "Guía",
+          "description": "Prompts regulares sobre intenciones y reflexiones."
+        },
+        "collaborator": {
+          "label": "Colaborador",
+          "description": "Cocrea momentos e impulsa la charla del grupo."
+        },
+        "instigator": {
+          "label": "Instigador",
+          "description": "Siembra dilemas, ganchos y rivalidades."
+        },
+        "provocateur": {
+          "label": "Provocador",
+          "description": "Empuja la tensión dramática, rota el foco y los arcos."
+        },
+        "immersive": {
+          "label": "Inmersivo",
+          "description": "Involucramiento casi LARP, diálogo in-character, ritmo dramático."
+        }
+      },
+      "narrative": {
+        "player": {
+          "label": "Jugador",
+          "description": "Libertad sandbox; reacciona más de lo que dirige."
+        },
+        "explorer": {
+          "label": "Explorador",
+          "description": "Hilos sueltos se plantan y el grupo los teje."
+        },
+        "hybrid": {
+          "label": "Híbrido",
+          "description": "Mezcla elecciones ramificadas con guía suave."
+        },
+        "balanced": {
+          "label": "Equilibrado",
+          "description": "Arcos con agencia y beats planeados en partes iguales."
+        },
+        "guided": {
+          "label": "Guiado",
+          "description": "Arcos claros, agendas recurrentes de PNJ y escenas con propósito."
+        },
+        "plotted": {
+          "label": "Trazado",
+          "description": "Estructura episódica sólida con giros planeados."
+        },
+        "authored": {
+          "label": "De Autor",
+          "description": "Saga épica con clímax presagiados y encuadre dramático."
+        }
+      }
+    },
+    "specialModes": {
+      "classic": {
+        "label": "Clásico",
+        "description": "Narrador neutro con etiqueta de mesa moderna."
+      },
+      "courtly": {
+        "label": "Cortesano",
+        "description": "Formalidad altanera, cumplidos heráldicos y etiqueta."
+      },
+      "grimdark": {
+        "label": "Grimdark",
+        "description": "Imágenes crudas, ambigüedad moral y tono fatalista."
+      },
+      "pirate": {
+        "label": "Corsario",
+        "description": "Jerga pirata, sabor a cantos marineros y bravura audaz."
+      },
+      "shakespearean": {
+        "label": "Shakespeariano",
+        "description": "Cadencia isabelina, giros poéticos y beats dramáticos."
+      },
+      "noir": {
+        "label": "Noir",
+        "description": "Monólogo hardboiled, metáforas sombrías e intriga ahumada."
+      },
+      "storybook": {
+        "label": "Cuento de Hadas",
+        "description": "Cadencia de fábula, lecciones morales y maravilla caprichosa."
+      }
+    },
+    "adventureLength": {
+      "flash": {
+        "label": "Relámpago",
+        "detail": "~1 sesión",
+        "description": "Misión concisa o prólogo."
+      },
+      "short": {
+        "label": "Corta",
+        "detail": "2-3 sesiones",
+        "description": "Mini arco con objetivo singular."
+      },
+      "medium": {
+        "label": "Estándar",
+        "detail": "4-6 sesiones",
+        "description": "Arco de temporada con subtramas."
+      },
+      "long": {
+        "label": "Larga",
+        "detail": "8-12 sesiones",
+        "description": "Campaña amplia con amenazas en capas."
+      },
+      "epic": {
+        "label": "Épica",
+        "detail": "12-18 sesiones",
+        "description": "Saga transformadora con múltiples actos."
+      },
+      "legendary": {
+        "label": "Legendaria",
+        "detail": "20+ sesiones",
+        "description": "Crónica generacional de largo aliento."
+      }
+    },
+    "difficulty": {
+      "storyteller": {
+        "label": "Narrativa",
+        "detail": "Falla hacia adelante",
+        "description": "El conflicto favorece los beats dramáticos."
+      },
+      "easy": {
+        "label": "Relajada",
+        "detail": "Apuestas suaves",
+        "description": "Encuentros rara vez letales; tono heroico."
+      },
+      "medium": {
+        "label": "Equilibrada",
+        "detail": "Riesgo moderado",
+        "description": "Profundidad táctica con peligro justo."
+      },
+      "challenging": {
+        "label": "Desafiante",
+        "detail": "Victorias ganadas",
+        "description": "Presión frecuente, descansos limitados."
+      },
+      "gritty": {
+        "label": "Cruenta",
+        "detail": "Decisiones duras",
+        "description": "El desgaste importa; las heridas perduran."
+      },
+      "deadly": {
+        "label": "Letal",
+        "detail": "Apuestas altas",
+        "description": "Peligro implacable; el fracaso pesa."
+      }
+    },
+    "worldSize": {
+      "intimate": {
+        "label": "Íntima",
+        "detail": "Local",
+        "description": "Un pueblo, una mazmorra, apuestas personales."
+      },
+      "small": {
+        "label": "Pequeña",
+        "detail": "Provincia",
+        "description": "Varias regiones enlazadas políticamente."
+      },
+      "medium": {
+        "label": "Media",
+        "detail": "Reino",
+        "description": "Viajes por el reino con culturas distintas."
+      },
+      "large": {
+        "label": "Grande",
+        "detail": "Continente",
+        "description": "Múltiples reinos y climas diversos."
+      },
+      "vast": {
+        "label": "Vasta",
+        "detail": "Mundo",
+        "description": "Saga mundial con susurros planares."
+      },
+      "epic": {
+        "label": "Mítica",
+        "detail": "Planos",
+        "description": "Odisea interplanar con apuestas cósmicas."
+      }
+    }
+  },
+  "dev": {
+    "testMode": {
+      "title": "Modo de Prueba",
+      "description": "Configura rápidamente combates, narrativas y variaciones de tono.",
+      "worldLabel": "Mundo",
+      "dmStyleLabel": "Estilo de DM",
+      "characterLabel": "Personaje",
+      "back": "Volver al lobby"
+    }
+  },
+  "archetypes": {
+    "terra": {
+      "label": "Dominio Verdeante",
+      "theme": "Alta fantasía caballeresca",
+      "setting": "Reinos verdes coronados por fortalezas en ruinas",
+      "tone": "Heroico con penumbra creciente",
+      "mood": "Dominio Verdeante",
+      "description": "Baronías feudales entre bosques ancestrales, caballeros juramentados y círculos druidas que custodian rutas arcanas.",
+      "background": "La Marcha de la Corona de Hollowspire entrelaza casas rivales, ruinas cubiertas de musgo y bosques de hierro, mientras los druidas advierten que algo inmenso se agita bajo las raíces."
+    },
+    "water": {
+      "label": "Soberanía de las Mareas",
+      "theme": "Saga de alta mar",
+      "setting": "Archipiélagos azotados por tormentas y fosos abisales",
+      "tone": "Aventurero y peligroso",
+      "mood": "Soberanía de las Mareas",
+      "description": "Flotas corsarias, templos hundidos y cartas náuticas que cambian con la luz de la luna.",
+      "background": "Armadas corsarias saquean convoyes imperiales mientras faros enclaves negocian con brujas del mar; las leyendas susurran sobre un soberano de las mareas que prueba a los mortales antes de un inminente trono de marejada."
+    },
+    "desert": {
+      "label": "Cortes de la Tormenta Solar",
+      "theme": "Reinos abrasados por el sol",
+      "setting": "Dunas azafrán y zigurat de obsidiana",
+      "tone": "Áspero y mítico",
+      "mood": "Cortes de la Tormenta Solar",
+      "description": "Ciudadelas espejismo, caravanas pactadas con djinn y profetas que cantan a la arena.",
+      "background": "A lo largo del Meridiano de Sable, reyes astrólogos tallan palacios en arenisca viva mientras fanáticos buscan reliquias enterradas bajo leviatanes petrificados."
+    },
+    "ice": {
+      "label": "Vigilia de la Aurora",
+      "theme": "Extensión boreal",
+      "setting": "Ciudadelas glaciales bajo un crepúsculo eterno",
+      "tone": "Resistencia sombría y esperanza frágil",
+      "mood": "Vigilia de la Aurora",
+      "description": "Tundras azotadas por tormentas, campos de hielo marcados con runas y monasterios silenciosos que guardan fragmentos de una estrella caída.",
+      "background": "Tempestades de aurora barren la frontera jotun mientras monasterios helados honran pactos antiguos con espíritus glaciales; la supervivencia depende de fuegos compartidos y de la memoria del clan."
+    },
+    "volcanic": {
+      "label": "Supremacía Ígnea",
+      "theme": "Dominio de ceniza",
+      "setting": "Calderas de magma y fortalezas de obsidiana",
+      "tone": "Volátil y despiadado",
+      "mood": "Supremacía Ígnea",
+      "description": "Bastiones de obsidiana, fraguas de salamandra y cultos que cantan al ritmo del corazón de la caldera.",
+      "background": "Clanes herreros canalizan ríos de fuego para alimentar máquinas de asedio mientras profetas de ceniza intentan despertar al titán que duerme bajo la cordillera."
+    },
+    "forest": {
+      "label": "Selvas Susurrantes",
+      "theme": "Enigma del bosque anciano",
+      "setting": "Arboledas conscientes y cortes a la luz de la luna",
+      "tone": "Susurrante y misterioso",
+      "mood": "Selvas Susurrantes",
+      "description": "Flora extraña, cortes feéricas estacionales y senderos vivos que se desplazan bajo copas vigilantes.",
+      "background": "Árboles ancianos sueñan en catedrales verdes, tejiendo tratados con mortales; cada pacto lleva cláusulas ocultas vigiladas por guardianes invisibles."
+    },
+    "sky": {
+      "label": "Ascendencia Céfiro",
+      "theme": "Imperios en el cielo",
+      "setting": "Islas flotantes y puentes de viento",
+      "tone": "Majestuoso y surrealista",
+      "mood": "Ascendencia Céfiro",
+      "description": "Órdenes de caballeros del cielo, forjas de nubes y leviatanes de tormenta patrullando el horizonte.",
+      "background": "Archipiélagos flotantes orbitan un núcleo de piedra lunar fracturada; caravanas de viento contrabandean reliquias entre islas mientras magos de trueno se baten por el dominio de los cielos."
+    },
+    "underground": {
+      "label": "Crisol Umbrío",
+      "theme": "Vasto umbral",
+      "setting": "Cavernas bioluminiscentes y mercados abisales",
+      "tone": "Intriga claustrofóbica",
+      "mood": "Crisol Umbrío",
+      "description": "Ciudades estalactita, cultos del temblor y gremios de hongos que comercian esporas de memoria.",
+      "background": "Bazarres iluminados por gemas se aferran a los techos mientras profetas sísmicos advierten sobre un colosal perforador que se acerca a la bóveda; las alianzas cambian como ríos subterráneos."
+    },
+    "custom": {
+      "label": "Reino Personalizado",
+      "theme": "",
+      "setting": "",
+      "tone": "",
+      "mood": "Lienzo del Autor",
+      "description": "Define tu propio tono, lore y emblemas desde cero.",
+      "background": ""
+    }
+  },
+  "character": {
+    "roomCode": "Código de Sala",
+    "playersReady": "{count} / {total} jugadores listos",
+    "waitingForPlayers": "Esperando a que todos los jugadores estén listos"
+  },
+  "characterCreation": {
+    "header": {
+      "title": "Todo Está Listo",
+      "subtitle": "Prepara a tu personaje para la aventura que se avecina",
+      "teamworkTitle": "🤝 Aventura en Equipo",
+      "teamworkHighlight": "¡Esta es una aventura en equipo!",
+      "teamworkBody": "Al escribir tu trasfondo, piensa cómo tu personaje conoce o puede conectarse con los demás jugadores del grupo. Comparte metas comunes, encuentros pasados o habilidades complementarias. ¡Vínculos fuertes generan mejores historias y un juego más envolvente!",
+      "worldTitle": "Mundo",
+      "worldLoading": "Generando descripción del mundo..."
+    },
+    "party": {
+      "title": "Grupo de Aventureros",
+      "waitingForPlayers": "Esperando a que los jugadores creen personajes...",
+      "readyBadge": "✓ Listo",
+      "readyCountSuffix": "jugadores listos",
+      "waitingForAll": "La partida empieza cuando todos estén listos",
+      "youAreReady": "✓ ¡Estás listo!",
+      "waitingForOthers": "Esperando a los demás jugadores...",
+      "unready": "Cancelar listo",
+      "readyUp": "¡Listarme!"
+    },
+    "quickCreate": {
+      "title": "⚡ Creación Rápida",
+      "description": "Carga un personaje preconstruido para pruebas rápidas"
+    },
+    "form": {
+      "nameLabel": "Nombre del Personaje *",
+      "namePlaceholder": "Ingresa el nombre del personaje",
+      "startingLevel": "Nivel Inicial:",
+      "raceLabel": "Raza *",
+      "classLabel": "Clase *",
+      "alignmentLabel": "Alineación *",
+      "backgroundLabel": "Historia de Fondo *",
+      "backgroundHint": "(mín. 50 caracteres)",
+      "backgroundPlaceholder": "Escribe el trasfondo de tu personaje. IMPORTANTE: incluye cómo conoces o podrías conectarte con los demás integrantes del grupo. ¿Comparten un objetivo? ¿Se conocieron en una taberna? ¿Son amigos de la infancia? ¡Vínculos fuertes generan mejores aventuras!",
+      "characters": "caracteres"
+    },
+    "pointBuy": {
+      "title": "Atributos (Distribución de Puntos)",
+      "perfect": "✓ ¡Perfecto!",
+      "remainingSuffix": "puntos restantes",
+      "modLabel": "Mod",
+      "rangePrefix": "Rango:",
+      "budgetPrefix": "Presupuesto Total:",
+      "pointsLabel": "puntos"
+    },
+    "appearance": {
+      "sectionTitle": "Apariencia (Opcional) ▼",
+      "age": "Edad",
+      "years": "años",
+      "height": "Altura",
+      "weight": "Peso",
+      "eyes": "Ojos",
+      "skin": "Piel",
+      "hair": "Cabello",
+      "descriptionPlaceholder": "Añade detalles llamativos: marcas, postura, vestuario u otros rasgos visuales."
+    },
+    "portraits": {
+      "title": "Retratos del Personaje",
+      "description": "Genera referencias visuales del héroe antes de finalizar la ficha.",
+      "generating": "Generando...",
+      "regenerate": "Generar Nuevamente",
+      "generate": "Generar Retratos",
+      "labels": {
+        "portrait": "Previsualización del Retrato",
+        "upperBody": "Previsualización del Torso",
+        "fullBody": "Previsualización Cuerpo Entero"
+      },
+      "generatePlaceholder": "Genera para visualizar",
+      "defaultName": "Personaje"
+    },
+    "personality": {
+      "sectionTitle": "Personalidad (Opcional) ▼",
+      "traitsPlaceholder": "Rasgos de Personalidad",
+      "idealsPlaceholder": "Ideales",
+      "bondsPlaceholder": "Vínculos",
+      "flawsPlaceholder": "Defectos"
+    },
+    "actions": {
+      "creating": "Creando...",
+      "loading": "Cargando...",
+      "create": "Crear Personaje"
+    },
+    "overlays": {
+      "creating": "Creando personaje...",
+      "loadingData": "Cargando datos..."
+    },
+    "errors": {
+      "nameRequired": "El nombre del personaje es obligatorio",
+      "backgroundShort": "El trasfondo debe tener al menos 50 caracteres e incluir las relaciones del personaje",
+      "pointsRequiredPrefix": "Debes usar todos los",
+      "pointsRequiredSuffix": "puntos de atributo",
+      "pointsRemainingSuffix": "restantes",
+      "missingPortraits": "Genera los retratos del personaje antes de crear la ficha.",
+      "createFailed": "Error al crear el personaje",
+      "templateFailed": "Error al cargar el modelo de personaje",
+      "generatePortraits": "Error al generar los retratos"
+    },
+    "steps": {
+      "basics": {
+        "title": "Básicos",
+        "description": "Nombra a tu héroe y confirma el nivel inicial."
+      },
+      "quickCreate": {
+        "title": "Creación Rápida",
+        "description": "Carga una plantilla y personaliza desde ahí."
+      },
+      "race": {
+        "title": "Linaje",
+        "description": "Elige la herencia que define tus habilidades."
+      },
+      "attributes": {
+        "title": "Atributos",
+        "description": "Asigna atributos de compra por puntos para definir tus fortalezas."
+      },
+      "class": {
+        "title": "Clase",
+        "description": "Identifica tu rol dentro del grupo."
+      },
+      "alignment": {
+        "title": "Alineación"
+      },
+      "background": {
+        "title": "Historia de Fondo"
+      },
+      "identity": {
+        "title": "Identidad"
+      },
+      "equipment": {
+        "title": "Equipamiento",
+        "description": "Selecciona tu equipo inicial",
+        "heading": "Equipa a tu héroe",
+        "copy": "Elige tu equipo inicial. Compra el paquete estándar para tu clase o selecciona objetos individuales."
+      },
+      "portraits": {
+        "title": "Retratos"
+      },
+      "review": {
+        "title": "Revisar"
+      }
+    }
+  },
+  "equipment": {
+    "shop": {
+      "title": "Tienda de Equipo",
+      "startingGold": "Oro Inicial",
+      "currentGold": "Oro Actual",
+      "buyPack": "Comprar Paquete Estándar",
+      "filterAll": "Todo",
+      "filterWeapon": "Armas",
+      "filterArmor": "Armaduras",
+      "filterGear": "Equipo",
+      "equipped": "Equipado",
+      "inventory": "Inventario",
+      "totalWeight": "Peso Total",
+      "buy": "Comprar",
+      "equip": "Equipar",
+      "unequip": "Desequipar",
+      "quantity": "Cant",
+      "cost": "Costo",
+      "weight": "Peso",
+      "damage": "Daño",
+      "armorClass": "CA",
+      "properties": "Propiedades",
+      "insufficientGold": "Oro insuficiente",
+      "purchaseSuccess": "Artículo comprado",
+      "packPurchased": "Paquete estándar comprado"
+    },
+    "slots": {
+      "mainHand": "Mano Principal",
+      "offHand": "Mano Secundaria",
+      "armor": "Armadura",
+      "shield": "Escudo",
+      "accessory1": "Accesorio 1",
+      "accessory2": "Accesorio 2",
+      "empty": "(Vacío)"
+    },
+    "categories": {
+      "Weapon": "Arma",
+      "Armor": "Armadura",
+      "Adventuring Gear": "Equipo de Aventura",
+      "Tools": "Herramientas",
+      "Mounts and Vehicles": "Monturas y Vehículos"
+    }
+  },
+  "gameplay": {
+    "submitAction": "Enviar Acción",
+    "submit": "Enviar",
+    "sending": "Enviando...",
+    "endTurn": "Terminar Turno",
+    "actionPlaceholder": "¿Qué haces?",
+    "processing": "Procesando...",
+    "processTurn": "Procesar Turno",
+    "feedTitle": "Relato de la Aventura",
+    "partyHeading": "Grupo",
+    "creaturesHeading": "Criaturas",
+    "viewSheet": "Ver Hoja",
+    "privatePerspective": "Tu Perspectiva",
+    "worldTitle": "El Mundo",
+    "openCharacterSheet": "Abrir Hoja de Personaje",
+    "yourTurn": "Tu turno - envía una acción",
+    "actionSubmitted": "Acción enviada. Esperando procesamiento...",
+    "actionsSubmitted": "Acciones enviadas",
+    "waitingForOthers": "✓ Esperando a otros...",
+    "readyToProcess": "¡Listo para procesar turno!",
+    "adventureBegins": "La aventura comienza..."
+  },
+  "debug": {
+    "title": "Panel de Depuración",
+    "close": "Cerrar"
+  },
+  "diceLoader": {
+    "messages": {
+      "summoning": "Invocando dados brillantes...",
+      "rattling": "Agitando la bandeja del destino...",
+      "focusing": "Consultando a los espíritus de la probabilidad...",
+      "calibrating": "Calibrando las tiradas críticas..."
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "hp": "PV",
+    "ac": "CA",
+    "init": "Init",
+    "attack": "ATQ",
+    "damage": "DMG",
+    "close": "Cerrar",
+    "back": "Volver",
+    "edit": "Editar"
+  },
+  "map": {
+    "tileDetails": "Detalles del Tile",
+    "coordinates": "Coordenadas",
+    "biome": "Bioma",
+    "elevation": "Elevación",
+    "features": "Características",
+    "entities": "Entidades",
+    "noDataAvailable": "No hay datos disponibles",
+    "featuresNearby": "Características Cercanas",
+    "dmView": "Vista DM",
+    "playerView": "Vista Jugador",
+    "centerPoint": "Punto Central",
+    "radius": "Radio",
+    "tiles": "tiles",
+    "loading": "Cargando...",
+    "featuresFound": "{{count}} características encontradas",
+    "noFeaturesInRadius": "No hay características en el radio",
+    "generatingTerrain": "Generando terreno...",
+    "chunks": "Fragmentos"
+  },
+  "tactical": {
+    "dmChat": "Comandar DM",
+    "dmChatEmpty": "Envía un comando al DM para comenzar",
+    "dmChatHint": "Intenta: Tirar iniciativa, Guerrero ataca Goblin",
+    "dmChatPlaceholder": "Comandar al DM...",
+    "dm": "DM",
+    "generateMap": "Generar Mapa",
+    "addCharacter": "Añadir Personaje",
+    "addCreature": "Añadir Criatura",
+    "clearBoard": "Limpiar Tablero",
+    "gridSize": "Tamaño de Cuadrícula",
+    "terrainDensity": "Densidad del Terreno",
+    "features": "Características",
+    "obstacles": "Obstáculos",
+    "terrain": "Terreno",
+    "characters": "Personajes",
+    "quickCreate": "Creación Rápida",
+    "loadExisting": "Cargar Existente",
+    "creatureLibrary": "Biblioteca de Criaturas"
+  }
+}

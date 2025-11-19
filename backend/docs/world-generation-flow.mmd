@@ -1,0 +1,288 @@
+```mermaid
+graph TB
+    A[World Generation Start] --> B{History Depth > 0?}
+    B -->|No| Z[Generate Basic World Description]
+    B -->|Yes| C[Initialize Entropy Engine]
+    
+    C --> D[Period Loop Start]
+    D --> E[Generate Historical Period N]
+    E --> F[Run Entropy Engine<br/>50-year simulation]
+    F --> G[Build LLM Context]
+    
+    G --> H[Previous Period Narrative]
+    G --> I[Entropy Events]
+    G --> J[World Settings]
+    
+    H --> K[Call LLM with<br/>HistoricalPeriodResponseSchema]
+    I --> K
+    J --> K
+    
+    K --> L[Extract Narrative]
+    K --> M[Extract Structures<br/>with relative positions]
+    K --> N[Extract Major Events]
+    
+    L --> O[Store Period Data]
+    M --> O
+    N --> O
+    
+    O --> P{More Periods?}
+    P -->|Yes| D
+    P -->|No| Q[Synthesize Overall Summary]
+    
+    Q --> R[Collect All Structures]
+    R --> S[Place Structures on Grid]
+    
+    S --> T[Convert Relative Positions<br/>to Absolute Coordinates]
+    T --> U[Apply Poisson Disc<br/>Sampling]
+    U --> V[Structures Placed]
+    
+    V --> W{Roads Enabled?}
+    W -->|No| AA[Skip Roads]
+    W -->|Yes| X[Generate Roads]
+    
+    X --> Y[Determine Connections<br/>based on significance]
+    Y --> Y1[Generate Organic Paths<br/>with noise]
+    Y1 --> Y2[Add Waystations]
+    Y2 --> AB[Roads Generated]
+    
+    AA --> AC[Create Collapse Data]
+    AB --> AC
+    
+    AC --> AD[Calculate Influence Map]
+    AD --> AE[Structure Influences]
+    AD --> AF[Road Influences]
+    
+    AE --> AG[Collapse Data Ready]
+    AF --> AG
+    
+    AG --> AH[Generate World Description]
+    AH --> AI[Include Historical Context]
+    AI --> AJ[World Generation Complete]
+    
+    Z --> AJ
+    AJ --> AK[Return State Update]
+    
+    AK --> AL[worldDescription]
+    AK --> AM[worldHistory]
+    AK --> AN[structures]
+    AK --> AO[roads]
+    AK --> AP[worldConditions]
+    
+    style A fill:#e1f5ff
+    style AJ fill:#d4edda
+    style K fill:#fff3cd
+    style AC fill:#f8d7da
+    
+    classDef llmCall fill:#fff3cd,stroke:#856404
+    classDef dataOutput fill:#d4edda,stroke:#155724
+    classDef processing fill:#e1f5ff,stroke:#004085
+    classDef terrain fill:#f8d7da,stroke:#721c24
+    
+    class K llmCall
+    class AJ,AL,AM,AN,AO,AP dataOutput
+    class S,X,AC processing
+    class AG terrain
+```
+
+## Detailed Component Breakdown
+
+### 1. Historical Period Generation
+```mermaid
+graph LR
+    A[Period N] --> B[Entropy Engine]
+    B --> C[Events + Mutations]
+    C --> D[LLM Context]
+    D --> E[HistoricalPeriodResponse]
+    E --> F[Narrative]
+    E --> G[Structures]
+    E --> H[Events]
+    
+    F --> I[Next Period Context]
+    G --> J[Structure Collection]
+    H --> I
+```
+
+### 2. Structure Placement Algorithm
+```mermaid
+graph TD
+    A[Structures with<br/>Relative Positions] --> B[Calculate Target Position]
+    B --> C{Direction}
+    C -->|north| D[y -= distance]
+    C -->|south| E[y += distance]
+    C -->|east| F[x += distance]
+    C -->|west| G[x -= distance]
+    C -->|diagonal| H[x,y adjust]
+    
+    D --> I[Check Overlaps]
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+    
+    I --> J{Position Free?}
+    J -->|Yes| K[Place Structure]
+    J -->|No| L[Spiral Search]
+    L --> I
+    
+    K --> M[Add to Occupied List]
+```
+
+### 3. Road Generation Flow
+```mermaid
+graph TD
+    A[Structures] --> B[Sort by Significance]
+    B --> C[For Each High-Sig Structure]
+    C --> D[Find Nearest Structures]
+    D --> E[Calculate Distance]
+    E --> F{Distance < Max?}
+    F -->|No| C
+    F -->|Yes| G[Generate Path]
+    
+    G --> H[Linear Interpolation]
+    H --> I[Apply Noise Curvature]
+    I --> J[Add Waypoints]
+    J --> K{Long Road?}
+    K -->|Yes| L[Add Waystations]
+    K -->|No| M[Road Complete]
+    L --> M
+    
+    M --> N{More Structures?}
+    N -->|Yes| C
+    N -->|No| O[All Roads Generated]
+```
+
+### 4. Terrain Collapse Process
+```mermaid
+graph TD
+    A[Structures + Roads] --> B[Create Influence Map]
+    
+    B --> C[Structure Influences]
+    B --> D[Road Influences]
+    
+    C --> E[Radius = f(size)]
+    C --> F[Elevation = f(type)]
+    C --> G[Strength = significance]
+    
+    D --> H[Width = f(quality)]
+    D --> I[Flatten = true]
+    
+    E --> J[Influence List]
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    
+    J --> K[During Chunk Generation]
+    K --> L[Calculate Base Elevation]
+    L --> M[Apply Influences]
+    M --> N{Near Structure?}
+    N -->|Yes| O[Blend to Target Elevation]
+    N -->|No| P{On Road?}
+    P -->|Yes| Q[Flatten Terrain]
+    P -->|No| R[Use Base Elevation]
+    
+    O --> S[Modified Elevation]
+    Q --> S
+    R --> S
+```
+
+## Streaming Events Timeline
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Node as World Generation Node
+    participant Entropy as Entropy Engine
+    participant LLM
+    participant Placer as Structure Placer
+    participant Roads as Road Generator
+    participant Collapse as Collapse Function
+    
+    Client->>Node: Start World Generation
+    
+    alt History Enabled
+        Node->>Client: history_generation_start
+        Node->>Entropy: Generate Period 0
+        Entropy->>LLM: Request narrative
+        LLM-->>Node: Period 0 data
+        
+        Node->>Entropy: Generate Period 1
+        Entropy->>LLM: Request narrative (with context)
+        LLM-->>Node: Period 1 data
+        
+        Note over Node: ... More periods ...
+        
+        Node->>Client: history_generation_complete
+        
+        Node->>Placer: Place structures
+        Placer-->>Node: Coordinates assigned
+        Node->>Client: structure_placement_complete
+        
+        Node->>Roads: Generate roads
+        Roads-->>Node: Roads created
+        Node->>Client: road_generation_complete
+        
+        Node->>Collapse: Create influence map
+        Collapse-->>Node: Collapse data ready
+        Node->>Client: terrain_collapse_complete
+    end
+    
+    Node->>LLM: Generate world description
+    LLM-->>Client: world_gen_chunk (stream)
+    LLM-->>Client: world_gen_chunk (stream)
+    LLM-->>Client: world_gen_chunk (stream)
+    
+    Node->>Client: World Generation Complete
+```
+
+## Data Flow
+
+```mermaid
+graph LR
+    subgraph Input
+        A1[worldSettings]
+        A2[roomSeed]
+    end
+    
+    subgraph "Historical Generation"
+        B1[Entropy Engine]
+        B2[Sequential LLM]
+        B3[Periods]
+    end
+    
+    subgraph "Spatial Processing"
+        C1[Structure Placer]
+        C2[Road Generator]
+        C3[Collapse Function]
+    end
+    
+    subgraph Output
+        D1[worldHistory]
+        D2[structures]
+        D3[roads]
+        D4[collapseData]
+    end
+    
+    A1 --> B1
+    A2 --> B1
+    B1 --> B2
+    B2 --> B3
+    
+    B3 --> C1
+    C1 --> D2
+    
+    D2 --> C2
+    C2 --> D3
+    
+    D2 --> C3
+    D3 --> C3
+    C3 --> D4
+    
+    B3 --> D1
+    
+    D1 -.->|Context| LLM[Final World Description]
+    D2 -.->|Stored| DB[(Firestore)]
+    D3 -.->|Stored| DB
+    D4 -.->|Used in| Chunks[Chunk Generation]
+```
+

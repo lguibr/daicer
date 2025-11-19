@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+glob: "**/*"
+---
+
+### **Rule 17: Ask, Don't Assume**
+
+If a requirement is unclear or a technical decision has a significant impact (e.g., changing a core state schema, altering a graph's structure), ask for clarification before proceeding.
+
+*   **Rationale**: Assumptions are the leading cause of rework. Proactive communication saves time and ensures the team remains aligned on architectural decisions.
+*   **Implementation**:
+    *   Use GitHub issues or team communication channels to discuss architectural changes.
+    *   When submitting a Pull Request for an impactful change, clearly document the "why" behind the decision and link to the discussion.

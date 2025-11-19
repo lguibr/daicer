@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+glob: "frontend/src/{components,pages}/**/*.{ts,tsx}"
+---
+
+### **Rule 9: User Actions are Dispatched as Events to the Backend**
+
+When a user performs an action (e.g., submitting a turn), the frontend must immediately dispatch an event to the backend API/socket. This event triggers a LangGraph invocation.
+
+*   **Rationale**: This pattern separates user intent from state transition logic. The UI feels fast, but the graph remains in control. The final, authoritative state will always come back from the backend after the graph has run.
+*   **Implementation**:
+    *   A player's action is sent to a REST endpoint or socket handler.
+    *   This handler invokes the `gameplayGraph` with the new action data.
+    *   The graph runs, and the new state is broadcast back to all clients in the room.

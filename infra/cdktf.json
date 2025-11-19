@@ -1,0 +1,11 @@
+{
+  "language": "typescript",
+  "app": "npx ts-node main.ts",
+  "projectId": "daicer-infra",
+  "terraformProviders": ["hashicorp/google@~> 6.0"],
+  "terraformRequiredVersion": ">= 1.6.0",
+  "context": {
+    "excludeStackIdFromLogicalIds": true,
+    "allowSepCharsInLogicalIds": true
+  }
+}

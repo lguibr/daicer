@@ -1,0 +1,204 @@
+const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {
+  mountain: Mountain,
+  tide: Waves,
+  dune: Sun,
+  frost: Snowflake,
+  ember: Flame,
+  grove: Trees,
+  sky: Cloud,
+  abyss: Gem,
+  custom: Sparkles,
+};
+
+// Wizard group types
+type WizardGroup = 'dmAndScope' | 'worldConfig' | 'characters' | 'inRoomConfig';
+
+const WIZARD_GROUPS: WizardGroup[] = ['dmAndScope', 'worldConfig', 'characters', 'inRoomConfig'];
+
+// Verbosity marks (same as before)
+const VERBOSITY_MARK_KEYS = [
+  { value: 0, key: 'whisper' },
+  { value: 1, key: 'terse' },
+  { value: 2, key: 'measured' },
+  { value: 3, key: 'storied' },
+  { value: 4, key: 'lyrical' },
+  { value: 5, key: 'epic' },
+  { value: 6, key: 'operatic' },
+] as const;
+
+const VERBOSITY_FALLBACK: Record<(typeof VERBOSITY_MARK_KEYS)[number]['key'], { label: string; description: string }> =
+  {
+    whisper: { label: 'Whisper', description: 'Compact phrases; battle reports without flourish.' },
+    terse: { label: 'Terse', description: 'Brief narration with essential sensory beats only.' },
+    measured: { label: 'Measured', description: 'Balanced cadence, short paragraphs anchoring scenes.' },
+    storied: { label: 'Storied', description: 'Narrative flow with hooks and periodic embellishment.' },
+    lyrical: { label: 'Lyrical', description: 'Rich language with artful metaphors and cadence.' },
+    epic: { label: 'Epic', description: 'Layered description, foreshadowing, and heroic gravitas.' },
+    operatic: { label: 'Operatic', description: 'Grandiloquent delivery worthy of bardic sagas.' },
+  };
+
+const DETAIL_MARK_KEYS = [
+  { value: 0, key: 'minimal' },
+  { value: 1, key: 'lean' },
+  { value: 2, key: 'focused' },
+  { value: 3, key: 'balanced' },
+  { value: 4, key: 'textured' },
+  { value: 5, key: 'immersive' },
+  { value: 6, key: 'cinematic' },
+] as const;
+
+const DETAIL_FALLBACK: Record<(typeof DETAIL_MARK_KEYS)[number]['key'], { label: string; description: string }> = {
+  minimal: { label: 'Minimal', description: 'Rule-first clarity; bare essential context.' },
+  lean: { label: 'Lean', description: 'Highlights key props and obstacles, nothing more.' },
+  focused: { label: 'Focused', description: 'Mix of mechanical stakes and vivid landmarks.' },
+  balanced: { label: 'Balanced', description: 'Equal parts mechanics, atmosphere, and sensory tone.' },
+  textured: { label: 'Textured', description: 'Layered description of sights, sounds, and culture.' },
+  immersive: { label: 'Immersive', description: 'Every scene painted with historical and emotional nuance.' },
+  cinematic: { label: 'Cinematic', description: 'Panoramic detail, symbolism, and lingering imagery.' },
+};
+
+const ENGAGEMENT_MARK_KEYS = [
+  { value: 0, key: 'observer' },
+  { value: 1, key: 'facilitator' },
+  { value: 2, key: 'guide' },
+  { value: 3, key: 'collaborator' },
+  { value: 4, key: 'instigator' },
+  { value: 5, key: 'provocateur' },
+  { value: 6, key: 'immersive' },
+] as const;
+
+const ENGAGEMENT_FALLBACK: Record<
+  (typeof ENGAGEMENT_MARK_KEYS)[number]['key'],
+  { label: string; description: string }
+> = {
+  observer: { label: 'Observer', description: 'Relays outcomes; minimal questions to players.' },
+  facilitator: { label: 'Facilitator', description: 'Invites input at decision beats only.' },
+  guide: { label: 'Guide', description: 'Regular prompts for intentions and reflections.' },
+  collaborator: { label: 'Collaborator', description: 'Co-creates moments, encourages party banter.' },
+  instigator: { label: 'Instigator', description: 'Seeds dilemmas, cliff-hangers, and rivalries.' },
+  provocateur: { label: 'Provocateur', description: 'Pushes dramatic tension, spotlight rotation, character arcs.' },
+  immersive: { label: 'Immersive', description: 'LARP-like involvement, in-character dialogue, dramatic pacing.' },
+};
+
+const NARRATIVE_MARK_KEYS = [
+  { value: 0, key: 'player' },
+  { value: 1, key: 'explorer' },
+  { value: 2, key: 'hybrid' },
+  { value: 3, key: 'balanced' },
+  { value: 4, key: 'guided' },
+  { value: 5, key: 'plotted' },
+  { value: 6, key: 'authored' },
+] as const;
+
+const NARRATIVE_FALLBACK: Record<(typeof NARRATIVE_MARK_KEYS)[number]['key'], { label: string; description: string }> =
+  {
+    player: { label: 'Player', description: 'Sandbox freedom; react to initiatives more than drive them.' },
+    explorer: { label: 'Explorer', description: 'Loose threads seeded, players weave them together.' },
+    hybrid: { label: 'Hybrid', description: 'Blend of branching choices with gentle nudges.' },
+    balanced: { label: 'Balanced', description: 'Story arcs with equal agency and plotted beats.' },
+    guided: { label: 'Guided', description: 'Clear arcs, recurring NPC agendas, purposeful scenes.' },
+    plotted: { label: 'Plotted', description: 'Strong episodic structure with planned twists.' },
+    authored: { label: 'Authored', description: 'Epic saga with foreshadowed climaxes and dramatic framing.' },
+  };
+
+const SPECIAL_MODE_KEYS: Array<{ id: DMPerformanceMode | null; key: string }> = [
+  { id: null, key: 'classic' },
+  { id: 'courtly', key: 'courtly' },
+  { id: 'grimdark', key: 'grimdark' },
+  { id: 'pirate', key: 'pirate' },
+  { id: 'shakespearean', key: 'shakespearean' },
+  { id: 'noir', key: 'noir' },
+  { id: 'storybook', key: 'storybook' },
+];
+
+const SPECIAL_MODE_FALLBACK: Record<(typeof SPECIAL_MODE_KEYS)[number]['key'], { label: string; description: string }> =
+  {
+    classic: { label: 'Classic', description: 'Neutral narrator with modern tabletop etiquette.' },
+    courtly: { label: 'Courtly', description: 'Highborn formality, heraldic compliments, etiquette cues.' },
+    grimdark: { label: 'Grimdark', description: 'Harsh imagery, moral ambiguity, fatalistic tone.' },
+    pirate: { label: 'Corsair', description: 'Swashbuckling slang, sea shanty flavor, audacious bravado.' },
+    shakespearean: { label: 'Shakespearean', description: 'Elizabethan cadence, poetic turns, dramatic beats.' },
+    noir: { label: 'Noir', description: 'Hardboiled monologue, moody metaphors, smoky intrigue.' },
+    storybook: { label: 'Storybook', description: 'Fairytale cadence, moral lessons, whimsical wonder.' },
+  };
+
+const ADVENTURE_LENGTH_VALUES: AdventureLength[] = ['flash', 'short', 'medium', 'long', 'epic', 'legendary'];
+
+const ADVENTURE_LENGTH_FALLBACK: Record<AdventureLength, { label: string; detail: string; description: string }> = {
+  flash: { label: 'Flash', detail: '~1 session', description: 'Tightly scoped mission or prologue.' },
+  short: { label: 'Short', detail: '2-3 sessions', description: 'Mini-arc with a singular objective.' },
+  medium: { label: 'Standard', detail: '4-6 sessions', description: 'Season-length arc with side beats.' },
+  long: { label: 'Long', detail: '8-12 sessions', description: 'Sprawling campaign with layered threats.' },
+  epic: { label: 'Epic', detail: '12-18 sessions', description: 'World-shaping saga with multiple acts.' },
+  legendary: { label: 'Legendary', detail: '20+ sessions', description: 'Generation-spanning chronicle.' },
+};
+
+const DIFFICULTY_VALUES: Difficulty[] = ['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly'];
+
+const DIFFICULTY_FALLBACK: Record<Difficulty, { label: string; detail: string; description: string }> = {
+  storyteller: {
+    label: 'Storyteller',
+    detail: 'Fail-forward',
+    description: 'Conflict favors narrative beats.',
+  },
+  easy: {
+    label: 'Relaxed',
+    detail: 'Gentle stakes',
+    description: 'Encounters rarely lethal; heroic tone.',
+  },
+  medium: {
+    label: 'Standard',
+    detail: 'Balanced risk',
+    description: 'Tactical depth with fair danger.',
+  },
+  challenging: {
+    label: 'Challenging',
+    detail: 'Earned victories',
+    description: 'Frequent pressure, limited rests.',
+  },
+  gritty: {
+    label: 'Gritty',
+    detail: 'Hard choices',
+    description: 'Attrition matters; wounds linger.',
+  },
+  deadly: {
+    label: 'Deadly',
+    detail: 'High stakes',
+    description: 'Relentless peril; failure has weight.',
+  },
+};
+
+const WORLD_SIZE_VALUES: WorldSize[] = ['intimate', 'small', 'medium', 'large', 'vast', 'epic'];
+
+const WORLD_SIZE_FALLBACK: Record<WorldSize, { label: string; detail: string; description: string }> = {
+  intimate: {
+    label: 'Intimate',
+    detail: 'Local',
+    description: 'One village, one dungeon, personal stakes.',
+  },
+  small: {
+    label: 'Small',
+    detail: 'Province',
+    description: 'A handful of regions with linked politics.',
+  },
+  medium: {
+    label: 'Medium',
+    detail: 'Kingdom',
+    description: 'Nation-spanning travel with distinct cultures.',
+  },
+  large: {
+    label: 'Large',
+    detail: 'Continent',
+    description: 'Multiple kingdoms and diverse climates.',
+  },
+  vast: {
+    label: 'Vast',
+    detail: 'World',
+    description: 'Globe-trotting saga with planar whispers.',
+  },
+  epic: {
+    label: 'Mythic',
+    detail: 'Planes',
+    description: 'Interplanar odyssey with cosmic stakes.',
+  },
+};

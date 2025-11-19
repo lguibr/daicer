@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+glob: "backend/src/{combat,services,graph,tactical}/**/*.ts"
+---
+
+### **Rule 10: All Agent Abilities are LangChain Tools with Zod Schemas**
+
+Any discrete capability the LLM can perform—rolling dice, casting a spell, starting combat—must be exposed as a `tool` with a strict Zod schema.
+
+*   **Rationale**: This forces the LLM to produce structured, validated outputs for its actions, making its behavior predictable, auditable, and easy to integrate with the deterministic game engine.
+*   **Implementation**:
+    *   Define all tools in a central location (e.g., `src/combat/tools.ts`).
+    *   The DM agent must be initialized by binding these tools to the model (`model.bindTools(tools)`).
+    *   The frontend must display a notification whenever a tool is called, showing its inputs and results.

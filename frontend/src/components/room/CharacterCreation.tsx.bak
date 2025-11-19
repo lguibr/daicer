@@ -1,0 +1,1211 @@
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Bird, Feather, Flame, Gem, Leaf, Shield, Sparkles, Swords, Users, Wand2 } from 'lucide-react';
+import clsx from 'clsx';
+import type { AvatarPreviewResponse, ReferenceImagePayload } from '../../types/assets';
+import type { Room, Attribute } from '../../types/shared';
+import { GamePhase } from '../../types/shared';
+import {
+  addCharacter,
+  generateAvatarPortrait,
+  generateAvatarUpperBody,
+  generateAvatarFullBody,
+} from '../../services/api';
+import { setReady } from '../../services/socket';
+import useAuth from '../../hooks/useAuth';
+import MarkdownMessage from '../game/MarkdownMessage';
+import { useAlignments, useRaces, useClasses } from '../../hooks/useGameData';
+import { Button } from '../ui/button';
+import { LoadingOverlay } from '../ui/LoadingOverlay';
+import Input from '../ui/input';
+import Label from '../ui/label';
+import Textarea from '../ui/textarea';
+import { DiceLoader } from '../ui/dice-loader';
+import { useDebouncedBusy } from '../../hooks/useDebouncedBusy';
+import { useI18n } from '../../i18n';
+import type { CharacterCreationProps, CharacterFormState } from './character-creation/types';
+import { AttributesSection } from './character-creation/AttributesSection';
+import { AppearanceSection } from './character-creation/AppearanceSection';
+import { PersonalitySection } from './character-creation/PersonalitySection';
+import { AvatarSection } from './character-creation/AvatarSection';
+import { EquipmentShop } from '../equipment/EquipmentShop';
+import type { EquipmentItemData } from '../equipment/EquipmentItemCard';
+import { calculateTotalPoints } from './character-creation/validation';
+import {
+  loadPlaceholderReferences,
+  buildAvatarPayload,
+  appendReference,
+  downscalePreviewImage,
+} from './character-creation/avatarHelpers';
+import {
+  FormWizard,
+  FormWizardSteps,
+  FormWizardContent,
+  FormWizardStep,
+  FormWizardActions,
+  useFormWizard,
+  type Step,
+} from '../ui/FormWizard';
+import { NumericInput } from '../ui/NumericInput';
+import { ToggleButtonGroup, type ToggleButtonOption } from '../ui/ToggleButtonGroup';
+import { buildCharacterSheetAsset, type CharacterSheetAsset } from './character-creation/characterSheetAsset';
+import { WorldGenerationProgress } from '../world/WorldGenerationProgress';
+
+interface StepValidationGateProps {
+  valid: boolean;
+}
+
+function StepValidationGate({ valid }: StepValidationGateProps) {
+  const { setCanGoNext } = useFormWizard();
+  useEffect(() => {
+    setCanGoNext(valid);
+  }, [valid, setCanGoNext]);
+  return null;
+}
+
+type RaceOption = {
+  id: string;
+  name: string;
+  description?: string;
+  size?: string;
+  speed?: number;
+};
+
+function resolveRaceIcon(name: string) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('elf')) return Leaf;
+  if (normalized.includes('dwarf')) return Gem;
+  if (normalized.includes('dragon')) return Flame;
+  if (normalized.includes('orc')) return Swords;
+  if (normalized.includes('halfling')) return Feather;
+  if (normalized.includes('gnome')) return Sparkles;
+  if (normalized.includes('tiefling')) return Flame;
+  if (normalized.includes('aarakocra') || normalized.includes('bird')) return Bird;
+  if (normalized.includes('human')) return Users;
+  if (normalized.includes('goliath') || normalized.includes('giant')) return Shield;
+  return Wand2;
+}
+
+interface RaceSelectionGridProps {
+  options: RaceOption[];
+  selectedRace: string;
+  onSelect: (race: string) => void;
+  loading: boolean;
+}
+
+function RaceSelectionGrid({ options, selectedRace, onSelect, loading }: RaceSelectionGridProps) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-midnight-600 bg-midnight-700/60 p-6">
+        <DiceLoader size="small" diceCount={3} />
+      </div>
+    );
+  }
+
+  if (options.length === 0) {
+    return (
+      <p className="text-sm text-shadow-500">No races available yet. Configure the ruleset to unlock racial options.</p>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {options.map((race, index) => {
+        const Icon = resolveRaceIcon(race.name);
+        const isSelected = race.name === selectedRace;
+        const gradientIndex = index % 6;
+        const gradientPalettes = [
+          'from-aurora-500/25 via-aurora-400/10 to-midnight-800/70',
+          'from-nebula-500/25 via-nebula-400/10 to-midnight-800/70',
+          'from-amber-500/25 via-amber-400/10 to-midnight-800/70',
+          'from-emerald-500/25 via-emerald-400/10 to-midnight-800/70',
+          'from-indigo-500/25 via-indigo-400/10 to-midnight-800/70',
+          'from-rose-500/25 via-rose-400/10 to-midnight-800/70',
+        ];
+
+        return (
+          <button
+            key={race.id}
+            type="button"
+            onClick={() => onSelect(race.name)}
+            className={clsx(
+              'group relative overflow-hidden rounded-2xl border px-5 py-6 text-left transition-all duration-200',
+              'border-midnight-600 bg-midnight-800/80 hover:border-aurora-400/60 hover:bg-midnight-700/90',
+              isSelected && 'border-aurora-400/80 bg-gradient-to-br shadow-[0_12px_28px_rgba(29,143,242,0.25)]',
+              isSelected && gradientPalettes[gradientIndex]
+            )}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className={clsx(
+                  'flex h-12 w-12 items-center justify-center rounded-xl border-2 transition-all',
+                  isSelected ? 'border-white/70 bg-white/10 text-white' : 'border-aurora-400/30 text-aurora-200'
+                )}
+              >
+                <Icon className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-lg font-semibold text-shadow-50 group-hover:text-aurora-100">{race.name}</p>
+                  {(race.size || race.speed) && (
+                    <p className="text-xs font-medium uppercase tracking-[0.35em] text-shadow-400">
+                      {[race.size, race.speed ? `${race.speed} ft` : undefined].filter(Boolean).join(' • ')}
+                    </p>
+                  )}
+                </div>
+                {race.description ? (
+                  <p className="line-clamp-3 text-sm leading-relaxed text-shadow-300">{race.description}</p>
+                ) : null}
+              </div>
+            </div>
+            {isSelected && (
+              <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/10 shadow-[0_18px_32px_rgba(29,143,242,0.35)]" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatAlignmentOption(name: string) {
+  const [ethics, morality] = name.split(' ');
+  return `${ethics?.charAt(0)}${morality ? `-${morality?.charAt(0)}` : ''}`.toUpperCase();
+}
+
+function CharacterAssetPreview({ asset }: { asset: CharacterSheetAsset }) {
+  return (
+    <div className="rounded-3xl border border-aurora-400/20 bg-midnight-900/70 p-6 shadow-[0_18px_40px_rgba(7,5,10,0.55)]">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-3">
+          <h3 className="text-2xl font-bold text-aurora-200">{asset.summary.name}</h3>
+          <p className="text-sm uppercase tracking-[0.32em] text-shadow-400">
+            {asset.summary.race} • {asset.summary.characterClass}
+          </p>
+          <div className="flex flex-wrap gap-2 text-sm text-shadow-200">
+            <span className="rounded-full border border-aurora-400/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-aurora-200">
+              LV {asset.summary.level}
+            </span>
+            <span className="rounded-full border border-shadow-500/50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-shadow-200">
+              {asset.summary.alignment}
+            </span>
+          </div>
+          <p className="text-xs text-shadow-500">
+            {asset.metadata.demo ? 'Demo asset – not saved' : 'Ready to add to the room roster'}
+          </p>
+        </div>
+        {asset.avatarPreview?.portrait ? (
+          <img
+            src={asset.avatarPreview.portrait.data}
+            alt={`${asset.summary.name} portrait`}
+            className="h-32 w-32 rounded-2xl border border-aurora-400/40 object-cover shadow-lg"
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export default function CharacterCreation({
+  room,
+  players = [],
+  assetMode = false,
+  settings,
+  onAssetCreated,
+}: CharacterCreationProps) {
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const currentUserAvatar = user?.photoURL && user.photoURL.trim().length > 0 ? user.photoURL : '/face.png';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<Partial<AvatarPreviewResponse>>({});
+  const [placeholderRefs, setPlaceholderRefs] = useState<Partial<
+    Record<keyof AvatarPreviewResponse, ReferenceImagePayload>
+  > | null>(null);
+  const [placeholderDimensions, setPlaceholderDimensions] = useState<
+    Partial<Record<keyof AvatarPreviewResponse, { width: number; height: number }>>
+  >({});
+  const [previewLoadState, setPreviewLoadState] = useState<Record<keyof AvatarPreviewResponse, boolean>>({
+    portrait: false,
+    upperBody: false,
+    fullBody: false,
+  });
+  const [placeholderLoading, setPlaceholderLoading] = useState(false);
+  const { isBusy: previewBusy } = useDebouncedBusy(previewLoading, { enterDelayMs: 180 });
+
+  const allReady = !assetMode && players.length > 0 && players.every((p) => p.isReady);
+  const isStarting = allReady && room?.phase === 'CHARACTER_CREATION';
+
+  const { data: alignments, loading: alignmentsLoading } = useAlignments();
+  const { data: races, loading: racesLoading } = useRaces();
+  const { data: classes, loading: classesLoading } = useClasses();
+  const dataLoading = alignmentsLoading || racesLoading || classesLoading;
+
+  const userPlayer = !assetMode ? players.find((p) => p.userId === user?.uid) : undefined;
+  const hasCharacter = !assetMode && !!userPlayer;
+
+  const startingLevel = settings?.startingLevel || room?.settings?.startingLevel || 1;
+  const attributeBudget = settings?.attributeBudget || room?.settings?.attributePointBudget || 27;
+  const [customLevel, setCustomLevel] = useState(startingLevel);
+  const effectiveLevel = assetMode ? customLevel : startingLevel;
+
+  useEffect(() => {
+    if (!assetMode) {
+      setCustomLevel(startingLevel);
+    }
+  }, [assetMode, startingLevel]);
+
+  const [formData, setFormData] = useState<CharacterFormState>({
+    name: '',
+    race: 'Human',
+    characterClass: 'Fighter',
+    background: '',
+    alignment: 'Neutral Good',
+    attributes: { Strength: 8, Dexterity: 8, Constitution: 8, Intelligence: 8, Wisdom: 8, Charisma: 8 },
+    skills: {},
+    equipment: '',
+    proficienciesAndLanguages: '',
+    features: '',
+    treasure: '',
+    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+    resourcePools: [],
+    talents: [],
+    expertises: [],
+    appearance: { age: '', height: '', weight: '', eyes: '', skin: '', hair: '', description: '' },
+    personality: { traits: '', ideals: '', bonds: '', flaws: '' },
+  });
+
+  // Equipment state management
+  const [equipmentItems, setEquipmentItems] = useState<EquipmentItemData[]>([]);
+  const [equipmentGold, setEquipmentGold] = useState(0);
+  const [inventory, setInventory] = useState<Array<{ itemIndex: string; quantity: number }>>([]);
+
+  // Equipped items state (for shop display)
+  const [equippedItems] = useState<Record<string, string | null>>({
+    mainHand: null,
+    offHand: null,
+    armor: null,
+    shield: null,
+    accessory1: null,
+    accessory2: null,
+  });
+
+  // Fetch equipment items on mount
+  useEffect(() => {
+    const fetchEquipment = async () => {
+      try {
+        const response = await fetch('/api/game-data/equipment');
+        if (response.ok) {
+          const { data } = await response.json();
+          setEquipmentItems(data);
+        }
+      } catch (err) {
+        console.error('Failed to load equipment:', err);
+      }
+    };
+    fetchEquipment();
+  }, []);
+
+  // Set initial gold based on class
+  useEffect(() => {
+    if (formData.characterClass) {
+      // In asset mode, start with unlimited gold; in game mode, start with class-based gold
+      setEquipmentGold(assetMode ? 9999999 : 100);
+    }
+  }, [formData.characterClass, assetMode]);
+
+  // Equipment handlers
+  const handleBuyItem = (itemIndex: string) => {
+    const item = equipmentItems.find((i) => i.index === itemIndex);
+    if (!item) return;
+
+    // In asset mode, don't deduct gold
+    if (assetMode) {
+      const existingIndex = inventory.findIndex((i) => i.itemIndex === itemIndex);
+      if (existingIndex !== -1) {
+        const newInventory = [...inventory];
+        newInventory[existingIndex].quantity += 1;
+        setInventory(newInventory);
+      } else {
+        setInventory([...inventory, { itemIndex, quantity: 1 }]);
+      }
+    } else {
+      // Game mode: deduct gold
+      const cost = item.cost?.quantity || 0;
+      if (equipmentGold >= cost) {
+        setEquipmentGold(equipmentGold - cost);
+        const existingIndex = inventory.findIndex((i) => i.itemIndex === itemIndex);
+        if (existingIndex !== -1) {
+          const newInventory = [...inventory];
+          newInventory[existingIndex].quantity += 1;
+          setInventory(newInventory);
+        } else {
+          setInventory([...inventory, { itemIndex, quantity: 1 }]);
+        }
+      }
+    }
+  };
+
+  const handleBuyStartingPack = () => {
+    // Add starting pack items for the class
+    // For now, just give 50gp worth of items as placeholder
+    setEquipmentGold(assetMode ? 9999999 : equipmentGold + 50);
+  };
+
+  const pointsUsed = useMemo(() => calculateTotalPoints(formData.attributes), [formData.attributes]);
+  const pointsRemaining = attributeBudget - pointsUsed;
+
+  const updateField = (field: keyof CharacterFormState, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const setAttributeScore = useCallback(
+    (attr: Attribute, rawValue: number) => {
+      setFormData((prev) => {
+        const currentScore = prev.attributes[attr];
+        const clamped = Math.max(8, Math.min(15, Math.round(rawValue)));
+        if (clamped === currentScore) return prev;
+
+        const currentTotal = calculateTotalPoints(prev.attributes);
+        const nextTotal =
+          currentTotal -
+          (prev.attributes[attr] ? calculateTotalPoints({ [attr]: prev.attributes[attr] }) : 0) +
+          calculateTotalPoints({ [attr]: clamped });
+        if (nextTotal > attributeBudget) return prev;
+
+        return { ...prev, attributes: { ...prev.attributes, [attr]: clamped } };
+      });
+    },
+    [attributeBudget]
+  );
+
+  const updateAppearance = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, appearance: { ...prev.appearance, [field]: value } }));
+  };
+
+  const updatePersonality = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, personality: { ...prev.personality, [field]: value } }));
+  };
+
+  const ensurePlaceholderReferences = useCallback(async () => {
+    if (placeholderRefs) return placeholderRefs;
+
+    setPlaceholderLoading(true);
+    try {
+      const { refs, dims } = await loadPlaceholderReferences();
+      setPlaceholderRefs(refs);
+      setPlaceholderDimensions(dims);
+      return refs;
+    } finally {
+      setPlaceholderLoading(false);
+    }
+  }, [placeholderRefs]);
+
+  useEffect(() => {
+    ensurePlaceholderReferences().catch((refError) => {
+      console.error('Failed to prepare placeholder references', refError);
+    });
+  }, [ensurePlaceholderReferences]);
+
+  const loadTemplate = async (archetype: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/game-data/character-templates/${archetype}`);
+      const result = await response.json();
+
+      if (!result.success) throw new Error('Failed to load template');
+
+      const template = result.data;
+      if (!template?.attributes?.Strength) throw new Error('Template missing required attributes');
+
+      setFormData({
+        name: template.name,
+        race: template.race,
+        characterClass: template.characterClass,
+        background: template.backstory,
+        alignment: template.alignment,
+        attributes: {
+          Strength: template.attributes?.Strength ?? 8,
+          Dexterity: template.attributes?.Dexterity ?? 8,
+          Constitution: template.attributes?.Constitution ?? 8,
+          Intelligence: template.attributes?.Intelligence ?? 8,
+          Wisdom: template.attributes?.Wisdom ?? 8,
+          Charisma: template.attributes?.Charisma ?? 8,
+        },
+        skills: template.skills ?? {},
+        equipment: template.equipment ?? '',
+        proficienciesAndLanguages: template.proficienciesAndLanguages ?? '',
+        features: template.features ?? '',
+        treasure: template.treasure ?? '',
+        currency: template.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+        resourcePools: template.resourcePools ?? [],
+        talents: template.talents ?? [],
+        expertises: template.expertises ?? [],
+        appearance: {
+          age: template.appearance?.age ?? '',
+          height: template.appearance?.height ?? '',
+          weight: template.appearance?.weight ?? '',
+          eyes: template.appearance?.eyes ?? '',
+          skin: template.appearance?.skin ?? '',
+          hair: template.appearance?.hair ?? '',
+          description: template.appearance?.description ?? '',
+        },
+        personality: {
+          traits: template.personality?.traits ?? '',
+          ideals: template.personality?.ideals ?? '',
+          bonds: template.personality?.bonds ?? '',
+          flaws: template.personality?.flaws ?? '',
+        },
+      });
+      setAvatarPreview({});
+      setPreviewLoading(false);
+      setPreviewLoadState({ portrait: false, upperBody: false, fullBody: false });
+      setPreviewError(null);
+    } catch (err) {
+      setError(t('characterCreation.errors.templateFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePreview = async () => {
+    try {
+      setPreviewLoading(true);
+      setPreviewError(null);
+      setAvatarPreview({});
+      setPreviewLoadState({ portrait: true, upperBody: true, fullBody: true });
+      const refs = await ensurePlaceholderReferences();
+
+      const roomForPayload: Room =
+        assetMode || !room
+          ? {
+              id: 'asset',
+              code: 'ASSET',
+              phase: GamePhase.CHARACTER_CREATION,
+              worldDescription: 'Character sheet asset creation',
+              settings: null,
+              ownerId: '',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            }
+          : room;
+
+      const payload = buildAvatarPayload(formData, roomForPayload, startingLevel);
+      const portraitPayload = appendReference(payload, refs?.portrait);
+      const portraitRaw = await generateAvatarPortrait(portraitPayload);
+      let portrait = portraitRaw;
+      try {
+        portrait = await downscalePreviewImage(portraitRaw);
+      } catch (downscaleError) {
+        console.warn('Failed to downscale portrait preview', downscaleError);
+      }
+      setAvatarPreview({ portrait });
+      setPreviewLoadState((prev) => ({ ...prev, portrait: false }));
+
+      const upperBodyPayload = appendReference(payload, refs?.upperBody);
+      const upperBodyRaw = await generateAvatarUpperBody(upperBodyPayload, portrait);
+      let upperBody = upperBodyRaw;
+      try {
+        upperBody = await downscalePreviewImage(upperBodyRaw);
+      } catch (downscaleError) {
+        console.warn('Failed to downscale upper-body preview', downscaleError);
+      }
+      setAvatarPreview((prev) => ({ ...prev, portrait, upperBody }));
+      setPreviewLoadState((prev) => ({ ...prev, upperBody: false }));
+
+      const fullBodyPayload = appendReference(payload, refs?.fullBody);
+      const fullBodyRaw = await generateAvatarFullBody(fullBodyPayload, portrait, upperBody);
+      let fullBody = fullBodyRaw;
+      try {
+        fullBody = await downscalePreviewImage(fullBodyRaw);
+      } catch (downscaleError) {
+        console.warn('Failed to downscale full-body preview', downscaleError);
+      }
+      setAvatarPreview((prev) => ({ ...prev, portrait, upperBody, fullBody }));
+      setPreviewLoadState({ portrait: false, upperBody: false, fullBody: false });
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : t('characterCreation.errors.generatePortraits'));
+    } finally {
+      setPreviewLoading(false);
+      setPreviewLoadState({ portrait: false, upperBody: false, fullBody: false });
+    }
+  };
+
+  const handleCreateCharacter = async () => {
+    if (assetMode) {
+      // Asset mode: just create the asset and notify parent
+      const asset = buildCharacterSheetAsset({
+        form: formData,
+        level: effectiveLevel,
+        avatarPreview,
+        demo: false,
+        originRoomId: room?.id,
+      });
+      onAssetCreated?.(asset);
+      return;
+    }
+
+    if (!room) {
+      setError('Room not found');
+      return;
+    }
+
+    if (!formData.name.trim()) {
+      setError(t('characterCreation.errors.nameRequired'));
+      return;
+    }
+
+    if (!formData.background.trim() || formData.background.length < 50) {
+      setError(t('characterCreation.errors.backgroundShort'));
+      return;
+    }
+
+    if (pointsRemaining !== 0) {
+      setError(
+        `${t('characterCreation.errors.pointsRequiredPrefix')} ${attributeBudget} ${t('characterCreation.errors.pointsRequiredSuffix')} (${pointsRemaining} ${t('characterCreation.errors.pointsRemainingSuffix')})`
+      );
+      return;
+    }
+
+    if (!avatarPreview.portrait || !avatarPreview.upperBody || !avatarPreview.fullBody) {
+      setError(t('characterCreation.errors.missingPortraits'));
+      return;
+    }
+
+    const { portrait, upperBody, fullBody } = avatarPreview;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const conModifier = Math.floor((formData.attributes.Constitution - 10) / 2);
+      const dexModifier = Math.floor((formData.attributes.Dexterity - 10) / 2);
+      const armorClass = 10 + dexModifier;
+      const proficiencyBonus = 2;
+
+      await addCharacter(room.id, {
+        ...formData,
+        level: startingLevel,
+        xp: 0,
+        hp: 10 + conModifier,
+        maxHp: 10 + conModifier,
+        temporaryHp: 0,
+        hitDice: { total: startingLevel, current: startingLevel },
+        deathSaves: { successes: 0, failures: 0 },
+        armorClass,
+        initiative: dexModifier,
+        speed: 30,
+        proficiencyBonus,
+        inspiration: false,
+        savingThrows: {
+          fortitude: conModifier,
+          reflex: dexModifier,
+          will: Math.floor((formData.attributes.Wisdom - 10) / 2),
+        },
+        skills: formData.skills ?? {},
+        baseAttackBonus: proficiencyBonus,
+        attacks: [],
+        equipment: '',
+        currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+        proficienciesAndLanguages: '',
+        features: '',
+        backstory: formData.background,
+        alliesAndOrganizations: '',
+        treasure: '',
+        spellcasting: {
+          class: '',
+          ability: '',
+          saveDC: 0,
+          attackBonus: 0,
+          cantrips: [],
+          spellsKnown: [],
+          slots: [],
+        },
+        avatarPreview: { portrait, upperBody, fullBody },
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('characterCreation.errors.createFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const wizardSteps = useMemo<Step[]>(
+    () => [
+      {
+        id: 'basics',
+        title: t('characterCreation.steps.basics.title'),
+        description: t('characterCreation.steps.basics.description'),
+      },
+      {
+        id: 'quickCreate',
+        title: t('characterCreation.steps.quickCreate.title'),
+        description: t('characterCreation.steps.quickCreate.description'),
+      },
+      {
+        id: 'race',
+        title: t('characterCreation.steps.race.title'),
+        description: t('characterCreation.steps.race.description'),
+      },
+      {
+        id: 'attributes',
+        title: t('characterCreation.steps.attributes.title'),
+        description: t('characterCreation.steps.attributes.description'),
+      },
+      {
+        id: 'class',
+        title: t('characterCreation.steps.class.title'),
+        description: t('characterCreation.steps.class.description'),
+      },
+      { id: 'alignment', title: t('characterCreation.steps.alignment.title') },
+      { id: 'background', title: t('characterCreation.steps.background.title') },
+      { id: 'identity', title: t('characterCreation.steps.identity.title') },
+      {
+        id: 'equipment',
+        title: t('characterCreation.steps.equipment.title'),
+        description: t('characterCreation.steps.equipment.description'),
+      },
+      { id: 'portraits', title: t('characterCreation.steps.portraits.title') },
+      { id: 'review', title: t('characterCreation.steps.review.title') },
+    ],
+    [t]
+  );
+
+  const [activeStepId, setActiveStepId] = useState<string>(wizardSteps[0]?.id ?? 'basics');
+  const [assetCompleted, setAssetCompleted] = useState(false);
+
+  const assetPreview = useMemo<CharacterSheetAsset>(
+    () =>
+      buildCharacterSheetAsset({
+        form: formData,
+        level: effectiveLevel,
+        avatarPreview,
+        demo: assetMode,
+        originRoomId: room?.id,
+      }),
+    [formData, effectiveLevel, avatarPreview, assetMode, room?.id]
+  );
+
+  useEffect(() => {
+    if (activeStepId !== 'review') {
+      setAssetCompleted(false);
+    }
+  }, [activeStepId]);
+
+  const handleWizardNext = async () => {
+    if (activeStepId === 'review') {
+      if (assetMode) {
+        setAssetCompleted(true);
+        setError(null);
+        const asset = buildCharacterSheetAsset({
+          form: formData,
+          level: effectiveLevel,
+          avatarPreview,
+          demo: false,
+          originRoomId: room?.id,
+        });
+        onAssetCreated?.(asset);
+      } else {
+        await handleCreateCharacter();
+      }
+    }
+  };
+
+  const isFinalStep = activeStepId === 'review';
+  const showWizardActions = !(!assetMode && hasCharacter);
+
+  if (!assetMode && hasCharacter && userPlayer && room) {
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-8">
+        <div className="mx-auto flex max-w-5xl flex-col gap-8">
+          <div className="space-y-3 text-center md:text-left">
+            <h1 className="text-3xl font-bold text-aurora-200 md:text-4xl">{t('characterCreation.header.title')}</h1>
+            <p className="text-shadow-400">{t('characterCreation.header.subtitle')}</p>
+          </div>
+
+          <section className="rounded-2xl border border-midnight-600 bg-midnight-800/70 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={currentUserAvatar}
+                  alt={userPlayer.character?.name ?? 'Character avatar'}
+                  className="h-14 w-14 rounded-full border border-aurora-400/40 object-cover shadow-lg"
+                />
+                <div>
+                  <h2 className="text-2xl font-bold text-shadow-50">{userPlayer.character?.name ?? 'Unknown'}</h2>
+                  <p className="text-sm text-shadow-300">
+                    Level {userPlayer.character?.level ?? 1} {userPlayer.character?.race ?? ''}{' '}
+                    {userPlayer.character?.characterClass ?? ''}
+                  </p>
+                </div>
+              </div>{' '}
+              <div className="flex flex-col gap-2 text-sm text-shadow-400">
+                <span>
+                  {t('characterCreation.party.readyCountSuffix')}: {players.filter((p) => p.isReady).length} /{' '}
+                  {room.settings?.playerCount || players.length}
+                </span>
+                {userPlayer.isReady ? (
+                  <Button onClick={() => setReady(room.id, false)} variant="secondary">
+                    {t('characterCreation.party.unready')}
+                  </Button>
+                ) : (
+                  <Button onClick={() => setReady(room.id, true)}>{t('characterCreation.party.readyUp')}</Button>
+                )}
+              </div>
+            </div>
+            {userPlayer.character?.backstory ? (
+              <div className="mt-4 rounded-xl border border-shadow-700 bg-shadow-900/50 p-4">
+                <p className="text-xs uppercase tracking-[0.32em] text-shadow-500">
+                  {t('characters.labels.backstory')}
+                </p>
+                <p className="text-sm text-shadow-200">{userPlayer.character.backstory}</p>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="rounded-2xl border border-midnight-600 bg-midnight-800/70 p-6">
+            <h3 className="text-xl font-semibold text-aurora-200 mb-4">{t('characterCreation.party.title')}</h3>
+            <div className="grid gap-3">
+              {players
+                .filter((player) => player.character !== null)
+                .map((player) => (
+                  <div
+                    key={player.id}
+                    className="flex flex-col gap-2 rounded-xl border border-midnight-600 bg-midnight-900/60 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-shadow-100">{player.character!.name}</p>
+                      <p className="text-xs text-shadow-500">
+                        Level {player.character!.level} {player.character!.race} {player.character!.characterClass}
+                      </p>
+                    </div>
+                    {player.isReady ? (
+                      <span className="text-xs font-semibold uppercase tracking-[0.35em] text-aurora-200">
+                        {t('characterCreation.party.readyBadge')}
+                      </span>
+                    ) : null}
+                  </div>
+                ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  const raceOptions: RaceOption[] = (races ?? []).map((race) => ({
+    id: race.id,
+    name: race.name,
+    description: race.description,
+    size: race.size,
+    speed: race.speed,
+  }));
+
+  const classOptions: ToggleButtonOption<string>[] = (classes ?? []).map((cls) => ({
+    value: cls.name,
+    label: cls.name,
+    description: cls.description,
+  }));
+
+  const alignmentOptions: ToggleButtonOption<string>[] = (alignments ?? []).map((alignment) => ({
+    value: alignment.name,
+    label: alignment.name,
+    description: alignment.description,
+  }));
+
+  const backgroundValid = formData.background.trim().length >= 50;
+  const portraitsValid = Boolean(avatarPreview.portrait && avatarPreview.upperBody && avatarPreview.fullBody);
+
+  return (
+    <>
+      {/* World Generation Progress Overlay */}
+      {room && <WorldGenerationProgress roomId={room.id} />}
+
+      {(loading || dataLoading) && (
+        <LoadingOverlay
+          message={loading ? t('characterCreation.overlays.creating') : t('characterCreation.overlays.loadingData')}
+        />
+      )}
+      {isStarting && <LoadingOverlay message={t('gameplay.adventureBegins')} />}
+      <div className="min-h-screen bg-background p-4 md:p-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8">
+          <header className="space-y-3 text-center md:text-left">
+            <h1 className="text-3xl font-bold text-aurora-200 md:text-4xl">{t('characterCreation.header.title')}</h1>
+            <p className="text-shadow-400">{t('characterCreation.header.subtitle')}</p>
+          </header>
+
+          {!assetMode && room ? (
+            <section className="rounded-2xl border border-midnight-600 bg-midnight-800/80 p-6">
+              <h2 className="text-xl font-semibold text-aurora-200 mb-3">{t('characterCreation.header.worldTitle')}</h2>
+              <div className="text-shadow-200 leading-relaxed prose-invert max-w-none">
+                {room.worldDescription ? (
+                  <MarkdownMessage content={room.worldDescription} />
+                ) : (
+                  <p className="italic text-shadow-500">{t('characterCreation.header.worldLoading')}</p>
+                )}
+              </div>
+            </section>
+          ) : null}
+
+          <FormWizard
+            steps={wizardSteps}
+            onStepChange={(index) => setActiveStepId(wizardSteps[index]?.id ?? 'basics')}
+            onComplete={() => {
+              if (assetMode) {
+                setAssetCompleted(true);
+              }
+            }}
+          >
+            <FormWizardSteps className="mb-4" />
+            <FormWizardContent className="space-y-12">
+              <FormWizardStep step="basics">
+                <StepValidationGate valid={Boolean(formData.name.trim())} />
+                <div className="space-y-6">
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+                    <div className="space-y-4">
+                      <Label htmlFor="name">{t('characterCreation.form.nameLabel')}</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => updateField('name', e.target.value)}
+                        placeholder={t('characterCreation.form.namePlaceholder')}
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label>{t('characterCreation.form.startingLevel')}</Label>
+                      <NumericInput
+                        value={effectiveLevel}
+                        onChange={(value) => {
+                          if (assetMode) {
+                            setCustomLevel(value);
+                          }
+                        }}
+                        min={1}
+                        max={20}
+                        disabled={!assetMode}
+                        showButtons={assetMode}
+                        className="max-w-xs"
+                      />
+                      {!assetMode ? <p className="text-xs text-shadow-500">Locked by room settings</p> : null}
+                    </div>
+                  </div>
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="quickCreate">
+                <StepValidationGate valid />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">{t('characterCreation.quickCreate.title')}</h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.quickCreate.description')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'fighter',
+                      'wizard',
+                      'rogue',
+                      'cleric',
+                      'ranger',
+                      'paladin',
+                      'barbarian',
+                      'bard',
+                      'monk',
+                      'sorcerer',
+                      'druid',
+                    ].map((archetype) => (
+                      <Button
+                        key={archetype}
+                        type="button"
+                        onClick={() => loadTemplate(archetype)}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        {archetype.charAt(0).toUpperCase() + archetype.slice(1)}
+                      </Button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-shadow-400 italic">
+                    Templates auto-populate your character. Adjust any step before finalizing.
+                  </p>
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="race">
+                <StepValidationGate valid={Boolean(formData.race)} />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">{t('characterCreation.steps.race.heading')}</h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.steps.race.copy')}</p>
+                  <RaceSelectionGrid
+                    options={raceOptions}
+                    selectedRace={formData.race}
+                    onSelect={(race) => updateField('race', race)}
+                    loading={racesLoading}
+                  />
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="attributes">
+                <StepValidationGate valid={pointsRemaining === 0} />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">{t('characterCreation.pointBuy.title')}</h2>
+                  <p className="text-sm text-shadow-400">
+                    Allocate {attributeBudget} points. Exact budget required before advancing.
+                  </p>
+                  <div
+                    className={clsx(
+                      'rounded-full px-4 py-1 text-sm font-semibold uppercase tracking-[0.32em] inline-block',
+                      pointsRemaining === 0
+                        ? 'bg-emerald-500/20 text-emerald-200'
+                        : pointsRemaining > 0
+                          ? 'bg-amber-500/20 text-amber-200'
+                          : 'bg-red-500/20 text-red-200'
+                    )}
+                  >
+                    {pointsRemaining === 0
+                      ? t('characterCreation.pointBuy.perfect')
+                      : `${pointsRemaining} ${t('characterCreation.pointBuy.remainingSuffix')}`}
+                  </div>
+                  <AttributesSection
+                    attributes={formData.attributes}
+                    pointsRemaining={pointsRemaining}
+                    attributeBudget={attributeBudget}
+                    onAttributeChange={setAttributeScore}
+                  />
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="class">
+                <StepValidationGate valid={Boolean(formData.characterClass)} />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">
+                    {t('characterCreation.steps.class.heading')}
+                  </h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.steps.class.copy')}</p>
+                  <ToggleButtonGroup
+                    options={classOptions}
+                    value={formData.characterClass}
+                    onChange={(value) => updateField('characterClass', value)}
+                    size="lg"
+                    className="flex flex-col gap-3"
+                  />
+                  {classes && classes.length > 0 ? (
+                    <div className="rounded-2xl border border-midnight-600 bg-midnight-900/50 p-4 text-sm text-shadow-300">
+                      {classes.find((cls) => cls.name === formData.characterClass)?.description ?? ''}
+                    </div>
+                  ) : null}
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="alignment">
+                <StepValidationGate valid={Boolean(formData.alignment)} />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">
+                    {t('characterCreation.steps.alignment.heading')}
+                  </h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.steps.alignment.copy')}</p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {alignmentOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateField('alignment', option.value)}
+                        className={clsx(
+                          'rounded-2xl border px-4 py-3 text-left transition-all',
+                          option.value === formData.alignment
+                            ? 'border-aurora-400/70 bg-aurora-500/10 text-aurora-100 shadow-[0_12px_28px_rgba(29,143,242,0.2)]'
+                            : 'border-midnight-600 bg-midnight-800/70 text-shadow-200 hover:border-aurora-400/40 hover:bg-midnight-700/80'
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-shadow-50">{option.value}</span>
+                          <span className="rounded-full border border-aurora-400/40 px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.32em] text-aurora-200">
+                            {formatAlignmentOption(option.value)}
+                          </span>
+                        </div>
+                        {option.description ? (
+                          <p className="mt-2 text-xs leading-relaxed text-shadow-400">{option.description}</p>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="background">
+                <StepValidationGate valid={backgroundValid} />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">
+                    {t('characterCreation.form.backgroundLabel')}
+                  </h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.form.backgroundHint')}</p>
+                  <Textarea
+                    rows={8}
+                    value={formData.background}
+                    onChange={(e) => updateField('background', e.target.value)}
+                    placeholder={t('characterCreation.form.backgroundPlaceholder')}
+                    className="w-full"
+                  />
+                  <div className="flex items-center justify-between text-xs text-shadow-500">
+                    <span>
+                      {formData.background.length}/50 {t('characterCreation.form.characters')}
+                    </span>
+                    {backgroundValid ? <span className="text-emerald-200">✓ Ready</span> : null}
+                  </div>
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="identity">
+                <StepValidationGate valid />
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="space-y-4 rounded-2xl border border-midnight-600 bg-midnight-800/70 p-5">
+                    <h3 className="text-lg font-semibold text-aurora-200">
+                      {t('characterCreation.appearance.sectionTitle')}
+                    </h3>
+                    <AppearanceSection appearance={formData.appearance} onAppearanceChange={updateAppearance} />
+                  </div>
+                  <div className="space-y-4 rounded-2xl border border-midnight-600 bg-midnight-800/70 p-5">
+                    <h3 className="text-lg font-semibold text-aurora-200">
+                      {t('characterCreation.personality.sectionTitle')}
+                    </h3>
+                    <PersonalitySection personality={formData.personality} onPersonalityChange={updatePersonality} />
+                  </div>
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="equipment">
+                <StepValidationGate valid />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">
+                    {t('characterCreation.steps.equipment.heading')}
+                  </h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.steps.equipment.copy')}</p>
+
+                  {equipmentItems.length > 0 ? (
+                    <EquipmentShop
+                      items={equipmentItems}
+                      currentGold={equipmentGold}
+                      equippedItems={equippedItems}
+                      inventory={inventory}
+                      onBuyItem={handleBuyItem}
+                      onBuyStartingPack={handleBuyStartingPack}
+                      startingPackCost={50}
+                      mode={assetMode ? 'asset' : 'game'}
+                    />
+                  ) : (
+                    <div className="rounded-2xl border border-midnight-600 bg-midnight-800/70 p-6">
+                      <DiceLoader text="Loading equipment..." />
+                    </div>
+                  )}
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="portraits">
+                <StepValidationGate valid={portraitsValid} />
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-aurora-200">{t('characterCreation.portraits.title')}</h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.portraits.description')}</p>
+                  <AvatarSection
+                    avatarPreview={avatarPreview}
+                    previewLoading={previewLoading}
+                    previewLoadState={previewLoadState}
+                    previewBusy={previewBusy}
+                    previewError={previewError}
+                    placeholderLoading={placeholderLoading}
+                    placeholderDimensions={placeholderDimensions}
+                    onGeneratePreview={handleGeneratePreview}
+                  />
+                </div>
+              </FormWizardStep>
+
+              <FormWizardStep step="review">
+                <StepValidationGate valid />
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold text-aurora-200">
+                    {t('characterCreation.steps.review.heading')}
+                  </h2>
+                  <p className="text-sm text-shadow-400">{t('characterCreation.steps.review.copy')}</p>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-midnight-600 bg-midnight-800/60 p-5">
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.32em] text-shadow-400 mb-3">
+                        Profile
+                      </h3>
+                      <ul className="space-y-2 text-sm text-shadow-200">
+                        <li>
+                          <span className="font-semibold text-shadow-100">Name:</span> {formData.name}
+                        </li>
+                        <li>
+                          <span className="font-semibold text-shadow-100">Level:</span> {effectiveLevel}
+                        </li>
+                        <li>
+                          <span className="font-semibold text-shadow-100">Race:</span> {formData.race}
+                        </li>
+                        <li>
+                          <span className="font-semibold text-shadow-100">Class:</span> {formData.characterClass}
+                        </li>
+                        <li>
+                          <span className="font-semibold text-shadow-100">Alignment:</span> {formData.alignment}
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="rounded-2xl border border-midnight-600 bg-midnight-800/60 p-5">
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.32em] text-shadow-400 mb-3">
+                        Attributes
+                      </h3>
+                      <div className="grid grid-cols-3 gap-3 text-sm text-shadow-200">
+                        {Object.entries(formData.attributes).map(([attr, score]) => (
+                          <div key={attr} className="rounded-xl border border-midnight-600 bg-midnight-900/60 p-3">
+                            <p className="text-xs uppercase tracking-[0.32em] text-shadow-500">{attr}</p>
+                            <p className="text-lg font-semibold text-shadow-50">{score}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {formData.background ? (
+                    <div className="rounded-2xl border border-midnight-600 bg-midnight-800/60 p-5">
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.32em] text-shadow-400 mb-3">
+                        Background Story
+                      </h3>
+                      <p className="text-sm leading-relaxed text-shadow-200 whitespace-pre-line">
+                        {formData.background}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <CharacterAssetPreview asset={assetPreview} />
+
+                  {assetMode && assetCompleted ? (
+                    <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                      <p>Character sheet asset created! You can create another or return to assets hub.</p>
+                    </div>
+                  ) : null}
+
+                  {error ? (
+                    <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+                      {error}
+                    </div>
+                  ) : null}
+                </div>
+              </FormWizardStep>
+            </FormWizardContent>
+
+            {showWizardActions ? (
+              <FormWizardActions
+                previousLabel={t('characterCreation.wizard.previous')}
+                nextLabel={isFinalStep ? t('characterCreation.wizard.finish') : t('characterCreation.wizard.next')}
+                completeLabel={
+                  assetMode ? t('characterCreation.wizard.finishAsset') : t('characterCreation.actions.create')
+                }
+                onNext={handleWizardNext}
+                showNext={!assetMode || !hasCharacter}
+              />
+            ) : null}
+          </FormWizard>
+        </div>
+      </div>
+    </>
+  );
+}

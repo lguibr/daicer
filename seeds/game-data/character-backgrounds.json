@@ -1,0 +1,80 @@
+[
+  {
+    "id": "acolyte",
+    "name": "Acolyte",
+    "description": "You have spent your life in service to a temple.",
+    "skillProficiencies": ["Insight", "Religion"]
+  },
+  {
+    "id": "charlatan",
+    "name": "Charlatan",
+    "description": "You have always had a way with people.",
+    "skillProficiencies": ["Deception", "Sleight of Hand"]
+  },
+  {
+    "id": "criminal",
+    "name": "Criminal",
+    "description": "You are an experienced criminal with a history of breaking the law.",
+    "skillProficiencies": ["Deception", "Stealth"]
+  },
+  {
+    "id": "entertainer",
+    "name": "Entertainer",
+    "description": "You thrive in front of an audience.",
+    "skillProficiencies": ["Acrobatics", "Performance"]
+  },
+  {
+    "id": "folk-hero",
+    "name": "Folk Hero",
+    "description": "You come from a humble social rank, but you are destined for so much more.",
+    "skillProficiencies": ["Animal Handling", "Survival"]
+  },
+  {
+    "id": "guild-artisan",
+    "name": "Guild Artisan",
+    "description": "You are a member of an artisan's guild.",
+    "skillProficiencies": ["Insight", "Persuasion"]
+  },
+  {
+    "id": "hermit",
+    "name": "Hermit",
+    "description": "You lived in seclusion for a formative part of your life.",
+    "skillProficiencies": ["Medicine", "Religion"]
+  },
+  {
+    "id": "noble",
+    "name": "Noble",
+    "description": "You understand wealth, power, and privilege.",
+    "skillProficiencies": ["History", "Persuasion"]
+  },
+  {
+    "id": "outlander",
+    "name": "Outlander",
+    "description": "You grew up in the wilds, far from civilization.",
+    "skillProficiencies": ["Athletics", "Survival"]
+  },
+  {
+    "id": "sage",
+    "name": "Sage",
+    "description": "You spent years learning the lore of the multiverse.",
+    "skillProficiencies": ["Arcana", "History"]
+  },
+  {
+    "id": "sailor",
+    "name": "Sailor",
+    "description": "You sailed on a seagoing vessel for years.",
+    "skillProficiencies": ["Athletics", "Perception"]
+  },
+  {
+    "id": "soldier",
+    "name": "Soldier",
+    "description": "You have trained as a warrior and fought in battles.",
+    "skillProficiencies": ["Athletics", "Intimidation"]
+  },
+  {
+    "id": "urchin",
+    "name": "Urchin",
+    "description": "You grew up on the streets alone, orphaned, and poor.",
+    "skillProficiencies": ["Sleight of Hand", "Stealth"]
+  }
+]

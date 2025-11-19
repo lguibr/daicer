@@ -1,0 +1,16 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "hp": "HP",
+    "ac": "AC",
+    "init": "Init",
+    "attack": "ATK",
+    "damage": "DMG"
+  }
+}

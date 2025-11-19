@@ -1,0 +1,172 @@
+---
+alwaysApply: true
+glob: '**/*'
+description: '⚠️ MANDATORY: The DAICE Planning Protocol. You MUST follow this 4-step process (Specify, Track, Plan, Result) before writing code for ANY non-trivial task. Code without a plan is strictly FORBIDDEN.'
+---
+
+### **Rule 38: The DAICE Planning Protocol - Analyze, Strategize, Decompose**
+
+**⚠️ CRITICAL ENFORCEMENT: This is NON-NEGOTIABLE. Before ANY code is written for a new feature, bug fix, or refactor, you MUST follow this structured planning protocol. We do not "vibe code"; we produce predictable outcomes from clear specifications.**
+
+The final output of this process is ALWAYS a list of atomic, actionable tasks.
+
+---
+
+# When Planning is REQUIRED
+
+You MUST use this protocol when:
+- Building a new feature (any size)
+- Making architectural changes (graph nodes, state schema, major refactors)
+- Fixing complex bugs that require changes across multiple files
+- Adding new API endpoints or services
+- Implementing new UI flows or components
+- Any task that affects >3 files or >50 lines of code
+
+**If there's any ambiguity about whether to plan, PLAN. Over-planning is better than under-planning.**
+
+---
+
+# When Planning Can Be SKIPPED
+
+You may skip this protocol ONLY for:
+- One-line fixes (typo, import, simple variable rename)
+- Updating a single string/constant
+- Adding a comment or docstring
+- Formatting-only changes
+
+**Everything else requires a plan.**
+
+---
+
+# The Four-Step Protocol (MANDATORY for All Planning)
+
+This protocol, inspired by Spec-Driven Development and the STAR method, forces rigorous thought. It ensures we fully understand the current state, the desired outcome, and the strategic path forward before decomposing work into manageable steps.
+
+## Step 1: Specify (The Situation - "As-Is")
+
+**Goal:** Analyze and document the current state of the codebase relevant to the task.
+
+**Action:** Before proposing any changes, you MUST first identify and list the key files, components, services, graph nodes, and state schemas involved. Demonstrate your understanding of how things work _now_.
+
+**Example:**
+```markdown
+#### 1. Specify (Situation - "As-Is")
+
+- The current `CombatGraph` in `backend/src/combat/graph.ts` manages turn flow.
+- Player actions are submitted via socket event and processed by nodes.
+- The `PlayerSchema` in `backend/src/combat/state.ts` has no field for "guarding" status.
+- The `attackNode` calculates damage without considering defensive stances other than AC.
+```
+
+---
+
+## Step 2: Track (The Goal & Gap - "To-Be")
+
+**Goal:** Clearly define the objective and the specific problems or gaps between the current state and desired state.
+
+**Action:** Articulate the "what" and "why." What is the user story or technical requirement? What specific problem are we solving? What will be measurably different when this task is complete?
+
+**Example:**
+```markdown
+#### 2. Track (Goal & Gap - "To-Be")
+
+- **Goal:** Players should be able to take a "Guard" action on their turn, which grants resistance to certain damage types until their next turn.
+- **Gap:** The state, game logic, and UI do not currently support this mechanic.
+```
+
+---
+
+## Step 3: Plan (The High-Level Action - "The Strategy")
+
+**Goal:** Formulate a high-level technical strategy to bridge the gap identified in Step 2.
+
+**Action:** This is the architectural approach, NOT the detailed task list. Describe _how_ you will solve the problem conceptually. For example: "We will introduce a new node to the combat graph," or "We will create a new reusable React hook to manage this state."
+
+**CRITICAL:** Use a Mermaid diagram here if the flow is complex (per Rule 33).
+
+**Example:**
+```markdown
+#### 3. Plan (High-Level Strategy)
+
+We will add a `guarding` status to the player's combat state. A new `guardNode` will be added to the graph to set this status. The existing `attackNode` and `turnStartNode` will be modified to apply and clear this status, respectively. The UI will get a new button to trigger the action.
+```
+
+---
+
+## Step 4: Result (The Atomic Tasks - "The To-Do List")
+
+**Goal:** Decompose the high-level plan from Step 3 into a concrete, ordered list of atomic, actionable tasks.
+
+**Action:** This is the final, executable output of the planning process. Each task MUST be:
+- **Atomic**: Represents a single, small piece of work
+- **Clear**: Unambiguously describes what needs to be done
+- **Located**: Explicitly mentions the file(s) to be created or modified
+
+**Example:**
+```markdown
+#### 4. Result (Atomic Tasks)
+
+1. **[State]** In `backend/src/combat/state.ts`, add `isGuarding: boolean` to the `CombatCharacterSchema`.
+2. **[Backend]** Create a new `guardNode.ts` in `backend/src/combat/nodes/` that sets `isGuarding` to `true` for the active character.
+3. **[Backend]** In `turnStartNode.ts`, add logic to set `isGuarding` to `false` for the character whose turn is beginning.
+4. **[Backend]** In `attack.ts` (the logic for the `attackNode`), modify damage calculation to halve incoming damage if target's `isGuarding` is `true`.
+5. **[Frontend]** In `frontend/src/components/combat/CombatActions.tsx`, add a "Guard" button that dispatches the appropriate socket event.
+6. **[E2E]** In `e2e/combat-actions.spec.ts`, add a new test to verify that a guarding player takes half damage from an attack.
+```
+
+---
+
+# Complete Example Application
+
+**User Request:** "Add a 'Ready' button for players in the lobby."
+
+**WRONG Approach:** Immediately open `LobbyScreen.tsx` and start adding a button.
+
+**CORRECT Approach (DAICE Planning Protocol):**
+
+```markdown
+### DAICE Planning Protocol: Adding 'Ready' Button
+
+#### 1. Specify (Situation - "As-Is")
+
+- The `LobbyScreen.tsx` component in `frontend/src/pages/` displays the current room state.
+- The `PlayerSchema` in `shared/player/schema.ts` defines the player state structure.
+- The `PlayerSidebar.tsx` component shows the list of players in the room.
+- Socket events are handled in `frontend/src/hooks/useSocket.ts`.
+- The backend has a socket handler directory in `backend/src/socket/handlers/`.
+
+#### 2. Track (Goal & Gap - "To-Be")
+
+- **Goal:** Each player in the lobby should have a "Ready" status that they can toggle. When all players are ready, the DM can start the game.
+- **Gap:** There is no `isReady` field in the player state, no UI button to toggle it, and no backend logic to handle the status change.
+
+#### 3. Plan (High-Level Strategy)
+
+We will add an `isReady` boolean field to the player state schema. A button in the UI will toggle this status by emitting a socket event to the backend. The backend will update the state via a graph invocation and broadcast the change to all players in the room.
+
+#### 4. Result (Atomic Tasks)
+
+1. **[State]** Add `isReady: boolean` field to `PlayerSchema` in `shared/player/schema.ts`.
+2. **[Backend]** Create new socket handler `backend/src/socket/handlers/ready.ts` that receives `player:ready` event and invokes graph to update player state.
+3. **[Backend]** Add a new node `readyNode.ts` in `backend/src/graph/nodes/` to toggle the `isReady` status for a specific player.
+4. **[Frontend UI]** Add a `<Button>` component to `PlayerSidebar.tsx`. Button appearance changes based on `player.isReady` status.
+5. **[Frontend Logic]** In `useSocket` hook, create `sendPlayerReady()` function that emits `player:ready` event.
+6. **[E2E]** Add test case in `e2e/.spec.ts` to verify clicking the button updates UI for all players in room.
+```
+
+---
+
+# Rationale
+
+This protocol forces clarity of thought, reduces wasted effort, and minimizes bugs by identifying complexities and edge cases upfront. A plan turns a complex problem into a series of manageable steps, making work more predictable and easier to review.
+
+**Planning is not overhead. Planning IS the work.**
+
+---
+
+# Cross-References
+
+- **Rule 45**: Master MCP Decision Protocol (use Obsidian MCP to create plan docs)
+- **Rule 33**: Mermaid Diagrams are Essential (use in Step 3 for complex flows)
+- **Rule 37**: Organize Agent Output (save plans in `thoughts/` with proper naming)
+- **Rule 16**: Plan and Debug, Don't Guess (systematic approach to problem-solving)

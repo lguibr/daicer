@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+glob: "frontend/src/{hooks,state,components,providers}/**/*.{ts,tsx}"
+---
+
+### **Rule 8: Frontend State is a Synchronized, Immutable Cache**
+
+The frontend's global state is a read-only cache of the backend's `GraphState`. It is updated exclusively via events from the backend (e.g., Socket.IO).
+
+*   **Rationale**: This maintains the backend LangGraph as the single source of truth, preventing state drift. The frontend reacts to authoritative state changes rather than owning them.
+*   **Implementation**:
+    *   Use a central `GraphEngine` class to hold the current state snapshot.
+    *   Use the `useSyncExternalStore` hook in React to subscribe to engine updates, ensuring correct and performant re-renders.
+    *   A Socket.IO listener is the primary mechanism for receiving state updates from the backend and applying them to the `GraphEngine`.

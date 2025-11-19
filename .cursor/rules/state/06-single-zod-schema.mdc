@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+glob: "**/src/{graph,tactical,state}/**/{schema,state}.ts"
+---
+
+### **Rule 6: A Single Zod Schema Defines the `GraphState`**
+
+The entire application state (`GraphState`) must be defined in a single, authoritative Zod schema (`src/state/schema.ts`). This schema is the contract for the LangGraph `StateGraph`, the Firestore checkpointer, and the frontend state engine.
+
+*   **Rationale**: A single schema ensures type safety and validation across the entire stack. It makes state changes predictable and prevents data drift between the backend and frontend.
+*   **Implementation**:
+    *   Use the `GraphStateSchema` to initialize the `StateGraph`.
+    *   Use Zod-derived types (`type GraphState = z.infer<typeof GraphStateSchema>`) in all node, service, and hook function signatures.

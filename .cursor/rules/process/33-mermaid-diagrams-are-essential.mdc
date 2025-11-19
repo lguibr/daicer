@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+glob: "**/*"
+description: "A core cultural rule that Mermaid diagrams are an essential tool for planning, communicating, and documenting all complex systems and workflows."
+---
+
+### **Rule 33: Mermaid Diagrams are Essential for Clarity**
+
+We love Mermaid diagrams. They are not an optional afterthought; they are a first-class tool for thinking, communicating, and documenting. We use them to explain complex logic to our teammates, to clarify our own thinking before we write code, and to create lasting documentation for the project.
+
+*   **Rationale**: Complex systems like DAICE, with its intricate state graphs and event flows, are often difficult to understand through code alone. Visual diagrams provide a high-level map that makes these systems approachable and easier to reason about. Because Mermaid is text-based, our diagrams can be version-controlled alongside our code, ensuring they remain a living part of our documentation.
+
+*   **Implementation Guidelines**:
+
+    1.  **Planning Tool**: Before implementing any non-trivial workflow, create a Mermaid diagram to map it out. This is a key part of **Rule #32 (Plan Before Code)**. A diagram helps identify potential issues in the flow before a single line of code is written.
+
+    2.  **Communication Tool**: Use diagrams in Pull Requests, design documents, and discussions to clearly explain how a new feature or refactor works. A simple flowchart can save hours of back-and-forth explanation.
+
+    3.  **Documentation Tool**: All significant architectural components and workflows must be documented with a Mermaid diagram.
+        *   **Location**: Store primary diagrams in the `docs/graphs/` directory.
+        *   **Embedding**: Embed relevant diagrams directly into the `README.md` file of the module they describe (e.g., the gameplay graph diagram in `backend/src/graph/README.md`).
+
+*   **When to Create or Update a Diagram**:
+    *   When creating a new LangGraph flow (e.g., a new character creation graph).
+    *   When modifying the edges or nodes of an existing graph.
+    *   When designing a complex data flow between the frontend and backend.
+    *   When documenting the high-level architecture of a new feature area.
+
+*   **Standard**: The system architecture diagram in the root `README.md` is the gold standard. All diagrams should strive for that level of clarity and completeness.

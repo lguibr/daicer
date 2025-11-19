@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+glob: "backend/src/{services,combat,utils}/**/*.ts"
+---
+
+### **Rule 5: All Non-Deterministic Operations MUST be `task()`s**
+
+Any operation with a variable outcome—such as an LLM call, a dice roll, or an external API request—must be wrapped in a LangGraph `task()`.
+
+*   **Rationale**: `task()` ensures the result of a non-deterministic operation is checkpointed. When the graph is resumed or replayed, LangGraph retrieves the saved result instead of re-executing, guaranteeing deterministic time-travel.
+*   **Implementation**:
+    *   Wrap all `langchain` agent/model invocations in a `task`.
+    *   Wrap all calls to the `DiceRoller` in a `task` to capture the roll's result at a specific point in the graph's history.
+
+    ```typescript
+    import { task } from '@langchain/langgraph';
+
+    // CORRECT: LLM call is wrapped for deterministic replay.
+    const processTurnTask = task('processGameTurn', async (params) => {
+      return await llm.invoke(prompt);
+    });
+    ```

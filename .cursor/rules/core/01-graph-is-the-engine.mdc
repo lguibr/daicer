@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+glob: "**/*"
+---
+
+### **Rule 1: The Graph is the Engine**
+
+This is the foundational principle. The LangGraph state machine is the authoritative source of truth for all significant game logic and state transitions.
+
+*   **Rationale**: Centralizing logic in the graph provides deterministic replayability, time-travel capabilities, robust error handling, and clear observability via LangSmith. It is the core of DAICE's architecture.
+*   **Implementation**: Any action that changes the core `GameState`—whether from a player, an AI DM, or a system event—must be processed through a node in a LangGraph workflow. Direct state mutations outside the graph are forbidden.

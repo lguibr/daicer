@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  NODE_VERSION: '22.13'
+  GCP_REGION: 'us-central1'
+  CLOUD_RUN_SERVICE: 'daicer-backend'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CLOUD_RUN_SA_KEY }}
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Build & deploy backend via Cloud Build
+        run: gcloud builds submit --config backend/cloudbuild.yaml
+
+      - name: Run Firestore seed job
+        run: gcloud builds submit --config seeds/cloudbuild.seed.yaml --substitutions=_FIREBASE_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel production environment
+        run: |
+          vercel pull \
+            --yes \
+            --environment=production \
+            --token "${{ secrets.VERCEL_TOKEN }}" \
+            --scope "${{ secrets.VERCEL_ORG_ID }}" \
+            --project "${{ secrets.VERCEL_PROJECT_ID }}" \
+            --cwd frontend
+
+      - name: Build frontend artifacts
+        run: |
+          vercel build \
+            --prod \
+            --token "${{ secrets.VERCEL_TOKEN }}" \
+            --scope "${{ secrets.VERCEL_ORG_ID }}" \
+            --project "${{ secrets.VERCEL_PROJECT_ID }}" \
+            --cwd frontend
+
+      - name: Deploy frontend via Vercel
+        run: |
+          vercel deploy \
+            --prebuilt \
+            --prod \
+            --token "${{ secrets.VERCEL_TOKEN }}" \
+            --scope "${{ secrets.VERCEL_ORG_ID }}" \
+            --project "${{ secrets.VERCEL_PROJECT_ID }}" \
+            --cwd frontend
+
+

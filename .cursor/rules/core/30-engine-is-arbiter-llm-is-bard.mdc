@@ -1,0 +1,57 @@
+---
+alwaysApply: true
+glob: "**/*"
+description: "The foundational rule: The game engine handles all mechanics and state changes deterministically. The LLM's role is strictly for narrative, role-playing, and interpreting game state, not deciding mechanical outcomes."
+---
+
+### **Rule 30: The Engine is the Arbiter of Mechanics; The LLM is the Bard**
+
+This is the most critical architectural principle in DAICE. The game engine is the ultimate authority on rules, state, and mechanical outcomes. The Large Language Model (LLM) is the creative storyteller responsible for narrative, role-playing, and interpreting the engine's results. The LLM proposes actions; the engine determines their success and consequences.
+
+*   **Rationale**: This separation ensures the game is **deterministic, fair, and rule-consistent**. It prevents the LLM from hallucinating game mechanics (e.g., ignoring an Armor Class value, inventing spell effects) and grounds the entire experience in the concrete `GraphState`. This allows for features like time-travel and ensures a predictable, D&D 5e-compliant experience.
+
+*   **Implementation Workflow**: The interaction must always follow this three-step process:
+
+    1.  **Intent (LLM's Role)**: The LLM's primary function is to decide *what* a character or creature *wants to do*. This intent must be expressed as a call to a specific, well-defined `tool` with structured parameters.
+        *   **WRONG**: The LLM generates text like: "The Orc swings its axe and hits you for 7 slashing damage."
+        *   **CORRECT**: The LLM decides to attack and invokes the `attack` tool, returning a structured call like: `{ tool: 'combat_attack', args: { attackerId: 'orc-1', targetId: 'player-elf' } }`.
+
+    2.  **Execution (Engine's Role)**: The game engine (via LangGraph nodes and services) receives the tool call.
+        *   It consults the authoritative `GraphState` for all necessary data (e.g., the Orc's attack bonus, the player's AC, the weapon's damage dice).
+        *   It performs all mechanical operations using the deterministic `DiceRoller`.
+        *   It calculates the outcome (hit/miss, damage dealt, conditions applied).
+        *   It produces a new, immutable `Partial<GraphState>` with the updated values (e.g., the player's new HP).
+
+    3.  **Interpretation (LLM's Role, Part 2)**: The structured result of the engine's execution is passed back to the LLM in the next step of the graph.
+        *   The engine might return a result like: `{ hit: true, damage: 7, newHP: 15, criticalHit: false }`.
+        *   The LLM then takes this factual, mechanical data and weaves it into a compelling narrative: "The hulking Orc brings its greataxe down in a vicious arc! The blade bites deep into your shoulder, and you feel a searing pain as you lose your footing."
+
+*   **Guiding Principle**: The LLM should never be asked "what happens?". It should be asked, "Based on the current situation, what tool should you call?" and later, "Based on this outcome `{...}`, describe what happens." The `GraphState` is the only source of truth for the game world's state.
+
+---
+
+# For LangChain/Agent Implementation Questions
+
+When implementing or modifying agent behavior, LangGraph workflows, or any LangChain-related code, you MUST use the `docs-langchain` MCP (Rule 34) before writing code.
+
+**Critical workflow:**
+1. **Query docs first**: Use `docs-langchain` MCP to verify API signatures, patterns, and examples
+2. **Implement with confidence**: Apply the verified patterns to your agent/tool implementation
+3. **Cite your sources**: Reference the documentation URL in comments or commit messages
+
+**Example:**
+```typescript
+// WRONG: Implementing based on internal knowledge (may be outdated)
+const agent = createAgent(model, tools);
+
+// CORRECT: First query docs-langchain MCP for latest v1 API
+// Then implement with verified pattern:
+// Source: https://docs.langchain.com/agents/v1/create-agent
+const agent = await createReactAgent({
+  llm: model,
+  tools: boundTools,
+  checkpointSaver: checkpointer
+});
+```
+
+**See Rule 45 (MCP Decision Protocol) and Rule 34 (LangChain Docs MCP) for details.**

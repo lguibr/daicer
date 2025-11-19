@@ -1,0 +1,10 @@
+# Ignore any exported data or test results
+exports/
+test-results/
+
+# Ignore personal workspace files
+*.postman_workspace
+
+# Ignore backup files
+*.bak
+*~

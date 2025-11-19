@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+glob: "**/README.md"
+---
+
+### **Rule 20: Documentation is Not Optional**
+
+If you change a module's behavior, API contract, or setup process, you must update its corresponding `README.md` file in the same pull request.
+
+*   **Rationale**: Documentation that is not kept up-to-date is worse than no documentation at all. This ensures that our `READMEs` remain a reliable source of truth for the team.
+*   **Implementation**:
+    *   When adding a new environment variable, update the `README.md` and the `.env.example` file.
+    *   When changing an API endpoint, update `backend/src/api/README.md`.
+    *   When modifying the graph flow, update the Mermaid diagrams in `docs/graphs/`.

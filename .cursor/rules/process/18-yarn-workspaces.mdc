@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+glob: "**/package.json"
+---
+
+### **Rule 18: Use Yarn and Yarn Workspaces**
+
+All dependency management and script execution must be handled through Yarn and its workspace features. Do not use `npm` or `pnpm`.
+
+*   **Rationale**: The monorepo is configured to use Yarn workspaces for hoisting dependencies, ensuring consistent versions across `frontend` and `backend`, and simplifying cross-package scripting.
+*   **Implementation**:
+    *   Install dependencies from the root: `yarn install:all`.
+    *   Run scripts for a specific package: `yarn workspace @daicer/frontend dev`.
+    *   Add dependencies to a specific package: `yarn workspace @daicer/backend add zod`.

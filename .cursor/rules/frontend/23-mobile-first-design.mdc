@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+glob: "frontend/src/{components,pages}/**/*.{ts,tsx}"
+description: "A rule enforcing a mobile-first responsive design philosophy to ensure a great user experience on all screen sizes."
+---
+
+### **Rule 23: Enforce Mobile-First and Responsive Design**
+
+All components and pages must be designed and implemented with a "mobile-first" approach. They must be functional and look great on small screens by default, then scale up gracefully for larger viewports.
+
+*   **Rationale**: A mobile-first strategy ensures a solid user experience on the most constrained devices, leading to a more robust and accessible design across all platforms.
+*   **Implementation**:
+    1.  **Default to Mobile Styles**: Write CSS classes that target small viewports by default. Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`, `xl:`) to add or override styles for larger screens.
+    2.  **Avoid Information Overload**: On smaller screens, prioritize clarity and simplicity. For complex forms or data-heavy views, prefer breaking the flow into multiple steps or using accordions/tabs to progressively disclose information. The `FormWizard.tsx` component is a good reference for this pattern.
+    3.  **Handle Exceptions Gracefully**: The tactical combat map (`CombatGrid.tsx`) is a known exception to the "less info" rule due to its inherent complexity. However, it must still be responsive. Ensure it is scrollable or scales appropriately on mobile devices without breaking the layout of the entire page.
+    4.  **Test Responsiveness**: Use Storybook's viewport controls or browser developer tools to verify that components adapt correctly across a range of screen sizes, from small mobile phones to large desktops.

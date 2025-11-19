@@ -1,0 +1,63 @@
+name: api-e2e-postman
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  newman-e2e:
+    runs-on: ubuntu-latest
+    env:
+      POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+      COLLECTION_UID: ${{ secrets.POSTMAN_COLLECTION_UID }}
+      E2E_ENV_UID: ${{ secrets.POSTMAN_E2E_ENV_UID }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: yarn install:all
+      
+      - name: Install Newman
+        run: npm install -g newman newman-reporter-htmlextra
+      
+      - name: Start Firebase Emulators (E2E)
+        run: |
+          firebase emulators:start --import=./emulator-data-e2e --export-on-exit=./emulator-data-e2e &
+          sleep 10
+      
+      - name: Start Backend
+        run: |
+          yarn workspace @daicer/backend dev &
+          sleep 5
+      
+      - name: Run collection with Newman (E2E)
+        run: |
+          newman run "https://api.getpostman.com/collections/${{ env.COLLECTION_UID }}?apikey=${{ env.POSTMAN_API_KEY }}" \
+            -e "https://api.getpostman.com/environments/${{ env.E2E_ENV_UID }}?apikey=${{ env.POSTMAN_API_KEY }}" \
+            --reporters cli,junit,htmlextra \
+            --reporter-junit-export newman-e2e.xml \
+            --reporter-htmlextra-export newman-e2e.html
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-results-e2e
+          path: |
+            newman-e2e.xml
+            newman-e2e.html
+      
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: newman-e2e.xml
+          check_name: API Tests (E2E - Local)

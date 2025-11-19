@@ -1,0 +1,78 @@
+# Logs
+logs/*.log
+qa-*.log
+fix-*.log
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+format.log
+lint.log
+test.log
+typecheck.log
+
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+.tsbuildinfo
+
+# Environment files
+*.local
+.env
+.env.local
+.env.*.local
+
+# ALL environment files except example (comprehensive protection)
+.env*
+!.env.example
+
+# Service account keys and secrets (anywhere in repo)
+**/*-key.json
+**/*-sa-*.json
+**/firebase-adminsdk-*.json
+**/*-service-account*.json
+
+# Additional secret patterns
+*.pem
+*.p12
+*.pfx
+secrets.yml
+secrets.yaml
+secret.json
+secrets.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Testing
+coverage/
+frontend/coverage/
+backend/coverage/
+playwright-report/
+test-results/
+
+# Firebase
+emulator-data
+emulator-data-e2e
+firestore-debug.log
+
+# Deployment
+.vercel
+thoughts/
+ideas/
+.lsmcp/
+.lsmcp
+firebase-export-*/

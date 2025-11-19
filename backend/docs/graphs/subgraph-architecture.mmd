@@ -1,0 +1,56 @@
+graph TB
+    subgraph session["Session Initialization (Root)"]
+        START([START])
+        
+        subgraph world_gen["World Generation Subgraph"]
+            subgraph history["History Generation"]
+                H1[world_init]
+                H2[world_conditions]
+                H3[history_period]
+                H4[history_summary]
+                
+                H1 --> H2
+                H2 --> H3
+                H3 -->|Loop| H3
+                H3 -->|Done| H4
+            end
+            
+            subgraph terrain["Terrain Generation"]
+                T1[structures_placement]
+                T2[roads_generation]
+                T3[terrain_collapse]
+                T4[chunks_pregeneration]
+                T5[world_lore]
+                
+                T1 --> T2
+                T2 --> T3
+                T3 --> T4
+                T4 --> T5
+            end
+            
+            history --> terrain
+        end
+        
+        COMP[world_completion]
+        
+        subgraph char["Character Setup Subgraph"]
+            C1[character_openings]
+            C2[equipment_management]
+            
+            C1 --> C2
+        end
+        
+        END([END])
+        
+        START --> world_gen
+        world_gen --> COMP
+        COMP --> char
+        char --> END
+    end
+    
+    style history fill:#fff4e1
+    style terrain fill:#e8f5e9
+    style char fill:#ffe0e0
+    style world_gen fill:#e1f5ff
+    style session fill:#f3e5f5
+

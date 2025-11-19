@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+glob: "**/*"
+description: "A core engineering philosophy that prioritizes correct, documented solutions over short-term workarounds, while balancing architectural improvement with system reliability."
+---
+
+### **Rule 31: The Principled Engineering Principle: No Workarounds, Balanced with Stability**
+
+We build robust, maintainable software by investing the time to understand our tools and solve problems at their root cause. We favor correct, well-designed solutions over temporary hacks. While we embrace architectural improvements, we value system reliability and make changes deliberately, not constantly.
+
+*   **Rationale**: Workarounds create technical debt, making the system brittle and difficult to understand. A principled approach ensures long-term velocity and builds a codebase that is a pleasure to work on. However, constant, un-justified refactoring introduces instability. This rule establishes the balance between craftsmanship and pragmatic delivery.
+
+*   **Implementation Guidelines**:
+
+    1.  **Read the Docs First**: Before implementing a feature with a library (LangGraph, React, Zustand, etc.), take the time to read the relevant documentation. Understand the "right way" to use the tool and follow its intended patterns. Do not fight the framework.
+
+    2.  **Solve the Root Cause, Not the Symptom**: If you encounter a problem that feels like it requires a workaround, stop. This is a signal that there might be a deeper issue in our architecture or a misunderstanding of a tool. Instead of patching the symptom, investigate the root cause and propose a proper fix.
+
+    3.  **Architectural Changes are Deliberate and Justified**: We are open to evolving our architecture to make it better. However, significant changes (e.g., altering the state engine, changing a core data flow) must be a conscious decision, not a casual refactor. Any such change must be discussed with the team and justified by a clear benefit (e.g., solving a recurring bug, significant performance improvement, major simplification).
+
+    4.  **Reliability is a Feature**: A stable, predictable system is more valuable than a "perfect" but constantly changing one. Balance the desire for architectural purity with the need for a reliable product. A well-understood, slightly imperfect solution is often better than a complex, theoretically ideal one that no one else understands.

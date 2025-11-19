@@ -1,0 +1,284 @@
+  const handleArchetypeChange = (newType: WorldType) => {
+    const defaults = getArchetypeDefaults(newType);
+    setSettings((prev) => ({
+      ...prev,
+      worldType: newType,
+      theme: defaults.theme,
+      setting: defaults.setting,
+      tone: defaults.tone,
+      worldBackground: defaults.background || prev.worldBackground,
+    }));
+  };
+
+  const updateDMStyle = <K extends keyof DMStyle>(key: K, value: DMStyle[K]) => {
+    setSettings((prev) => ({
+      ...prev,
+      dmStyle: { ...prev.dmStyle, [key]: value },
+    }));
+  };
+
+  // NEW: Section 1 Handler (DM Story)
+  const handleSection1Complete = async () => {
+    if (!generatedRoom) {
+      setError('Room must be created first');
+      return;
+    }
+
+    setLoadingSection(1);
+    setSectionError(null);
+    graphProgress.setCurrentSection(1);
+
+    try {
+      const result = await invokeDMStoryGraph({
+        roomId: generatedRoom.id,
+        language,
+        settings: {
+          theme: settings.theme,
+          tone: settings.tone,
+          setting: settings.setting,
+          worldBackground: settings.worldBackground,
+          worldType: settings.worldType,
+          dmStyle: {
+            verbosity: settings.dmStyle.verbosity,
+            detail: settings.dmStyle.detail,
+            engagement: settings.dmStyle.engagement,
+            narrative: settings.dmStyle.narrative,
+            specialMode: settings.dmStyle.specialMode,
+            customDirectives: settings.dmStyle.customDirectives || undefined,
+          },
+          worldSize: settings.worldSize,
+          adventureLength: settings.adventureLength,
+          difficulty: settings.difficulty,
+          historyDepth: worldGenSettings.historyDepth,
+          eraCount: worldGenSettings.eraCount,
+        },
+      });
+
+      cacheSection1Output(generatedRoom.id, result);
+      setSectionOutputs((prev) => ({ ...prev, section1: result }));
+      setCompletedGroups(new Set([...completedGroups, currentGroup]));
+      setCurrentGroup(1);
+    } catch (error) {
+      setSectionError(error instanceof Error ? error.message : 'Section 1 generation failed');
+    } finally {
+      setLoadingSection(null);
+      graphProgress.setCurrentSection(null);
+    }
+  };
+
+  // NEW: Section 2 Handler (World Config)
+  const handleSection2Complete = async () => {
+    if (!generatedRoom || !sectionOutputs.section1) {
+      setError('Section 1 must complete first');
+      return;
+    }
+
+    setLoadingSection(2);
+    setSectionError(null);
+    graphProgress.setCurrentSection(2);
+
+    try {
+      const result = await invokeWorldConfigGraph({
+        roomId: generatedRoom.id,
+        settings: {
+          structureDensity: worldGenSettings.structureDensity,
+          structureTypes: worldGenSettings.structureTypes,
+          enableRoads: worldGenSettings.enableRoads,
+          roadQuality: worldGenSettings.roadQuality === 'medium' ? 'road' : worldGenSettings.roadQuality,
+          terrainComplexity: worldGenSettings.terrainComplexity,
+        },
+        historyPeriods: sectionOutputs.section1.historyPeriods,
+        conditions: sectionOutputs.section1.conditions,
+        worldHistory: sectionOutputs.section1.worldHistory,
+      });
+
+      cacheSection2Output(generatedRoom.id, result);
+      setSectionOutputs((prev) => ({ ...prev, section2: result }));
+
+      // Update generatedRoom with results
+      setGeneratedRoom({
+        ...generatedRoom,
+        worldDescription: result.worldDescription,
+        structures: result.structures,
+        roads: result.roads,
+      });
+
+      setWorldGeneration({ status: 'done' });
+      setCompletedGroups(new Set([...completedGroups, currentGroup]));
+      setCurrentGroup(2);
+    } catch (error) {
+      setSectionError(error instanceof Error ? error.message : 'Section 2 generation failed');
+    } finally {
+      setLoadingSection(null);
+      graphProgress.setCurrentSection(null);
+    }
+  };
+
+  const handleGenerateWorld = async () => {
+    if (!generatedRoom) {
+      setError('Room must be created first');
+      return;
+    }
+
+    setWorldGeneration({ status: 'generating' });
+    setStreamEvents([]); // Clear previous events
+    clearGraphEvents(); // Clear graph stream events
+
+    try {
+      // Get auth token
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+      const token = await user.getIdToken();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/game/rooms/${generatedRoom.id}/generate-world`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'text/event-stream',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to start world generation');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Response body is not readable');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) continue;
+
+          try {
+            const data = JSON.parse(line.substring(6));
+
+            // Store all events for display (legacy + new graph events)
+            setStreamEvents((prev) => [...prev, data]);
+            addGraphEvent(data);
+
+            if (data.type === 'done') {
+              setWorldGeneration({ status: 'done' });
+              setGeneratedRoom(data.room);
+              return;
+            }
+            if (data.type === 'error') {
+              setWorldGeneration({ status: 'error' });
+              setError(data.error || 'World generation failed');
+              return;
+            }
+            if (data.type === 'phase_complete' && data.phase === 'complete') {
+              // World generation complete
+              setWorldGeneration({ status: 'done' });
+            }
+          } catch (parseError) {
+            // Graceful error recovery - log and continue
+            console.error('Failed to parse SSE event:', parseError, 'Line:', line);
+          }
+        }
+      }
+    } catch (err) {
+      setWorldGeneration({ status: 'error' });
+      setError(err instanceof Error ? err.message : 'Failed to start world generation');
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const isFinalGroup = currentGroup === WIZARD_GROUPS.length - 1;
+
+    // NEW: Auto-invoke section graphs on Next click
+    if (currentGroup === 0 && validateGroup(0)) {
+      // Section 1 (DM & Scope) complete - create room and invoke
+      if (!generatedRoom) {
+        setLoading(true);
+        try {
+          const fullSettings = {
+            ...settings,
+            ...worldGenSettings,
+            language,
+          };
+          const room = await createRoom({ settings: fullSettings });
+          setGeneratedRoom(room);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to create room');
+          setLoading(false);
+          return;
+        }
+        setLoading(false);
+      }
+
+      // Then invoke Section 1 API
+      await handleSection1Complete();
+      return;
+    }
+
+    if (currentGroup === 1 && validateGroup(1)) {
+      // Section 2 (World Config) complete - invoke
+      await handleSection2Complete();
+      return;
+    }
+
+    if (!isFinalGroup) {
+      goToNextGroup();
+      return;
+    }
+
+    // Final group: navigate to room
+    if (generatedRoom && worldGeneration.status === 'done') {
+      setShowCharacterModal(true);
+    }
+  };
+
+  const handleCharacterSubmit = async (character: any) => {
+    if (!generatedRoom) return;
+
+    setLoading(true);
+    try {
+      await addCharacter(generatedRoom.id, character);
+      navigate(`/room/${generatedRoom.id}`);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const currentGroupId = WIZARD_GROUPS[currentGroup];
+  const isFinalGroup = currentGroup === WIZARD_GROUPS.length - 1;
+
+  const renderGroupContent = () => {
+    switch (currentGroupId) {
+      case 'dmAndScope': {
+        const worldSizeIndex = Math.max(
+          0,
+          worldSizeOptions.findIndex((option) => option.value === settings.worldSize)
+        );
+        const adventureLengthIndex = Math.max(
+          0,
+          adventureLengthOptions.findIndex((option) => option.value === settings.adventureLength)
+        );
+        const difficultyIndex = Math.max(
+          0,
+          difficultyOptions.findIndex((option) => option.value === settings.difficulty)
+        );
+
+        return (

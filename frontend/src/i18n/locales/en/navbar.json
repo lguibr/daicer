@@ -1,0 +1,28 @@
+{
+  "navbar": {
+    "brandAlt": "Home",
+    "links": {
+      "rooms": "Rooms",
+      "explore": "Explore",
+      "spellbook": "Spellbook",
+      "combatDemo": "Combat Demo"
+    },
+    "labels": {
+      "account": "Account",
+      "room": "Room",
+      "roomCode": "Room Code",
+      "phase": "Phase",
+      "players": "Players"
+    },
+    "actions": {
+      "leaveRoom": "Leave Room",
+      "logout": "Logout"
+    },
+    "phase": {
+      "setup": "Setup",
+      "characterCreation": "Character Creation",
+      "gameplay": "In Game",
+      "combat": "Combat"
+    }
+  }
+}

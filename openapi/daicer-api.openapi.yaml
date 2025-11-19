@@ -1,0 +1,1283 @@
+openapi: 3.0.3
+info:
+  title: DAICE Backend API
+  description: Complete API collection for the DAICE (D&D AI Collaborative Experience) backend. Includes all REST endpoints for rooms, game logic, assets, spells, characters, game data, and tactical combat.
+  version: 1.0.0
+  contact:
+    name: DAICE Team
+servers:
+  - url: "http://localhost:3001"
+    description: Development (emulator-data)
+  - url: "http://localhost:3101"
+    description: E2E Testing (emulator-data-e2e)
+tags:
+  - name: Health & Diagnostics
+    description: Health check and diagnostics endpoints
+  - name: Users
+    description: User profile endpoints
+  - name: Rooms
+    description: Room lifecycle management endpoints
+  - name: Game
+    description: Game lifecycle and narrative generation endpoints
+  - name: Characters
+    description: Character sheet management endpoints
+  - name: Assets
+    description: AI asset generation endpoints (avatars, backgrounds, action frames)
+  - name: Spells
+    description: D&D 5e spell catalog endpoints
+  - name: Game Data (SRD)
+    description: D&D 5e SRD reference data endpoints
+  - name: Tactical Combat
+    description: Tactical combat system endpoints (grid-based combat)
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Liveness probe for the backend service. Returns status and timestamp.
+      tags:
+        - Health & Diagnostics
+      operationId: health-check
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      security:
+  /api/users/me:
+    get:
+      summary: Get Current User
+      description: Get or create current user profile based on Firebase authentication token. Creates user on first login.
+      tags:
+        - Users
+      operationId: get-current-user
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/rooms:
+    post:
+      summary: Create Room
+      description: Create a new multiplayer room. Room owner is automatically set to authenticated user.
+      tags:
+        - Rooms
+      operationId: create-room
+      parameters:
+      responses:
+        200:
+          description: Successful response
+    get:
+      summary: List My Rooms
+      description: List all rooms the current user belongs to (as owner or player)
+      tags:
+        - Rooms
+      operationId: list-my-rooms
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/rooms/{code}/join:
+    post:
+      summary: Join Room by Code
+      description: Join a room using its short code
+      tags:
+        - Rooms
+      operationId: join-room-by-code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: 6-character room code (uppercase)
+          schema:
+            type: string
+            example: ABC123
+      responses:
+        200:
+          description: Successful response
+  /api/rooms/{roomId}:
+    get:
+      summary: Get Room State
+      description: Get room state including players and settings
+      tags:
+        - Rooms
+      operationId: get-room-state
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+    delete:
+      summary: Delete Room
+      description: Soft-delete a room. Only room owner can delete.
+      tags:
+        - Rooms
+      operationId: delete-room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/rooms/{roomId}/settings:
+    patch:
+      summary: Update Room Settings
+      description: Update room settings. Only room owner can update.
+      tags:
+        - Rooms
+      operationId: update-room-settings
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                theme: High Fantasy
+                setting: Medieval Kingdom
+                tone: Heroic
+                playerCount: 4
+                adventureLength: medium
+                difficulty: medium
+  /api/rooms/{roomId}/membership:
+    delete:
+      summary: Leave Room
+      description: Leave a room as a player member
+      tags:
+        - Rooms
+      operationId: leave-room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/game/{roomId}/world:
+    post:
+      summary: Generate World
+      description: Generate world description and narrative seed based on room settings. Only room owner can generate. Uses language from room settings.
+      tags:
+        - Game
+      operationId: generate-world
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/game/{roomId}/character:
+    post:
+      summary: Add Character
+      description: Submit a character to the room during character creation phase
+      tags:
+        - Game
+      operationId: add-character
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Elara the Brave
+                race: Elf
+                characterClass: Fighter
+                alignment: Lawful Good
+                background: Soldier
+                attributes:
+                  Strength: 16
+                  Dexterity: 14
+                  Constitution: 13
+                  Intelligence: 10
+                  Wisdom: 12
+                  Charisma: 8
+                armorClass: 16
+  /api/game/{roomId}/start:
+    post:
+      summary: Start Adventure
+      description: Generate personalized character openings and start the game. Only room owner can start. Uses language from room settings.
+      tags:
+        - Game
+      operationId: start-adventure
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/game/{roomId}/turn:
+    post:
+      summary: Process Turn
+      description: Execute game turn - processes all player actions and generates DM response using LangGraph
+      tags:
+        - Game
+      operationId: process-turn
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/characters/{roomId}:
+    get:
+      summary: List Characters in Room
+      description: Get all player characters in a room
+      tags:
+        - Characters
+      operationId: list-characters-in-room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/characters/{roomId}/{playerId}:
+    get:
+      summary: Get Character
+      description: Get a specific character by player ID
+      tags:
+        - Characters
+      operationId: get-character
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+        - name: playerId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{PLAYER_ID}}
+      responses:
+        200:
+          description: Successful response
+    put:
+      summary: Update Character
+      description: Update character fields (partial update supported)
+      tags:
+        - Characters
+      operationId: update-character
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+        - name: playerId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{PLAYER_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                attributes:
+                  Strength: 17
+                hp: 45
+                maxHp: 50
+  /api/characters/{roomId}/{playerId}/import:
+    post:
+      summary: Import Character Sheet
+      description: Import a complete character sheet (full replacement)
+      tags:
+        - Characters
+      operationId: import-character-sheet
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ROOM_ID}}
+        - name: playerId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{PLAYER_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Thorin Ironforge
+                race: Dwarf
+                characterClass: Cleric
+                level: 3
+                attributes:
+                  Strength: 14
+                  Dexterity: 10
+                  Constitution: 16
+                  Intelligence: 12
+                  Wisdom: 16
+                  Charisma: 10
+  /api/assets/avatar:
+    post:
+      summary: Generate Avatar (All Views)
+      description: "Generate all three avatar views: portrait, upper-body, and full-body"
+      tags:
+        - Assets
+      operationId: generate-avatar-(all-views)
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Elara
+                basePrompt: A brave elven fighter with long silver hair
+                appearance:
+                  race: Elf
+                  classRole: Fighter
+                  hair: Long silver hair
+                  eyes: Emerald green
+                  attire: Plate armor with elven designs
+                artStyle: Fantasy illustration
+                tone: Heroic
+  /api/assets/avatar/preview/portrait:
+    post:
+      summary: Generate Portrait Preview
+      description: Generate portrait preview (first step of sequential generation)
+      tags:
+        - Assets
+      operationId: generate-portrait-preview
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Elara
+                basePrompt: A brave elven fighter with long silver hair
+                appearance:
+                  race: Elf
+                  classRole: Fighter
+                  hair: Long silver hair
+                  eyes: Emerald green
+  /api/assets/avatar/preview/upper:
+    post:
+      summary: Generate Upper Body Preview
+      description: Generate upper-body preview using portrait as reference
+      tags:
+        - Assets
+      operationId: generate-upper-body-preview
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                payload:
+                  name: Elara
+                  basePrompt: A brave elven fighter with long silver hair
+                  appearance:
+                    race: Elf
+                    classRole: Fighter
+                    attire: Plate armor
+                portrait:
+                  mimeType: image/png
+                  data: base64-encoded-portrait-data
+                  prompt: Portrait prompt used
+  /api/assets/avatar/preview/full:
+    post:
+      summary: Generate Full Body Preview
+      description: Generate full-body preview using portrait and upper-body as references
+      tags:
+        - Assets
+      operationId: generate-full-body-preview
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                payload:
+                  name: Elara
+                  basePrompt: A brave elven fighter
+                portrait:
+                  mimeType: image/png
+                  data: base64-encoded-portrait
+                upperBody:
+                  mimeType: image/png
+                  data: base64-encoded-upper-body
+  /api/assets/grid-background:
+    post:
+      summary: Generate Grid Background
+      description: Generate tactical grid background image
+      tags:
+        - Assets
+      operationId: generate-grid-background
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                themePrompt: Dark dungeon corridor with stone walls
+                gridSize:
+                  columns: 10
+                  rows: 10
+                biome: dungeon
+                lighting: dim torchlight
+                mood: ominous
+  /api/assets/action-frame:
+    post:
+      summary: Generate Action Frame
+      description: Generate action scene illustration
+      tags:
+        - Assets
+      operationId: generate-action-frame
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                basePrompt: Elven fighter swinging sword at goblin
+                stakes: high
+                cameraAngle: dynamic side view
+                motionStyle: action blur
+                narrative:
+                  currentScene: Combat in dungeon
+                  playerIntent: Attack the goblin
+  /api/spells:
+    get:
+      summary: List All Spells
+      description: List all spells with optional filtering and pagination
+      tags:
+        - Spells
+      operationId: list-all-spells
+      parameters:
+        - name: page
+          in: query
+          required: true
+          description: 
+          schema:
+            type: string
+            example: 1
+        - name: limit
+          in: query
+          required: true
+          description: 
+          schema:
+            type: string
+            example: 50
+        - name: level
+          in: query
+          required: false
+          description: Filter by spell level (0-9)
+          schema:
+            type: string
+            example: 1
+        - name: school
+          in: query
+          required: false
+          description: Filter by school of magic
+          schema:
+            type: string
+            example: evocation
+        - name: class
+          in: query
+          required: false
+          description: Filter by class
+          schema:
+            type: string
+            example: Wizard
+        - name: name
+          in: query
+          required: false
+          description: Search by name
+          schema:
+            type: string
+            example: fire
+        - name: effectShape
+          in: query
+          required: false
+          description: Filter by effect shape
+          schema:
+            type: string
+            example: cone
+      responses:
+        200:
+          description: Successful response
+  /api/spells/{id}:
+    get:
+      summary: Get Spell by ID
+      description: Get detailed information about a specific spell
+      tags:
+        - Spells
+      operationId: get-spell-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: fireball
+      responses:
+        200:
+          description: Successful response
+  /api/spells/search/query:
+    get:
+      summary: Search Spells
+      description: Search spells by name or description
+      tags:
+        - Spells
+      operationId: search-spells
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: 
+          schema:
+            type: string
+            example: fire
+      responses:
+        200:
+          description: Successful response
+  /api/spells/shapes/{shape}:
+    get:
+      summary: Get Spells by Shape
+      description: Get all spells with specific effect shape (cone, line, sphere, etc.)
+      tags:
+        - Spells
+      operationId: get-spells-by-shape
+      parameters:
+        - name: shape
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: cone
+      responses:
+        200:
+          description: Successful response
+  /api/spells/levels/{level}:
+    get:
+      summary: Get Spells by Level
+      description: Get all spells of a specific level (0-9)
+      tags:
+        - Spells
+      operationId: get-spells-by-level
+      parameters:
+        - name: level
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: 3
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/alignments:
+    get:
+      summary: Get Alignments
+      description: Get all character alignments
+      tags:
+        - Game Data (SRD)
+      operationId: get-alignments
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/abilities:
+    get:
+      summary: Get Abilities
+      description: Get all ability scores (STR, DEX, CON, INT, WIS, CHA)
+      tags:
+        - Game Data (SRD)
+      operationId: get-abilities
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/skills:
+    get:
+      summary: Get Skills
+      description: Get all skills
+      tags:
+        - Game Data (SRD)
+      operationId: get-skills
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/races:
+    get:
+      summary: Get Races
+      description: Get all player races
+      tags:
+        - Game Data (SRD)
+      operationId: get-races
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/classes:
+    get:
+      summary: Get Classes
+      description: Get all character classes
+      tags:
+        - Game Data (SRD)
+      operationId: get-classes
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/backgrounds:
+    get:
+      summary: Get Backgrounds
+      description: Get all character backgrounds
+      tags:
+        - Game Data (SRD)
+      operationId: get-backgrounds
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/languages:
+    get:
+      summary: Get Languages
+      description: Get all languages
+      tags:
+        - Game Data (SRD)
+      operationId: get-languages
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/magic-schools:
+    get:
+      summary: Get Magic Schools
+      description: Get all schools of magic
+      tags:
+        - Game Data (SRD)
+      operationId: get-magic-schools
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/conditions:
+    get:
+      summary: Get Conditions
+      description: Get all combat conditions (blinded, poisoned, etc.)
+      tags:
+        - Game Data (SRD)
+      operationId: get-conditions
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/damage-types:
+    get:
+      summary: Get Damage Types
+      description: Get all damage types
+      tags:
+        - Game Data (SRD)
+      operationId: get-damage-types
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/equipment-categories:
+    get:
+      summary: Get Equipment Categories
+      description: Get all equipment categories
+      tags:
+        - Game Data (SRD)
+      operationId: get-equipment-categories
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/equipment:
+    get:
+      summary: Get Equipment
+      description: Get all equipment items
+      tags:
+        - Game Data (SRD)
+      operationId: get-equipment
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/weapon-properties:
+    get:
+      summary: Get Weapon Properties
+      description: Get all weapon properties
+      tags:
+        - Game Data (SRD)
+      operationId: get-weapon-properties
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/character-templates:
+    get:
+      summary: Get Character Templates
+      description: Get list of pre-made character templates
+      tags:
+        - Game Data (SRD)
+      operationId: get-character-templates
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/character-templates/{archetype}:
+    get:
+      summary: Generate Character from Template
+      description: Generate a complete character from a template
+      tags:
+        - Game Data (SRD)
+      operationId: generate-character-from-template
+      parameters:
+        - name: archetype
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: warrior
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/monsters:
+    get:
+      summary: Get Monsters
+      description: Get all monsters
+      tags:
+        - Game Data (SRD)
+      operationId: get-monsters
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/monsters/{id}:
+    get:
+      summary: Get Monster by ID
+      description: Get a specific monster by ID
+      tags:
+        - Game Data (SRD)
+      operationId: get-monster-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: goblin
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/magic-items:
+    get:
+      summary: Get Magic Items
+      description: Get all magic items
+      tags:
+        - Game Data (SRD)
+      operationId: get-magic-items
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/magic-items/{id}:
+    get:
+      summary: Get Magic Item by ID
+      description: Get a specific magic item by ID
+      tags:
+        - Game Data (SRD)
+      operationId: get-magic-item-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: bag-of-holding
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/features:
+    get:
+      summary: Get Features
+      description: Get all class features
+      tags:
+        - Game Data (SRD)
+      operationId: get-features
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/features/{id}:
+    get:
+      summary: Get Feature by ID
+      description: Get a specific feature by ID
+      tags:
+        - Game Data (SRD)
+      operationId: get-feature-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: action-surge
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/traits:
+    get:
+      summary: Get Traits
+      description: Get all racial traits
+      tags:
+        - Game Data (SRD)
+      operationId: get-traits
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/traits/{id}:
+    get:
+      summary: Get Trait by ID
+      description: Get a specific trait by ID
+      tags:
+        - Game Data (SRD)
+      operationId: get-trait-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: darkvision
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/subclasses:
+    get:
+      summary: Get Subclasses
+      description: Get all subclasses
+      tags:
+        - Game Data (SRD)
+      operationId: get-subclasses
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/subclasses/{id}:
+    get:
+      summary: Get Subclass by ID
+      description: Get a specific subclass by ID
+      tags:
+        - Game Data (SRD)
+      operationId: get-subclass-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: champion
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/proficiencies:
+    get:
+      summary: Get Proficiencies
+      description: Get all proficiencies
+      tags:
+        - Game Data (SRD)
+      operationId: get-proficiencies
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/game-data/proficiencies/{id}:
+    get:
+      summary: Get Proficiency by ID
+      description: Get a specific proficiency by ID
+      tags:
+        - Game Data (SRD)
+      operationId: get-proficiency-by-id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: longswords
+      responses:
+        200:
+          description: Successful response
+  /api/tactical/arenas:
+    get:
+      summary: List Arenas
+      description: Get all available tactical combat arenas
+      tags:
+        - Tactical Combat
+      operationId: list-arenas
+      parameters:
+      responses:
+        200:
+          description: Successful response
+  /api/tactical/arenas/generate:
+    post:
+      summary: Generate Arena from World
+      description: Generate tactical arena from world coordinates
+      tags:
+        - Tactical Combat
+      operationId: generate-arena-from-world
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                worldSeed: 12345
+                worldX: 100
+                worldY: 200
+                name: Forest Ambush
+  /api/tactical/encounter:
+    post:
+      summary: Create Encounter
+      description: Create a new tactical encounter in a specific arena
+      tags:
+        - Tactical Combat
+      operationId: create-encounter
+      parameters:
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                arenaId: tavern-brawl
+  /api/tactical/encounter/{id}:
+    get:
+      summary: Get Encounter
+      description: Get current state of a tactical encounter
+      tags:
+        - Tactical Combat
+      operationId: get-encounter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/tactical/encounter/{id}/units:
+    post:
+      summary: Add Unit to Encounter
+      description: Add a unit (player or enemy) to the encounter (setup phase only)
+      tags:
+        - Tactical Combat
+      operationId: add-unit-to-encounter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Elara
+                hp: 40
+                maxHp: 40
+                armorClass: 16
+                position:
+                  x: 5
+                  y: 5
+                allegiance: player
+                attributes:
+                  strength: 16
+                  dexterity: 14
+                  constitution: 13
+                  intelligence: 10
+                  wisdom: 12
+                  charisma: 8
+                proficiencyBonus: 2
+                speed: 30
+                reach: 5
+  /api/tactical/encounter/{id}/units/{unitId}:
+    patch:
+      summary: Update Unit Position
+      description: Update unit position (setup phase only)
+      tags:
+        - Tactical Combat
+      operationId: update-unit-position
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+        - name: unitId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: unit-123
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                position:
+                  x: 6
+                  y: 7
+    delete:
+      summary: Remove Unit
+      description: Remove a unit from the encounter (setup phase only)
+      tags:
+        - Tactical Combat
+      operationId: remove-unit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+        - name: unitId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: unit-123
+      responses:
+        200:
+          description: Successful response
+  /api/tactical/encounter/{id}/start:
+    post:
+      summary: Start Combat
+      description: Roll initiative and start combat
+      tags:
+        - Tactical Combat
+      operationId: start-combat
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+      responses:
+        200:
+          description: Successful response
+  /api/tactical/encounter/{encounterId}/preview:
+    post:
+      summary: Preview Action
+      description: Preview an action using natural language command
+      tags:
+        - Tactical Combat
+      operationId: preview-action
+      parameters:
+        - name: encounterId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                command: Move to (8, 5) and attack the goblin
+  /api/tactical/encounter/{encounterId}/execute:
+    post:
+      summary: Execute Action
+      description: Execute a previewed action plan
+      tags:
+        - Tactical Combat
+      operationId: execute-action
+      parameters:
+        - name: encounterId
+          in: path
+          required: true
+          description: 
+          schema:
+            type: string
+            example: {{ENCOUNTER_ID}}
+      responses:
+        200:
+          description: Successful response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                planId: plan-12345
+                confirmed: true
+                overrides:
+                  allowFriendlyFire: false
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase ID Token
+  schemas:
+security:
+  - BearerAuth:

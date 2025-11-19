@@ -1,0 +1,86 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'yarn'
+
+      - name: Setup Java (for Firebase Emulators)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install dependencies
+        run: yarn install:all --frozen-lockfile
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Start Firebase Emulators
+        run: |
+          cd backend
+          firebase emulators:start --only firestore,auth,storage --project demo-test &
+          sleep 10
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+          FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+
+      - name: Run linter
+        run: yarn workspace @daicer/backend lint
+
+      - name: Run type check
+        run: yarn workspace @daicer/backend typecheck
+
+      - name: Run tests with coverage
+        run: yarn workspace @daicer/backend test:coverage
+        env:
+          NODE_ENV: test
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
+          FIREBASE_STORAGE_EMULATOR_HOST: localhost:9199
+          FIREBASE_PROJECT_ID: demo-test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./backend/coverage/lcov.info
+          flags: backend
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Check coverage thresholds
+        run: |
+          cd backend
+          COVERAGE=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct")
+          echo "Line coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+            echo "Coverage $COVERAGE% is below 70% threshold"
+            exit 1
+          fi
+          echo "Coverage threshold met ✓"
+

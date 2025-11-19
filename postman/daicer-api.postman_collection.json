@@ -1,0 +1,1453 @@
+{
+  "info": {
+    "_postman_id": "daicer-backend-api",
+    "name": "DAICE Backend API",
+    "description": "Complete API collection for the DAICE (D&D AI Collaborative Experience) backend. Includes all REST endpoints for rooms, game logic, assets, spells, characters, game data, and tactical combat.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{FIREBASE_ID_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "FIREBASE_ID_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ROOM_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PLAYER_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ENCOUNTER_ID",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Diagnostics",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/health",
+              "host": ["{{BASE_URL}}"],
+              "path": ["health"]
+            },
+            "description": "Liveness probe for the backend service. Returns status and timestamp."
+          },
+          "response": []
+        }
+      ],
+      "description": "Health check and diagnostics endpoints"
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/me",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "me"]
+            },
+            "description": "Get or create current user profile based on Firebase authentication token. Creates user on first login."
+          },
+          "response": []
+        }
+      ],
+      "description": "User profile endpoints"
+    },
+    {
+      "name": "Rooms",
+      "item": [
+        {
+          "name": "Create Room",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.data && jsonData.data.id) {",
+                  "        pm.collectionVariables.set('ROOM_ID', jsonData.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms"]
+            },
+            "description": "Create a new multiplayer room. Room owner is automatically set to authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "List My Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms"]
+            },
+            "description": "List all rooms the current user belongs to (as owner or player)"
+          },
+          "response": []
+        },
+        {
+          "name": "Join Room by Code",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms/:code/join",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms", ":code", "join"],
+              "variable": [
+                {
+                  "key": "code",
+                  "value": "ABC123",
+                  "description": "6-character room code (uppercase)"
+                }
+              ]
+            },
+            "description": "Join a room using its short code"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Room State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms/:roomId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms", ":roomId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Get room state including players and settings"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Room Settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"theme\": \"High Fantasy\",\n  \"setting\": \"Medieval Kingdom\",\n  \"tone\": \"Heroic\",\n  \"playerCount\": 4,\n  \"adventureLength\": \"medium\",\n  \"difficulty\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms/:roomId/settings",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms", ":roomId", "settings"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Update room settings. Only room owner can update."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Room",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms/:roomId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms", ":roomId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Soft-delete a room. Only room owner can delete."
+          },
+          "response": []
+        },
+        {
+          "name": "Leave Room",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/rooms/:roomId/membership",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "rooms", ":roomId", "membership"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Leave a room as a player member"
+          },
+          "response": []
+        }
+      ],
+      "description": "Room lifecycle management endpoints"
+    },
+    {
+      "name": "Game",
+      "item": [
+        {
+          "name": "Generate World",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game/:roomId/world",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game", ":roomId", "world"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Generate world description and narrative seed based on room settings. Only room owner can generate. Uses language from room settings."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Character",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.data && jsonData.data.id) {",
+                  "        pm.collectionVariables.set('PLAYER_ID', jsonData.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Elara the Brave\",\n  \"race\": \"Elf\",\n  \"characterClass\": \"Fighter\",\n  \"alignment\": \"Lawful Good\",\n  \"background\": \"Soldier\",\n  \"attributes\": {\n    \"Strength\": 16,\n    \"Dexterity\": 14,\n    \"Constitution\": 13,\n    \"Intelligence\": 10,\n    \"Wisdom\": 12,\n    \"Charisma\": 8\n  },\n  \"armorClass\": 16\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/game/:roomId/character",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game", ":roomId", "character"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Submit a character to the room during character creation phase"
+          },
+          "response": []
+        },
+        {
+          "name": "Start Adventure",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game/:roomId/start",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game", ":roomId", "start"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Generate personalized character openings and start the game. Only room owner can start. Uses language from room settings."
+          },
+          "response": []
+        },
+        {
+          "name": "Process Turn",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game/:roomId/turn",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game", ":roomId", "turn"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Execute game turn - processes all player actions and generates DM response using LangGraph"
+          },
+          "response": []
+        }
+      ],
+      "description": "Game lifecycle and narrative generation endpoints"
+    },
+    {
+      "name": "Characters",
+      "item": [
+        {
+          "name": "List Characters in Room",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/characters/:roomId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "characters", ":roomId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                }
+              ]
+            },
+            "description": "Get all player characters in a room"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Character",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/characters/:roomId/:playerId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "characters", ":roomId", ":playerId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                },
+                {
+                  "key": "playerId",
+                  "value": "{{PLAYER_ID}}"
+                }
+              ]
+            },
+            "description": "Get a specific character by player ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Character",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attributes\": {\n    \"Strength\": 17\n  },\n  \"hp\": 45,\n  \"maxHp\": 50\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/characters/:roomId/:playerId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "characters", ":roomId", ":playerId"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                },
+                {
+                  "key": "playerId",
+                  "value": "{{PLAYER_ID}}"
+                }
+              ]
+            },
+            "description": "Update character fields (partial update supported)"
+          },
+          "response": []
+        },
+        {
+          "name": "Import Character Sheet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Thorin Ironforge\",\n  \"race\": \"Dwarf\",\n  \"characterClass\": \"Cleric\",\n  \"level\": 3,\n  \"attributes\": {\n    \"Strength\": 14,\n    \"Dexterity\": 10,\n    \"Constitution\": 16,\n    \"Intelligence\": 12,\n    \"Wisdom\": 16,\n    \"Charisma\": 10\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/characters/:roomId/:playerId/import",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "characters", ":roomId", ":playerId", "import"],
+              "variable": [
+                {
+                  "key": "roomId",
+                  "value": "{{ROOM_ID}}"
+                },
+                {
+                  "key": "playerId",
+                  "value": "{{PLAYER_ID}}"
+                }
+              ]
+            },
+            "description": "Import a complete character sheet (full replacement)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Character sheet management endpoints"
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "Generate Avatar (All Views)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Elara\",\n  \"basePrompt\": \"A brave elven fighter with long silver hair\",\n  \"appearance\": {\n    \"race\": \"Elf\",\n    \"classRole\": \"Fighter\",\n    \"hair\": \"Long silver hair\",\n    \"eyes\": \"Emerald green\",\n    \"attire\": \"Plate armor with elven designs\"\n  },\n  \"artStyle\": \"Fantasy illustration\",\n  \"tone\": \"Heroic\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/assets/avatar",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "assets", "avatar"]
+            },
+            "description": "Generate all three avatar views: portrait, upper-body, and full-body"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Portrait Preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Elara\",\n  \"basePrompt\": \"A brave elven fighter with long silver hair\",\n  \"appearance\": {\n    \"race\": \"Elf\",\n    \"classRole\": \"Fighter\",\n    \"hair\": \"Long silver hair\",\n    \"eyes\": \"Emerald green\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/assets/avatar/preview/portrait",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "assets", "avatar", "preview", "portrait"]
+            },
+            "description": "Generate portrait preview (first step of sequential generation)"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Upper Body Preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"name\": \"Elara\",\n    \"basePrompt\": \"A brave elven fighter with long silver hair\",\n    \"appearance\": {\n      \"race\": \"Elf\",\n      \"classRole\": \"Fighter\",\n      \"attire\": \"Plate armor\"\n    }\n  },\n  \"portrait\": {\n    \"mimeType\": \"image/png\",\n    \"data\": \"base64-encoded-portrait-data\",\n    \"prompt\": \"Portrait prompt used\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/assets/avatar/preview/upper",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "assets", "avatar", "preview", "upper"]
+            },
+            "description": "Generate upper-body preview using portrait as reference"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Full Body Preview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"name\": \"Elara\",\n    \"basePrompt\": \"A brave elven fighter\"\n  },\n  \"portrait\": {\n    \"mimeType\": \"image/png\",\n    \"data\": \"base64-encoded-portrait\"\n  },\n  \"upperBody\": {\n    \"mimeType\": \"image/png\",\n    \"data\": \"base64-encoded-upper-body\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/assets/avatar/preview/full",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "assets", "avatar", "preview", "full"]
+            },
+            "description": "Generate full-body preview using portrait and upper-body as references"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Grid Background",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"themePrompt\": \"Dark dungeon corridor with stone walls\",\n  \"gridSize\": {\n    \"columns\": 10,\n    \"rows\": 10\n  },\n  \"biome\": \"dungeon\",\n  \"lighting\": \"dim torchlight\",\n  \"mood\": \"ominous\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/assets/grid-background",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "assets", "grid-background"]
+            },
+            "description": "Generate tactical grid background image"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Action Frame",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"basePrompt\": \"Elven fighter swinging sword at goblin\",\n  \"stakes\": \"high\",\n  \"cameraAngle\": \"dynamic side view\",\n  \"motionStyle\": \"action blur\",\n  \"narrative\": {\n    \"currentScene\": \"Combat in dungeon\",\n    \"playerIntent\": \"Attack the goblin\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/assets/action-frame",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "assets", "action-frame"]
+            },
+            "description": "Generate action scene illustration"
+          },
+          "response": []
+        }
+      ],
+      "description": "AI asset generation endpoints (avatars, backgrounds, action frames)"
+    },
+    {
+      "name": "Spells",
+      "item": [
+        {
+          "name": "List All Spells",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/spells?page=1&limit=50",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "spells"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "level",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Filter by spell level (0-9)"
+                },
+                {
+                  "key": "school",
+                  "value": "evocation",
+                  "disabled": true,
+                  "description": "Filter by school of magic"
+                },
+                {
+                  "key": "class",
+                  "value": "Wizard",
+                  "disabled": true,
+                  "description": "Filter by class"
+                },
+                {
+                  "key": "name",
+                  "value": "fire",
+                  "disabled": true,
+                  "description": "Search by name"
+                },
+                {
+                  "key": "effectShape",
+                  "value": "cone",
+                  "disabled": true,
+                  "description": "Filter by effect shape"
+                }
+              ]
+            },
+            "description": "List all spells with optional filtering and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Spell by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/spells/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "spells", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "fireball"
+                }
+              ]
+            },
+            "description": "Get detailed information about a specific spell"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Spells",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/spells/search/query?q=fire",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "spells", "search", "query"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "fire"
+                }
+              ]
+            },
+            "description": "Search spells by name or description"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Spells by Shape",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/spells/shapes/:shape",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "spells", "shapes", ":shape"],
+              "variable": [
+                {
+                  "key": "shape",
+                  "value": "cone"
+                }
+              ]
+            },
+            "description": "Get all spells with specific effect shape (cone, line, sphere, etc.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Spells by Level",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/spells/levels/:level",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "spells", "levels", ":level"],
+              "variable": [
+                {
+                  "key": "level",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Get all spells of a specific level (0-9)"
+          },
+          "response": []
+        }
+      ],
+      "description": "D&D 5e spell catalog endpoints"
+    },
+    {
+      "name": "Game Data (SRD)",
+      "item": [
+        {
+          "name": "Get Alignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/alignments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "alignments"]
+            },
+            "description": "Get all character alignments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Abilities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/abilities",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "abilities"]
+            },
+            "description": "Get all ability scores (STR, DEX, CON, INT, WIS, CHA)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/skills",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "skills"]
+            },
+            "description": "Get all skills"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Races",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/races",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "races"]
+            },
+            "description": "Get all player races"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Classes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/classes",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "classes"]
+            },
+            "description": "Get all character classes"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Backgrounds",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/backgrounds",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "backgrounds"]
+            },
+            "description": "Get all character backgrounds"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Languages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/languages",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "languages"]
+            },
+            "description": "Get all languages"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Magic Schools",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/magic-schools",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "magic-schools"]
+            },
+            "description": "Get all schools of magic"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Conditions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/conditions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "conditions"]
+            },
+            "description": "Get all combat conditions (blinded, poisoned, etc.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Damage Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/damage-types",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "damage-types"]
+            },
+            "description": "Get all damage types"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Equipment Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/equipment-categories",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "equipment-categories"]
+            },
+            "description": "Get all equipment categories"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Equipment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/equipment",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "equipment"]
+            },
+            "description": "Get all equipment items"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weapon Properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/weapon-properties",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "weapon-properties"]
+            },
+            "description": "Get all weapon properties"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Character Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/character-templates",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "character-templates"]
+            },
+            "description": "Get list of pre-made character templates"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Character from Template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/character-templates/:archetype",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "character-templates", ":archetype"],
+              "variable": [
+                {
+                  "key": "archetype",
+                  "value": "warrior"
+                }
+              ]
+            },
+            "description": "Generate a complete character from a template"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Monsters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/monsters",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "monsters"]
+            },
+            "description": "Get all monsters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Monster by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/monsters/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "monsters", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "goblin"
+                }
+              ]
+            },
+            "description": "Get a specific monster by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Magic Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/magic-items",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "magic-items"]
+            },
+            "description": "Get all magic items"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Magic Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/magic-items/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "magic-items", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "bag-of-holding"
+                }
+              ]
+            },
+            "description": "Get a specific magic item by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Features",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/features",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "features"]
+            },
+            "description": "Get all class features"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Feature by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/features/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "features", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "action-surge"
+                }
+              ]
+            },
+            "description": "Get a specific feature by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Traits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/traits",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "traits"]
+            },
+            "description": "Get all racial traits"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trait by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/traits/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "traits", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "darkvision"
+                }
+              ]
+            },
+            "description": "Get a specific trait by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Subclasses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/subclasses",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "subclasses"]
+            },
+            "description": "Get all subclasses"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Subclass by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/subclasses/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "subclasses", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "champion"
+                }
+              ]
+            },
+            "description": "Get a specific subclass by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Proficiencies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/proficiencies",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "proficiencies"]
+            },
+            "description": "Get all proficiencies"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Proficiency by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/game-data/proficiencies/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "game-data", "proficiencies", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "longswords"
+                }
+              ]
+            },
+            "description": "Get a specific proficiency by ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "D&D 5e SRD reference data endpoints"
+    },
+    {
+      "name": "Tactical Combat",
+      "item": [
+        {
+          "name": "List Arenas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/arenas",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "arenas"]
+            },
+            "description": "Get all available tactical combat arenas"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Arena from World",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"worldSeed\": 12345,\n  \"worldX\": 100,\n  \"worldY\": 200,\n  \"name\": \"Forest Ambush\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/arenas/generate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "arenas", "generate"]
+            },
+            "description": "Generate tactical arena from world coordinates"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Encounter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.success && jsonData.data && jsonData.data.encounterId) {",
+                  "        pm.collectionVariables.set('ENCOUNTER_ID', jsonData.data.encounterId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arenaId\": \"tavern-brawl\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter"]
+            },
+            "description": "Create a new tactical encounter in a specific arena"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Encounter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ENCOUNTER_ID}}"
+                }
+              ]
+            },
+            "description": "Get current state of a tactical encounter"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Unit to Encounter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Elara\",\n  \"hp\": 40,\n  \"maxHp\": 40,\n  \"armorClass\": 16,\n  \"position\": {\n    \"x\": 5,\n    \"y\": 5\n  },\n  \"allegiance\": \"player\",\n  \"attributes\": {\n    \"strength\": 16,\n    \"dexterity\": 14,\n    \"constitution\": 13,\n    \"intelligence\": 10,\n    \"wisdom\": 12,\n    \"charisma\": 8\n  },\n  \"proficiencyBonus\": 2,\n  \"speed\": 30,\n  \"reach\": 5\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:id/units",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":id", "units"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ENCOUNTER_ID}}"
+                }
+              ]
+            },
+            "description": "Add a unit (player or enemy) to the encounter (setup phase only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Unit Position",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": {\n    \"x\": 6,\n    \"y\": 7\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:id/units/:unitId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":id", "units", ":unitId"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ENCOUNTER_ID}}"
+                },
+                {
+                  "key": "unitId",
+                  "value": "unit-123"
+                }
+              ]
+            },
+            "description": "Update unit position (setup phase only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Unit",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:id/units/:unitId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":id", "units", ":unitId"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ENCOUNTER_ID}}"
+                },
+                {
+                  "key": "unitId",
+                  "value": "unit-123"
+                }
+              ]
+            },
+            "description": "Remove a unit from the encounter (setup phase only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Start Combat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:id/start",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":id", "start"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ENCOUNTER_ID}}"
+                }
+              ]
+            },
+            "description": "Roll initiative and start combat"
+          },
+          "response": []
+        },
+        {
+          "name": "Preview Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"command\": \"Move to (8, 5) and attack the goblin\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:encounterId/preview",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":encounterId", "preview"],
+              "variable": [
+                {
+                  "key": "encounterId",
+                  "value": "{{ENCOUNTER_ID}}"
+                }
+              ]
+            },
+            "description": "Preview an action using natural language command"
+          },
+          "response": []
+        },
+        {
+          "name": "Execute Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"plan-12345\",\n  \"confirmed\": true,\n  \"overrides\": {\n    \"allowFriendlyFire\": false\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/tactical/encounter/:encounterId/execute",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "tactical", "encounter", ":encounterId", "execute"],
+              "variable": [
+                {
+                  "key": "encounterId",
+                  "value": "{{ENCOUNTER_ID}}"
+                }
+              ]
+            },
+            "description": "Execute a previewed action plan"
+          },
+          "response": []
+        }
+      ],
+      "description": "Tactical combat system endpoints (grid-based combat)"
+    }
+  ]
+}

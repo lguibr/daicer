@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+glob: "frontend/src/{components,pages,theme}/**/*.{ts,tsx}"
+description: "A rule to ensure all new components adhere to the project's established design system, colors, and tokens defined in Tailwind config."
+---
+
+### **Rule 22: Adhere to the Design System and Theme**
+
+All new components and styling must strictly adhere to the project's established design system, including colors, fonts, spacing, and theming tokens.
+
+*   **Rationale**: This maintains a consistent and professional visual identity across the application, makes styling predictable, and simplifies future theme updates.
+*   **Implementation**:
+    1.  **Use Tailwind Utilities**: All styling must be implemented using Tailwind CSS utility classes. Do not write custom CSS or use inline `style` objects for layout and theming.
+    2.  **Reference Theme Tokens**: All colors, fonts, spacing, and other design values must come from the theme defined in `frontend/tailwind.config.js` and `frontend/src/theme/gildedTokens.ts`. **Do not use arbitrary values** (e.g., `text-[#1A2B3C]`, `w-[123px]`). Use theme-aware classes like `text-primary`, `bg-aurora-blue`, `p-4`.
+    3.  **Leverage UI Primitives**: Whenever possible, compose new components using the pre-styled primitives from `frontend/src/components/ui/`. These components are already theme-aware.
+    4.  **Verify Dark Mode**: Ensure that all new components are tested and look correct in both light and dark modes.

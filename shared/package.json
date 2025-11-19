@@ -1,0 +1,51 @@
+{
+  "name": "@daicer/shared",
+  "version": "1.0.0",
+  "description": "Shared types, schemas, and test fixtures for Daicer",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./character": "./character/index.ts",
+    "./character/types": "./character/types.ts",
+    "./room": "./room/index.ts",
+    "./room/types": "./room/types.ts",
+    "./player": "./player/index.ts",
+    "./player/types": "./player/types.ts",
+    "./user": "./user/index.ts",
+    "./user/types": "./user/types.ts",
+    "./world/history-schema": "./world/history-schema.ts",
+    "./world/structure-schema": "./world/structure-schema.ts",
+    "./world/road-schema": "./world/road-schema.ts",
+    "./world/condition-schema": "./world/condition-schema.ts",
+    "./graph-states": "./graph-states/index.ts",
+    "./graph-states/dm-story": "./graph-states/dm-story-state.ts",
+    "./graph-states/world-config": "./graph-states/world-config-state.ts",
+    "./graph-states/character": "./graph-states/character-state.ts",
+    "./graph-states/mergers": "./graph-states/mergers.ts",
+    "./world-gen": "./world-gen/index.ts",
+    "./world-gen/noise": "./world-gen/noise/index.ts",
+    "./world-gen/cellular-automata": "./world-gen/cellular-automata/index.ts",
+    "./world-gen/bsp": "./world-gen/bsp/index.ts",
+    "./world-gen/voronoi": "./world-gen/voronoi/index.ts",
+    "./world-gen/wfc": "./world-gen/wfc/index.ts",
+    "./world-gen/structures": "./world-gen/structures/index.ts",
+    "./world-gen/utils": "./world-gen/utils/index.ts"
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules ../node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules ../node_modules/jest/bin/jest.js --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "fast-simplex-noise": "^4.0.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.8.3"
+  }
+}

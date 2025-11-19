@@ -1,0 +1,21 @@
+# Environment Variables
+node_modules/
+dist/
+cdktf.out/
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
+.env
+.env.local
+.DS_Store
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

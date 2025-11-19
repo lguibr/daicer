@@ -1,0 +1,128 @@
+[
+  {
+    "id": "acrobatics",
+    "index": "acrobatics",
+    "name": "Acrobatics",
+    "description": "Stay on your feet in a tricky situation, or perform an acrobatic stunt.",
+    "abilityScore": "dex"
+  },
+  {
+    "id": "animal-handling",
+    "index": "animal-handling",
+    "name": "Animal Handling",
+    "description": "Calm or train an animal, or get an animal to behave in a certain way.",
+    "abilityScore": "wis"
+  },
+  {
+    "id": "arcana",
+    "index": "arcana",
+    "name": "Arcana",
+    "description": "Recall lore about spells, magic items, and the planes of existence.",
+    "abilityScore": "int"
+  },
+  {
+    "id": "athletics",
+    "index": "athletics",
+    "name": "Athletics",
+    "description": "Jump farther than normal, stay afloat in rough water, or break something.",
+    "abilityScore": "str"
+  },
+  {
+    "id": "deception",
+    "index": "deception",
+    "name": "Deception",
+    "description": "Tell a convincing lie, or wear a disguise convincingly.",
+    "abilityScore": "cha"
+  },
+  {
+    "id": "history",
+    "index": "history",
+    "name": "History",
+    "description": "Recall lore about historical events, people, nations, and cultures.",
+    "abilityScore": "int"
+  },
+  {
+    "id": "insight",
+    "index": "insight",
+    "name": "Insight",
+    "description": "Discern a person's mood and intentions.",
+    "abilityScore": "wis"
+  },
+  {
+    "id": "intimidation",
+    "index": "intimidation",
+    "name": "Intimidation",
+    "description": "Awe or threaten someone into doing what you want.",
+    "abilityScore": "cha"
+  },
+  {
+    "id": "investigation",
+    "index": "investigation",
+    "name": "Investigation",
+    "description": "Find obscure information in books, or deduce how something works.",
+    "abilityScore": "int"
+  },
+  {
+    "id": "medicine",
+    "index": "medicine",
+    "name": "Medicine",
+    "description": "Diagnose an illness, or determine what killed the recently slain.",
+    "abilityScore": "wis"
+  },
+  {
+    "id": "nature",
+    "index": "nature",
+    "name": "Nature",
+    "description": "Recall lore about terrain, plants, animals, and weather.",
+    "abilityScore": "int"
+  },
+  {
+    "id": "perception",
+    "index": "perception",
+    "name": "Perception",
+    "description": "Using a combination of senses, notice something that's easy to miss.",
+    "abilityScore": "wis"
+  },
+  {
+    "id": "performance",
+    "index": "performance",
+    "name": "Performance",
+    "description": "Act, tell a story, perform music, or dance.",
+    "abilityScore": "cha"
+  },
+  {
+    "id": "persuasion",
+    "index": "persuasion",
+    "name": "Persuasion",
+    "description": "Honestly and graciously convince someone of something.",
+    "abilityScore": "cha"
+  },
+  {
+    "id": "religion",
+    "index": "religion",
+    "name": "Religion",
+    "description": "Recall lore about gods, religious rituals, and holy symbols.",
+    "abilityScore": "int"
+  },
+  {
+    "id": "sleight-of-hand",
+    "index": "sleight-of-hand",
+    "name": "Sleight of Hand",
+    "description": "Pick a pocket, conceal a handheld object, or perform legerdemain.",
+    "abilityScore": "dex"
+  },
+  {
+    "id": "stealth",
+    "index": "stealth",
+    "name": "Stealth",
+    "description": "Escape notice by moving quietly and hiding behind things.",
+    "abilityScore": "dex"
+  },
+  {
+    "id": "survival",
+    "index": "survival",
+    "name": "Survival",
+    "description": "Follow tracks, forage, find a trail, or avoid natural hazards.",
+    "abilityScore": "wis"
+  }
+]

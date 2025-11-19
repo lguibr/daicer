@@ -1,0 +1,261 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark only;
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(216, 132, 22, 0.18), transparent 52%),
+    radial-gradient(circle at 82% 8%, rgba(122, 73, 217, 0.18), transparent 48%),
+    linear-gradient(140deg, rgba(7, 5, 7, 0.98), rgba(11, 8, 10, 0.96));
+  color: theme('colors.shadow.100');
+  overflow-x: hidden;
+}
+
+code {
+  font-family: 'Source Code Pro', Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: theme('colors.midnight.300');
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, theme('colors.shadow.700'), theme('colors.midnight.700'));
+  border-radius: 9999px;
+  border: 2px solid theme('colors.midnight.400');
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, theme('colors.aurora.500'), theme('colors.midnight.600'));
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.shadow.700') theme('colors.midnight.400');
+}
+
+.input-style {
+  @apply px-3 py-2 rounded-lg border border-midnight-600 bg-midnight-500/70 text-shadow-100 transition-all duration-200 focus:border-accent focus:ring-2 focus:ring-accent/50 focus:outline-none;
+  box-shadow: inset 0 1px 2px rgba(5, 6, 7, 0.35);
+}
+
+.btn-primary {
+  @apply px-6 py-3 font-semibold tracking-wide rounded-lg shadow-lg transition-all duration-200 bg-aurora-500 text-shadow-50 hover:bg-aurora-400 hover:-translate-y-0.5 active:bg-aurora-600 disabled:bg-midnight-600 disabled:text-shadow-400 disabled:cursor-not-allowed disabled:opacity-50;
+  box-shadow: 0 12px 24px rgba(211, 143, 31, 0.25);
+}
+
+.btn-secondary {
+  @apply px-6 py-3 font-medium rounded-lg transition-all duration-200 bg-midnight-500/80 text-shadow-100 border border-midnight-400 hover:bg-midnight-400/80 hover:border-aurora-400/60 active:bg-midnight-600 disabled:bg-midnight-700 disabled:text-shadow-500 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.card {
+  @apply rounded-xl border border-midnight-500/70 bg-midnight-400/80 shadow-2xl backdrop-blur-md;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 45px rgba(4, 7, 12, 0.55);
+}
+
+::selection {
+  background: linear-gradient(120deg, rgba(216, 132, 22, 0.55), rgba(122, 73, 217, 0.55));
+  color: theme('colors.midnight.50');
+}
+
+::-moz-selection {
+  background: linear-gradient(120deg, rgba(216, 132, 22, 0.55), rgba(122, 73, 217, 0.55));
+  color: theme('colors.midnight.50');
+}
+
+@layer base {
+  :root {
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --background: 270 22% 6%;
+    --foreground: 40 45% 94%;
+    --card: 24 30% 12%;
+    --card-foreground: 38 38% 94%;
+    --popover: 24 30% 12%;
+    --popover-foreground: 38 38% 94%;
+    --primary: 38 78% 48%;
+    --primary-foreground: 24 68% 12%;
+    --secondary: 26 26% 20%;
+    --secondary-foreground: 38 34% 88%;
+    --muted: 25 20% 24%;
+    --muted-foreground: 34 18% 64%;
+    --accent: 278 64% 58%;
+    --accent-foreground: 261 75% 96%;
+    --destructive: 6 70% 48%;
+    --destructive-foreground: 24 68% 12%;
+    --border: 26 26% 26%;
+    --input: 26 26% 26%;
+    --ring: 38 78% 48%;
+    --chart-1: 38 78% 48%;
+    --chart-2: 280 64% 56%;
+    --chart-3: 18 63% 48%;
+    --chart-4: 48 36% 44%;
+    --chart-5: 6 60% 50%;
+    --radius: 0.65rem;
+    --app-accent: hsl(var(--accent));
+  }
+
+  .dark {
+    --background: 270 22% 5%;
+    --foreground: 40 45% 94%;
+    --card: 26 32% 10%;
+    --card-foreground: 38 38% 94%;
+    --popover: 26 32% 10%;
+    --popover-foreground: 38 38% 94%;
+    --primary: 38 78% 48%;
+    --primary-foreground: 24 68% 12%;
+    --secondary: 28 24% 18%;
+    --secondary-foreground: 38 34% 88%;
+    --muted: 28 20% 20%;
+    --muted-foreground: 34 18% 64%;
+    --accent: 278 64% 58%;
+    --accent-foreground: 261 75% 96%;
+    --destructive: 6 70% 48%;
+    --destructive-foreground: 24 68% 12%;
+    --border: 28 24% 20%;
+    --input: 28 24% 20%;
+    --ring: 38 78% 48%;
+    --chart-1: 38 78% 48%;
+    --chart-2: 280 64% 56%;
+    --chart-3: 18 63% 48%;
+    --chart-4: 48 36% 44%;
+    --chart-5: 6 60% 50%;
+    --app-accent: hsl(var(--accent));
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Shake animations for Logo - various intensities */
+
+/* Subtle shake - gentle wobble */
+@keyframes shake-subtle {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(-0.5px) rotate(-0.3deg); }
+  20% { transform: translateX(0.5px) rotate(0.3deg); }
+  30% { transform: translateX(-1px) rotate(-0.4deg); }
+  40% { transform: translateX(1px) rotate(0.4deg); }
+  50% { transform: translateX(-0.5px) rotate(-0.2deg); }
+  60% { transform: translateX(0.5px) rotate(0.2deg); }
+  70% { transform: translateX(-0.5px) rotate(-0.2deg); }
+  80% { transform: translateX(0.5px) rotate(0.2deg); }
+  90% { transform: translateX(-0.5px) rotate(0deg); }
+}
+
+/* Normal shake - balanced movement */
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10% { transform: translateX(-2px) rotate(-1deg); }
+  20% { transform: translateX(2px) rotate(1deg); }
+  30% { transform: translateX(-3px) rotate(-1.5deg); }
+  40% { transform: translateX(3px) rotate(1.5deg); }
+  50% { transform: translateX(-2px) rotate(-0.5deg); }
+  60% { transform: translateX(2px) rotate(0.5deg); }
+  70% { transform: translateX(-1px) rotate(-0.5deg); }
+  80% { transform: translateX(1px) rotate(0.5deg); }
+  90% { transform: translateX(-1px) rotate(0deg); }
+}
+
+/* Strong shake - more aggressive */
+@keyframes shake-strong {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-4px, 1px) rotate(-2deg); }
+  20% { transform: translate(4px, -1px) rotate(2deg); }
+  30% { transform: translate(-5px, 2px) rotate(-3deg); }
+  40% { transform: translate(5px, -2px) rotate(3deg); }
+  50% { transform: translate(-4px, 1px) rotate(-2deg); }
+  60% { transform: translate(4px, -1px) rotate(2deg); }
+  70% { transform: translate(-3px, 1px) rotate(-1deg); }
+  80% { transform: translate(3px, -1px) rotate(1deg); }
+  90% { transform: translate(-2px, 0) rotate(-0.5deg); }
+}
+
+/* Extreme shake - very intense */
+@keyframes shake-extreme {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  10% { transform: translate(-6px, 3px) rotate(-4deg) scale(1.02); }
+  20% { transform: translate(6px, -3px) rotate(4deg) scale(0.98); }
+  30% { transform: translate(-8px, 4px) rotate(-5deg) scale(1.03); }
+  40% { transform: translate(8px, -4px) rotate(5deg) scale(0.97); }
+  50% { transform: translate(-6px, 3px) rotate(-4deg) scale(1.02); }
+  60% { transform: translate(6px, -3px) rotate(4deg) scale(0.98); }
+  70% { transform: translate(-4px, 2px) rotate(-3deg) scale(1.01); }
+  80% { transform: translate(4px, -2px) rotate(3deg) scale(0.99); }
+  90% { transform: translate(-2px, 1px) rotate(-1deg) scale(1); }
+}
+
+/* Chaotic shake - unpredictable with scale & 3D */
+@keyframes shake-chaotic {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  8% { transform: translate(-7px, 4px) rotate(-6deg) scale(1.05); }
+  16% { transform: translate(8px, -5px) rotate(7deg) scale(0.95); }
+  24% { transform: translate(-9px, 3px) rotate(-8deg) scale(1.08); }
+  32% { transform: translate(10px, -6px) rotate(9deg) scale(0.92); }
+  40% { transform: translate(-8px, 5px) rotate(-7deg) scale(1.06); }
+  48% { transform: translate(7px, -4px) rotate(6deg) scale(0.94); }
+  56% { transform: translate(-6px, 3px) rotate(-5deg) scale(1.04); }
+  64% { transform: translate(5px, -2px) rotate(4deg) scale(0.96); }
+  72% { transform: translate(-4px, 2px) rotate(-3deg) scale(1.03); }
+  80% { transform: translate(3px, -1px) rotate(2deg) scale(0.97); }
+  88% { transform: translate(-2px, 1px) rotate(-1deg) scale(1.01); }
+  96% { transform: translate(1px, 0px) rotate(0.5deg) scale(0.99); }
+}
+
+.animate-shake-subtle {
+  animation: shake-subtle 600ms ease-in-out;
+}
+
+.animate-shake {
+  animation: shake 600ms ease-in-out;
+}
+
+.animate-shake-strong {
+  animation: shake-strong 600ms ease-in-out;
+}
+
+.animate-shake-extreme {
+  animation: shake-extreme 700ms ease-in-out;
+}
+
+.animate-shake-chaotic {
+  animation: shake-chaotic 800ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}

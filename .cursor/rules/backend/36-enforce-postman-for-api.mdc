@@ -1,0 +1,139 @@
+---
+alwaysApply: true
+glob: ["backend/src/api/**/*.ts", "backend/src/services/**/*.ts", "e2e/**/*.spec.ts"]
+description: "⚠️ MANDATORY: Use Postman MCP for ALL REST API testing, verification, and debugging. Manual API testing is FORBIDDEN."
+---
+
+### **Rule 36: API Testing via Postman MCP - NON-NEGOTIABLE**
+
+**⚠️ CRITICAL ENFORCEMENT: You MUST use the Postman MCP (`postman-api`) for ANY task involving REST API endpoints. Testing APIs manually with curl, fetch, or any other method is strictly FORBIDDEN.**
+
+Postman is the single source of truth for API testing in DAICE. It provides precise, repeatable requests, environment management, and validated response checking.
+
+**See Rule 45 (MCP Decision Protocol) for when to invoke this tool.**
+
+---
+
+# When to use
+
+You MUST use Postman MCP when:
+- Testing or verifying a REST API endpoint
+- Debugging 4xx/5xx errors on specific routes
+- Validating request/response payloads match Zod schemas
+- Checking headers, status codes, or auth behavior
+- Generating API examples or documentation
+- Investigating backend routes in isolation from the frontend
+
+**If the task mentions an API endpoint, this rule applies. No exceptions.**
+
+---
+
+# What to do
+
+1. **Use MCP server `postman-api`** (always start with this in full tool mode)
+
+2. **Select the correct environment:**
+   - **`dev`** (default): localhost:3001 with `emulator-data` - use for normal development testing
+   - **`e2e`**: localhost:3101 with `emulator-data-e2e` - use for parallel E2E test validation
+   - **`prod`**: Production URLs - ONLY use if user explicitly says "prod" AND confirms it's deployed
+
+3. **Run requests from the collection** (don't construct raw requests):
+   - Use the request name from the collection (e.g., "Rooms / Create Room")
+   - Variables are auto-resolved from the environment (BASE_URL, FIREBASE_ID_TOKEN, etc)
+
+4. **Validate the response:**
+   - Check HTTP status code matches expectation (200, 201, 404, etc)
+   - Verify response body structure matches Zod schema
+   - Inspect headers if auth/CORS is relevant
+
+5. **Report results concisely:**
+   - State the request name and environment used
+   - Show status code + key response data
+   - Flag any validation errors or unexpected behavior
+
+---
+
+# Collection structure
+
+The DAICE API collection (`postman/daicer-api.postman_collection.json`) contains:
+
+- **Health & Diagnostics** - Health check (no auth required)
+- **Users** - Get/create user profile
+- **Rooms** - Create/join/update/delete rooms
+- **Game** - World generation, character submission, turn processing
+- **Characters** - Character sheet CRUD operations
+- **Assets** - AI generation (avatars, backgrounds, action frames)
+- **Spells** - D&D 5e spell catalog with filtering
+- **Game Data** - Complete SRD reference data
+- **Tactical Combat** - Grid-based tactical encounters
+
+---
+
+# Environment details
+
+**dev environment (localhost:3001)**
+- Frontend: localhost:3000
+- Backend: localhost:3001
+- Firestore: localhost:8080
+- Auth: localhost:9099
+- Data: `emulator-data/`
+- Use: Normal development and manual testing
+
+**e2e environment (localhost:3101)**
+- Frontend: localhost:3100
+- Backend: localhost:3101
+- Firestore: localhost:8081
+- Auth: localhost:9100
+- Data: `emulator-data-e2e/`
+- Use: Parallel-safe E2E test validation (doesn't interfere with dev)
+
+---
+
+# Safety & Constraints
+
+- **Local environments only by default**: `dev` and `e2e` are safe (localhost, emulators)
+- **Never run `prod` without confirmation**: User MUST explicitly say "prod" AND you MUST verify deployment exists
+- **Redact secrets**: If a response contains tokens, API keys, or credentials, redact them in your output
+- **Auth is collection-level**: Bearer token with `{{FIREBASE_ID_TOKEN}}` is configured at collection level
+
+---
+
+# Examples
+
+**Test room creation:**
+```
+Use postman-api. Run "Rooms / Create Room" with environment dev.
+Show me status + response.room.id.
+```
+
+**Verify spell filtering:**
+```
+Use postman-api. Run "Spells / List All Spells" with query params level=1&school=evocation in dev.
+Show spell count and first 3 spell names.
+```
+
+**Debug a 401 error:**
+```
+Use postman-api. Run "Characters / Get Character" in dev without auth header.
+Confirm 401 status. Then run with valid FIREBASE_ID_TOKEN and confirm 200.
+```
+
+**Test character submission:**
+```
+Use postman-api. Run "Game / Add Character" in dev with sample Fighter character.
+Confirm 201 status and PLAYER_ID auto-populated in response.
+```
+
+**E2E validation:**
+```
+Use postman-api. Run "Rooms / Join Room" in e2e environment with test room code.
+Verify response matches expected schema for E2E test assertion.
+```
+
+---
+
+# Cross-References
+
+- **Rule 45**: Master MCP Decision Protocol (when to select this tool)
+- **Rule 28**: Design for Testability (applies to backend routes too)
+- **Rule 38**: DAICE Planning Protocol (plan API changes before coding)

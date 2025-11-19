@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+glob: "backend/src/{services,graph,tactical}/**/*.ts"
+---
+
+### **Rule 11: Structured Output is Non-Negotiable**
+
+All interactions with LLMs that result in state changes or narrative generation must use structured output (`.withStructuredOutput(schema)`).
+
+*   **Rationale**: This eliminates unreliable string parsing and ensures the AI's output can be directly and safely applied to the `GraphState`. It is the core of making the AI a reliable system component.
+*   **Implementation**:
+    *   For turn processing, the LLM must return a Zod object containing `overall_summary` and `player_perspectives`.
+    *   For asset generation, the LLM must return a validated JSON structure representing the voxel model or image parameters.

@@ -1,0 +1,26 @@
+{
+  "name": "@daicer/e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end integration tests for DAIcer (full-stack)",
+  "scripts": {
+    "env": "dotenv -e ../.env.e2e -- node start-e2e-env.js",
+    "test": "dotenv -e ../.env.e2e -- playwright test",
+    "test:ui": "dotenv -e ../.env.e2e -- playwright test --ui",
+    "test:headed": "dotenv -e ../.env.e2e -- playwright test --headed",
+    "test:debug": "dotenv -e ../.env.e2e -- playwright test --debug",
+    "report": "playwright show-report",
+    "codegen": "playwright codegen http://localhost:3100"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@types/node": "^20.10.5",
+    "wait-on": "^9.0.3"
+  },
+  "keywords": [
+    "e2e",
+    "integration-tests",
+    "playwright",
+    "testing"
+  ]
+}

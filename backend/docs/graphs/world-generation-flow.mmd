@@ -1,0 +1,41 @@
+graph TB
+    START([START]) --> world_init[world_init_node]
+    world_init --> world_conditions[world_conditions_node]
+    
+    world_conditions --> history_check{historyDepth > 0?}
+    history_check -->|Yes| history_period[history_period_node]
+    history_check -->|No| structures[structures_placement_node]
+    
+    history_period --> period_check{More periods?}
+    period_check -->|Yes| history_period
+    period_check -->|No| history_summary[history_summary_node]
+    
+    history_summary --> structures
+    
+    structures --> roads_check{enableRoads?}
+    roads_check -->|Yes| roads[roads_generation_node]
+    roads_check -->|No| terrain[terrain_collapse_node]
+    
+    roads --> terrain
+    
+    terrain --> chunks[chunks_pregeneration_node]
+    chunks --> lore[world_lore_node]
+    lore --> completion[world_completion_node]
+    
+    completion --> character_openings[character_openings_node]
+    character_openings --> equipment[equipment_management_node]
+    equipment --> END([END])
+    
+    style world_init fill:#e1f5ff
+    style world_conditions fill:#e1f5ff
+    style history_period fill:#fff4e1
+    style history_summary fill:#fff4e1
+    style structures fill:#e8f5e9
+    style roads fill:#e8f5e9
+    style terrain fill:#e8f5e9
+    style chunks fill:#e8f5e9
+    style lore fill:#f3e5f5
+    style completion fill:#f3e5f5
+    style character_openings fill:#ffe0e0
+    style equipment fill:#ffe0e0
+

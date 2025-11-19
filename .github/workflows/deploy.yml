@@ -1,0 +1,158 @@
+name: Deploy Daicer to GCP
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: daicer-ed373
+  GCP_REGION: us-central1
+  IMAGE_NAME: daicer-backend
+
+jobs:
+  build_and_push_backend:
+    name: Build & Push Backend Image
+    runs-on: ubuntu-latest
+
+    outputs:
+      image: ${{ steps.img.outputs.image }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth
+        run: gcloud auth configure-docker gcr.io
+
+      - name: Build backend image
+        run: |
+          cd backend
+          docker build -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+                       -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest .
+
+      - name: Push backend image
+        run: |
+          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Export image for next jobs
+        id: img
+        run: echo "image=gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_OUTPUT
+
+  deploy_infra:
+    name: Deploy Infra (CDKTF → Cloud Run)
+    runs-on: ubuntu-latest
+    needs: build_and_push_backend
+
+    outputs:
+      backend_url: ${{ steps.cdktf-outputs.outputs.backend_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: infra/yarn.lock
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.5"
+          terraform_wrapper: false
+
+      - name: Install CDKTF CLI
+        run: npm install -g cdktf-cli@0.21.0
+
+      - name: Install infra dependencies
+        run: |
+          cd infra
+          yarn install --frozen-lockfile
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: CDKTF Synth
+        working-directory: infra
+        env:
+          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+          BACKEND_IMAGE: ${{ needs.build_and_push_backend.outputs.image }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+        run: cdktf synth
+
+      - name: Terraform Init
+        working-directory: infra/cdktf.out/stacks/daicer-infra
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infra/cdktf.out/stacks/daicer-infra
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+        run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: infra/cdktf.out/stacks/daicer-infra
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SA_KEY }}
+        run: terraform apply -auto-approve
+
+      - name: Get Terraform Outputs
+        id: cdktf-outputs
+        working-directory: infra/cdktf.out/stacks/daicer-infra
+        run: |
+          BACKEND_URL=$(terraform output -raw backend_url || echo "")
+          echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+
+  deploy_frontend:
+    name: Build & Deploy Frontend to Firebase Hosting
+    runs-on: ubuntu-latest
+    needs: deploy_infra
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          yarn install --frozen-lockfile
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          yarn build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          projectId: ${{ env.GCP_PROJECT_ID }}
+          channelId: live
+

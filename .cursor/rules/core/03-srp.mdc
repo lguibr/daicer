@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+glob: "**/*.{ts,tsx}"
+---
+
+### **Rule 3: Small Files, Single Responsibility**
+
+Every file, module, and component must have a single, well-defined responsibility. Avoid monolithic files that handle multiple concerns (e.g., state logic, API calls, and rendering in one component).
+
+*   **Rationale**: This improves modularity, testability, and maintainability. It makes the codebase easier to navigate and reason about, which is critical for a complex system like DAICE.
+*   **Implementation**:
+    *   Separate hooks, components, services, and state definitions into their own files.
+    *   Keep functions short and focused on a single task.
+    *   If a file exceeds 200-300 lines, consider if it can be broken down into smaller, more specialized modules.

@@ -1,0 +1,80 @@
+# Build outputs
+dist/
+build/
+coverage/
+.next/
+
+# Logs
+logs/
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Lock files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Generated files
+*.min.js
+*.min.css
+
+# Firebase/Firestore
+.firebase/
+emulator-data/
+emulator-data-e2e/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# CDK
+cdktf.out/
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test reports
+playwright-report/
+test-results/
+
+# Postman - include collection but ignore environments
+postman/environments/
+postman/exports/
+postman/test-results/
+
+# Project-specific generated files
+*.mmd.svg
+project-tree.txt
+
+# QA logs
+qa-run.log
+format.log
+lint.log
+typecheck.log
+test.log
