@@ -3,7 +3,7 @@
  */
 
 import { auth } from './firebase';
-import type { Room, WorldSettings, Player, Message, RoomMembership } from '../types/shared';
+import type { Room, WorldSettings, Player, Message, RoomMembership, Structure, Road, HistoricalPeriod, WorldCondition, CharacterSheet } from '../types/shared';
 import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse } from '../types/assets';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -250,14 +250,13 @@ interface WorldConfigSettings {
 
 export async function invokeWorldConfigGraph(input: {
   roomId: string;
-  settings: WorldConfigSettings;
-  historyPeriods: HistoricalPeriod[];
-  conditions: WorldCondition[];
-  worldHistory: string;
+  settings: WorldConfigSettings & {
+    seed?: string;
+    generationParams?: any;
+  };
 }): Promise<{
   structures: Structure[];
   roads: Road[];
-  worldDescription: string;
   generatedChunks: unknown[];
   gridState?: unknown;
   terrainMap?: unknown;

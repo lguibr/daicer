@@ -27,9 +27,15 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
   }, []);
 
   // Notify parent of changes
+  // Notify parent of changes
+  const onParamsChangeRef = React.useRef(onParamsChange);
   useEffect(() => {
-    onParamsChange(params, seed);
-  }, [params, seed, onParamsChange]);
+    onParamsChangeRef.current = onParamsChange;
+  }, [onParamsChange]);
+
+  useEffect(() => {
+    onParamsChangeRef.current(params, seed);
+  }, [params, seed]);
 
   const handleRegenerate = () => {
     generateWorld(seed, 128, params);
@@ -78,13 +84,13 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
               <Label>World Seed</Label>
               <div className="flex gap-2">
                 <Input value={seed} onChange={(e) => setSeed(e.target.value)} placeholder="Enter seed..." />
-                <Button variant="outline" size="icon" onClick={handleRandomizeSeed} title="Randomize">
+                <Button type="button" variant="outline" size="icon" onClick={handleRandomizeSeed} title="Randomize">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <Button onClick={handleRegenerate} disabled={isGenerating} className="w-full">
+            <Button type="button" onClick={handleRegenerate} disabled={isGenerating} className="w-full">
               <Play className="w-4 h-4 mr-2" />
               {isGenerating ? 'Generating Preview...' : 'Update Preview'}
             </Button>
@@ -92,6 +98,7 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
             {/* Advanced Settings Toggle */}
             <div className="pt-4 border-t">
               <Button
+                type="button"
                 variant="ghost"
                 className="w-full flex justify-between items-center"
                 onClick={() => setShowAdvanced(!showAdvanced)}

@@ -36,6 +36,7 @@ import openapiRouter from '@/api/openapi';
 import gridChunksRouter from '@/api/grid-chunks';
 import graphSectionsRouter from '@/api/graph-sections';
 import terrainRouter from '@/api/terrain';
+import exploreRouter from '@/routes/explore';
 
 // Socket.io handlers
 import { initializeSocketHandlers } from '@/socket/handlers';
@@ -150,6 +151,7 @@ app.use('/api/tactical', tacticalMapRouter);
 app.use('/api/grid', gridChunksRouter);
 app.use('/api/graph', graphSectionsRouter); // NEW: Section graph endpoints
 app.use('/api/terrain', terrainRouter); // NEW: Terrain generation endpoints
+app.use('/api/explore', exploreRouter); // NEW: Exploration prototype endpoints
 
 // Error handling
 app.use(notFoundHandler);

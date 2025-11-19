@@ -36,6 +36,18 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
   useEffect(() => {
     if (!roomId) return;
 
+    // Debug: Log which dependency changed
+    console.log('[InfiniteChunks] Initializing/Updating provider. Changed deps:', {
+      roomId,
+      initialGridLen: initialGrid.length,
+      chunkSize,
+      loadRadius,
+      enabled,
+      chunkGeneratorChanged: !!chunkGenerator,
+      placementMapChanged: !!placementMap,
+      layer
+    });
+
     dispatch({
       type: 'INITIALIZE',
       payload: {

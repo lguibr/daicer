@@ -10,3 +10,7 @@ export * from '@daicer/shared/character/types';
 export * from '@daicer/shared/room/types';
 export * from '@daicer/shared/player/types';
 export * from '@daicer/shared/user/types';
+export * from '@daicer/shared/world/structure-schema';
+export * from '@daicer/shared/world/road-schema';
+export * from '@daicer/shared/world/history-schema';
+export * from '@daicer/shared/world/condition-schema';

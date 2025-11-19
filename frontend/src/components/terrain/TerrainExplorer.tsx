@@ -19,7 +19,7 @@ import { AspectRatio } from '../ui/aspect-ratio';
 interface TerrainExplorerProps {
   biomeGrid: string[][]; // 2D grid for backward compatibility (surface layer)
   biomeGrid3D?: string[][][]; // Optional 3D grid [floor][y][x] for multi-floor structures (7 floors: -3 to +3)
-  structures?: Array<{ name: string; x: number; y: number; type: string; [key: string]: any }>;
+  structures?: Array<{ name: string; x: number; y: number; type: string;[key: string]: any }>;
   roomSize?: number;
   initialZoom?: number;
   roomId?: string;
@@ -79,6 +79,8 @@ function getStructureColor(biomeName: string): string | null {
   if (biomeName.startsWith('structure_final_')) {
     const parts = biomeName.split('_');
     const material = parts[2]; // structure_final_<material>_...
+    if (!material) return '#6b7280';
+
     const tileType = parts[3]; // structure_final_<material>_<tileType>_...
 
     const baseColor = MATERIAL_COLORS[material] || '#6b7280';
@@ -113,6 +115,10 @@ function getStructureColor(biomeName: string): string | null {
   return null; // Not a structure biome
 }
 
+import { useSimpleTerrainManager } from './useSimpleTerrainManager';
+
+// ... imports ...
+
 export function TerrainExplorer({
   biomeGrid,
   biomeGrid3D,
@@ -122,36 +128,53 @@ export function TerrainExplorer({
   roomId = '',
   enableInfinite = true,
   chunkGenerator,
-  placementMap, // NEW: Accept placement map
+  placementMap,
 }: TerrainExplorerProps) {
-  // Wrap with provider if infinite chunks enabled
+  // Case 1: Client-side generation (Preview Mode)
+  // If we have a chunkGenerator, we use the simple manager directly.
+  // This bypasses the complex InfiniteChunksProvider.
+  if (enableInfinite && chunkGenerator) {
+    return (
+      <SimpleTerrainExplorerWrapper
+        biomeGrid={biomeGrid}
+        biomeGrid3D={biomeGrid3D}
+        structures={structures}
+        roomSize={roomSize}
+        initialZoom={initialZoom}
+        roomId={roomId}
+        chunkGenerator={chunkGenerator}
+      />
+    );
+  }
+
+  // Case 2: Backend generation (Game Mode)
+  // If we have roomId but NO chunkGenerator, we use the InfiniteChunksProvider.
   if (enableInfinite && roomId) {
     return (
       <InfiniteChunksProvider
         options={{
           roomId,
           initialGrid: biomeGrid,
-          chunkSize: 4,
-          loadRadius: 12,
+          chunkSize: 16,
+          loadRadius: 8,
           enabled: true,
-          chunkGenerator,
+          // No chunkGenerator here implies backend mode
           placementMap,
         }}
       >
-        <TerrainExplorerInternal
+        <InfiniteChunksBridge
           biomeGrid={biomeGrid}
           biomeGrid3D={biomeGrid3D}
           structures={structures}
           roomSize={roomSize}
           initialZoom={initialZoom}
           roomId={roomId}
-          enableInfinite={enableInfinite}
         />
       </InfiniteChunksProvider>
     );
   }
 
-  // No provider needed for static mode
+  // Case 3: Static Mode (No infinite loading)
   return (
     <TerrainExplorerInternal
       biomeGrid={biomeGrid}
@@ -161,11 +184,60 @@ export function TerrainExplorer({
       initialZoom={initialZoom}
       roomId={roomId}
       enableInfinite={false}
+      // Static props
+      expandedGrid={biomeGrid}
+      gridWorldOffset={{ x: 0, y: 0 }}
+      isLoading={false}
+      checkChunkLoading={() => { }}
     />
   );
 }
 
-// Internal component that uses the hooks
+// Wrapper for Simple Manager
+function SimpleTerrainExplorerWrapper(props: TerrainExplorerProps & { chunkGenerator: NonNullable<TerrainExplorerProps['chunkGenerator']> }) {
+  const { expandedGrid, gridWorldOffset, isLoading, checkChunkLoading } = useSimpleTerrainManager({
+    initialGrid: props.biomeGrid,
+    chunkSize: 16,
+    loadRadius: 8,
+    chunkGenerator: props.chunkGenerator,
+  });
+
+  return (
+    <TerrainExplorerInternal
+      {...props}
+      enableInfinite={true}
+      expandedGrid={expandedGrid}
+      gridWorldOffset={gridWorldOffset}
+      isLoading={isLoading}
+      checkChunkLoading={checkChunkLoading}
+    />
+  );
+}
+
+// Bridge for InfiniteChunksContext
+function InfiniteChunksBridge(props: Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'>) {
+  const infiniteChunksView = useInfiniteChunksView();
+  const infiniteChunksActions = useInfiniteChunksActions();
+
+  return (
+    <TerrainExplorerInternal
+      {...props}
+      enableInfinite={true}
+      expandedGrid={infiniteChunksView.expandedGrid}
+      gridWorldOffset={infiniteChunksView.gridWorldOffset}
+      isLoading={infiniteChunksView.isLoading}
+      checkChunkLoading={infiniteChunksActions.checkChunkLoading}
+    />
+  );
+}
+
+interface TerrainExplorerInternalProps extends Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'> {
+  expandedGrid: string[][];
+  gridWorldOffset: { x: number; y: number };
+  isLoading: boolean;
+  checkChunkLoading: (x: number, y: number) => void;
+}
+
 function TerrainExplorerInternal({
   biomeGrid,
   biomeGrid3D,
@@ -174,10 +246,15 @@ function TerrainExplorerInternal({
   initialZoom = 2,
   roomId = '',
   enableInfinite = false,
-}: Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'>) {
+  expandedGrid,
+  gridWorldOffset,
+  isLoading,
+  checkChunkLoading,
+}: TerrainExplorerInternalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Local UI state
   const [zoom, setZoom] = useState(initialZoom);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -189,27 +266,12 @@ function TerrainExplorerInternal({
   const [selectedMetadata, setSelectedMetadata] = useState<VoxelMetadata | null>(null);
 
   // Helper to convert Z-layer to floor index (for 3D grid)
-  // Z-layer buttons: -1, 0, 1 map to floors: -1, 0, +1 (but we have -3 to +3)
-  // For now, we'll support -3 to +3 via the layer controls
-  const getFloorIndex = (layer: number): number => 
-    // layer can be -3 to +3
-    // floor index in array: 0 to 6 (where 0 = floor -3, 3 = floor 0, 6 = floor +3)
-     layer + 3
-  ;
-
-  // Infinite chunk loading (use new hooks if enabled)
-  const infiniteChunksView = enableInfinite && roomId ? useInfiniteChunksView() : null;
-  const infiniteChunksActions = enableInfinite && roomId ? useInfiniteChunksActions() : null;
-
-  const expandedGrid = infiniteChunksView?.expandedGrid || biomeGrid;
-  const isLoading = infiniteChunksView?.isLoading || false;
-  const gridWorldOffset = infiniteChunksView?.gridWorldOffset || { x: 0, y: 0 };
-  const checkChunkLoading = infiniteChunksActions?.checkChunkLoading || (() => {});
+  const getFloorIndex = (layer: number): number => layer + 3; // -3 to +3 maps to 0 to 6
 
   // Use expanded grid if infinite chunks enabled, otherwise use initial grid
   const activeGrid = useMemo(
-    () => (enableInfinite && roomId ? expandedGrid : biomeGrid),
-    [enableInfinite, roomId, expandedGrid, biomeGrid]
+    () => (enableInfinite ? expandedGrid : biomeGrid),
+    [enableInfinite, expandedGrid, biomeGrid]
   );
 
   const gridWidth = activeGrid[0]?.length || 128;
@@ -228,11 +290,11 @@ function TerrainExplorerInternal({
     bounds: enableInfinite
       ? undefined // No bounds for infinite terrain
       : {
-          minX: gridWorldOffset.x,
-          maxX: gridWorldOffset.x + gridWidth - 1,
-          minY: gridWorldOffset.y,
-          maxY: gridWorldOffset.y + gridHeight - 1,
-        },
+        minX: gridWorldOffset.x,
+        maxX: gridWorldOffset.x + gridWidth - 1,
+        minY: gridWorldOffset.y,
+        maxY: gridWorldOffset.y + gridHeight - 1,
+      },
     enabled: true,
     coordinateOffset: gridWorldOffset, // Pass for awareness
   });
@@ -317,17 +379,12 @@ function TerrainExplorerInternal({
     ctx.save();
     ctx.translate(pan.x, pan.y);
 
-    // Get the appropriate grid layer based on currentLayer and biomeGrid3D
+    //Get the appropriate grid layer based on currentLayer and biomeGrid3D
     let layerGrid: string[][];
 
-    if (biomeGrid3D && currentLayer >= -3 && currentLayer <= 3) {
-      // Use 3D grid for multi-floor structures
-      const floorIndex = getFloorIndex(currentLayer);
-      layerGrid = biomeGrid3D[floorIndex] || activeGrid;
-    } else {
-      // Fallback to 2D grid (surface layer only)
-      layerGrid = activeGrid;
-    }
+    // ALWAYS use activeGrid (the expanding grid with new chunks)
+    // NOT biomeGrid3D which is static and doesn't include dynamically loaded chunks
+    layerGrid = activeGrid;
 
     // Layer-specific rendering
     if (currentLayer < 0) {
@@ -761,12 +818,21 @@ function TerrainExplorerInternal({
       const worldY = Math.floor((clickY - pan.y) / renderScale);
 
       // Bounds check
-      if (worldX < 0 || worldY < 0 || worldY >= activeGrid.length || worldX >= activeGrid[0].length) {
+      if (
+        worldX < 0 ||
+        worldY < 0 ||
+        !activeGrid ||
+        activeGrid.length === 0 ||
+        worldY >= activeGrid.length ||
+        !activeGrid[0] ||
+        worldX >= activeGrid[0].length
+      ) {
         return;
       }
 
       // Extract biome
-      const biome = activeGrid[worldY][worldX];
+      const biome = activeGrid[worldY]?.[worldX];
+      if (!biome) return;
 
       // Calculate room coordinates
       const roomX = Math.floor(worldX / roomSize);
@@ -793,10 +859,10 @@ function TerrainExplorerInternal({
         // Let's check VoxelMetadataPanel.tsx again. It has optional elevation, temperature, moisture.
         structure: structure
           ? {
-              name: structure.name,
-              type: structure.type,
-              description: structure.description || 'A mysterious structure',
-            }
+            name: structure.name,
+            type: structure.type,
+            description: structure.description || 'A mysterious structure',
+          }
           : undefined,
       };
 
@@ -945,7 +1011,7 @@ function TerrainExplorerInternal({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          // onWheel handled via ref in useEffect
+        // onWheel handled via ref in useEffect
         >
           <AspectRatio ratio={16 / 9} className="w-full h-full">
             <canvas

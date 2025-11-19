@@ -3,7 +3,7 @@
  * Memoized action creators for modifying chunk state
  */
 
-import { useContext, useCallback, useRef, useEffect } from 'react';
+import { useContext, useCallback, useRef } from 'react';
 import { InfiniteChunksContext } from './InfiniteChunksProvider';
 import type { InfiniteChunksActions } from './types';
 import { loadChunk, getChunksToLoad, getMaxConcurrentLoads } from './services/chunkLoader';
@@ -95,6 +95,17 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
     [dispatch]
   );
 
+  // Memoized setLayer function
+  const setLayer = useCallback(
+    (layer: number) => {
+      dispatch({
+        type: 'SET_LAYER',
+        payload: { layer },
+      });
+    },
+    [dispatch]
+  );
+
   // Memoized reset function
   const reset = useCallback(() => {
     dispatch({ type: 'RESET' });
@@ -104,6 +115,7 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
   return {
     checkChunkLoading,
     setLoadRadius,
+    setLayer,
     reset,
   };
 }
