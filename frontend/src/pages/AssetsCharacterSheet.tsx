@@ -12,18 +12,19 @@ import { Card, CardContent } from '../components/ui/card';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import { CollectionCard } from '../components/assets/CollectionCard';
 import { CreateCollectionModal } from '../components/assets/CreateCollectionModal';
-import { CreateAssetModal } from '../components/assets/CreateAssetModal';
 import { AssetCard } from '../components/assets/AssetCard';
 import { AssetPreviewModal } from '../components/assets/AssetPreviewModal';
 import { MoveAssetModal } from '../components/assets/MoveAssetModal';
+import CharacterCreation from '../components/room/CharacterCreation';
+import type { CharacterSheetAsset } from '../components/room/character-creation/characterSheetAsset';
 import { useAssetsStore } from '../state/assetsStore';
-import { auth } from '../services/firebase';
 import {
   getCollections,
   getCollectionAssets,
   deleteCollection,
   deleteAsset,
   updateCollection,
+  createAsset,
 } from '../services/assetService';
 
 export default function AssetsCharacterSheetPage() {
@@ -121,28 +122,44 @@ export default function AssetsCharacterSheetPage() {
     }
   };
 
-  const handleGenerateAsset = async (assetId: string) => {
+  const handleCharacterAssetCreated = async (characterAsset: CharacterSheetAsset) => {
+    if (!creatingAssetForCollection) {
+      toast({ title: 'Error', description: 'No collection selected', variant: 'destructive' });
+      return;
+    }
+
     try {
-      const token = await auth.currentUser?.getIdToken();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/assets-gen/assets/${assetId}/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+      setLoading(true);
+
+      // Create asset with character sheet data
+      const description = `${characterAsset.summary.race} ${characterAsset.summary.characterClass} (Level ${characterAsset.summary.level})`;
+      
+      await createAsset({
+        collectionId: creatingAssetForCollection,
+        name: characterAsset.summary.name,
+        description,
+        characterSheetData: characterAsset as unknown as Record<string, unknown>,
       });
 
-      if (!response.ok) throw new Error('Generation failed');
+      // Reload assets to show the new asset
+      if (selectedCollection) {
+        await loadAssets(selectedCollection);
+      } else {
+        await loadCollections();
+      }
 
-      toast({ title: 'Generation Started', description: 'Character sheet is being generated' });
+      // Close modal
+      setShowCreateAsset(false);
+      setCreatingAssetForCollection(null);
 
-      setTimeout(() => {
-        if (selectedCollection) {
-          loadAssets(selectedCollection);
-        }
-      }, 2000);
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to start generation', variant: 'destructive' });
+      toast({ title: 'Success', description: 'Character sheet asset created successfully' });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create asset';
+      setError(errorMessage);
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+      // Keep modal open on error so user can retry
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -217,10 +234,9 @@ export default function AssetsCharacterSheetPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-white">{selectedCollectionData.name}</h2>
-                <p className="text-sm text-shadow-400">
-                  {selectedCollectionData.mode && `Mode: ${selectedCollectionData.mode}`}
-                  {selectedCollectionData.description && ` • ${selectedCollectionData.description}`}
-                </p>
+                {selectedCollectionData.description && (
+                  <p className="text-sm text-shadow-400">{selectedCollectionData.description}</p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -266,10 +282,8 @@ export default function AssetsCharacterSheetPage() {
                       key={asset.id}
                       asset={asset}
                       onView={() => setViewingAsset(asset.id)}
-                      onGenerate={() => handleGenerateAsset(asset.id)}
                       onMove={() => setMovingAsset(asset.id)}
                       onDelete={() => setDeleteConfirm({ type: 'asset', id: asset.id })}
-                      showGenerateButton
                     />
                   ))}
                 </div>
@@ -290,26 +304,51 @@ export default function AssetsCharacterSheetPage() {
           />
         )}
 
-        {/* Create Asset Modal */}
+        {/* Character Creation Modal */}
         {showCreateAsset && creatingAssetForCollection && (
-          <CreateAssetModal
-            collectionId={creatingAssetForCollection}
-            assetType="character-sheet"
-            onClose={() => {
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-midnight-900/95 p-4"
+            onClick={() => {
               setShowCreateAsset(false);
               setCreatingAssetForCollection(null);
             }}
-            onSuccess={() => {
-              setShowCreateAsset(false);
-              setCreatingAssetForCollection(null);
-              if (selectedCollection) {
-                loadAssets(selectedCollection);
-              } else {
-                loadCollections();
-              }
-            }}
-            onGenerate={handleGenerateAsset}
-          />
+          >
+            <div
+              className="h-full w-full max-w-7xl overflow-auto rounded-2xl border border-accent/30 bg-gradient-to-br from-midnight-900/95 via-midnight-800/95 to-midnight-700/95"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-midnight-600 bg-midnight-900/90 px-6 py-4 backdrop-blur-sm">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">
+                    Create Character Sheet
+                    {selectedCollectionData && ` - ${selectedCollectionData.name}`}
+                  </h2>
+                  <p className="text-sm text-shadow-400">Complete the wizard to create your character sheet asset</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowCreateAsset(false);
+                    setCreatingAssetForCollection(null);
+                  }}
+                  className="text-shadow-300 hover:text-white"
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="p-6">
+                <CharacterCreation
+                  assetMode={true}
+                  settings={{
+                    startingLevel: 1,
+                    attributeBudget: 27,
+                  }}
+                  onAssetCreated={handleCharacterAssetCreated}
+                />
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Asset Preview Modal */}

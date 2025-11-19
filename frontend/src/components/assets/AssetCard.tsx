@@ -115,7 +115,12 @@ export function AssetCard({
         </div>
 
         {/* Created Date */}
-        <p className="mb-3 text-xs text-shadow-500">Created {new Date(asset.createdAt).toLocaleDateString()}</p>
+        <p className="mb-3 text-xs text-shadow-500">
+          Created{' '}
+          {asset.createdAt instanceof Date
+            ? asset.createdAt.toLocaleDateString()
+            : new Date(asset.createdAt).toLocaleDateString() || 'Unknown date'}
+        </p>
 
         {/* Actions */}
         <div className="flex gap-2">

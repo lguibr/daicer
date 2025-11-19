@@ -189,6 +189,11 @@ export default function Assets2DPage() {
       }
 
       toast({ title: 'Generation Started', description: 'Asset is being generated' });
+      
+      // Immediately reload assets to show the new asset in the grid
+      if (selectedCollection) {
+        await loadAssets(selectedCollection);
+      }
 
       // Clear form
       setPrompt('');
@@ -219,7 +224,12 @@ export default function Assets2DPage() {
               if (selectedCollection) {
                 loadAssets(selectedCollection);
               }
-              if (asset.status === 'error') {
+              if (asset.status === 'done') {
+                toast({
+                  title: 'Generation Complete',
+                  description: '2D image generated successfully!',
+                });
+              } else {
                 toast({
                   title: 'Generation Failed',
                   description: 'The asset generation encountered an error.',

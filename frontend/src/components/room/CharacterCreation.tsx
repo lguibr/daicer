@@ -129,7 +129,7 @@ export default function CharacterCreation({
   const allReady = !assetMode && players.length > 0 && players.every((p) => p.isReady);
   const isStarting = allReady && room?.phase === 'CHARACTER_CREATION';
 
-  const isOwner = user?.uid === room.ownerId;
+  const isOwner = user?.uid === room?.ownerId;
   const isLocked = room?.characterCreationLocked !== false; // Locked by default
 
   // GATE: If locked and not in asset mode, show approval screens

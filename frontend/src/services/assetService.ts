@@ -48,6 +48,7 @@ export interface Asset {
   generationPrompt?: string;
   storageUrl?: string;
   modelData?: ModelData;
+  characterSheetData?: Record<string, unknown>; // Full CharacterSheetAsset object as JSON
 }
 
 export interface WorldMap {
@@ -91,6 +92,36 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   return response.json();
 }
 
+/**
+ * Convert Firestore Timestamp object to Date
+ * Handles both Firestore Timestamp format { _seconds, _nanoseconds } and Date objects
+ */
+function convertFirestoreTimestamp(timestamp: unknown): Date {
+  if (timestamp instanceof Date) {
+    return timestamp;
+  }
+
+  if (typeof timestamp === 'object' && timestamp !== null) {
+    const ts = timestamp as { _seconds?: number; _nanoseconds?: number };
+    if (typeof ts._seconds === 'number') {
+      // Firestore Timestamp: convert seconds to milliseconds
+      return new Date(ts._seconds * 1000 + (ts._nanoseconds || 0) / 1000000);
+    }
+  }
+
+  // Fallback: try to parse as number or string
+  if (typeof timestamp === 'number') {
+    return new Date(timestamp);
+  }
+
+  if (typeof timestamp === 'string') {
+    return new Date(timestamp);
+  }
+
+  // Last resort: return current date
+  return new Date();
+}
+
 // Collections
 export async function createCollection(data: {
   name: string;
@@ -109,11 +140,23 @@ export async function getCollections(
   assetType?: '2d' | '3d' | 'map' | 'structures' | 'character-sheet'
 ): Promise<Collection[]> {
   const query = assetType ? `?assetType=${assetType}` : '';
-  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/collections${query}`).then((res) => res.data);
+  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/collections${query}`).then((res) => {
+    const collections = res.data as Collection[];
+    return collections.map((collection) => ({
+      ...collection,
+      createdAt: convertFirestoreTimestamp(collection.createdAt),
+    }));
+  });
 }
 
 export async function getCollection(id: string): Promise<Collection> {
-  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/collections/${id}`).then((res) => res.data);
+  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/collections/${id}`).then((res) => {
+    const collection = res.data as Collection;
+    return {
+      ...collection,
+      createdAt: convertFirestoreTimestamp(collection.createdAt),
+    };
+  });
 }
 
 export async function updateCollection(id: string, updates: Partial<Collection>): Promise<void> {
@@ -135,6 +178,7 @@ export async function createAsset(data: {
   name: string;
   description: string;
   generationPrompt?: string;
+  characterSheetData?: Record<string, unknown>;
 }): Promise<{ id: string }> {
   return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/`, {
     method: 'POST',
@@ -143,11 +187,23 @@ export async function createAsset(data: {
 }
 
 export async function getCollectionAssets(collectionId: string): Promise<Asset[]> {
-  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/collections/${collectionId}/assets`).then((res) => res.data);
+  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/collections/${collectionId}/assets`).then((res) => {
+    const assets = res.data as Asset[];
+    return assets.map((asset) => ({
+      ...asset,
+      createdAt: convertFirestoreTimestamp(asset.createdAt),
+    }));
+  });
 }
 
 export async function getAsset(id: string): Promise<Asset> {
-  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/${id}`).then((res) => res.data);
+  return fetchWithAuth(`${API_BASE_URL}/api/assets-gen/${id}`).then((res) => {
+    const asset = res.data as Asset;
+    return {
+      ...asset,
+      createdAt: convertFirestoreTimestamp(asset.createdAt),
+    };
+  });
 }
 
 export async function updateAsset(id: string, updates: Partial<Asset>): Promise<void> {

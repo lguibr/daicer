@@ -9,7 +9,7 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { logger } from '../../utils/logger';
-import { Collection, Asset, AssetCategory, GenerationMode, GenerationStatus, ModelData } from '../generation/types';
+import { Collection, Asset, AssetCategory, GenerationStatus, ModelData } from '../generation/types';
 import { saveAsset } from '../asset-storage';
 
 // Lazy getters to avoid initialization before Firebase is ready
@@ -23,7 +23,7 @@ export async function createCollection(
   userId: string,
   name: string,
   assetType: AssetCategory,
-  mode?: GenerationMode,
+  mode?: string,
   description?: string,
   color?: string
 ): Promise<string> {
@@ -144,22 +144,29 @@ export async function createAsset(
   name: string,
   description: string,
   assetType: AssetCategory,
-  generationPrompt?: string
+  generationPrompt?: string,
+  characterSheetData?: Record<string, unknown>
 ): Promise<string> {
   try {
     // Build asset data, filtering out undefined values
+    // Character sheet assets with data are already complete (human-generated, no AI generation needed)
     const assetData: Record<string, unknown> = {
       collectionId,
       name,
       description,
       assetType,
-      status: 'pending',
+      status: characterSheetData ? 'done' : 'pending',
       createdAt: new Date(),
     };
 
     // Only add generationPrompt if defined
     if (generationPrompt !== undefined) {
       assetData.generationPrompt = generationPrompt;
+    }
+
+    // Only add characterSheetData if defined
+    if (characterSheetData !== undefined) {
+      assetData.characterSheetData = characterSheetData;
     }
 
     const docRef = await getFirestoreInstance().collection('assets').add(assetData);

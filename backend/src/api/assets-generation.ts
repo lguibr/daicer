@@ -73,6 +73,7 @@ const createAssetSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string(),
   generationPrompt: z.string().optional(),
+  characterSheetData: z.any().optional(), // CharacterSheetAsset as JSON (any object structure)
 });
 
 const generateModelSchema = z.object({
@@ -265,7 +266,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     throw new ApiError(400, validation.error.message);
   }
 
-  const { collectionId, name, description, generationPrompt } = validation.data;
+  const { collectionId, name, description, generationPrompt, characterSheetData } = validation.data;
 
   // Verify collection ownership
   const collection = await getCollection(collectionId);
@@ -277,7 +278,14 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
     throw new ApiError(403, 'Access denied');
   }
 
-  const assetId = await createAsset(collectionId, name, description, collection.assetType, generationPrompt);
+  const assetId = await createAsset(
+    collectionId,
+    name,
+    description,
+    collection.assetType,
+    generationPrompt,
+    characterSheetData
+  );
 
   res.status(201).json({ success: true, data: { id: assetId } });
 });
@@ -289,7 +297,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
 router.post('/collections/:collectionId/assets', authenticate, async (req: AuthRequest, res: Response) => {
   const collectionId = requireParam(req.params, 'collectionId');
 
-  const { name, description, generationPrompt } = req.body;
+  const { name, description, generationPrompt, characterSheetData } = req.body;
 
   if (!name || !description) {
     throw new ApiError(400, 'Name and description are required');
@@ -305,7 +313,14 @@ router.post('/collections/:collectionId/assets', authenticate, async (req: AuthR
     throw new ApiError(403, 'Access denied');
   }
 
-  const assetId = await createAsset(collectionId, name, description, collection.assetType, generationPrompt);
+  const assetId = await createAsset(
+    collectionId,
+    name,
+    description,
+    collection.assetType,
+    generationPrompt,
+    characterSheetData
+  );
 
   res.status(201).json({ success: true, data: { id: assetId } });
 });

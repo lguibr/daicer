@@ -84,6 +84,7 @@ export interface Asset {
   readonly metadata?: AssetMetadata;
   readonly imageId?: string;
   readonly modelData?: ModelData;
+  readonly characterSheetData?: Record<string, unknown>; // Full CharacterSheetAsset object as JSON
 }
 
 export interface ModelGenerationRequest {

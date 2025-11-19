@@ -160,6 +160,11 @@ export default function Assets3DPage() {
       if (!response.ok) throw new Error('Generation failed');
 
       toast({ title: 'Generation Started', description: 'Voxel model is being generated' });
+      
+      // Immediately reload assets to show the new asset in the grid
+      if (selectedCollection) {
+        await loadAssets(selectedCollection);
+      }
 
       // Clear form
       setPrompt('');
@@ -189,7 +194,12 @@ export default function Assets3DPage() {
               if (selectedCollection) {
                 loadAssets(selectedCollection);
               }
-              if (asset.status === 'error') {
+              if (asset.status === 'done') {
+                toast({
+                  title: 'Generation Complete',
+                  description: '3D model generated successfully!',
+                });
+              } else {
                 toast({
                   title: 'Generation Failed',
                   description: 'The asset generation encountered an error.',

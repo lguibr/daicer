@@ -217,10 +217,9 @@ export default function AssetsStructuresPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-white">{selectedCollectionData.name}</h2>
-                <p className="text-sm text-shadow-400">
-                  {selectedCollectionData.mode && `Mode: ${selectedCollectionData.mode}`}
-                  {selectedCollectionData.description && ` • ${selectedCollectionData.description}`}
-                </p>
+                {selectedCollectionData.description && (
+                  <p className="text-sm text-shadow-400">{selectedCollectionData.description}</p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button
