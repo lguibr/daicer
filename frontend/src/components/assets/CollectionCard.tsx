@@ -129,15 +129,6 @@ export function CollectionCard({
           <p className="mb-4 text-sm text-shadow-300 line-clamp-2">{collection.description}</p>
         )}
 
-        {/* Mode Badge */}
-        {collection.mode && (
-          <div className="mb-4">
-            <span className="inline-block rounded-full border border-midnight-500/60 bg-midnight-600/70 px-3 py-1 text-xs uppercase tracking-wider text-shadow-400">
-              {collection.mode.replace('-', ' ')}
-            </span>
-          </div>
-        )}
-
         {/* Created Date */}
         <p className="mb-4 text-xs text-shadow-500">Created {new Date(collection.createdAt).toLocaleDateString()}</p>
 

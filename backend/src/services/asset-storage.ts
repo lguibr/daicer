@@ -1,5 +1,6 @@
 import path from 'path';
 
+import admin from 'firebase-admin';
 import { getStorage } from 'firebase-admin/storage';
 
 import { ApiError } from '@/middleware/error';
@@ -13,14 +14,24 @@ const ensureEmulatorHost = (): void => {
     return;
   }
 
-  try {
-    const url = new URL(emulatorHost);
-    process.env.FIREBASE_STORAGE_EMULATOR_HOST = `${url.hostname}:${url.port ?? '9199'}`;
-  } catch {
-    process.env.FIREBASE_STORAGE_EMULATOR_HOST = emulatorHost;
+  // Extract host:port from the emulator host (remove protocol if present)
+  let hostPort = emulatorHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  
+  // If it doesn't have a port, add default
+  if (!hostPort.includes(':')) {
+    hostPort = `${hostPort}:9199`;
+  }
+  
+  // Firebase Admin SDK requires FIREBASE_STORAGE_EMULATOR_HOST in format: host:port (NO protocol)
+  process.env.FIREBASE_STORAGE_EMULATOR_HOST = hostPort;
+  
+  // Our buildPublicUrl function expects STORAGE_EMULATOR_HOST with http:// protocol
+  if (!process.env.STORAGE_EMULATOR_HOST?.startsWith('http')) {
+    process.env.STORAGE_EMULATOR_HOST = `http://${hostPort}`;
   }
 };
 
+// Run immediately when module loads to set env vars before Firebase initialization
 ensureEmulatorHost();
 
 export interface SaveAssetParams {
@@ -52,9 +63,19 @@ export const saveAsset = async ({
   folder,
   metadata,
 }: SaveAssetParams): Promise<StoredAsset> => {
-  const bucketName = process.env.FIREBASE_STORAGE_BUCKET ?? process.env.STORAGE_BUCKET;
+  // Try env vars first, then fall back to Firebase app config
+  let bucketName = process.env.FIREBASE_STORAGE_BUCKET ?? process.env.STORAGE_BUCKET;
+  
   if (!bucketName) {
-    throw new ApiError(500, 'Firebase storage bucket not configured. Set FIREBASE_STORAGE_BUCKET.');
+    // Fall back to bucket from Firebase app config (set in initializeFirebase)
+    const app = admin.apps[0];
+    if (app?.options.storageBucket) {
+      bucketName = app.options.storageBucket;
+    }
+  }
+  
+  if (!bucketName) {
+    throw new ApiError(500, 'Firebase storage bucket not configured. Set FIREBASE_STORAGE_BUCKET or ensure Firebase is initialized with storageBucket.');
   }
 
   const sanitizedFolder = sanitizeFolder(folder);

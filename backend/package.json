@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "echo '🚀 Starting backend dev server on http://localhost:3001' && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 tsx watch src/server.ts",
+    "dev": "echo '🚀 Starting backend dev server on http://localhost:3001' && FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 STORAGE_EMULATOR_HOST=127.0.0.1:9199 tsx watch src/server.ts",
     "dev:all": "echo '🎯 Starting BOTH backend (3001) + Studio server (3002)...' && concurrently --names 'BACKEND,STUDIO' --prefix-colors 'cyan,magenta' 'tsx watch src/server.ts' 'tsx watch src/server-langgraph-studio.ts'",
     "dev:wait": "wait-on http://localhost:3001/health -t 30000 && echo '✅ Backend is ready!'",
     "studio": "echo '🎨 Starting LangGraph Studio server on http://localhost:3002' && tsx watch src/server-langgraph-studio.ts",

@@ -16,7 +16,8 @@ export interface Collection {
   createdBy: string;
   color?: string;
   assetType: '2d' | '3d' | 'map' | 'structures' | 'character-sheet';
-  mode?: 'variations' | 'text-to-image' | 'batch-transform' | 'batch-create';
+  // Deprecated: mode field is no longer used
+  mode?: string;
   baseImageId?: string;
   masterDescription?: string;
 }

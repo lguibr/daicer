@@ -29,6 +29,10 @@ export function initializeFirebase(): void {
     if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
       console.log(`🔧 Auth Emulator: ${process.env.FIREBASE_AUTH_EMULATOR_HOST}`);
     }
+    if (process.env.STORAGE_EMULATOR_HOST || process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
+      const storageHost = process.env.STORAGE_EMULATOR_HOST || process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+      console.log(`🔧 Storage Emulator: ${storageHost}`);
+    }
 
     admin.initializeApp({
       projectId,

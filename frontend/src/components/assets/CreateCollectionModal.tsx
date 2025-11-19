@@ -28,12 +28,7 @@ const PRESET_COLORS = [
   '#1098ad', // cyan
 ];
 
-const GENERATION_MODES = [
-  { value: 'text-to-image', label: 'Text to Image', description: 'Generate images from text prompts' },
-  { value: 'variations', label: 'Variations', description: 'Create variations from a base image' },
-  { value: 'batch-transform', label: 'Batch Transform', description: 'Transform multiple images at once' },
-  { value: 'batch-create', label: 'Batch Create', description: 'Create multiple assets with similar prompts' },
-] as const;
+// Generation modes removed - no longer used
 
 const ASSET_TYPE_LABELS: Record<CreateCollectionModalProps['assetType'], string> = {
   '2d': '2D Images',
@@ -46,7 +41,6 @@ const ASSET_TYPE_LABELS: Record<CreateCollectionModalProps['assetType'], string>
 export function CreateCollectionModal({ assetType, onClose, onSuccess }: CreateCollectionModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [mode, setMode] = useState<string>('text-to-image');
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -65,7 +59,6 @@ export function CreateCollectionModal({ assetType, onClose, onSuccess }: CreateC
       const result = await createCollection({
         name: name.trim(),
         assetType,
-        mode: assetType === '2d' || assetType === '3d' ? mode : undefined,
         description: description.trim() || undefined,
         color,
       });
@@ -98,27 +91,6 @@ export function CreateCollectionModal({ assetType, onClose, onSuccess }: CreateC
             data-testid="collection-name-input"
           />
         </FormField>
-
-        {/* Generation Mode - Only for image collections (2d/3d) */}
-        {(assetType === '2d' || assetType === '3d') && (
-          <FormField label="Generation Mode" htmlFor="mode" required>
-            <select
-              id="mode"
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
-              className="input-style w-full border-midnight-500 bg-midnight-800/50 text-white"
-              disabled={loading}
-              data-testid="collection-mode-select"
-            >
-              {GENERATION_MODES.map((modeOption) => (
-                <option key={modeOption.value} value={modeOption.value}>
-                  {modeOption.label} — {modeOption.description}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-shadow-400">Mode cannot be changed after creation</p>
-          </FormField>
-        )}
 
         {/* Description */}
         <FormField label="Description" htmlFor="description">

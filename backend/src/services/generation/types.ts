@@ -50,7 +50,8 @@ export interface AssetMetadata {
   readonly scaleVariation?: ScaleVariation;
 }
 
-export type GenerationMode = 'variations' | 'text-to-image' | 'batch-transform' | 'batch-create';
+// Deprecated: GenerationMode is no longer used
+// export type GenerationMode = 'variations' | 'text-to-image' | 'batch-transform' | 'batch-create';
 
 export type GenerationStatus = 'pending' | 'loading' | 'done' | 'error';
 
@@ -62,7 +63,8 @@ export interface Collection {
   readonly createdBy: string;
   readonly color?: string;
   readonly assetType: AssetCategory;
-  readonly mode?: GenerationMode;
+  // Deprecated: mode field is no longer used
+  readonly mode?: string;
   readonly baseImageId?: string;
   readonly masterDescription?: string;
   readonly baseModelData?: ModelData;

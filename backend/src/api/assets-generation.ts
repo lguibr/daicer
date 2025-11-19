@@ -695,9 +695,9 @@ router.post('/assets/:assetId/generate-grid', authenticate, async (req: AuthRequ
 
 /**
  * Generate a 2D image from text for an asset
- * @route POST /api/assets/:assetId/generate-image
+ * @route POST /api/assets-gen/assets/:assetId/generate-image
  */
-router.post('/:assetId/generate-image', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/assets/:assetId/generate-image', authenticate, async (req: AuthRequest, res: Response) => {
   const assetId = requireParam(req.params, 'assetId');
   const validation = generateImageSchema.safeParse(req.body);
 
@@ -736,10 +736,10 @@ router.post('/:assetId/generate-image', authenticate, async (req: AuthRequest, r
 
 /**
  * Generate an image variation for an asset
- * @route POST /api/assets/:assetId/generate-variation
+ * @route POST /api/assets-gen/assets/:assetId/generate-variation
  */
 router.post(
-  '/:assetId/generate-variation',
+  '/assets/:assetId/generate-variation',
   authenticate,
   upload.single('baseImage') as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   async (req: AuthRequest, res: Response) => {
@@ -792,10 +792,10 @@ router.post(
 
 /**
  * Transform an image for an asset
- * @route POST /api/assets/:assetId/transform-image
+ * @route POST /api/assets-gen/assets/:assetId/transform-image
  */
 router.post(
-  '/:assetId/transform-image',
+  '/assets/:assetId/transform-image',
   authenticate,
   upload.single('baseImage') as any, // eslint-disable-line @typescript-eslint/no-explicit-any
   async (req: AuthRequest, res: Response) => {

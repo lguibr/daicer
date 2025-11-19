@@ -3,7 +3,7 @@
  * Displays an asset with thumbnail, status, and actions
  */
 
-import { Eye, Trash2, Sparkles, MoveRight, Copy } from 'lucide-react';
+import { Eye, Trash2, MoveRight, Copy } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
@@ -13,11 +13,9 @@ import type { Asset } from '../../services/assetService';
 interface AssetCardProps {
   asset: Asset;
   onView?: () => void;
-  onGenerate?: () => void;
   onMove?: () => void;
   onDelete: () => void;
   onCreateVariations?: () => void;
-  showGenerateButton?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -50,14 +48,11 @@ const ASSET_TYPE_ICONS: Record<Asset['assetType'], string> = {
 export function AssetCard({
   asset,
   onView,
-  onGenerate,
   onMove,
   onDelete,
   onCreateVariations,
-  showGenerateButton = true,
 }: AssetCardProps) {
   const statusConfig = STATUS_CONFIG[asset.status];
-  const canGenerate = showGenerateButton && asset.status === 'pending' && onGenerate;
   const canView = asset.status === 'done' && onView;
   const canCreateVariations = asset.status === 'done' && onCreateVariations;
 
@@ -124,17 +119,6 @@ export function AssetCard({
 
         {/* Actions */}
         <div className="flex gap-2">
-          {canGenerate && (
-            <Button
-              onClick={onGenerate}
-              className="flex-1 bg-accent/20 text-accent hover:bg-accent/30"
-              size="sm"
-              data-testid={`asset-card-${asset.id}-generate-button`}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate
-            </Button>
-          )}
           {canCreateVariations && (
             <Button
               onClick={onCreateVariations}

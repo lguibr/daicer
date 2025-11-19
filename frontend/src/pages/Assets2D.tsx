@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Upload, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/toast';
 import { PrivateLayout } from '../components/layout';
@@ -12,7 +12,6 @@ import { Card, CardContent } from '../components/ui/card';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import { CollectionCard } from '../components/assets/CollectionCard';
 import { CreateCollectionModal } from '../components/assets/CreateCollectionModal';
-import { CreateAssetModal } from '../components/assets/CreateAssetModal';
 import { AssetCard } from '../components/assets/AssetCard';
 import { AssetPreviewModal } from '../components/assets/AssetPreviewModal';
 import { MoveAssetModal } from '../components/assets/MoveAssetModal';
@@ -24,8 +23,11 @@ import {
   deleteCollection,
   deleteAsset,
   updateCollection,
-  type Asset,
+  createAsset,
+  getAsset,
 } from '../services/assetService';
+import Textarea from '../components/ui/textarea';
+import Label from '../components/ui/label';
 
 export default function Assets2DPage() {
   const navigate = useNavigate();
@@ -33,12 +35,15 @@ export default function Assets2DPage() {
   const { collections, setCollections, assets, setAssets, isLoading, setLoading, setError } = useAssetsStore();
 
   const [showCreateCollection, setShowCreateCollection] = useState(false);
-  const [showCreateAsset, setShowCreateAsset] = useState(false);
-  const [creatingAssetForCollection, setCreatingAssetForCollection] = useState<string | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
   const [viewingAsset, setViewingAsset] = useState<string | null>(null);
   const [movingAsset, setMovingAsset] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'collection' | 'asset'; id: string } | null>(null);
+  
+  // Inline form state
+  const [prompt, setPrompt] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   // Load collections on mount
   useEffect(() => {
@@ -124,29 +129,130 @@ export default function Assets2DPage() {
     }
   };
 
-  const handleGenerateAsset = async (assetId: string) => {
+  const handleGenerate2D = async () => {
+    if (!selectedCollection || !prompt.trim()) {
+      toast({ title: 'Error', description: 'Please enter a prompt', variant: 'destructive' });
+      return;
+    }
+
+    setGenerating(true);
     try {
       const token = await auth.currentUser?.getIdToken();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/assets-gen/assets/${assetId}/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+      if (!token) throw new Error('Not authenticated');
+
+      // Step 1: Create asset
+      const assetName = prompt.substring(0, 50) || 'Generated Asset';
+      const createResult = await createAsset({
+        collectionId: selectedCollection,
+        name: assetName,
+        description: prompt.trim(),
+        generationPrompt: prompt.trim(),
       });
 
-      if (!response.ok) throw new Error('Generation failed');
+      const assetId = createResult.id;
+
+      // Step 2: Generate immediately
+      if (imageFile) {
+        // Use variation endpoint with image
+        const formData = new FormData();
+        formData.append('baseImage', imageFile);
+        formData.append('masterDescription', prompt.trim());
+        formData.append('variationDescription', prompt.trim());
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/assets-gen/assets/${assetId}/generate-variation`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) throw new Error('Generation failed');
+      } else {
+        // Use text-to-image endpoint
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/assets-gen/assets/${assetId}/generate-image`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ prompt: prompt.trim() }),
+          }
+        );
+
+        if (!response.ok) throw new Error('Generation failed');
+      }
 
       toast({ title: 'Generation Started', description: 'Asset is being generated' });
 
-      // Reload assets after a delay to show updated status
-      setTimeout(() => {
-        if (selectedCollection) {
-          loadAssets(selectedCollection);
-        }
-      }, 2000);
+      // Clear form
+      setPrompt('');
+      setImageFile(null);
+
+      // Poll for asset status until done or error
+      const pollAssetStatus = async () => {
+        const maxAttempts = 60; // 60 attempts = 5 minutes max (5s intervals)
+        let attempts = 0;
+
+        const checkStatus = async (): Promise<void> => {
+          if (attempts >= maxAttempts) {
+            toast({
+              title: 'Timeout',
+              description: 'Generation is taking longer than expected. Please refresh the page.',
+              variant: 'destructive',
+            });
+            if (selectedCollection) {
+              loadAssets(selectedCollection);
+            }
+            return;
+          }
+
+          try {
+            const asset = await getAsset(assetId);
+            if (asset.status === 'done' || asset.status === 'error') {
+              // Reload assets to show updated status
+              if (selectedCollection) {
+                loadAssets(selectedCollection);
+              }
+              if (asset.status === 'error') {
+                toast({
+                  title: 'Generation Failed',
+                  description: 'The asset generation encountered an error.',
+                  variant: 'destructive',
+                });
+              }
+              return;
+            }
+
+            // Still loading, check again in 5 seconds
+            attempts++;
+            setTimeout(checkStatus, 5000);
+          } catch (error) {
+            // If polling fails, just reload assets
+            if (selectedCollection) {
+              loadAssets(selectedCollection);
+            }
+          }
+        };
+
+        // Start polling after 2 seconds
+        setTimeout(checkStatus, 2000);
+      };
+
+      pollAssetStatus();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to start generation', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to start generation',
+        variant: 'destructive',
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -205,10 +311,7 @@ export default function Assets2DPage() {
                     onView={() => setSelectedCollection(collection.id)}
                     onRename={(newName) => handleRenameCollection(collection.id, newName)}
                     onDelete={() => setDeleteConfirm({ type: 'collection', id: collection.id })}
-                    onCreateAsset={() => {
-                      setCreatingAssetForCollection(collection.id);
-                      setShowCreateAsset(true);
-                    }}
+                    onCreateAsset={() => setSelectedCollection(collection.id)}
                   />
                 ))}
               </div>
@@ -222,37 +325,108 @@ export default function Assets2DPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-white">{selectedCollectionData.name}</h2>
-                <p className="text-sm text-shadow-400">
-                  {selectedCollectionData.mode && `Mode: ${selectedCollectionData.mode}`}
-                  {selectedCollectionData.description && ` • ${selectedCollectionData.description}`}
-                </p>
+                {selectedCollectionData.description && (
+                  <p className="text-sm text-shadow-400">{selectedCollectionData.description}</p>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    setCreatingAssetForCollection(selectedCollection);
-                    setShowCreateAsset(true);
-                  }}
-                  className="bg-accent text-white hover:bg-accent/90"
-                  size="sm"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Asset
-                </Button>
-                <Button
-                  onClick={() => {
-                    setSelectedCollection(null);
-                    setAssets([]);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="text-shadow-300 hover:text-white"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Collections
-                </Button>
-              </div>
+              <Button
+                onClick={() => {
+                  setSelectedCollection(null);
+                  setAssets([]);
+                }}
+                variant="ghost"
+                size="sm"
+                className="text-shadow-300 hover:text-white"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Collections
+              </Button>
             </div>
+
+            {/* Inline Generation Form */}
+            <Card className="mb-6 border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
+              <CardContent className="p-6">
+                <h3 className="mb-4 text-lg font-semibold text-white">Generate 2D Asset</h3>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleGenerate2D();
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <Label htmlFor="prompt" className="text-shadow-200">
+                      Prompt *
+                    </Label>
+                    <Textarea
+                      id="prompt"
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="A magical forest with glowing mushrooms and fireflies..."
+                      className="mt-1 border-midnight-500 bg-midnight-800/50 text-white placeholder:text-shadow-500"
+                      rows={3}
+                      disabled={generating}
+                      data-testid="asset-prompt-input"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="imageFile" className="text-shadow-200">
+                      Base Image (optional)
+                    </Label>
+                    <div className="mt-1">
+                      <label
+                        htmlFor="imageFile"
+                        className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-midnight-500 bg-midnight-800/50 p-4 transition-colors hover:border-accent/50"
+                      >
+                        <div className="text-center">
+                          <Upload className="mx-auto mb-2 h-6 w-6 text-shadow-600" />
+                          <p className="text-sm text-white">
+                            {imageFile ? imageFile.name : 'Click to upload image (optional)'}
+                          </p>
+                          <p className="mt-1 text-xs text-shadow-500">PNG, JPG up to 10MB</p>
+                        </div>
+                        <input
+                          id="imageFile"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                          className="hidden"
+                          disabled={generating}
+                        />
+                      </label>
+                      {imageFile && (
+                        <Button
+                          type="button"
+                          onClick={() => setImageFile(null)}
+                          variant="ghost"
+                          size="sm"
+                          className="mt-2 text-xs text-shadow-400 hover:text-red-400"
+                        >
+                          Remove image
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-accent text-white hover:bg-accent/90"
+                    disabled={generating || !prompt.trim()}
+                    data-testid="generate-asset-button"
+                  >
+                    {generating ? (
+                      'Generating...'
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generate Asset
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
 
             {/* Asset Grid */}
             <div>
@@ -261,7 +435,7 @@ export default function Assets2DPage() {
                 <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
                   <CardContent className="p-12 text-center">
                     <p className="text-lg text-shadow-300">No assets in this collection</p>
-                    <p className="mt-2 text-sm text-shadow-400">Click Create Asset above to add your first asset</p>
+                    <p className="mt-2 text-sm text-shadow-400">Generate your first asset using the form above</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -271,10 +445,8 @@ export default function Assets2DPage() {
                       key={asset.id}
                       asset={asset}
                       onView={() => setViewingAsset(asset.id)}
-                      onGenerate={() => handleGenerateAsset(asset.id)}
                       onMove={() => setMovingAsset(asset.id)}
                       onDelete={() => setDeleteConfirm({ type: 'asset', id: asset.id })}
-                      showGenerateButton
                     />
                   ))}
                 </div>
@@ -292,28 +464,6 @@ export default function Assets2DPage() {
               loadCollections();
               setShowCreateCollection(false);
             }}
-          />
-        )}
-
-        {/* Create Asset Modal */}
-        {showCreateAsset && creatingAssetForCollection && (
-          <CreateAssetModal
-            collectionId={creatingAssetForCollection}
-            assetType="2d"
-            onClose={() => {
-              setShowCreateAsset(false);
-              setCreatingAssetForCollection(null);
-            }}
-            onSuccess={() => {
-              setShowCreateAsset(false);
-              setCreatingAssetForCollection(null);
-              if (selectedCollection) {
-                loadAssets(selectedCollection);
-              } else {
-                loadCollections();
-              }
-            }}
-            onGenerate={handleGenerateAsset}
           />
         )}
 
