@@ -52,7 +52,7 @@ export function AssetCard({
   onDelete,
   onCreateVariations,
 }: AssetCardProps) {
-  const statusConfig = STATUS_CONFIG[asset.status];
+  const statusConfig = STATUS_CONFIG[asset.status] || STATUS_CONFIG.pending;
   const canView = asset.status === 'done' && onView;
   const canCreateVariations = asset.status === 'done' && onCreateVariations;
 

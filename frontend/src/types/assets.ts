@@ -53,7 +53,9 @@ export interface AvatarGenerationPayload {
 
 export interface AvatarPreviewImage {
   mimeType: string;
-  data: string;
+  data?: string;
+  publicUrl?: string;
+  storagePath?: string;
   prompt: string;
   width: number;
   height: number;

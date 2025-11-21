@@ -137,6 +137,72 @@ export async function deleteCollection(collectionId: string, deleteAssets = true
 }
 
 /**
+ * Helper: Save avatar images from character sheet data to storage
+ */
+async function saveAvatarImages(
+  assetId: string,
+  userId: string,
+  characterSheetData: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const avatarPreview = characterSheetData.avatarPreview as Record<string, unknown> | undefined;
+
+  if (!avatarPreview) {
+    return characterSheetData;
+  }
+
+  const updatedAvatarPreview: Record<string, unknown> = {};
+  const avatarVariants = ['portrait', 'upperBody', 'fullBody'] as const;
+
+  for (const variant of avatarVariants) {
+    const variantData = avatarPreview[variant] as { data?: string; mimeType?: string } | undefined;
+
+    if (variantData?.data) {
+      try {
+        // Convert base64 to buffer
+        const buffer = Buffer.from(variantData.data, 'base64');
+        const mimeType = variantData.mimeType || 'image/png';
+
+        // Save to storage
+        const result = await saveAsset({
+          buffer,
+          contentType: mimeType,
+          filename: `${variant}.png`,
+          folder: `assets/${userId}/${assetId}/avatar`,
+          metadata: {
+            userId,
+            assetId,
+            variant,
+          },
+        });
+
+        // Store public URL instead of base64 data
+        const { data, ...variantWithoutData } = variantData;
+        updatedAvatarPreview[variant] = {
+          ...variantWithoutData,
+          publicUrl: result.url,
+          storagePath: result.path,
+          // data field omitted to save space
+        };
+
+        logger.info(`[AssetService] Avatar ${variant} saved: ${result.url}`);
+      } catch (error) {
+        logger.error(`[AssetService] Failed to save avatar ${variant}:`, error);
+        // Keep original data if save fails
+        updatedAvatarPreview[variant] = variantData;
+      }
+    } else if (avatarPreview[variant]) {
+      // Preserve existing data if no base64 data
+      updatedAvatarPreview[variant] = avatarPreview[variant];
+    }
+  }
+
+  return {
+    ...characterSheetData,
+    avatarPreview: updatedAvatarPreview,
+  };
+}
+
+/**
  * Create a new asset
  */
 export async function createAsset(
@@ -148,14 +214,46 @@ export async function createAsset(
   characterSheetData?: Record<string, unknown>
 ): Promise<string> {
   try {
-    // Build asset data, filtering out undefined values
-    // Character sheet assets with data are already complete (human-generated, no AI generation needed)
+    // For character sheets, save avatar images to storage first
+    let processedCharacterData = characterSheetData;
+    if (characterSheetData && assetType === 'character-sheet') {
+      // We need the userId - get it from the collection
+      const collection = await getCollection(collectionId);
+      if (collection?.createdBy) {
+        // Create asset document first to get an ID
+        const tempAssetData: Record<string, unknown> = {
+          collectionId,
+          name,
+          description,
+          assetType,
+          status: 'processing',
+          createdAt: new Date(),
+        };
+
+        const docRef = await getFirestoreInstance().collection('assets').add(tempAssetData);
+        const assetId = docRef.id;
+
+        // Save avatar images and get updated data with URLs
+        processedCharacterData = await saveAvatarImages(assetId, collection.createdBy, characterSheetData);
+
+        // Update the asset with processed data
+        await getFirestoreInstance().collection('assets').doc(assetId).update({
+          characterSheetData: processedCharacterData,
+          status: 'done',
+        });
+
+        logger.info(`[AssetService] Character sheet asset created with avatars: ${assetId}`);
+        return assetId;
+      }
+    }
+
+    // Standard asset creation (non-character-sheet or no avatar data)
     const assetData: Record<string, unknown> = {
       collectionId,
       name,
       description,
       assetType,
-      status: characterSheetData ? 'done' : 'pending',
+      status: processedCharacterData ? 'done' : 'pending',
       createdAt: new Date(),
     };
 
@@ -165,8 +263,8 @@ export async function createAsset(
     }
 
     // Only add characterSheetData if defined
-    if (characterSheetData !== undefined) {
-      assetData.characterSheetData = characterSheetData;
+    if (processedCharacterData !== undefined) {
+      assetData.characterSheetData = processedCharacterData;
     }
 
     const docRef = await getFirestoreInstance().collection('assets').add(assetData);

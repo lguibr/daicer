@@ -25,7 +25,7 @@ export interface ServerToClientEvents {
   'player:joined': (data: { userId: string }) => void;
   'player:left': (data: { userId: string }) => void;
   'player:created': (data: { player: Player }) => void;
-  'player:ready_updated': (data: { playerId: string; ready: boolean }) => void;
+  'player:ready_updated': (data: { userId: string; isReady: boolean }) => void;
 
   // Turn - actual structures from backend
   'turn:processing': () => void;
@@ -77,7 +77,7 @@ export interface ClientToServerEvents {
   'room:create': (data: { name: string; config?: any }, callback?: (error: Error | null, room?: Room) => void) => void;
 
   // Player
-  'player:ready': (data: { roomId: string; ready: boolean }) => void;
+  'player:ready': (data: { roomId: string; isReady: boolean }) => void;
   'player:action': (data: { roomId: string; action: string }) => void;
 
   // Game

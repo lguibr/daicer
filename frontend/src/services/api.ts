@@ -168,31 +168,36 @@ export async function startGame(roomId: string, language: string): Promise<Messa
   });
 }
 
-export async function generateAvatarPortrait(payload: AvatarGenerationPayload): Promise<AvatarPreviewImage> {
+export async function generateAvatarPortrait(
+  payload: AvatarGenerationPayload,
+  referenceImage?: string | null
+): Promise<AvatarPreviewImage> {
   return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/portrait', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, referenceImage }),
   });
 }
 
 export async function generateAvatarUpperBody(
   payload: AvatarGenerationPayload,
-  portrait: AvatarPreviewImage
+  portrait: AvatarPreviewImage,
+  referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
   return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/upper', {
     method: 'POST',
-    body: JSON.stringify({ payload, portrait }),
+    body: JSON.stringify({ payload, portrait, referenceImage }),
   });
 }
 
 export async function generateAvatarFullBody(
   payload: AvatarGenerationPayload,
   portrait: AvatarPreviewImage,
-  upperBody: AvatarPreviewImage
+  upperBody: AvatarPreviewImage,
+  referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
   return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/full', {
     method: 'POST',
-    body: JSON.stringify({ payload, portrait, upperBody }),
+    body: JSON.stringify({ payload, portrait, upperBody, referenceImage }),
   });
 }
 

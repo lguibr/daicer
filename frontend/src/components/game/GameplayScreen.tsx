@@ -11,7 +11,7 @@ import GameplayComposer from './GameplayComposer';
 import { RoomTabs } from '../room/RoomTabs';
 import { PlayerListTab } from '../room/PlayerListTab';
 import { RoomSettingsTab } from '../room/RoomSettingsTab';
-import { RoomMapView } from '../room/RoomMapView';
+import { TerrainExplorer } from '../terrain/TerrainExplorer';
 
 interface GameplayScreenProps {
   room: Room;
@@ -168,7 +168,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
       <RoomTabs
         roomId={room.id}
         chatContent={chatContent}
-        mapContent={<RoomMapView roomId={room.id} />}
+        mapContent={<TerrainExplorer roomId={room.id} biomeGrid={[]} roomSize={32} enableInfinite={true} />}
         playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
         settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}
       />

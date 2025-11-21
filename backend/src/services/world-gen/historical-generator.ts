@@ -10,7 +10,7 @@ import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { HistoricalPeriodResponseSchema } from '@/schemas/agent-responses';
 import type { HistoricalPeriodResponse } from '@/schemas/agent-responses';
 import type { WorldSettings } from '@/types';
-import type { WorldHistory, HistoricalPeriod } from '@daicer/shared/world/history-schema';
+import type { HistoricalPeriod } from '@daicer/shared/world/history-schema';
 import type { Structure } from '@daicer/shared/world/structure-schema';
 import { logger } from '@/utils/logger';
 import type { WorldCondition } from '../entropy/types';
@@ -62,7 +62,7 @@ function buildPeriodPrompt(periodNumber: number, entropy: HistoricalPeriodEntrop
   // Structure guidance
   prompt += `Structures: 0-2 new. Relative position (e.g. northeast-far). Significance 1-10.\n\n`;
 
-  prompt += `BE EXTREMELY BRIEF. Bullet points only.`;
+  prompt += `Write a concise but evocative historical summary. Focus on events that shape the world's current state.`;
 
   return prompt;
 }
@@ -161,7 +161,7 @@ export const generateSinglePeriodTask = task(
         era: periodNumber,
         type: s.type,
         significance: s.significance,
-        relativePosition: s.relativePosition, // Store for later conversion
+        relativePosition: s.relativePosition as any, // Store for later conversion
       };
     }) as Structure[];
 
@@ -205,9 +205,8 @@ export const generateOverallSummaryTask = task(
       .map((p) => `**Years ${p.startYear}-${p.endYear}:**\n${p.narrative}`)
       .join('\n\n');
 
-    const fullPrompt = `${
-      prompt + allNarratives
-    }\n\nCreate a concise 2-3 paragraph summary of the entire history, highlighting the most significant events, structures, and themes that define this world.`;
+    const fullPrompt = `${prompt + allNarratives
+      }\n\nCreate a concise 2-3 paragraph summary of the entire history, highlighting the most significant events, structures, and themes that define this world.`;
 
     // For summary, we just need a string, so we'll use a simple schema
     const SummarySchema = HistoricalPeriodResponseSchema.pick({ narrative: true });

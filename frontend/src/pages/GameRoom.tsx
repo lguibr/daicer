@@ -4,10 +4,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getRoomState } from '../services/api';
-import { joinRoom as joinSocketRoom } from '../services/socket';
+import { getRoomState, startGame } from '../services/api';
+import { joinRoom as joinSocketRoom, setReady } from '../services/socket';
 import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
+import { LobbyScreen } from '../components/room/LobbyScreen';
 import { TerrainGenerationScreen } from '../components/terrain/TerrainGenerationScreen';
 import GameplayScreen from '../components/game/GameplayScreen';
 import { CombatScreen } from '../components/game/CombatScreen';
@@ -18,6 +19,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import ToolCallCard from '../components/chat/ToolCallCard';
 import { auth } from '../services/firebase';
+import useAuth from '../hooks/useAuth';
 import type { ToolCall } from '../services/socket';
 import type { Room, Player } from '../types/shared';
 
@@ -28,13 +30,37 @@ import type { Room, Player } from '../types/shared';
 export default function GameRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentToolCalls, setRecentToolCalls] = useState<typeof socket.toolCalls>([]);
 
+  const [isCreatingCharacter, setIsCreatingCharacter] = useState(false);
+  const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
+
   const socket = useSocket(roomId);
+
+  // Auto-redirect to character creation if user has no character
+  useEffect(() => {
+    if (!loading && players.length > 0 && user?.uid) {
+      // Only redirect if we are in the correct phase
+      if (room?.phase === 'CHARACTER_CREATION' || room?.phase === 'SETUP') {
+        const me = players.find(p => p.userId === user.uid);
+        if (me) {
+          if (!me.character && !hasAutoRedirected) {
+            setIsCreatingCharacter(true);
+            setHasAutoRedirected(true);
+          } else if (me.character && isCreatingCharacter) {
+            // If we have a character but are in creation mode, exit creation mode
+            // This handles the case where creation finishes
+            setIsCreatingCharacter(false);
+          }
+        }
+      }
+    }
+  }, [loading, players, user?.uid, hasAutoRedirected, room?.phase, isCreatingCharacter]);
 
   const [streamEvents, setStreamEvents] = useState<
     Array<{
@@ -107,7 +133,8 @@ export default function GameRoomPage() {
   }, [socket.room, socket.players]);
 
   // Monitor world generation if room is in SETUP phase
-  const isWorldGenerating = room && room.phase === 'SETUP' && !room.worldDescription;
+  // const isWorldGenerating = room && room.phase === 'SETUP' && !room.worldDescription;
+  const isWorldGenerating = false; // SKIP INTRO: Always skip the streaming view
   const roomPhase = room?.phase;
   const hasWorldDescription = room?.worldDescription;
 
@@ -214,27 +241,22 @@ export default function GameRoomPage() {
     };
   }, [roomId, roomPhase, hasWorldDescription]);
 
-  if (loading) {
+  // Show loading state only when initially loading or if there's an error
+  if (loading || !room) {
     return (
       <DynamicLayout showNavbar={false} showLanguageSelector>
         <div className="flex min-h-screen items-center justify-center">
-          <DiceLoader size="lg" />
-        </div>
-      </DynamicLayout>
-    );
-  }
-
-  if (error || !room) {
-    return (
-      <DynamicLayout showNavbar={false} showLanguageSelector>
-        <div className="flex min-h-screen items-center justify-center">
-          <Card className="max-w-md border-red-500/30 bg-midnight-800/95 p-8 text-center">
-            <h2 className="mb-4 text-xl font-semibold text-red-400">Error</h2>
-            <p className="text-shadow-300">{error || 'Room not found'}</p>
-            <Button onClick={() => navigate('/')} className="mt-6">
-              Return to Lobby
-            </Button>
-          </Card>
+          {error ? (
+            <Card className="max-w-md border-red-500/30 bg-midnight-800/95 p-8 text-center">
+              <h2 className="mb-4 text-xl font-semibold text-red-400">Error</h2>
+              <p className="text-shadow-300">{error || 'Room not found'}</p>
+              <Button onClick={() => navigate('/')} className="mt-6">
+                Return to Lobby
+              </Button>
+            </Card>
+          ) : (
+            <DiceLoader size="large" />
+          )}
         </div>
       </DynamicLayout>
     );
@@ -340,11 +362,79 @@ export default function GameRoomPage() {
     );
   }
 
-  // PHASE 3: CHARACTER_CREATION - Full character creation wizard with map/history review
-  if (room.phase === 'CHARACTER_CREATION') {
+  // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
+  // Also show this for SETUP phase to skip the streaming intro
+  // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
+  // Also show this for SETUP phase to skip the streaming intro
+  if (room.phase === 'CHARACTER_CREATION' || room.phase === 'SETUP') {
+    // If user has no character, default to creation mode (optional, can be just lobby)
+    // But let's start in Lobby to see everyone
+
+    // If user has no character, default to creation mode (optional, can be just lobby)
+    // But let's start in Lobby to see everyone
+
+    const handleUnlockRoom = async () => {
+      if (!room?.id) return;
+      try {
+        const token = await user?.getIdToken();
+        await fetch(`${import.meta.env.VITE_API_URL}/api/rooms/${room.id}/unlock-characters`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (err) {
+        console.error('Failed to unlock room:', err);
+      }
+    };
+
+    const handleReadyToggle = async (isReady: boolean) => {
+      if (!room?.id) return;
+      try {
+        await setReady(room.id, isReady);
+      } catch (err) {
+        console.error('Failed to toggle ready:', err);
+      }
+    };
+
+    const handleStartGame = async () => {
+      if (!room) return;
+      try {
+        setLoading(true);
+        await startGame(room.id, room.settings?.language || 'en');
+        // Room update will come via socket
+      } catch (err) {
+        console.error('Failed to start game:', err);
+        // Optional: show error toast
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isCreatingCharacter) {
+      return (
+        <DynamicLayout showNavbar={false} showLanguageSelector>
+          <CharacterCreation
+            room={room}
+            players={players}
+            onCancel={() => setIsCreatingCharacter(false)}
+          />
+        </DynamicLayout>
+      );
+    }
+
     return (
       <DynamicLayout showNavbar={false} showLanguageSelector>
-        <CharacterCreation room={room} players={players} />
+        <LobbyScreen
+          room={room}
+          players={players}
+          onCreateCharacter={() => setIsCreatingCharacter(true)}
+          onReadyToggle={handleReadyToggle}
+          isOwner={room.ownerId === user?.uid}
+          onStartGame={handleStartGame}
+          onUnlockRoom={handleUnlockRoom}
+        />
       </DynamicLayout>
     );
   }
@@ -353,8 +443,8 @@ export default function GameRoomPage() {
   if (room.phase === 'COMBAT') {
     return (
       <DynamicLayout showRoomInfo>
-        <CombatScreen />
-        <ToolNotificationContainer toolCalls={recentToolCalls} />
+        <CombatScreen roomId={roomId!} />
+        <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => { }} />
       </DynamicLayout>
     );
   }
@@ -362,8 +452,8 @@ export default function GameRoomPage() {
   // PHASE 5: GAMEPLAY - Active gameplay with chat, turns, etc.
   return (
     <DynamicLayout showRoomInfo>
-      <GameplayScreen />
-      <ToolNotificationContainer toolCalls={recentToolCalls} />
+      <GameplayScreen room={room} players={players} />
+      <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => { }} />
     </DynamicLayout>
   );
 }

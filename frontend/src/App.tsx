@@ -14,8 +14,6 @@ import AssetsMapsPage from './pages/AssetsMaps';
 import AssetsCharacterSheetPage from './pages/AssetsCharacterSheet';
 import AssetsStructuresPage from './pages/AssetsStructures';
 import AssetDetailPage from './pages/AssetDetail';
-import WorldGenDebugger from './pages/WorldGenDebugger';
-import MapExplorer from './pages/MapExplorer';
 import NotFoundPage from './pages/NotFound';
 import ErrorPage from './pages/Error';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -80,8 +78,6 @@ export default function App() {
           }
         />
         <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/debug/worldgen" element={<WorldGenDebugger />} />
-        <Route path="/debug/explorer" element={<MapExplorer />} />
         <Route
           path="/assets"
           element={

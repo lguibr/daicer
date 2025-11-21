@@ -150,15 +150,26 @@ export async function updateRoomWorld(
 ): Promise<Room> {
   const roomRef = db().collection('rooms').doc(roomId);
 
+  // Build update data, filtering out undefined values
   const updateData: Partial<Room> = {
     worldDescription: worldData.worldDescription,
-    worldHistory: worldData.worldHistory,
-    structures: worldData.structures,
-    roads: worldData.roads,
-    worldConditions: worldData.worldConditions,
     phase,
     updatedAt: Date.now(),
   };
+
+  // Only add optional fields if they're defined
+  if (worldData.worldHistory !== undefined) {
+    updateData.worldHistory = worldData.worldHistory;
+  }
+  if (worldData.structures !== undefined) {
+    updateData.structures = worldData.structures;
+  }
+  if (worldData.roads !== undefined) {
+    updateData.roads = worldData.roads;
+  }
+  if (worldData.worldConditions !== undefined) {
+    updateData.worldConditions = worldData.worldConditions;
+  }
 
   await roomRef.update(updateData);
 

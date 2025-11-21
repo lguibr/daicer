@@ -491,8 +491,9 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
     throw new ApiError(404, 'Room not found');
   }
 
-  if (room.phase !== GamePhase.CHARACTER_CREATION) {
-    throw new ApiError(400, 'Not in character creation phase');
+  // Allow character creation in both SETUP and CHARACTER_CREATION phases
+  if (room.phase !== GamePhase.SETUP && room.phase !== GamePhase.CHARACTER_CREATION) {
+    throw new ApiError(400, 'Character creation is only allowed during setup or character creation phase');
   }
 
   const { sheet, avatarPreview, ...coreData } = characterSchema.parse(req.body);
@@ -573,26 +574,71 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
 
   // Use language from room settings, NOT request body
   const language = room.settings?.language || 'en';
-  const openings = await generateCharacterOpenings(room.worldDescription, players, language);
 
-  const messages: Message[] = [];
+  // 1. Immediate update to GAMEPLAY phase to unblock UI
+  await updateRoomWorld(roomId, { worldDescription: room.worldDescription }, GamePhase.GAMEPLAY);
 
-  for (const { playerId, message: opening } of openings.openings) {
-    const msg: Message = {
-      id: `msg-${Date.now()}-${playerId}`,
-      sender: 'DM',
-      text: opening,
-      timestamp: Date.now(),
-      targetPlayer: playerId,
-    };
+  // 2. Send immediate system message
+  const startMsg: Message = {
+    id: `msg-${Date.now()}-system`,
+    sender: 'System',
+    text: 'The adventure begins! The story is being written...',
+    timestamp: Date.now(),
+  };
+  await addMessage(roomId, startMsg);
 
-    await addMessage(roomId, msg);
-    messages.push(msg);
-  }
+  // 3. Return success immediately
+  res.json({ success: true, data: [startMsg] });
 
-  await updateRoomWorld(roomId, room.worldDescription, GamePhase.GAMEPLAY);
+  // 4. Trigger background generation
+  // We don't await this, so the response returns immediately
+  (async () => {
+    try {
+      // Import the granular generation functions
+      const { generateMainOpening, generateCharacterOpening } = await import('@/services/game');
 
-  res.json({ success: true, data: messages });
+      // A. Generate and send public story message FIRST
+      const mainMessage = await generateMainOpening(room.worldDescription, language);
+
+      const publicMsg: Message = {
+        id: `msg-${Date.now()}-dm-public`,
+        sender: 'DM',
+        text: mainMessage,
+        timestamp: Date.now() + 100,
+      };
+      await addMessage(roomId, publicMsg);
+
+      // B. Generate and send private messages in parallel
+      await Promise.all(
+        players.map(async (player) => {
+          try {
+            const opening = await generateCharacterOpening(room.worldDescription, player.character, language);
+
+            const msg: Message = {
+              id: `msg-${Date.now()}-${player.id}`,
+              sender: 'DM',
+              text: opening,
+              timestamp: Date.now() + 200,
+              targetPlayer: player.id,
+            };
+            await addMessage(roomId, msg);
+          } catch (charErr) {
+            logger.error(`Failed to generate opening for player ${player.id}:`, charErr);
+          }
+        })
+      );
+
+    } catch (err) {
+      logger.error(`Background story generation failed for room ${roomId}:`, err);
+      const errorMsg: Message = {
+        id: `msg-${Date.now()}-error`,
+        sender: 'System',
+        text: 'The storyteller is having trouble... but the adventure must go on!',
+        timestamp: Date.now(),
+      };
+      await addMessage(roomId, errorMsg);
+    }
+  })();
 });
 
 /**

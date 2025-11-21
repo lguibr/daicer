@@ -178,6 +178,7 @@ export function buildAvatarPayload(
     .join(', ');
 
   const appearanceBits = [
+    formData.appearance.gender ? `${formData.appearance.gender}` : '',
     formData.appearance.age ? `age ${formData.appearance.age}` : '',
     formData.appearance.height ? `height ${formData.appearance.height}` : '',
     formData.appearance.weight ? `weight ${formData.appearance.weight}` : '',

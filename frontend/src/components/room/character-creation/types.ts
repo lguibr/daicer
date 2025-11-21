@@ -35,6 +35,7 @@ export type CharacterFormState = {
     skin: string;
     hair: string;
     description: string;
+    gender?: string;
   };
   personality: {
     traits: string;

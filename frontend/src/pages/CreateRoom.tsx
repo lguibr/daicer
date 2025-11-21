@@ -10,7 +10,7 @@ import PrivateLayout from '../components/layout/PrivateLayout';
 import { createRoom, addCharacter } from '../services/api';
 import { WorldPreview } from '../components/create-room/WorldPreview';
 import { DEFAULT_GENERATION_PARAMS, type GenerationParams } from '../hooks/useWorldGeneration';
-import type { Room, WorldSettings, WorldType, DMStyle, ScaleLevel, DMPerformanceMode } from '../types/shared';
+import type { Room, WorldSettings, WorldType, DMStyle, ScaleLevel } from '../types/shared';
 import { WORLD_ARCHETYPES } from '../constants/worldArchetypes';
 import {
   ARCHETYPE_SIGILS,
@@ -45,7 +45,6 @@ export default function CreateRoomPage() {
   const [currentGroup, setCurrentGroup] = useState(0);
   const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
 
-  const [generatedRoom, setGeneratedRoom] = useState<Room | null>(null);
   const [showCharacterModal, setShowCharacterModal] = useState(false);
 
   // Terrain generation state
@@ -399,8 +398,8 @@ export default function CreateRoomPage() {
         }
       });
 
-      setGeneratedRoom(room);
-      setShowCharacterModal(true);
+      // Redirect immediately to the room
+      navigate(`/room/${room.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create room');
     } finally {

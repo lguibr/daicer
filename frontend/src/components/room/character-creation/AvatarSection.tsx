@@ -1,110 +1,191 @@
+import React, { useState } from 'react';
 import type { AvatarPreviewResponse } from '../../../types/assets';
 import { Button } from '../../ui/button';
-import Label from '../../ui/label';
 import { DiceLoader } from '../../ui/dice-loader';
 import { useI18n } from '../../../i18n';
 import { previewPlaceholders } from './constants';
+import { Upload, Camera, Wand2, RefreshCw } from 'lucide-react';
+import { WebcamCapture } from '../../ui/WebcamCapture';
+import clsx from 'clsx';
+
+export type AvatarSlot = keyof AvatarPreviewResponse;
 
 interface AvatarSectionProps {
-  avatarPreview: Partial<AvatarPreviewResponse>;
-  previewLoading: boolean;
-  previewLoadState: Record<keyof AvatarPreviewResponse, boolean>;
-  previewBusy: boolean;
-  previewError: string | null;
-  placeholderLoading: boolean;
-  placeholderDimensions: Partial<Record<keyof AvatarPreviewResponse, { width: number; height: number }>>;
-  onGeneratePreview: () => void;
+  // The images to display (merged generated + uploaded in parent)
+  images: Record<AvatarSlot, string | null>;
+
+  // Loading states
+  loading: Record<AvatarSlot, boolean>;
+
+  // Actions
+  onUpload: (slot: AvatarSlot, file: File) => void;
+  onCapture: (slot: AvatarSlot, base64: string) => void;
+  onGenerateAll: () => void; // Changed to single action for all avatars
+
+  // Dimensions for placeholders
+  placeholderDimensions: Partial<Record<AvatarSlot, { width: number; height: number }>>;
 }
 
 export function AvatarSection({
-  avatarPreview,
-  previewLoading,
-  previewLoadState,
-  previewBusy,
-  previewError,
-  placeholderLoading,
+  images,
+  loading,
+  onUpload,
+  onCapture,
+  onGenerateAll,
   placeholderDimensions,
-  onGeneratePreview,
 }: AvatarSectionProps) {
   const { t } = useI18n();
+  const [webcamOpen, setWebcamOpen] = useState(false);
+  const [activeWebcamSlot, setActiveWebcamSlot] = useState<AvatarSlot | null>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, slot: AvatarSlot) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onUpload(slot, file);
+    }
+    // Reset input
+    event.target.value = '';
+  };
+
+  const openWebcam = (slot: AvatarSlot) => {
+    setActiveWebcamSlot(slot);
+    setWebcamOpen(true);
+  };
+
+  const handleWebcamCapture = (imageSrc: string) => {
+    if (activeWebcamSlot) {
+      onCapture(activeWebcamSlot, imageSrc);
+    }
+  };
+
+  const renderSlot = (slot: AvatarSlot, labelKey: string, placeholderSrc: string) => {
+    const image = images[slot];
+    const isLoading = loading[slot];
+    const translatedLabel = t(labelKey);
+    const isFullBody = slot === 'fullBody';
+    const placeholderDims = placeholderDimensions[slot];
+
+    return (
+      <div key={slot} className="flex flex-col gap-3">
+        <div className="relative group rounded-xl border border-midnight-600 bg-midnight-800/70 overflow-hidden">
+          {/* Image Area */}
+          <div
+            className={clsx(
+              "relative flex items-center justify-center min-h-[320px] w-full",
+              isFullBody ? "bg-midnight-900" : "bg-midnight-800/40"
+            )}
+            style={
+              !image && placeholderDims
+                ? { aspectRatio: `${placeholderDims.width} / ${placeholderDims.height}` }
+                : undefined
+            }
+          >
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-midnight-900/50 backdrop-blur-sm z-10">
+                <DiceLoader size="medium" diceCount={slot === 'portrait' ? 1 : slot === 'upperBody' ? 2 : 3} />
+              </div>
+            ) : null}
+
+            {/* Show either generated image or placeholder */}
+            {image ? (
+              <img
+                src={image}
+                alt={translatedLabel}
+                className="w-full h-auto object-contain max-h-[500px]"
+              />
+            ) : (
+              <img
+                src={placeholderSrc}
+                alt={`${translatedLabel} Placeholder`}
+                className="w-full h-full object-cover opacity-30"
+              />
+            )}
+
+            {/* Small Upload/Camera buttons in top-right corner */}
+            <div className="absolute top-2 right-2 flex gap-2 opacity-50 hover:opacity-100 transition-opacity">
+              {/* Upload Button (icon only) */}
+              <div className="relative">
+                <input
+                  type="file"
+                  id={`upload-${slot}`}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, slot)}
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor={`upload-${slot}`}
+                  className="flex items-center justify-center w-8 h-8 bg-midnight-700/80 hover:bg-midnight-600 text-aurora-300 rounded-lg cursor-pointer transition-colors border border-midnight-500 backdrop-blur-sm"
+                  title="Upload Image"
+                >
+                  <Upload className="w-4 h-4" />
+                </label>
+              </div>
+
+              {/* Camera Button (icon only) */}
+              <button
+                onClick={() => openWebcam(slot)}
+                disabled={isLoading}
+                className="flex items-center justify-center w-8 h-8 bg-midnight-700/80 hover:bg-midnight-600 text-aurora-300 rounded-lg transition-colors border border-midnight-500 backdrop-blur-sm disabled:opacity-50"
+                title="Take Photo"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <h3 className="text-sm font-semibold text-aurora-200 uppercase tracking-wider">{translatedLabel}</h3>
+        </div>
+      </div>
+    );
+  };
+
+  const anyImage = images.portrait || images.upperBody || images.fullBody;
+  const anyLoading = loading.portrait || loading.upperBody || loading.fullBody;
 
   return (
-    <div className="border-t border-midnight-600 pt-4 space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <Label>{t('characterCreation.portraits.title')}</Label>
-          <p className="text-xs text-shadow-500">{t('characterCreation.portraits.description')}</p>
-        </div>
+    <>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {previewPlaceholders.map(({ key, labelKey, src }) =>
+          renderSlot(key as AvatarSlot, labelKey, src)
+        )}
+      </div>
+
+      {/* Single Generate All Button */}
+      <div className="flex justify-center mt-8">
         <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={onGeneratePreview}
-          disabled={previewLoading || placeholderLoading}
+          variant="default"
+          size="lg"
+          onClick={onGenerateAll}
+          disabled={anyLoading}
+          className="min-w-[260px] px-8 py-6 h-14 bg-aurora-600 hover:bg-aurora-700 text-white font-semibold shadow-[0_8px_24px_rgba(29,143,242,0.25)] hover:shadow-[0_12px_32px_rgba(29,143,242,0.35)] border-2 border-aurora-400/40"
         >
-          {previewLoading
-            ? t('characterCreation.portraits.generating')
-            : avatarPreview.portrait && avatarPreview.upperBody && avatarPreview.fullBody
-              ? t('characterCreation.portraits.regenerate')
-              : t('characterCreation.portraits.generate')}
+          {anyLoading ? (
+            <>
+              <DiceLoader size="small" diceCount={3} />
+              <span className="ml-3">Generating...</span>
+            </>
+          ) : anyImage ? (
+            <>
+              <RefreshCw className="w-5 h-5 mr-2" />
+              Regenerate All Avatars
+            </>
+          ) : (
+            <>
+              <Wand2 className="w-5 h-5 mr-2" />
+              Generate All Avatars
+            </>
+          )}
         </Button>
       </div>
-      {previewError && (
-        <div className="rounded-lg border border-red-500 bg-red-900/40 p-3 text-sm text-red-200">{previewError}</div>
-      )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {previewPlaceholders.map(({ key, src, labelKey }) => {
-          const translatedLabel = t(labelKey);
-          const isFullBody = key === 'fullBody';
-          const asset = avatarPreview[key];
-          const shouldShowSpinner = previewLoadState[key] || (!asset && previewBusy);
-          const spinnerDiceCount = key === 'portrait' ? 1 : key === 'upperBody' ? 2 : 3;
-          const baseFigureClasses =
-            'rounded-xl border border-midnight-600 bg-midnight-800/70 flex flex-col items-center justify-center overflow-hidden p-6';
-          const placeholderDims = placeholderDimensions[key];
 
-          if (shouldShowSpinner) {
-            return (
-              <figure key={key} className={`${baseFigureClasses} w-full`}>
-                <DiceLoader size="small" diceCount={spinnerDiceCount} />
-              </figure>
-            );
-          }
-
-          if (asset) {
-            const aspectStyle =
-              asset.width && asset.height ? { aspectRatio: `${asset.width} / ${asset.height}` } : undefined;
-
-            return (
-              <figure key={key} className={`${baseFigureClasses} w-full`} style={aspectStyle}>
-                <img
-                  src={`data:${asset.mimeType};base64,${asset.data}`}
-                  alt={`${t('characterCreation.portraits.defaultName')} ${translatedLabel}`}
-                  className={`w-full h-auto object-contain ${isFullBody ? 'bg-midnight-900' : ''}`}
-                />
-                <figcaption className="px-3 py-2 text-xs font-semibold text-shadow-300">{translatedLabel}</figcaption>
-              </figure>
-            );
-          }
-
-          return (
-            <figure
-              key={key}
-              className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-midnight-600 bg-midnight-800/40 p-6 text-center text-sm text-shadow-400"
-              style={
-                placeholderDims ? { aspectRatio: `${placeholderDims.width} / ${placeholderDims.height}` } : undefined
-              }
-            >
-              <img src={src} alt={translatedLabel} className="w-full h-auto object-contain opacity-90" />
-              <figcaption>
-                {translatedLabel}
-                <br />
-                <span className="text-xs text-shadow-500">{t('characterCreation.portraits.generatePlaceholder')}</span>
-              </figcaption>
-            </figure>
-          );
-        })}
-      </div>
-    </div>
+      <WebcamCapture
+        open={webcamOpen}
+        onOpenChange={setWebcamOpen}
+        onCapture={handleWebcamCapture}
+      />
+    </>
   );
 }

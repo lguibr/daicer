@@ -7,7 +7,9 @@ import { X, Download, Trash2, ExternalLink, ChevronLeft, ChevronRight } from 'lu
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { VoxelModelViewer } from './VoxelModelViewer';
+import { CharacterSheetViewer } from './CharacterSheetViewer';
 import type { Asset } from '../../services/assetService';
+import type { CharacterSheetAsset } from '../room/character-creation/characterSheetAsset';
 
 interface AssetPreviewModalProps {
   asset: Asset;
@@ -26,6 +28,17 @@ export function AssetPreviewModal({
   onOpenDetailPage,
   onNavigate,
 }: AssetPreviewModalProps) {
+  // Check if this is a character sheet asset
+  if (asset.characterSheetData) {
+    return (
+      <CharacterSheetViewer
+        characterData={asset.characterSheetData as unknown as CharacterSheetAsset}
+        onClose={onClose}
+      />
+    );
+  }
+
+  // Otherwise render generic preview
   const currentIndex = allAssets.findIndex((a) => a.id === asset.id);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < allAssets.length - 1;

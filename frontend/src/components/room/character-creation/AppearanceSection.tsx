@@ -21,9 +21,12 @@ interface AppearanceSectionProps {
     skin: string;
     hair: string;
     description: string;
+    gender?: string;
   };
   onAppearanceChange: (field: string, value: string) => void;
 }
+
+const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Other'];
 
 export function AppearanceSection({ appearance, onAppearanceChange }: AppearanceSectionProps) {
   const { t } = useI18n();
@@ -31,6 +34,9 @@ export function AppearanceSection({ appearance, onAppearanceChange }: Appearance
   const ageValue = parseAppearanceNumber(appearance.age, DEFAULT_APPEARANCE_AGE);
   const heightValue = parseAppearanceNumber(appearance.height, DEFAULT_APPEARANCE_HEIGHT);
   const weightValue = parseAppearanceNumber(appearance.weight, DEFAULT_APPEARANCE_WEIGHT);
+
+  // Convert feet to cm for display (1 ft = 30.48 cm)
+  const heightCm = Math.round(heightValue * 30.48);
 
   return (
     <div className="space-y-6">
@@ -49,11 +55,15 @@ export function AppearanceSection({ appearance, onAppearanceChange }: Appearance
         </div>
         <div className="rounded-lg border border-midnight-600 bg-midnight-800/70 p-4">
           <SliderWithMarks
-            label={t('characterCreation.appearance.height')}
-            value={heightValue}
-            onChange={(value) => onAppearanceChange('height', String(value))}
-            min={120}
-            max={220}
+            label={`${t('characterCreation.appearance.height')} (cm)`}
+            value={heightCm}
+            onChange={(value) => {
+              // Convert cm back to feet for storage
+              const feet = value / 30.48;
+              onAppearanceChange('height', String(feet));
+            }}
+            min={120} // ~4ft
+            max={220} // ~7.2ft
             step={1}
             showValue
             showTooltip={false}
@@ -73,7 +83,22 @@ export function AppearanceSection({ appearance, onAppearanceChange }: Appearance
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+            Gender
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {GENDER_OPTIONS.map((option) => (
+              <OptionPill
+                key={option}
+                label={option}
+                selected={appearance.gender === option}
+                onSelect={() => onAppearanceChange('gender', option)}
+              />
+            ))}
+          </div>
+        </div>
         <div className="space-y-3">
           <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
             {t('characterCreation.appearance.eyes')}

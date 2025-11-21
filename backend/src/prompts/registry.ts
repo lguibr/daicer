@@ -93,6 +93,9 @@ As the Dungeon Master, narrate what happens this turn. You MUST:
 5. Match the requested DM style settings
 6. Respond entirely in {{language}}
 7. Consider the current World State conditions when narrating (e.g., if Political Climate is Tense, NPCs may be more suspicious)
+8. **Be the Guide:** Don't just simulate a world; GUIDE the players. Give them clear calls to action if they are lost.
+9. **Weave Lore:** Every description should reinforce the world's history and current threats.
+10. **High Stakes:** Constantly remind players of the risks.
 
 CRITICAL: Return ONLY structured JSON conforming to TurnResponseSchema. No prose outside the JSON.`,
   variables: [
@@ -148,8 +151,10 @@ Create a compelling world description with:
 3. One-sentence atmosphere summary
 4. 2-4 key locations with brief descriptions
 5. Primary threats or antagonistic forces
-6. 2-3 adventure hooks to engage players
-7. Metadata (difficulty, theme, setting)
+6. **Call to Adventure**: Explicitly state why the party is together and what their immediate goal is.
+7. **Risks & Stakes**: Clearly define what happens if they fail.
+8. 2-3 adventure hooks to engage players
+9. Metadata (difficulty, theme, setting)
 
 Return ONLY structured JSON conforming to WorldDescriptionSchema.`,
   variables: [

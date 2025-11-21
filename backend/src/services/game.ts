@@ -89,6 +89,8 @@ Create rich, detailed world descriptions with structured metadata.`;
 - Capture the atmosphere in one sentence
 - Identify 2-4 key locations with brief descriptions
 - List primary threats or antagonistic forces
+- **Call to Adventure**: Explicitly state why the party is together and what their immediate goal is.
+- **Risks & Stakes**: Clearly define what happens if they fail.
 - Provide 2-3 adventure hooks to draw players in
 - Include metadata about difficulty, theme, and setting`;
 
@@ -109,23 +111,29 @@ ${worldData.description}
 ## Key Locations
 
 ${
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  worldData.keyLocations.map((loc: any) => `**${loc.name}**: ${loc.description}`).join('\n\n')
-}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    worldData.keyLocations.map((loc: any) => `**${loc.name}**: ${loc.description}`).join('\n\n')
+    }
 
 ## Threats
 
 ${
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  worldData.threats.map((threat: any) => `- ${threat}`).join('\n')
-}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    worldData.threats.map((threat: any) => `- ${threat}`).join('\n')
+    }
+
+## Call to Adventure & Stakes
+
+**Why you are here:** ${worldData.hooks[0] || 'Fate has brought you together.'}
+
+**The Risks:** The world is in peril, and failure could mean doom.
 
 ## Adventure Hooks
 
 ${
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')
-}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')
+    }`;
 
   return formattedDescription;
 };
@@ -197,7 +205,14 @@ function buildDMSystemInstruction(
 
   const basePrelude =
     settings?.dmSystemPrompt?.trim() ||
-    'You are a world-class Dungeon Master for a d20-based tabletop RPG. Uphold teamwork, dramatic stakes, and balanced rulings.';
+    `You are the Dungeon Master (DM). Your goal is to run a thrilling, immersive, and fair D&D 5e adventure.
+
+**DM PERSONA & GOALS:**
+1.  **Be the Guide:** Don't just simulate a world; GUIDE the players. Give them clear calls to action if they are lost.
+2.  **Weave Lore:** Every description should reinforce the world's history and current threats. Don't just say "You see a door"; say "You see a door marked with the ancient sigil of the Fallen King."
+3.  **High Stakes:** Constantly remind players of the risks. The world is dangerous. Failure has consequences.
+4.  **Call to Adventure:** Ensure the players know WHY they are here and WHAT they need to do.
+5.  **Fair but Firm:** Apply rules fairly, but prioritize fun and narrative flow.`;
 
   const worldLore = [settings?.worldBackground?.trim(), worldDescription].filter(Boolean).join('\n\n');
 
@@ -404,7 +419,21 @@ Respond entirely in ${languageName}.`;
  * @param language - Game language
  * @returns Personalized opening narration
  */
-const generateCharacterOpening = async (
+/**
+ * Generate personalized opening for a specific character (wrapped with tracing)
+ * @param worldDescription - World background
+ * @param character - Character sheet
+ * @param language - Game language
+ * @returns Personalized opening narration
+ */
+/**
+ * Generate personalized opening for a specific character (wrapped with tracing)
+ * @param worldDescription - World background
+ * @param character - Character sheet
+ * @param language - Game language
+ * @returns Personalized opening narration
+ */
+export const generateCharacterOpening = async (
   worldDescription: string,
   character: CharacterSheet,
   language: Language = 'en'
@@ -417,6 +446,7 @@ const generateCharacterOpening = async (
   const languageName = languageMap[language] || 'English';
 
   const systemPrompt = `You are the Dungeon Master. You provide immersive, personalized perspectives for each character.
+Your goal is to ground the character in the current moment BEFORE the adventure fully kicks off.
 
 WORLD CONTEXT:
 ${worldDescription}
@@ -433,22 +463,26 @@ CHARACTER:
 - Alignment: ${character.alignment}
 - Key Stats: STR ${character.attributes.Strength}, DEX ${character.attributes.Dexterity}, INT ${character.attributes.Intelligence}, WIS ${character.attributes.Wisdom}
 
-Describe what THIS specific character sees, feels, and notices based on their unique perspective:
+Describe what THIS specific character is doing or feeling in a moment of relative calm (e.g., at a tavern, resting, traveling) just before the main inciting incident occurs.
 
-**For a Fighter/Warrior:** Notice tactical details, defensive positions, weapon advantages
-**For a Wizard/Caster:** Sense magical energies, arcane disturbances, mystical patterns
-**For a Rogue/Scout:** Spot traps, hidden paths, suspicious details
-**For a Cleric/Priest:** Feel divine presence, sense undead, notice religious symbols
+**Focus on:**
+1. **Sensory Details:** What are they drinking, eating, or looking at?
+2. **Internal State:** Are they worried, relaxed, eager, or brooding?
+3. **Class Flavor:**
+   - **Fighter/Warrior:** Checking gear, observing the crowd for threats.
+   - **Wizard/Caster:** Reading a tome, sensing a shift in the air.
+   - **Rogue/Scout:** Watching the exits, listening to hushed conversations.
+   - **Cleric/Priest:** Praying, reflecting on their deity's will.
 
 **Format (use markdown):**
 ### Through [Character's] Eyes
 
-[What they see with their unique perspective]
+[What they see/feel/do in this grounded moment]
 
-*[Their internal thoughts or feelings]*
+*[Their internal thoughts]*
 
 **[Something they notice with their skills]:**
-- Detail 1
+- Detail 1 (e.g., a suspicious figure, a strange smell, a tremor)
 - Detail 2
 
 > "[Dialogue, inscription, or inner voice]"
@@ -459,6 +493,44 @@ REMEMBER: NO meta-text. Start directly with ### header.`;
 
   const response = await generateText(systemPrompt, userMessage, language);
   return response;
+};
+
+/**
+ * Generate main opening narration for the party
+ * @param worldDescription - World background
+ * @param language - Game language
+ * @returns Main opening narration
+ */
+export const generateMainOpening = async (
+  worldDescription: string,
+  language: Language = 'en'
+): Promise<string> => {
+  const languageMap: Record<Language, string> = {
+    en: 'English',
+    es: 'Spanish',
+    'pt-BR': 'Brazilian Portuguese',
+  };
+  const languageName = languageMap[language] || 'English';
+
+  const openingSystemPrompt = `You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.
+
+LANGUAGE REQUIREMENT:
+You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
+
+  const openingUserPrompt = `Based on the world description below, write a 2-3 paragraph opening narration for the entire party.
+
+**Requirements:**
+1.  **Grounded Start:** Start in a classic, atmospheric setting (e.g., a bustling tavern, a quiet campfire, a city gate). Establish the mood.
+2.  **Party Unity:** Briefly mention they are together (resting, planning, or celebrating).
+3.  **Inciting Incident:** Halfway through, introduce a SUDDEN event that disrupts the peace (e.g., a desperate messenger, a magical explosion, a monster attack).
+4.  **Call to Action:** End with the immediate aftermath of this event, demanding a reaction.
+
+**Tone:** Atmospheric, immersive, then suddenly urgent.
+
+WORLD:
+${worldDescription}`;
+
+  return generateText(openingSystemPrompt, openingUserPrompt, language);
 };
 
 /**
@@ -475,24 +547,7 @@ export const generateCharacterOpenings = async (
 ): Promise<{ openings: Array<{ playerId: string; message: string }>; mainMessage: string }> => {
   logger.info(`Generating personalized openings for ${players.length} characters in language: ${language}`);
 
-  const languageMap: Record<Language, string> = {
-    en: 'English',
-    es: 'Spanish',
-    'pt-BR': 'Brazilian Portuguese',
-  };
-  const languageName = languageMap[language] || 'English';
-
-  const openingSystemPrompt = `You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.
-
-LANGUAGE REQUIREMENT:
-You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
-
-  const openingUserPrompt = `Based on the world description below, write a 2-3 paragraph opening narration for the entire party. Introduce the immediate surroundings and hint at the brewing conflict or adventure.
-
-WORLD:
-${worldDescription}`;
-
-  const mainMessage = await generateText(openingSystemPrompt, openingUserPrompt, language);
+  const mainMessage = await generateMainOpening(worldDescription, language);
 
   const openings = await Promise.all(
     players.map(async (player) => {

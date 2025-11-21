@@ -4,7 +4,7 @@
  * Merges functionality from gemini-image.ts and generation/gemini.ts
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { task } from '@langchain/langgraph';
 import { ApiError } from '@/middleware/error';
 import { logger } from '@/utils/logger';
@@ -16,7 +16,6 @@ import type {
   ReferenceImagePayload,
   ImageGenConfig,
 } from './types';
-import { DEFAULT_IMAGE_CONFIG } from './types';
 
 const MODEL_NAME = 'gemini-2.5-flash-image';
 
@@ -28,30 +27,7 @@ type InlineDataPart = {
   text?: string;
 };
 
-type GeminiCandidate = {
-  content?: {
-    parts?: InlineDataPart[];
-  };
-};
 
-type GeminiStreamChunk = {
-  candidates?: GeminiCandidate[];
-};
-
-type GeminiStreamWrapper = {
-  stream: AsyncIterable<unknown>;
-};
-
-const isGeminiStreamChunk = (value: unknown): value is GeminiStreamChunk => {
-  if (typeof value !== 'object' || value === null || !('candidates' in value)) {
-    return false;
-  }
-  const { candidates } = value as { candidates: unknown };
-  return Array.isArray(candidates);
-};
-
-const isGeminiStreamWrapper = (value: unknown): value is GeminiStreamWrapper =>
-  typeof value === 'object' && value !== null && 'stream' in value;
 
 let client: GoogleGenAI | null = null;
 
@@ -88,51 +64,22 @@ function buildContents(prompt: string, references?: ReferenceImagePayload[]) {
   // Add text prompt
   parts.push({ text: prompt });
 
-  return [
-    {
-      role: 'user' as const,
-      parts,
-    },
-  ];
+  return {
+    parts,
+  };
 }
 
 /**
  * Build response configuration
  */
-function buildResponseConfig(config?: ImageGenConfig) {
-  const finalConfig = { ...DEFAULT_IMAGE_CONFIG, ...config };
+function buildResponseConfig() {
+  // Simplified config - imageConfig and temperature are not supported by the model
   return {
-    responseModalities: ['IMAGE' as const],
-    imageConfig: {
-      imageSize: finalConfig.size,
-    },
-    temperature: finalConfig.temperature,
+    responseModalities: [Modality.IMAGE],
   };
 }
 
-/**
- * Resolve inline image from stream
- */
-async function resolveInlineImage(prompt: string, iterable: AsyncIterable<unknown>): Promise<GeneratedImage> {
-  for await (const chunk of iterable) {
-    if (isGeminiStreamChunk(chunk)) {
-      const [candidate] = chunk.candidates ?? [];
-      const part = candidate?.content?.parts?.find((p) => p.inlineData);
-      const inlineData = part?.inlineData;
-      if (inlineData?.data) {
-        const mimeType = inlineData.mimeType ?? 'image/png';
-        const buffer = Buffer.from(inlineData.data, 'base64');
-        return {
-          buffer,
-          mimeType,
-          prompt,
-        };
-      }
-    }
-  }
 
-  throw new ApiError(502, 'Gemini image generation returned no inline data');
-}
 
 /**
  * Convert Gemini errors to ApiError
@@ -148,7 +95,51 @@ function convertGeminiError(error: unknown): Error {
     return new ApiError(401, 'Gemini API key invalid or missing. Check GEMINI_API_KEY env var.');
   }
 
+  // Check for transient errors (500, 503)
+  if (message.includes('500') || message.includes('503') || message.includes('INTERNAL')) {
+    return new ApiError(503, `Gemini API temporarily unavailable: ${message}`);
+  }
+
   return new ApiError(502, `Gemini image generation failed: ${message}`);
+}
+
+/**
+ * Retry with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on client errors (400s)
+      if (lastError instanceof ApiError && lastError.statusCode < 500) {
+        throw lastError;
+      }
+
+      // Don't retry on last attempt
+      if (attempt === maxRetries - 1) {
+        throw lastError;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = baseDelay * Math.pow(2, attempt);
+      logger.warn(`[GeminiImage] Attempt ${attempt + 1} failed, retrying in ${delay}ms`, {
+        error: lastError.message,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError || new Error('Retry failed with unknown error');
 }
 
 /**
@@ -161,19 +152,38 @@ async function _generateImage(request: ImageGenerationRequest): Promise<Generate
   });
 
   try {
-    const response = await getClient().models.generateContentStream({
-      model: MODEL_NAME,
-      config: buildResponseConfig(request.config),
-      contents: buildContents(request.prompt, request.references),
+    return await retryWithBackoff(async () => {
+      const contents = buildContents(request.prompt, request.references);
+
+      const response = await getClient().models.generateContent({
+        model: MODEL_NAME,
+        config: buildResponseConfig(),
+        contents: contents as any, // Force match working implementation
+      });
+
+      const [candidate] = response.candidates ?? [];
+      const part = candidate?.content?.parts?.find((p) => p.inlineData);
+      const inlineData = part?.inlineData;
+
+      if (inlineData?.data) {
+        const mimeType = inlineData.mimeType ?? 'image/png';
+        const buffer = Buffer.from(inlineData.data, 'base64');
+
+        logger.info('[GeminiImage] Image generated successfully');
+        return {
+          buffer,
+          mimeType,
+          prompt: request.prompt,
+        };
+      }
+
+      throw new ApiError(502, 'Gemini image generation returned no inline data');
     });
-
-    const stream = isGeminiStreamWrapper(response) ? response.stream : response;
-    const result = await resolveInlineImage(request.prompt, stream);
-
-    logger.info('[GeminiImage] Image generated successfully');
-    return result;
   } catch (error) {
-    logger.error('[GeminiImage] Generation error:', error);
+    logger.error('[GeminiImage] Generation error after retries:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw convertGeminiError(error);
   }
 }
@@ -196,9 +206,9 @@ Your task is to generate a new image that applies the following specific variati
 It is crucial that you maintain the exact same pose and a similar art style from the original image. The background must be simple and black. The output should be only the character image, without any extra space or borders.`;
 
   try {
-    const response = await getClient().models.generateContentStream({
+    const response = await getClient().models.generateContent({
       model: MODEL_NAME,
-      config: buildResponseConfig(request.config),
+      config: buildResponseConfig(),
       contents: buildContents(prompt, [
         {
           data: base64Data,
@@ -207,11 +217,23 @@ It is crucial that you maintain the exact same pose and a similar art style from
       ]),
     });
 
-    const stream = isGeminiStreamWrapper(response) ? response.stream : response;
-    const result = await resolveInlineImage(prompt, stream);
+    const [candidate] = response.candidates ?? [];
+    const part = candidate?.content?.parts?.find((p) => p.inlineData);
+    const inlineData = part?.inlineData;
 
-    logger.info('[GeminiImage] Image variation generated successfully');
-    return result;
+    if (inlineData?.data) {
+      const mimeType = inlineData.mimeType ?? 'image/png';
+      const buffer = Buffer.from(inlineData.data, 'base64');
+
+      logger.info('[GeminiImage] Image variation generated successfully');
+      return {
+        buffer,
+        mimeType,
+        prompt,
+      };
+    }
+
+    throw new ApiError(502, 'Gemini image variation returned no inline data');
   } catch (error) {
     logger.error('[GeminiImage] Image variation error:', error);
     throw convertGeminiError(error);
@@ -244,9 +266,9 @@ async function _transformImage(request: ImageTransformRequest): Promise<Generate
 Maintain the same pose and art style from the original image. The background must be simple and black. The output should be only the transformed image, without any extra space or borders.`;
 
   try {
-    const response = await getClient().models.generateContentStream({
+    const response = await getClient().models.generateContent({
       model: MODEL_NAME,
-      config: buildResponseConfig(request.config),
+      config: buildResponseConfig(),
       contents: buildContents(prompt, [
         {
           data: base64Data,
@@ -255,11 +277,23 @@ Maintain the same pose and art style from the original image. The background mus
       ]),
     });
 
-    const stream = isGeminiStreamWrapper(response) ? response.stream : response;
-    const result = await resolveInlineImage(prompt, stream);
+    const [candidate] = response.candidates ?? [];
+    const part = candidate?.content?.parts?.find((p) => p.inlineData);
+    const inlineData = part?.inlineData;
 
-    logger.info('[GeminiImage] Image transformed successfully');
-    return result;
+    if (inlineData?.data) {
+      const mimeType = inlineData.mimeType ?? 'image/png';
+      const buffer = Buffer.from(inlineData.data, 'base64');
+
+      logger.info('[GeminiImage] Image transformed successfully');
+      return {
+        buffer,
+        mimeType,
+        prompt,
+      };
+    }
+
+    throw new ApiError(502, 'Gemini image transformation returned no inline data');
   } catch (error) {
     logger.error('[GeminiImage] Image transformation error:', error);
     throw convertGeminiError(error);
