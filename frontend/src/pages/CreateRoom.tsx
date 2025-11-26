@@ -3,14 +3,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n';
 
-import { CharacterCreationModal } from '../components/room/CharacterCreationModal';
 import DiscreteSlider, { type SliderMark } from '../components/forms/DiscreteSlider';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import PrivateLayout from '../components/layout/PrivateLayout';
-import { createRoom, addCharacter } from '../services/api';
-import { WorldPreview } from '../components/create-room/WorldPreview';
+import { createRoom } from '../services/api';
+import { WorldGenerator } from '../components/terrain/WorldGenerator';
 import { DEFAULT_GENERATION_PARAMS, type GenerationParams } from '../hooks/useWorldGeneration';
-import type { Room, WorldSettings, WorldType, DMStyle, ScaleLevel } from '../types/shared';
+import type { WorldSettings, WorldType, DMStyle, ScaleLevel } from '../types/shared';
 import { WORLD_ARCHETYPES } from '../constants/worldArchetypes';
 import {
   ARCHETYPE_SIGILS,
@@ -44,8 +43,6 @@ export default function CreateRoomPage() {
   // Wizard state
   const [currentGroup, setCurrentGroup] = useState(0);
   const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
-
-  const [showCharacterModal, setShowCharacterModal] = useState(false);
 
   // Terrain generation state
   const [seed, setSeed] = useState<string>('daicer-world');
@@ -366,10 +363,7 @@ export default function CreateRoomPage() {
     }));
   };
 
-  const handleParamsChange = React.useCallback((params: GenerationParams, newSeed: string) => {
-    setGenerationParams(params);
-    setSeed(newSeed);
-  }, []);
+
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -402,20 +396,6 @@ export default function CreateRoomPage() {
       navigate(`/room/${room.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create room');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCharacterSubmit = async (character: any) => {
-    if (!generatedRoom) return;
-
-    setLoading(true);
-    try {
-      await addCharacter(generatedRoom.id, character);
-      navigate(`/room/${generatedRoom.id}`);
-    } catch (err) {
-      throw err;
     } finally {
       setLoading(false);
     }
@@ -669,10 +649,23 @@ export default function CreateRoomPage() {
                 <p className="text-sm text-shadow-300">Design your world's geography and structures</p>
               </div>
 
-              <WorldPreview
-                initialSeed={seed}
-                onParamsChange={handleParamsChange}
-              />
+              {/* Step 3: World Generation */}
+              <div className="space-y-6 animate-in slide-in-from-right duration-300">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-white">{t('createWizard.steps.world.title')}</h2>
+                  <p className="text-shadow-300">{t('createWizard.steps.world.description')}</p>
+                </div>
+
+                <WorldGenerator
+                  initialSeed={seed}
+                  initialParams={generationParams}
+                  onParamsChange={(params, newSeed) => {
+                    setGenerationParams(params);
+                    setSeed(newSeed);
+                  }}
+                  className="h-full"
+                />
+              </div>
             </div>
           </section>
         );
@@ -811,14 +804,6 @@ export default function CreateRoomPage() {
           </form>
         </div>
       </div>
-
-      {/* Character Creation Modal */}
-      {showCharacterModal && generatedRoom && (
-        <CharacterCreationModal
-          onSubmit={handleCharacterSubmit}
-          onCancel={() => setShowCharacterModal(false)}
-        />
-      )}
     </PrivateLayout>
   );
 }

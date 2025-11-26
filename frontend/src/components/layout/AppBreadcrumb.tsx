@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'react-router-dom';
+import { Home } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,7 +24,7 @@ export default function AppBreadcrumb() {
 
   // Route label mappings
   const routeLabels: Record<string, string> = {
-    lobby: t('navbar.links.rooms'),
+
     room: t('navbar.links.rooms'),
     rooms: t('navbar.links.rooms'),
     game: t('navbar.links.game'),
@@ -59,7 +60,7 @@ export default function AppBreadcrumb() {
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
             <Link to="/" className="text-aurora-200 hover:text-aurora-100">
-              {t('navbar.brandAlt')}
+              <Home className="h-4 w-4" />
             </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>

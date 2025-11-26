@@ -341,7 +341,11 @@ export const processTurn = async (
   language: Language = 'en',
   settings?: WorldSettings,
   worldConditions?: WorldCondition[]
-): Promise<{ overall_summary: string; player_perspectives: Array<{ playerName: string; perspective: string }> }> => {
+): Promise<{
+  overall_summary: string;
+  player_perspectives: Array<{ playerName: string; perspective: string }>;
+  metadata: { ragContext: string };
+}> => {
   const languageMap: Record<Language, string> = {
     en: 'English',
     es: 'Spanish',
@@ -409,7 +413,12 @@ Respond entirely in ${languageName}.`;
 
   logger.info('Turn processed successfully');
 
-  return response as TurnResponse;
+  return {
+    ...response,
+    metadata: {
+      ragContext: relevantRules,
+    },
+  };
 };
 
 /**

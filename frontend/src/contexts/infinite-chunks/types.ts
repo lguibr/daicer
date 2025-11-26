@@ -3,26 +3,14 @@
  * All interfaces and types for the infinite chunk system
  */
 
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
+import type { GridChunk, GridTile } from '../../../../../shared/world';
 
-// ============================================================================
-// Core Data Types
-// ============================================================================
-
-export interface TerrainChunk {
-  chunkX: number;
-  chunkY: number;
+export type TerrainChunk = GridChunk & {
   worldOffsetX: number;
   worldOffsetY: number;
-  biomes: string[][];
-  structures: Array<{
-    name: string;
-    type: string;
-    x: number;
-    y: number;
-    [key: string]: any;
-  }>;
-}
+};
+
+import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
 
 export interface ChunkGenerator {
   generateChunk: (worldX: number, worldY: number, width: number, height: number) => string[][];
@@ -44,7 +32,7 @@ export interface InfiniteChunksConfig {
 
 export interface InfiniteChunksOptions {
   roomId: string;
-  initialGrid: string[][];
+  initialGrid: (GridTile | null)[][];
   chunkSize?: number;
   loadRadius?: number;
   enabled?: boolean;
@@ -60,7 +48,7 @@ export interface InfiniteChunksOptions {
 export interface InfiniteChunksState {
   // Core data
   chunks: Map<string, TerrainChunk>;
-  expandedGrid: string[][];
+  expandedGrid: (GridTile | null)[][];
   gridWorldOffset: { x: number; y: number };
 
   // Loading state
@@ -83,7 +71,7 @@ export type InfiniteChunksAction =
   | {
       type: 'INITIALIZE';
       payload: {
-        initialGrid: string[][];
+        initialGrid: (GridTile | null)[][];
         config: InfiniteChunksConfig;
         chunkGenerator?: ChunkGenerator;
         placementMap?: GlobalPlacementMap | null;
@@ -110,7 +98,7 @@ export interface InfiniteChunksContextValue {
 // ============================================================================
 
 export interface InfiniteChunksView {
-  expandedGrid: string[][];
+  expandedGrid: (GridTile | null)[][];
   isLoading: boolean;
   gridWorldOffset: { x: number; y: number };
   loadRadius: number;

@@ -10,7 +10,7 @@ import { mergeChunkIntoGrid } from './services/gridExpander';
 export function createInitialState(): InfiniteChunksState {
   return {
     chunks: new Map(),
-    expandedGrid: [['plains']],
+    expandedGrid: [[null]],
     gridWorldOffset: { x: 0, y: 0 },
     loading: new Set(),
     initialized: false,
@@ -20,6 +20,7 @@ export function createInitialState(): InfiniteChunksState {
       loadRadius: 5,
       enabled: false,
       mode: 'generator',
+      layer: 0,
     },
   };
 }
@@ -35,7 +36,8 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
 
       return {
         ...state,
-        expandedGrid: initialGrid.length > 0 ? initialGrid : [['plains']],
+        // @ts-ignore - initialGrid might be string[][] from legacy code, we'll fix upstream later
+        expandedGrid: initialGrid.length > 0 ? initialGrid : [[null]],
         gridWorldOffset: { x: 0, y: 0 },
         config: { ...config, mode },
         chunkGenerator,
@@ -58,6 +60,11 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
     case 'CHUNK_LOAD_SUCCESS': {
       const { chunk } = action.payload;
       const chunkKey = `${chunk.chunkX},${chunk.chunkY}`;
+      console.log(`[InfiniteChunks] Reducer: CHUNK_LOAD_SUCCESS for ${chunkKey}`, { 
+        chunkTiles: chunk.tiles?.length,
+        chunkBiomes: chunk.biomes?.length,
+        chunkSize: state.config.chunkSize
+      });
 
       // Remove from loading
       const newLoading = new Set(state.loading);
@@ -74,6 +81,8 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
         state.gridWorldOffset,
         state.config.chunkSize
       );
+
+      console.log(`[InfiniteChunks] Reducer: Grid expanded. New size: ${newGrid[0]?.length}x${newGrid.length}, Offset:`, newOffset);
 
       return {
         ...state,

@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
+import { GridTile } from '../../../../shared/world';
 
 interface ChunkGenerator {
-    generateChunk: (worldX: number, worldY: number, width: number, height: number) => string[][];
+    generateChunk: (worldX: number, worldY: number, width: number, height: number) => GridTile[][];
 }
 
 interface SimpleTerrainManagerOptions {
-    initialGrid: string[][];
+    initialGrid: GridTile[][];
     chunkSize?: number;
     loadRadius?: number;
     chunkGenerator?: ChunkGenerator;
@@ -17,8 +18,8 @@ export function useSimpleTerrainManager({
     loadRadius = 8,
     chunkGenerator,
 }: SimpleTerrainManagerOptions) {
-    // Store chunks as a map of "x,y" -> string[][]
-    const [chunks, setChunks] = useState<Map<string, string[][]>>(new Map());
+    // Store chunks as a map of "x,y" -> GridTile[][]
+    const [chunks, setChunks] = useState<Map<string, GridTile[][]>>(new Map());
 
     // Track the top-left corner of the expanded grid in world coordinates
     const [gridWorldOffset, setGridWorldOffset] = useState({ x: 0, y: 0 });
@@ -27,12 +28,13 @@ export function useSimpleTerrainManager({
     const loadedChunksRef = useRef<Set<string>>(new Set());
 
     // Calculate the expanded grid by merging all chunks
-    const expandedGrid = useMemo<{ grid: string[][]; offset: { x: number; y: number } }>(() => {
+    const expandedGrid = useMemo<{ grid: (GridTile | null)[][]; offset: { x: number; y: number } }>(() => {
         console.log(`[SimpleTerrainManager] Recalculating expanded grid, chunks.size: ${chunks.size}`);
 
         if (chunks.size === 0) {
             console.log('[SimpleTerrainManager] No chunks, using initial grid');
-            return { grid: initialGrid, offset: { x: 0, y: 0 } };
+            // Convert initialGrid (GridTile[][]) to (GridTile | null)[][]
+            return { grid: initialGrid as (GridTile | null)[][], offset: { x: 0, y: 0 } };
         }
 
         // Find bounds across ALL chunks (including initial grid at 0,0)
@@ -63,17 +65,17 @@ export function useSimpleTerrainManager({
         // Create empty grid
         const width = maxX - minX;
         const height = maxY - minY;
-        const grid: string[][] = Array(height)
+        const grid: (GridTile | null)[][] = Array(height)
             .fill(null)
-            .map(() => Array(width).fill(''));
+            .map(() => Array(width).fill(null));
 
         console.log(`[SimpleTerrainManager] Created grid: ${width}x${height}`);
 
         // Helper to set tile at world coordinates
-        const setTile = (worldX: number, worldY: number, val: string) => {
+        const setTile = (worldX: number, worldY: number, val: GridTile) => {
             const localX = worldX - minX;
             const localY = worldY - minY;
-            if (localX >= 0 && localX < width && localY >= 0 && localY < height) {
+            if (localX >= 0 && localX < width && localY >= 0 && localY < height && grid[localY]) {
                 grid[localY][localX] = val;
             }
         };
@@ -84,7 +86,7 @@ export function useSimpleTerrainManager({
             if (!row) continue;
             for (let x = 0; x < row.length; x++) {
                 const tile = row[x];
-                if (tile !== undefined) {
+                if (tile) {
                     // Initial grid is at world coords (0,0), not affected by offset
                     setTile(x, y, tile);
                 }
@@ -105,7 +107,7 @@ export function useSimpleTerrainManager({
                 if (!row) continue;
                 for (let x = 0; x < chunkSize && x < row.length; x++) {
                     const tile = row[x];
-                    if (tile !== undefined && tile !== '') {
+                    if (tile) {
                         setTile(startX + x, startY + y, tile);
                     }
                 }
@@ -119,7 +121,7 @@ export function useSimpleTerrainManager({
         if (width > 128) {
             const sampleX = Math.min(150, width - 1);
             const sampleY = Math.min(64, height - 1);
-            console.log(`[SimpleTerrainManager] Sample tile at (${sampleX}, ${sampleY}): "${grid[sampleY]?.[sampleX] || 'UNDEFINED'}"`);
+            console.log(`[SimpleTerrainManager] Sample tile at (${sampleX}, ${sampleY}): "${grid[sampleY]?.[sampleX]?.biome || 'UNDEFINED'}"`);
         }
 
         return { grid, offset: { x: minX, y: minY } };
@@ -144,7 +146,7 @@ export function useSimpleTerrainManager({
 
             console.log(`[SimpleTerrainManager] Player chunk: (${playerChunkX}, ${playerChunkY}), radius: ${chunkRadius} chunks`);
 
-            const newChunks = new Map<string, string[][]>();
+            const newChunks = new Map<string, GridTile[][]>();
             let hasNew = false;
 
             // Check chunks around player
@@ -187,7 +189,7 @@ export function useSimpleTerrainManager({
                     const chunk = chunkGenerator.generateChunk(chunkStartX, chunkStartY, chunkSize, chunkSize);
 
                     // Log first few tiles to verify content
-                    const sampleTiles = chunk.slice(0, 2).map(row => row.slice(0, 4).join(','));
+                    const sampleTiles = chunk.slice(0, 2).map(row => row.slice(0, 4).map(t => t.biome).join(','));
                     console.log(`[SimpleTerrainManager] Chunk content sample: [${sampleTiles.join('] [')}]`);
 
                     newChunks.set(key, chunk);
@@ -210,7 +212,7 @@ export function useSimpleTerrainManager({
                 console.log('[SimpleTerrainManager] No new chunks needed');
             }
         },
-        [chunkGenerator, chunkSize, loadRadius]
+        [chunkGenerator, chunkSize, loadRadius, initialGrid]
     );
 
     return {

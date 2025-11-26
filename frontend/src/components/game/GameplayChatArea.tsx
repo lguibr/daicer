@@ -173,6 +173,36 @@ export default function GameplayChatArea({
                     <p className="whitespace-pre-wrap leading-relaxed break-words text-shadow-50">{content}</p>
                   )}
 
+                  {/* Metadata / Thought Process */}
+                  {isDM && msg.metadata && (
+                    <div className="mt-4 rounded-lg border border-midnight-700 bg-midnight-900/50 p-3">
+                      <details className="group/details">
+                        <summary className="flex cursor-pointer items-center gap-2 text-xs font-medium text-shadow-400 hover:text-shadow-200">
+                          <span className="transition-transform group-open/details:rotate-90">▶</span>
+                          <span>Thinking Process & Context</span>
+                        </summary>
+                        <div className="mt-3 space-y-4 text-xs text-shadow-300">
+                          {msg.metadata.ragContext && (
+                            <div>
+                              <h4 className="mb-2 flex items-center gap-2 font-bold text-aurora-300">
+                                <span className="text-lg">📚</span> Relevant Rules (RAG)
+                              </h4>
+                              <RAGContextViewer text={msg.metadata.ragContext} />
+                            </div>
+                          )}
+                          {msg.metadata.toolCalls && (
+                            <div>
+                              <h4 className="mb-2 flex items-center gap-2 font-bold text-nebula-300">
+                                <span className="text-lg">🛠️</span> Tool Calls
+                              </h4>
+                              <ToolCallsViewer toolCalls={msg.metadata.toolCalls} />
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    </div>
+                  )}
+
                   {/* Dice Rolls - MANDATORY FEATURE */}
                   {msg.diceRolls && msg.diceRolls.length > 0 && (
                     <div className="mt-4 space-y-3">
@@ -241,5 +271,124 @@ export default function GameplayChatArea({
       {/* Scroll to Bottom Button */}
       <ConversationScrollButton />
     </Conversation>
+  );
+}
+
+// --- Helper Components ---
+
+function RAGContextViewer({ text }: { text: string }) {
+  // Parse the RAG text. Assuming format: "**Rule N: Title** (relevance: X%) Category: Y ...content..."
+  // If parsing fails, fallback to raw text.
+
+  const rules = useMemo(() => {
+    try {
+      // Split by "**Rule " to find segments
+      const parts = text.split(/\*\*Rule /g);
+      // First part might be empty or preamble
+      const parsedRules = parts
+        .slice(1) // Skip preamble
+        .map((part) => {
+          // Re-add "Rule " prefix for regex matching if needed, or just parse the rest
+          // part looks like: "1: Title** (relevance: X%) Category: Y ...content..."
+
+          const titleMatch = part.match(/^(\d+): (.*?)\*\*/);
+          if (!titleMatch) return null;
+
+          const ruleNumber = titleMatch[1];
+          const title = titleMatch[2];
+          const rest = part.substring(titleMatch[0].length);
+
+          // Extract metadata
+          const relevanceMatch = rest.match(/\(relevance: (.*?)\)/);
+          const categoryMatch = rest.match(/Category: (.*?)\s/);
+
+          const relevance = relevanceMatch ? relevanceMatch[1] : 'Unknown';
+          const category = categoryMatch ? categoryMatch[1] : 'General';
+
+          // Content is what's left after metadata
+          // Clean up leading metadata text
+          let content = rest
+            .replace(/\(relevance: .*?\)/, '')
+            .replace(/Category: .*?\s/, '')
+            .trim();
+
+          // Remove trailing dashes if any
+          if (content.startsWith('-') || content.startsWith('—')) {
+            content = content.replace(/^[—\-\s]+/, '');
+          }
+
+          return {
+            id: ruleNumber,
+            title,
+            relevance,
+            category,
+            content,
+          };
+        })
+        .filter(Boolean);
+
+      return parsedRules;
+    } catch (e) {
+      console.error('Failed to parse RAG context', e);
+      return [];
+    }
+  }, [text]);
+
+  if (rules.length === 0) {
+    return (
+      <div className="rounded bg-midnight-950 p-3 font-mono text-[10px] leading-relaxed opacity-80 whitespace-pre-wrap">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-1">
+      {rules.map((rule: any) => (
+        <div
+          key={rule.id}
+          className="relative overflow-hidden rounded-lg border border-aurora-500/20 bg-midnight-950/50 p-3 shadow-sm transition-all hover:border-aurora-500/40 hover:bg-midnight-950/80"
+        >
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <h5 className="font-bold text-aurora-200">
+              <span className="mr-2 opacity-50">#{rule.id}</span>
+              {rule.title}
+            </h5>
+            <div className="flex flex-col items-end gap-1 text-[10px]">
+              <span className="rounded-full bg-aurora-500/10 px-2 py-0.5 text-aurora-300">
+                {rule.relevance} match
+              </span>
+              <span className="text-shadow-400 uppercase tracking-wider">{rule.category}</span>
+            </div>
+          </div>
+          <p className="text-shadow-300 leading-relaxed opacity-90">{rule.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ToolCallsViewer({ toolCalls }: { toolCalls: any[] }) {
+  if (!toolCalls || toolCalls.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      {toolCalls.map((call, idx) => (
+        <div
+          key={idx}
+          className="rounded-md border border-nebula-500/20 bg-midnight-950/50 p-2 font-mono text-[10px]"
+        >
+          <div className="mb-1 flex items-center justify-between border-b border-nebula-500/10 pb-1">
+            <span className="font-bold text-nebula-300">{call.name || call.function?.name || 'Unknown Tool'}</span>
+            <span className="opacity-50">call_id: {call.id?.slice(0, 8)}...</span>
+          </div>
+          <div className="overflow-x-auto py-1">
+            <pre className="text-shadow-300">
+              {JSON.stringify(call.arguments || call.function?.arguments, null, 2)}
+            </pre>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

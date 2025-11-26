@@ -4,6 +4,7 @@
  * NO side effects - all functions are deterministic
  */
 
+import type { GridTile } from '../../../../../shared/world';
 import type { TerrainChunk } from '../types';
 
 /**
@@ -11,11 +12,11 @@ import type { TerrainChunk } from '../types';
  * Returns new grid and new offset (immutable)
  */
 export function mergeChunkIntoGrid(
-  existingGrid: string[][],
+  existingGrid: (GridTile | null)[][],
   chunk: TerrainChunk,
   currentOffset: { x: number; y: number },
   chunkSize: number
-): { newGrid: string[][]; newOffset: { x: number; y: number } } {
+): { newGrid: (GridTile | null)[][]; newOffset: { x: number; y: number } } {
   // Deep clone the grid to maintain immutability
   let newGrid = existingGrid.map((row) => [...row]);
   let newOffsetX = currentOffset.x;
@@ -24,7 +25,7 @@ export function mergeChunkIntoGrid(
   // Expand LEFT if chunk is west of current grid
   if (chunk.worldOffsetX < currentOffset.x) {
     const extraCols = currentOffset.x - chunk.worldOffsetX;
-    newGrid = newGrid.map((row) => [...Array(extraCols).fill('plains'), ...row]);
+    newGrid = newGrid.map((row) => [...Array(extraCols).fill(null), ...row]);
     newOffsetX = chunk.worldOffsetX;
   }
 
@@ -34,7 +35,7 @@ export function mergeChunkIntoGrid(
     const currentWidth = newGrid[0]?.length || 0;
     const topRows = Array(extraRows)
       .fill(null)
-      .map(() => Array(currentWidth).fill('plains'));
+      .map(() => Array(currentWidth).fill(null));
     newGrid = [...topRows, ...newGrid];
     newOffsetY = chunk.worldOffsetY;
   }
@@ -47,7 +48,7 @@ export function mergeChunkIntoGrid(
   const requiredWidth = Math.max(newGrid[0]?.length || 0, gridX + chunkSize);
   if (requiredWidth > (newGrid[0]?.length || 0)) {
     const widthDiff = requiredWidth - (newGrid[0]?.length || 0);
-    newGrid = newGrid.map((row) => [...row, ...Array(widthDiff).fill('plains')]);
+    newGrid = newGrid.map((row) => [...row, ...Array(widthDiff).fill(null)]);
   }
 
   // Expand BOTTOM if needed
@@ -57,31 +58,56 @@ export function mergeChunkIntoGrid(
     const currentWidth = newGrid[0]?.length || 0;
     const bottomRows = Array(heightDiff)
       .fill(null)
-      .map(() => Array(currentWidth).fill('plains'));
+      .map(() => Array(currentWidth).fill(null));
     newGrid = [...newGrid, ...bottomRows];
   }
 
-  // Stamp chunk biomes onto grid
-  for (let y = 0; y < chunk.biomes.length; y++) {
-    const biomeRow = chunk.biomes[y];
-    if (!biomeRow) continue;
-
-    for (let x = 0; x < biomeRow.length; x++) {
-      const targetX = gridX + x;
-      const targetY = gridY + y;
-      const biomeTile = biomeRow[x];
+  // Stamp chunk tiles onto grid
+  if (chunk.tiles && Array.isArray(chunk.tiles)) {
+    chunk.tiles.forEach((tile: any) => {
+      // Calculate local coordinates relative to the grid
+      // tile.x/y are world coordinates
+      const targetX = tile.x - newOffsetX;
+      const targetY = tile.y - newOffsetY;
 
       if (
         targetY >= 0 &&
         targetY < newGrid.length &&
         targetX >= 0 &&
         newGrid[targetY] &&
-        targetX < newGrid[targetY].length &&
-        biomeTile
+        targetX < newGrid[targetY].length
       ) {
-        newGrid[targetY][targetX] = biomeTile;
+        newGrid[targetY][targetX] = tile;
       }
-    }
+    });
+  } else if (chunk.biomes && Array.isArray(chunk.biomes)) {
+    // Handle 2D biomes array (standard for new system)
+    chunk.biomes.forEach((row: any[], y: number) => {
+      if (!Array.isArray(row)) return;
+      row.forEach((tile: any, x: number) => {
+        // Calculate world coordinates from chunk offset
+        const worldX = chunk.worldOffsetX + x;
+        const worldY = chunk.worldOffsetY + y;
+
+        const targetX = worldX - newOffsetX;
+        const targetY = worldY - newOffsetY;
+
+        if (
+          targetY >= 0 &&
+          targetY < newGrid.length &&
+          targetX >= 0 &&
+          newGrid[targetY] &&
+          targetX < newGrid[targetY].length
+        ) {
+          // Ensure tile is a proper GridTile object
+          const tileObj = typeof tile === 'string'
+            ? { x: worldX, y: worldY, z: 0, biome: tile, blockType: 'grass' } as GridTile
+            : tile;
+            
+          newGrid[targetY][targetX] = tileObj;
+        }
+      });
+    });
   }
 
   return {
@@ -102,53 +128,52 @@ export function expandGrid(
 ): string[][] {
   if (amount <= 0) return grid;
 
-  const currentWidth = grid[0]?.length || 0;
   const currentHeight = grid.length;
+  const currentWidth = grid[0]?.length || 0;
 
-  switch (direction) {
-    case 'left':
-      return grid.map((row) => [...Array(amount).fill(fillValue), ...row]);
-
-    case 'right':
-      return grid.map((row) => [...row, ...Array(amount).fill(fillValue)]);
-
-    case 'top': {
-      const topRows = Array(amount)
-        .fill(null)
-        .map(() => Array(currentWidth).fill(fillValue));
-      return [...topRows, ...grid];
-    }
-
-    case 'bottom': {
-      const bottomRows = Array(amount)
-        .fill(null)
-        .map(() => Array(currentWidth).fill(fillValue));
-      return [...grid, ...bottomRows];
-    }
-
-    default:
-      return grid;
+  if (direction === 'left') {
+    const newCols = Array(currentHeight)
+      .fill(null)
+      .map(() => Array(amount).fill(fillValue));
+    return grid.map((row, i) => [...(newCols[i] || []), ...row]);
   }
+
+  if (direction === 'right') {
+    const newCols = Array(currentHeight)
+      .fill(null)
+      .map(() => Array(amount).fill(fillValue));
+    return grid.map((row, i) => [...row, ...(newCols[i] || [])]);
+  }
+
+  if (direction === 'top') {
+    const newRows = Array(amount)
+      .fill(null)
+      .map(() => Array(currentWidth).fill(fillValue));
+    return [...newRows, ...grid];
+  }
+
+  if (direction === 'bottom') {
+    const newRows = Array(amount)
+      .fill(null)
+      .map(() => Array(currentWidth).fill(fillValue));
+    return [...grid, ...newRows];
+  }
+
+  return grid;
 }
 
 /**
- * Gets the chunk key from chunk coordinates
+ * Generates a unique key for a chunk
  */
-export function getChunkKey(chunkX: number, chunkY: number): string {
-  return `${chunkX},${chunkY}`;
+export function getChunkKey(x: number, y: number): string {
+  return `${x},${y}`;
 }
 
 /**
- * Parses chunk coordinates from chunk key
+ * Parses a chunk key back to coordinates
  */
-export function parseChunkKey(chunkKey: string): { chunkX: number; chunkY: number } | null {
-  const parts = chunkKey.split(',');
-  if (parts.length !== 2) return null;
-
-  const chunkX = parseInt(parts[0], 10);
-  const chunkY = parseInt(parts[1], 10);
-
-  if (isNaN(chunkX) || isNaN(chunkY)) return null;
-
-  return { chunkX, chunkY };
+export function parseChunkKey(key: string): { x: number; y: number } {
+  const [x, y] = key.split(',').map((n) => parseInt(n, 10));
+  if (isNaN(x) || isNaN(y)) return { x: 0, y: 0 };
+  return { x, y };
 }

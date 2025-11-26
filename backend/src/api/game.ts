@@ -731,6 +731,7 @@ async function resolveTurn(roomId: string, room: any) {
     sender: 'DM',
     text: dmResponse.overall_summary,
     timestamp: Date.now(),
+    metadata: dmResponse.metadata,
   };
   await addMessage(roomId, dmMessage);
 

@@ -26,71 +26,106 @@ export async function loadChunk(
   const worldX = chunkX * chunkSize;
   const worldY = chunkY * chunkSize;
 
-  // CLIENT-SIDE GENERATION (debug mode)
-  if (mode === 'generator' && chunkGenerator) {
-    // Generate base terrain
-    const chunkBiomes = chunkGenerator.generateChunk(worldX, worldY, chunkSize, chunkSize);
+  try {
+    console.log(`[ChunkLoader] Loading chunk ${chunkX},${chunkY} (mode: ${mode})`);
 
-    // Get structures that overlap this chunk
-    const structures = getStructuresForChunk(
-      placementMap || null,
-      worldX,
-      worldY,
-      chunkSize,
-      roomId // Use roomId as seed
+    // CLIENT-SIDE GENERATION (debug mode)
+    if (mode === 'generator' && chunkGenerator) {
+      // Generate base terrain
+      const chunkBiomes = chunkGenerator.generateChunk(worldX, worldY, chunkSize, chunkSize);
+
+      // Get structures that overlap this chunk
+      const structures = getStructuresForChunk(
+        placementMap || null,
+        worldX,
+        worldY,
+        chunkSize,
+        roomId // Use roomId as seed
+      );
+
+      // Stamp structures onto chunk
+      let finalBiomes = chunkBiomes;
+      for (const structure of structures) {
+        finalBiomes = stampStructureOnChunk(finalBiomes, structure, worldX, worldY);
+      }
+
+      const result = {
+        chunkX,
+        chunkY,
+        worldOffsetX: worldX,
+        worldOffsetY: worldY,
+        biomes: finalBiomes,
+        structures: structures.map((s) => ({
+          name: s.name,
+          type: s.type,
+          x: s.worldX,
+          y: s.worldY,
+          material: s.material,
+        })),
+      };
+      console.log(`[ChunkLoader] Generated chunk data for ${chunkX},${chunkY}:`, result);
+      return result;
+    }
+
+    // BACKEND API FETCH (game mode)
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const token = await user.getIdToken();
+    const layer = config.layer || 0;
+    const url = `${import.meta.env.VITE_API_URL}/api/grid/chunk/${roomId}/${chunkX}/${chunkY}/${layer}`;
+    console.log(`[ChunkLoader] Fetching chunk: ${url}`);
+
+    const response = await fetch(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
-    // Stamp structures onto chunk
-    let finalBiomes = chunkBiomes;
-    for (const structure of structures) {
-      finalBiomes = stampStructureOnChunk(finalBiomes, structure, worldX, worldY);
-    }
-
-    return {
-      chunkX,
-      chunkY,
-      worldOffsetX: worldX,
-      worldOffsetY: worldY,
-      biomes: finalBiomes,
-      structures: structures.map((s) => ({
-        name: s.name,
-        type: s.type,
-        x: s.worldX,
-        y: s.worldY,
-        material: s.material,
-      })),
-    };
-  }
-
-  // BACKEND API FETCH (game mode)
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
-
-  const token = await user.getIdToken();
-  const layer = config.layer || 0;
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/api/grid/chunk/${roomId}/${chunkX}/${chunkY}/${layer}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
 
   if (!response.ok) {
+    console.error(`[ChunkLoader] Failed to load chunk: ${response.status} ${response.statusText}`);
     throw new Error(`Failed to load chunk: ${response.status} ${response.statusText}`);
   }
 
   const result = await response.json();
   if (!result.success || !result.data) {
+    console.error('[ChunkLoader] Invalid chunk response:', result);
     throw new Error('Invalid chunk response from backend');
   }
 
-  return result.data;
+  
+  // Return the raw chunk data (validated by schema in a real app)
+  // The frontend will now consume GridTile[] directly
+  const data = result.data;
+  console.log(`[ChunkLoader] Backend response for ${chunkX},${chunkY}:`, { 
+    hasTiles: !!data.tiles, 
+    hasBiomes: !!data.biomes,
+    biomesLength: data.biomes?.length,
+    worldOffset: { x: data.worldOffsetX, y: data.worldOffsetY }
+  });
+
+  // Ensure worldOffsetX/Y are present (backend might omit them)
+  const chunk: TerrainChunk = {
+    ...data,
+    chunkX,
+    chunkY,
+    worldOffsetX: data.worldOffsetX ?? worldX,
+    worldOffsetY: data.worldOffsetY ?? worldY,
+  };
+
+  return chunk;
+  } catch (error) {
+    console.error(`[ChunkLoader] Error loading chunk ${chunkX},${chunkY}:`, error);
+    throw error;
+  }
 }
 
 /**

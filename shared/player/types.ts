@@ -33,6 +33,11 @@ export interface Message {
   images?: string[];
   timestamp: number;
   targetPlayer?: string;
+  metadata?: {
+    ragContext?: string;
+    toolCalls?: any[];
+    [key: string]: any;
+  };
 }
 
 export interface ToolCallEvent {

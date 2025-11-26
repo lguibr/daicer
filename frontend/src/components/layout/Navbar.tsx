@@ -110,7 +110,7 @@ export default function Navbar({
   const { t } = useI18n();
 
   const handleLeaveRoom = () => {
-    navigate('/lobby');
+    navigate('/');
   };
 
   const handleLogout = async () => {
@@ -130,7 +130,7 @@ export default function Navbar({
             size="md"
             onClick={() => {
               closeMenus();
-              navigate('/lobby');
+              navigate('/');
             }}
           />
           <div className="hidden flex-1 items-center gap-2 sm:flex" data-testid="navbar-desktop-links">

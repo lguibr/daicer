@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Room, Player } from '../../types/shared';
 import useStreamingSocket from '../../hooks/useStreamingSocket';
@@ -13,6 +13,8 @@ import { RoomTabs } from '../room/RoomTabs';
 import { PlayerListTab } from '../room/PlayerListTab';
 import { RoomSettingsTab } from '../room/RoomSettingsTab';
 import { TerrainExplorer } from '../terrain/TerrainExplorer';
+
+const EMPTY_GRID: any[] = [];
 
 interface GameplayScreenProps {
   room: Room;
@@ -40,16 +42,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const roomLanguage = room.settings?.language || 'en';
   const isDM = room.ownerId === user?.uid;
 
-  // Players sorted with current user first (not currently used in render)
-  const _sortedPlayers = useMemo(
-    () =>
-      [...players].sort((a, b) => {
-        if (a.userId === user?.uid) return -1;
-        if (b.userId === user?.uid) return 1;
-        return a.character.name.localeCompare(b.character.name);
-      }),
-    [players, user?.uid]
-  );
+
 
   const handleSubmitAction = async (action: string) => {
     if (!action.trim() || !room.id) return;
@@ -169,7 +162,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
       <RoomTabs
         roomId={room.id}
         chatContent={chatContent}
-        mapContent={<TerrainExplorer roomId={room.id} biomeGrid={[]} roomSize={32} enableInfinite={true} />}
+        mapContent={<TerrainExplorer roomId={room.id} biomeGrid={EMPTY_GRID} roomSize={32} enableInfinite={true} />}
         playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
         settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}
       />

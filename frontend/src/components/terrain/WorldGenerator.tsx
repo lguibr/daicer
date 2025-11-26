@@ -1,25 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Label from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Play, RefreshCw, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import  Input  from '@/components/ui/input';
+import { Play, RefreshCw, Settings2, ChevronDown, ChevronUp, Save } from 'lucide-react';
+
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@/hooks/useWorldGeneration';
-import Input from '@/components/ui/input';
+import { GridTile } from '../../../../shared/world';
 
-interface WorldPreviewProps {
-  onParamsChange: (params: GenerationParams, seed: string) => void;
+interface WorldGeneratorProps {
   initialSeed?: string;
+  initialParams?: GenerationParams;
+  onParamsChange?: (params: GenerationParams, seed: string) => void;
+  onSave?: (seed: string, params: GenerationParams) => void;
+  className?: string;
 }
 
-export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps) {
+export function WorldGenerator({
+  initialSeed,
+  initialParams = DEFAULT_GENERATION_PARAMS,
+  onParamsChange,
+  onSave,
+  className,
+}: WorldGeneratorProps) {
   const [seed, setSeed] = useState(initialSeed || 'daicer-world');
+  const [params, setParams] = useState<GenerationParams>(initialParams);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [params, setParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS);
 
-  const { isGenerating, biomeGrid, biomeGrid3D, structures, generateWorld, createChunkGenerator } =
-    useWorldGeneration();
+  const {
+    isGenerating,
+    biomeGrid,
+    biomeGrid3D,
+    structures,
+    generateWorld,
+    createChunkGenerator,
+  } = useWorldGeneration();
 
   // Initial generation
   useEffect(() => {
@@ -27,14 +44,15 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
   }, []);
 
   // Notify parent of changes
-  // Notify parent of changes
-  const onParamsChangeRef = React.useRef(onParamsChange);
+  const onParamsChangeRef = useRef(onParamsChange);
   useEffect(() => {
     onParamsChangeRef.current = onParamsChange;
   }, [onParamsChange]);
 
   useEffect(() => {
-    onParamsChangeRef.current(params, seed);
+    if (onParamsChangeRef.current) {
+      onParamsChangeRef.current(params, seed);
+    }
   }, [params, seed]);
 
   const handleRegenerate = () => {
@@ -48,37 +66,56 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
   };
 
   const updateParam = (key: keyof GenerationParams, value: number | boolean | undefined) => {
-    if (value === undefined) return; // Guard against undefined
+    if (value === undefined) return;
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
   // Create chunk generator for TerrainExplorer
-  const chunkGenerator = React.useMemo(() => {
+  const chunkGenerator = useMemo(() => {
     const generator = createChunkGenerator(seed, params);
     return {
-      generateChunk: (worldX: number, worldY: number, width: number, height: number): string[][] => {
+      generateChunk: (worldX: number, worldY: number, width: number, height: number): GridTile[][] => {
+        // generator returns string[][][] (3D grid of biome strings)
         const chunk3D = generator(worldX, worldY, width, height);
         // Return surface layer (floor 3 - index 3), or empty grid if not available
-        return (
-          chunk3D[3] ||
-          Array(height)
-            .fill(0)
-            .map(() => Array(width).fill(''))
+        const surfaceGrid = chunk3D[3] || Array(height).fill(0).map(() => Array(width).fill('plains'));
+        
+        return surfaceGrid.map((row, y) => 
+          row.map((biome, x) => ({
+            x: worldX + x,
+            y: worldY + y,
+            z: 0,
+            biome: typeof biome === 'string' ? biome : 'plains',
+            blockType: 'grass'
+          } as GridTile))
         );
       },
-      generateChunk3D: generator,
+      generateChunk3D: (worldX: number, worldY: number, width: number, height: number): GridTile[][][] => {
+        const chunk3D = generator(worldX, worldY, width, height);
+        return chunk3D.map((floorGrid, z) => 
+          floorGrid.map((row, y) => 
+            row.map((biome, x) => ({
+              x: worldX + x,
+              y: worldY + y,
+              z: z - 3,
+              biome: typeof biome === 'string' ? biome : 'plains',
+              blockType: 'grass'
+            } as GridTile))
+          )
+        );
+      },
     };
   }, [createChunkGenerator, seed, params]);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className={`space-y-6 ${className || ''}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         {/* Controls Panel */}
-        <Card className="lg:col-span-1 h-fit">
+        <Card className="lg:col-span-1 h-full flex flex-col">
           <CardHeader>
             <CardTitle className="text-lg">World Configuration</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 flex-1 overflow-y-auto">
             {/* Seed Control */}
             <div className="space-y-2">
               <Label>World Seed</Label>
@@ -94,6 +131,18 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
               <Play className="w-4 h-4 mr-2" />
               {isGenerating ? 'Generating Preview...' : 'Update Preview'}
             </Button>
+
+            {onSave && (
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={() => onSave(seed, params)} 
+                className="w-full"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save World
+              </Button>
+            )}
 
             {/* Advanced Settings Toggle */}
             <div className="pt-4 border-t">
@@ -199,15 +248,28 @@ export function WorldPreview({ onParamsChange, initialSeed }: WorldPreviewProps)
         </Card>
 
         {/* Preview Panel */}
-        <Card className="lg:col-span-2 min-h-[500px] flex flex-col">
-          <CardHeader>
-            <CardTitle className="text-lg">Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 p-0 overflow-hidden rounded-b-lg relative">
+        <Card className="lg:col-span-2 h-full flex flex-col overflow-hidden">
+          <CardContent className="flex-1 p-0 overflow-hidden relative">
             <div className="absolute inset-0">
               <TerrainExplorer
-                biomeGrid={biomeGrid.length > 0 ? biomeGrid : [['plains']]}
-                biomeGrid3D={biomeGrid3D}
+                biomeGrid={
+                  biomeGrid.length > 0 
+                    ? biomeGrid.map((row, y) => 
+                        row.map((biome, x) => ({
+                          x, y, z: 0, biome: typeof biome === 'string' ? biome : 'plains', blockType: 'grass'
+                        } as GridTile))
+                      )
+                    : []
+                }
+                biomeGrid3D={
+                  biomeGrid3D.map((floor, z) =>
+                    floor.map((row, y) =>
+                      row.map((biome, x) => ({
+                        x, y, z: z - 3, biome: typeof biome === 'string' ? biome : 'plains', blockType: 'grass'
+                      } as GridTile))
+                    )
+                  )
+                }
                 structures={structures}
                 roomSize={32}
                 enableInfinite

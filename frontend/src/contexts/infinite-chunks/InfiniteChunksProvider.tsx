@@ -72,8 +72,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
 
   // Force initial chunk loading for empty grids
   useEffect(() => {
-    if (state.initialized && initialGrid.length === 0 && chunkGenerator) {
-      console.log('[InfiniteChunks] Loading initial chunks for empty grid at origin (0,0)');
+    if (state.initialized && initialGrid.length === 0) {
       setTimeout(() => {
         checkChunkLoadingInternal(0, 0);
       }, 100);
@@ -84,7 +83,10 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
   // Internal chunk loading logic
   const checkChunkLoadingInternal = useCallback(
     async (playerX: number, playerY: number) => {
-      if (!enabled || !state.initialized) return;
+      if (!enabled || !state.initialized) {
+        console.log('[InfiniteChunks] Skipping checkChunkLoading: not enabled or initialized', { enabled, initialized: state.initialized });
+        return;
+      }
 
       const chunksToLoad = getChunksToLoad(
         playerX,
@@ -94,6 +96,8 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
         new Set(state.chunks.keys()),
         state.loading
       );
+
+      console.log(`[InfiniteChunks] checkChunkLoading(${playerX}, ${playerY}) found ${chunksToLoad.length} chunks to load`);
 
       if (chunksToLoad.length === 0) return;
 

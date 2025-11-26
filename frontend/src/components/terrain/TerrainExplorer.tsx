@@ -6,7 +6,9 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { CHUNK_SIZE } from '@daicer/shared';
 import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
+import type { GridTile } from '../../../../shared/world';
 import { VoxelMetadataPanel, type VoxelMetadata } from './VoxelMetadataPanel';
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement';
 import {
@@ -17,18 +19,23 @@ import {
 import { AspectRatio } from '../ui/aspect-ratio';
 
 interface TerrainExplorerProps {
-  biomeGrid: string[][]; // 2D grid for backward compatibility (surface layer)
-  biomeGrid3D?: string[][][]; // Optional 3D grid [floor][y][x] for multi-floor structures (7 floors: -3 to +3)
+  biomeGrid: GridTile[][]; // 2D grid for backward compatibility (surface layer)
+  biomeGrid3D?: GridTile[][][]; // Optional 3D grid [floor][y][x] for multi-floor structures (7 floors: -3 to +3)
   structures?: Array<{ name: string; x: number; y: number; type: string;[key: string]: any }>;
   roomSize?: number;
   initialZoom?: number;
   roomId?: string;
   enableInfinite?: boolean;
   chunkGenerator?: {
-    generateChunk: (worldX: number, worldY: number, width: number, height: number) => string[][];
-    generateChunk3D?: (worldX: number, worldY: number, width: number, height: number) => string[][][];
+    generateChunk: (worldX: number, worldY: number, width: number, height: number) => GridTile[][];
+    generateChunk3D?: (worldX: number, worldY: number, width: number, height: number) => GridTile[][][];
   };
   placementMap?: GlobalPlacementMap | null; // NEW: Global structure placement map
+  // For internal use by InfiniteChunksBridge
+  expandedGrid?: (GridTile | null)[][];
+  gridWorldOffset?: { x: number; y: number };
+  isLoading?: boolean;
+  checkChunkLoading?: (x: number, y: number) => void;
 }
 
 const BIOME_COLORS: Record<string, string> = {
@@ -117,7 +124,7 @@ function getStructureColor(biomeName: string): string | null {
 
 import { useSimpleTerrainManager } from './useSimpleTerrainManager';
 
-// ... imports ...
+
 
 export function TerrainExplorer({
   biomeGrid,
@@ -130,6 +137,10 @@ export function TerrainExplorer({
   chunkGenerator,
   placementMap,
 }: TerrainExplorerProps) {
+  useEffect(() => {
+    console.log('[TerrainExplorer] MOUNTED', { roomId, enableInfinite });
+    return () => console.log('[TerrainExplorer] UNMOUNTED', { roomId });
+  }, [roomId, enableInfinite]);
   // Case 1: Client-side generation (Preview Mode)
   // If we have a chunkGenerator, we use the simple manager directly.
   // This bypasses the complex InfiniteChunksProvider.
@@ -143,6 +154,7 @@ export function TerrainExplorer({
         initialZoom={initialZoom}
         roomId={roomId}
         chunkGenerator={chunkGenerator}
+        placementMap={placementMap}
       />
     );
   }
@@ -155,7 +167,7 @@ export function TerrainExplorer({
         options={{
           roomId,
           initialGrid: biomeGrid,
-          chunkSize: 16,
+          chunkSize: CHUNK_SIZE,
           loadRadius: 8,
           enabled: true,
           // No chunkGenerator here implies backend mode
@@ -197,7 +209,7 @@ export function TerrainExplorer({
 function SimpleTerrainExplorerWrapper(props: TerrainExplorerProps & { chunkGenerator: NonNullable<TerrainExplorerProps['chunkGenerator']> }) {
   const { expandedGrid, gridWorldOffset, isLoading, checkChunkLoading } = useSimpleTerrainManager({
     initialGrid: props.biomeGrid,
-    chunkSize: 16,
+    chunkSize: CHUNK_SIZE,
     loadRadius: 8,
     chunkGenerator: props.chunkGenerator,
   });
@@ -232,7 +244,7 @@ function InfiniteChunksBridge(props: Omit<TerrainExplorerProps, 'chunkGenerator'
 }
 
 interface TerrainExplorerInternalProps extends Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'> {
-  expandedGrid: string[][];
+  expandedGrid: (GridTile | null)[][];
   gridWorldOffset: { x: number; y: number };
   isLoading: boolean;
   checkChunkLoading: (x: number, y: number) => void;
@@ -379,8 +391,8 @@ function TerrainExplorerInternal({
     ctx.save();
     ctx.translate(pan.x, pan.y);
 
-    //Get the appropriate grid layer based on currentLayer and biomeGrid3D
-    let layerGrid: string[][];
+    // Get the appropriate grid layer based on currentLayer and biomeGrid3D
+    let layerGrid: (GridTile | null)[][];
 
     // ALWAYS use activeGrid (the expanding grid with new chunks)
     // NOT biomeGrid3D which is static and doesn't include dynamically loaded chunks
@@ -391,7 +403,8 @@ function TerrainExplorerInternal({
       // Underground floors: show structure basements, dungeons, caves
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-          const biome = layerGrid[y]?.[x] || '';
+          const tile = layerGrid[y]?.[x];
+          const biome = tile ? tile.biome : '';
 
           // Empty = solid rock/earth
           if (biome === '') {
@@ -406,7 +419,8 @@ function TerrainExplorerInternal({
           const color = structureColor || '#2a2a2a'; // Dark gray for terrain underground
 
           ctx.fillStyle = color;
-          ctx.fillRect(x * renderScale, y * renderScale, renderScale, renderScale);
+          // Add 0.5px overlap to prevent sub-pixel rendering gaps (grid lines)
+          ctx.fillRect(x * renderScale, y * renderScale, renderScale + 0.5, renderScale + 0.5);
 
           // AGGRESSIVE borders for structure tiles (same as surface)
           if (isStructure) {
@@ -454,14 +468,15 @@ function TerrainExplorerInternal({
           }
         }
       }
-    } else if (currentLayer === 0) {
-      // Surface: biome tiles with structure detection
+    } else if (currentLayer >= 0) {
+      // Surface/Sky layers
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-          const biome = layerGrid[y]?.[x] || '';
+          const tile = layerGrid[y]?.[x];
+          const biome = tile ? tile.biome : '';
 
-          // Empty string means structure empty tile (non-collapsed area) - render as black
-          if (biome === '') {
+          // Empty = void/sky
+          if (!biome) {
             ctx.fillStyle = '#000000';
             ctx.fillRect(x * renderScale, y * renderScale, renderScale, renderScale);
             continue;
@@ -534,70 +549,7 @@ function TerrainExplorerInternal({
               ctx.setLineDash([]); // Reset
             }
           }
-        }
       }
-    } else if (currentLayer > 0) {
-      // Upper floors: show structure towers, upper levels
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const biome = layerGrid[y]?.[x] || '';
-
-          // Empty = open air/sky
-          if (biome === '') {
-            ctx.fillStyle = 'rgba(135, 206, 250, 0.2)'; // Light blue transparent
-            ctx.fillRect(x * renderScale, y * renderScale, renderScale, renderScale);
-            continue;
-          }
-
-          // Structure tiles render normally
-          const structureColor = getStructureColor(biome);
-          const isStructure = biome.startsWith('structure_final_') || biome.startsWith('structure_road_');
-          const color = structureColor || 'rgba(255, 255, 255, 0.3)'; // Light for sky
-
-          ctx.fillStyle = color;
-          ctx.fillRect(x * renderScale, y * renderScale, renderScale, renderScale);
-
-          // AGGRESSIVE borders for structure tiles
-          if (isStructure) {
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = Math.max(2, renderScale * 0.2);
-            ctx.strokeRect(x * renderScale, y * renderScale, renderScale, renderScale);
-
-            if (biome.includes('_wall_')) {
-              ctx.strokeStyle = '#000000';
-              ctx.lineWidth = Math.max(3, renderScale * 0.25);
-              ctx.strokeRect(x * renderScale + 1.5, y * renderScale + 1.5, renderScale - 3, renderScale - 3);
-
-              // CENTER DOT: Visual indicator that walls are impassable
-              const centerX = x * renderScale + renderScale / 2;
-              const centerY = y * renderScale + renderScale / 2;
-              const dotRadius = Math.max(2, renderScale * 0.15);
-
-              ctx.fillStyle = '#000000';
-              ctx.beginPath();
-              ctx.arc(centerX, centerY, dotRadius, 0, Math.PI * 2);
-              ctx.fill();
-            }
-
-            if (biome.includes('_door_')) {
-              ctx.strokeStyle = '#fbbf24';
-              ctx.lineWidth = Math.max(4, renderScale * 0.3);
-              ctx.strokeRect(x * renderScale, y * renderScale, renderScale, renderScale);
-              ctx.strokeStyle = '#fef08a';
-              ctx.lineWidth = Math.max(2, renderScale * 0.15);
-              ctx.strokeRect(x * renderScale + 2, y * renderScale + 2, renderScale - 4, renderScale - 4);
-            }
-
-            if (biome.includes('_stairs_')) {
-              ctx.strokeStyle = '#06b6d4';
-              ctx.lineWidth = Math.max(4, renderScale * 0.3);
-              ctx.strokeRect(x * renderScale, y * renderScale, renderScale, renderScale);
-              ctx.strokeStyle = '#67e8f9';
-              ctx.lineWidth = Math.max(2, renderScale * 0.15);
-              ctx.strokeRect(x * renderScale + 2, y * renderScale + 2, renderScale - 4, renderScale - 4);
-            }
-          }
-        }
       }
     }
 
@@ -636,8 +588,9 @@ function TerrainExplorerInternal({
         let hasDetailedTiles = false;
         for (let sy = roomStartY; sy < roomStartY + 3 && sy < height; sy++) {
           for (let sx = roomStartX; sx < roomStartX + 3 && sx < width; sx++) {
-            const biome = activeGrid[sy]?.[sx] || '';
-            if (biome.startsWith('structure_final_') || biome.startsWith('structure_road_')) {
+            const tile = activeGrid[sy]?.[sx];
+            const biomeName = typeof tile === 'string' ? tile : (tile ? tile.biome : '');
+            if (biomeName && (biomeName.startsWith('structure_final_') || biomeName.startsWith('structure_road_'))) {
               hasDetailedTiles = true;
               break;
             }
@@ -850,7 +803,7 @@ function TerrainExplorerInternal({
       const metadata: VoxelMetadata = {
         worldCoords: { x: worldX, y: worldY, z: currentLayer },
         roomCoords: { x: roomX, y: roomY },
-        biome: biome || 'unknown',
+        biome: (biome as any)?.biome || (typeof biome === 'string' ? biome : 'unknown'),
         temperature: 0.5, // Placeholder
         moisture: 0.5, // Placeholder
         elevation: 0, // Placeholder

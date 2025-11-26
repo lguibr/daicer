@@ -57,7 +57,8 @@ export interface WorldMap {
   width: number;
   height: number;
   seed: string;
-  parameters: Record<string, unknown>;
+  params: Record<string, unknown>;
+  parameters?: Record<string, unknown>; // Deprecated?
   createdAt: Date;
   createdBy: string;
 }

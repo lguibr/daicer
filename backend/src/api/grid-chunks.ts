@@ -94,7 +94,7 @@ router.get('/chunk/:entityId/:chunkX/:chunkY/:z', authenticate, async (req: Auth
     }
 
     const roomData = roomDoc.data()!;
-    let seed = roomData.seed || roomData.code || roomId;
+    let seed = roomData.seed || roomData.settings?.seed || roomData.code || roomId;
 
     // Fallback: If room has no seed, use roomId
     if (!seed || seed.length === 0) {

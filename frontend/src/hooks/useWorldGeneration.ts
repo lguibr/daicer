@@ -495,12 +495,41 @@ export function useWorldGeneration() {
     }
   }, []);
 
+  // Convert string grids to GridTile objects for TerrainExplorer
+  const grid = useMemo(() => {
+    return biomeGrid.map((row, y) =>
+      row.map((biome, x) => ({
+        x,
+        y,
+        z: 0,
+        biome,
+        blockType: 'grass',
+      } as any)) // Cast to any to avoid strict GridTile validation issues for now, or import GridTile
+    );
+  }, [biomeGrid]);
+
+  const grid3D = useMemo(() => {
+    return biomeGrid3D.map((floorGrid, z) =>
+      floorGrid.map((row, y) =>
+        row.map((biome, x) => ({
+          x,
+          y,
+          z: z - 3, // Map 0..6 to -3..3
+          biome,
+          blockType: 'grass',
+        } as any))
+      )
+    );
+  }, [biomeGrid3D]);
+
   return {
     isGenerating,
     progress,
     steps,
     biomeGrid,
     biomeGrid3D,
+    grid, // New GridTile[][]
+    grid3D, // New GridTile[][][]
     structures,
     generateWorld,
     createChunkGenerator,
