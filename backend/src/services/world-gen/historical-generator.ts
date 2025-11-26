@@ -205,8 +205,9 @@ export const generateOverallSummaryTask = task(
       .map((p) => `**Years ${p.startYear}-${p.endYear}:**\n${p.narrative}`)
       .join('\n\n');
 
-    const fullPrompt = `${prompt + allNarratives
-      }\n\nCreate a concise 2-3 paragraph summary of the entire history, highlighting the most significant events, structures, and themes that define this world.`;
+    const fullPrompt = `${
+      prompt + allNarratives
+    }\n\nCreate a concise 2-3 paragraph summary of the entire history, highlighting the most significant events, structures, and themes that define this world.`;
 
     // For summary, we just need a string, so we'll use a simple schema
     const SummarySchema = HistoricalPeriodResponseSchema.pick({ narrative: true });

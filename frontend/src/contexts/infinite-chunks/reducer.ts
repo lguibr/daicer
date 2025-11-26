@@ -60,10 +60,10 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
     case 'CHUNK_LOAD_SUCCESS': {
       const { chunk } = action.payload;
       const chunkKey = `${chunk.chunkX},${chunk.chunkY}`;
-      console.log(`[InfiniteChunks] Reducer: CHUNK_LOAD_SUCCESS for ${chunkKey}`, { 
+      console.log(`[InfiniteChunks] Reducer: CHUNK_LOAD_SUCCESS for ${chunkKey}`, {
         chunkTiles: chunk.tiles?.length,
         chunkBiomes: chunk.biomes?.length,
-        chunkSize: state.config.chunkSize
+        chunkSize: state.config.chunkSize,
       });
 
       // Remove from loading
@@ -82,7 +82,10 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
         state.config.chunkSize
       );
 
-      console.log(`[InfiniteChunks] Reducer: Grid expanded. New size: ${newGrid[0]?.length}x${newGrid.length}, Offset:`, newOffset);
+      console.log(
+        `[InfiniteChunks] Reducer: Grid expanded. New size: ${newGrid[0]?.length}x${newGrid.length}, Offset:`,
+        newOffset
+      );
 
       return {
         ...state,

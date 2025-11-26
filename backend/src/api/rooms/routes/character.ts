@@ -41,50 +41,50 @@ const router = Router();
  *         description: Room not found
  */
 router.post(
-    '/:roomId/unlock-characters',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId/unlock-characters',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        if (room.ownerId !== req.user?.uid) {
-            throw new ApiError(403, 'Only room owner can unlock character creation');
-        }
+    if (room.ownerId !== req.user?.uid) {
+      throw new ApiError(403, 'Only room owner can unlock character creation');
+    }
 
-        // Create and invoke room management graph
-        logger.info('[Room Management Graph] Creating graph instance', { roomId });
-        const graph = createRoomManagementGraph();
+    // Create and invoke room management graph
+    logger.info('[Room Management Graph] Creating graph instance', { roomId });
+    const graph = createRoomManagementGraph();
 
-        const input = {
-            roomId,
-            characterCreationLocked: true, // Current state
-            phase: room.phase,
-            updatedAt: room.updatedAt,
-        };
+    const input = {
+      roomId,
+      characterCreationLocked: true, // Current state
+      phase: room.phase,
+      updatedAt: room.updatedAt,
+    };
 
-        const startTime = Date.now();
-        await graph.invoke(input);
-        const duration = Date.now() - startTime;
+    const startTime = Date.now();
+    await graph.invoke(input);
+    const duration = Date.now() - startTime;
 
-        logger.info('[Room Management Graph] Execution complete', { roomId, duration: `${duration}ms` });
+    logger.info('[Room Management Graph] Execution complete', { roomId, duration: `${duration}ms` });
 
-        // Get updated room from Firestore
-        const updatedRoom = await getRoom(roomId);
+    // Get updated room from Firestore
+    const updatedRoom = await getRoom(roomId);
 
-        // Broadcast game state to all players
-        await RoomManager.broadcastGameState(roomId);
+    // Broadcast game state to all players
+    await RoomManager.broadcastGameState(roomId);
 
-        // Broadcast phase change
-        await RoomManager.broadcastPhaseChange(roomId, GamePhase.CHARACTER_CREATION);
+    // Broadcast phase change
+    await RoomManager.broadcastPhaseChange(roomId, GamePhase.CHARACTER_CREATION);
 
-        logger.info('[Rooms] Character creation unlocked via graph', { roomId, ownerId: req.user?.uid });
+    logger.info('[Rooms] Character creation unlocked via graph', { roomId, ownerId: req.user?.uid });
 
-        res.json({ success: true, data: updatedRoom });
-    })
+    res.json({ success: true, data: updatedRoom });
+  })
 );
 
 export default router;

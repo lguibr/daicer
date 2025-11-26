@@ -173,8 +173,9 @@ export function CompleteMapVisualizer() {
                     className="w-full flex items-start gap-2 text-sm hover:bg-accent/50 p-2 rounded transition-colors text-left"
                   >
                     <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${step.completed ? 'bg-green-500' : 'bg-gray-600'
-                        }`}
+                      className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        step.completed ? 'bg-green-500' : 'bg-gray-600'
+                      }`}
                     >
                       {step.completed && <Check className="w-3 h-3 text-white" />}
                     </div>

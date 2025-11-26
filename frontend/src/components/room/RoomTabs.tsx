@@ -5,8 +5,8 @@
  */
 
 import { type ReactNode, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { MessageSquare, Map as MapIcon, Users, Settings } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface RoomTabsProps {
   roomId: string;

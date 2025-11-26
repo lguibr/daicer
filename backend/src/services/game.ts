@@ -111,16 +111,16 @@ ${worldData.description}
 ## Key Locations
 
 ${
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    worldData.keyLocations.map((loc: any) => `**${loc.name}**: ${loc.description}`).join('\n\n')
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worldData.keyLocations.map((loc: any) => `**${loc.name}**: ${loc.description}`).join('\n\n')
+}
 
 ## Threats
 
 ${
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    worldData.threats.map((threat: any) => `- ${threat}`).join('\n')
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worldData.threats.map((threat: any) => `- ${threat}`).join('\n')
+}
 
 ## Call to Adventure & Stakes
 
@@ -131,9 +131,9 @@ ${
 ## Adventure Hooks
 
 ${
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')
-    }`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')
+}`;
 
   return formattedDescription;
 };
@@ -509,10 +509,7 @@ REMEMBER: NO meta-text. Start directly with ### header.`;
  * @param language - Game language
  * @returns Main opening narration
  */
-export const generateMainOpening = async (
-  worldDescription: string,
-  language: Language = 'en'
-): Promise<string> => {
+export const generateMainOpening = async (worldDescription: string, language: Language = 'en'): Promise<string> => {
   const languageMap: Record<Language, string> = {
     en: 'English',
     es: 'Spanish',

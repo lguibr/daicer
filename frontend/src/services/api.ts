@@ -3,7 +3,18 @@
  */
 
 import { auth } from './firebase';
-import type { Room, WorldSettings, Player, Message, RoomMembership, Structure, Road, HistoricalPeriod, WorldCondition, CharacterSheet } from '../types/shared';
+import type {
+  Room,
+  WorldSettings,
+  Player,
+  Message,
+  RoomMembership,
+  Structure,
+  Road,
+  HistoricalPeriod,
+  WorldCondition,
+  CharacterSheet,
+} from '../types/shared';
 import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse } from '../types/assets';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';

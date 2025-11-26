@@ -35,7 +35,6 @@ export const placeStructuresNode = async (
     minDistance,
   });
 
-
   // Map dimensions (default 512x512 chunks)
   const mapWidth = 512;
   const mapHeight = 512;
@@ -52,7 +51,6 @@ export const placeStructuresNode = async (
     count: placedStructures.length,
     sample: placedStructures.map((s) => `${s.name} @ (${s.x}, ${s.y})`).slice(0, 5),
   });
-
 
   return {
     structures: placedStructures,

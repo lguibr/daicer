@@ -3,6 +3,7 @@
  * Manages concurrent streams, chunk emission, and error recovery
  */
 
+import { streamManager } from '@/services/llm/stream-manager';
 import type { Server, Socket } from 'socket.io';
 import { logger } from '@/utils/logger';
 import { streamText, streamWithHistory, batchStreamChunks } from '@/services/llm';
@@ -147,6 +148,9 @@ export async function handleStreamRequest(
       timestamp: Date.now(),
     });
 
+    // Start unified stream
+    streamManager.startStream(streamId, roomId, userId);
+
     // Create streaming generator
     const stream = streamText(systemPrompt, userPrompt, language as Language, {
       model,
@@ -180,6 +184,9 @@ export async function handleStreamRequest(
           fullText: accumulated,
           timestamp: Date.now(),
         });
+
+        // End unified stream
+        streamManager.endStream(streamId);
 
         logger.info('[Streaming] Stream completed', {
           streamId,
@@ -259,6 +266,9 @@ export async function handleStreamWithHistory(
       timestamp: Date.now(),
     });
 
+    // Start unified stream
+    streamManager.startStream(streamId, roomId, userId);
+
     // Create streaming generator with history
     const stream = streamWithHistory(systemPrompt, history, userMessage, language as Language, {
       model,
@@ -292,6 +302,9 @@ export async function handleStreamWithHistory(
           fullText: accumulated,
           timestamp: Date.now(),
         });
+
+        // End unified stream
+        streamManager.endStream(streamId);
 
         logger.info('[Streaming] History stream completed', {
           streamId,

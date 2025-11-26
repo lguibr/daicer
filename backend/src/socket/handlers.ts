@@ -14,7 +14,12 @@ import { registerWorldChunkHandlers } from './handlers/worldChunks';
 import { registerMapFeatureHandlers } from './handlers/mapFeatures';
 import { registerTacticalDMHandlers } from './handlers/tacticalDM';
 
+import { streamManager } from '@/services/llm/stream-manager';
+
 export function initializeSocketHandlers(io: Server): void {
+  // Initialize StreamManager with IO instance
+  streamManager.setSocketServer(io);
+
   io.on('connection', async (socket: Socket) => {
     logger.info(`Socket connected: ${socket.id}`);
 

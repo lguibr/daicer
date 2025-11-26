@@ -39,7 +39,7 @@ export default function Assets2DPage() {
   const [viewingAsset, setViewingAsset] = useState<string | null>(null);
   const [movingAsset, setMovingAsset] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'collection' | 'asset'; id: string } | null>(null);
-  
+
   // Inline form state
   const [prompt, setPrompt] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -189,7 +189,7 @@ export default function Assets2DPage() {
       }
 
       toast({ title: 'Generation Started', description: 'Asset is being generated' });
-      
+
       // Immediately reload assets to show the new asset in the grid
       if (selectedCollection) {
         await loadAssets(selectedCollection);

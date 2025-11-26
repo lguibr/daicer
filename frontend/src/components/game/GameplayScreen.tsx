@@ -42,8 +42,6 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const roomLanguage = room.settings?.language || 'en';
   const isDM = room.ownerId === user?.uid;
 
-
-
   const handleSubmitAction = async (action: string) => {
     if (!action.trim() || !room.id) return;
 
@@ -162,7 +160,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
       <RoomTabs
         roomId={room.id}
         chatContent={chatContent}
-        mapContent={<TerrainExplorer roomId={room.id} biomeGrid={EMPTY_GRID} roomSize={32} enableInfinite={true} />}
+        mapContent={<TerrainExplorer roomId={room.id} biomeGrid={EMPTY_GRID} roomSize={32} enableInfinite />}
         playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
         settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}
       />

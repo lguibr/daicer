@@ -3,14 +3,14 @@
  * All interfaces and types for the infinite chunk system
  */
 
+import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
 import type { GridChunk, GridTile } from '../../../../../shared/world';
+
 
 export type TerrainChunk = GridChunk & {
   worldOffsetX: number;
   worldOffsetY: number;
 };
-
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
 
 export interface ChunkGenerator {
   generateChunk: (worldX: number, worldY: number, width: number, height: number) => string[][];

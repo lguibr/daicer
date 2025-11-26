@@ -133,7 +133,7 @@ export default function AssetsCharacterSheetPage() {
 
       // Create asset with character sheet data
       const description = `${characterAsset.summary.race} ${characterAsset.summary.characterClass} (Level ${characterAsset.summary.level})`;
-      
+
       await createAsset({
         collectionId: creatingAssetForCollection,
         name: characterAsset.summary.name,
@@ -339,7 +339,7 @@ export default function AssetsCharacterSheetPage() {
               </div>
               <div className="p-6">
                 <CharacterCreation
-                  assetMode={true}
+                  assetMode
                   settings={{
                     startingLevel: 1,
                     attributeBudget: 27,

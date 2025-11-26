@@ -363,8 +363,6 @@ export default function CreateRoomPage() {
     }));
   };
 
-
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -388,8 +386,8 @@ export default function CreateRoomPage() {
           ...settings,
           // @ts-ignore - Adding these properties dynamically if not in type
           seed,
-          generationParams
-        }
+          generationParams,
+        },
       });
 
       // Redirect immediately to the room
@@ -594,7 +592,10 @@ export default function CreateRoomPage() {
               {/* Theme, Tone, Setting inputs */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label htmlFor="theme-input" className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                  <label
+                    htmlFor="theme-input"
+                    className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+                  >
                     Theme *
                   </label>
                   <input
@@ -607,7 +608,10 @@ export default function CreateRoomPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="tone-input" className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                  <label
+                    htmlFor="tone-input"
+                    className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+                  >
                     Tone *
                   </label>
                   <input
@@ -621,7 +625,10 @@ export default function CreateRoomPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label htmlFor="setting-input" className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+                <label
+                  htmlFor="setting-input"
+                  className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400"
+                >
                   Primary Setting *
                 </label>
                 <input
@@ -643,9 +650,7 @@ export default function CreateRoomPage() {
           <section className="space-y-6" data-testid="wizard-group-terrain">
             <div className="card p-8">
               <div className="space-y-2 mb-6">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">
-                  Terrain Builder
-                </h2>
+                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Terrain Builder</h2>
                 <p className="text-sm text-shadow-300">Design your world's geography and structures</p>
               </div>
 
@@ -726,11 +731,11 @@ export default function CreateRoomPage() {
                           className={clsx(
                             'flex w-full flex-col gap-2 rounded-xl border px-4 py-3 text-left transition-all duration-200',
                             status === 'current' &&
-                            'border-accent/60 bg-gradient-to-br from-accent/15 via-nebula-500/25 to-midnight-700/40 text-accent',
+                              'border-accent/60 bg-gradient-to-br from-accent/15 via-nebula-500/25 to-midnight-700/40 text-accent',
                             status === 'complete' &&
-                            'border-aurora-500/60 bg-aurora-500/10 text-aurora-200 hover:border-aurora-400/70 cursor-pointer',
+                              'border-aurora-500/60 bg-aurora-500/10 text-aurora-200 hover:border-aurora-400/70 cursor-pointer',
                             status === 'upcoming' &&
-                            'border-midnight-500/60 bg-midnight-500/20 text-shadow-400 cursor-not-allowed opacity-60'
+                              'border-midnight-500/60 bg-midnight-500/20 text-shadow-400 cursor-not-allowed opacity-60'
                           )}
                         >
                           <span
@@ -788,16 +793,10 @@ export default function CreateRoomPage() {
                   disabled={loading || !validateGroup(currentGroup)}
                   className="btn-primary sm:min-w-[170px]"
                   data-testid={
-                    currentGroup === WIZARD_GROUPS.length - 1
-                      ? 'wizard-create-room-button'
-                      : 'wizard-next-button'
+                    currentGroup === WIZARD_GROUPS.length - 1 ? 'wizard-create-room-button' : 'wizard-next-button'
                   }
                 >
-                  {currentGroup === WIZARD_GROUPS.length - 1
-                    ? loading
-                      ? 'Creating...'
-                      : 'Create Room'
-                    : 'Next'}
+                  {currentGroup === WIZARD_GROUPS.length - 1 ? (loading ? 'Creating...' : 'Create Room') : 'Next'}
                 </button>
               </div>
             </div>

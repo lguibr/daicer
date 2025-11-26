@@ -25,7 +25,6 @@ export const terrainCollapseNode = async (
     seed: settings.seed,
   });
 
-
   // Map dimensions
   const mapWidth = 512;
   const mapHeight = 512;
@@ -45,7 +44,6 @@ export const terrainCollapseNode = async (
   logger.info('[terrain_collapse] Terrain collapsed', {
     influences: collapseData.influences.length,
   });
-
 
   // Store collapse data for use by chunk generation
   return {

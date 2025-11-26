@@ -34,18 +34,18 @@ const router = Router();
  *         description: World history retrieved successfully
  */
 router.get(
-    '/:roomId/history',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId/history',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        res.json({ success: true, data: room.worldHistory || null });
-    })
+    res.json({ success: true, data: room.worldHistory || null });
+  })
 );
 
 /**
@@ -69,18 +69,18 @@ router.get(
  *         description: Structures retrieved successfully
  */
 router.get(
-    '/:roomId/structures',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId/structures',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        res.json({ success: true, data: room.structures || [] });
-    })
+    res.json({ success: true, data: room.structures || [] });
+  })
 );
 
 /**
@@ -104,48 +104,48 @@ router.get(
  *         description: Placement map retrieved successfully
  */
 router.get(
-    '/:roomId/world-placement',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId/world-placement',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        // Get or create placement map
-        const { getOrCreatePlacementMap } = await import('@/services/world-placement-service');
+    // Get or create placement map
+    const { getOrCreatePlacementMap } = await import('@/services/world-placement-service');
 
-        // Use room's world seed, or fallback to roomId
-        const worldSeed = (room as any).seed || roomId;
+    // Use room's world seed, or fallback to roomId
+    const worldSeed = (room as any).seed || roomId;
 
-        // World size mapping
-        const worldSizeMap: Record<string, number> = {
-            intimate: 64000,
-            small: 128000,
-            medium: 256000,
-            large: 512000,
-            vast: 512000,
-            epic: 512000,
-        };
-        const worldSize = worldSizeMap[(room as any).worldSize || 'medium'] || 256000;
+    // World size mapping
+    const worldSizeMap: Record<string, number> = {
+      intimate: 64000,
+      small: 128000,
+      medium: 256000,
+      large: 512000,
+      vast: 512000,
+      epic: 512000,
+    };
+    const worldSize = worldSizeMap[(room as any).worldSize || 'medium'] || 256000;
 
-        const placementMap = await getOrCreatePlacementMap(roomId, worldSeed, worldSize, {
-            minDistance: 30,
-            maxStructures: 50,
-            generateRoads: (room as any).enableRoads ?? true,
-            roadMaterial: 'stone',
-        });
+    const placementMap = await getOrCreatePlacementMap(roomId, worldSeed, worldSize, {
+      minDistance: 30,
+      maxStructures: 50,
+      generateRoads: (room as any).enableRoads ?? true,
+      roadMaterial: 'stone',
+    });
 
-        logger.info('[Rooms] Placement map retrieved', {
-            roomId,
-            structureCount: placementMap.structures.length,
-            roadCount: placementMap.roads.length,
-        });
+    logger.info('[Rooms] Placement map retrieved', {
+      roomId,
+      structureCount: placementMap.structures.length,
+      roadCount: placementMap.roads.length,
+    });
 
-        res.json({ success: true, data: placementMap });
-    })
+    res.json({ success: true, data: placementMap });
+  })
 );
 
 /**
@@ -184,52 +184,52 @@ router.get(
  *         description: Nearby structures retrieved
  */
 router.get(
-    '/:roomId/structures-near',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
-        const { x, y, radius } = structuresNearQuerySchema.parse(req.query);
+  '/:roomId/structures-near',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
+    const { x, y, radius } = structuresNearQuerySchema.parse(req.query);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        // Get placement map
-        const { getOrCreatePlacementMap } = await import('@/services/world-placement-service');
-        const { getStructuresNearLocation: getStructuresNear } = await import('@daicer/shared/world-gen/structures');
+    // Get placement map
+    const { getOrCreatePlacementMap } = await import('@/services/world-placement-service');
+    const { getStructuresNearLocation: getStructuresNear } = await import('@daicer/shared/world-gen/structures');
 
-        const worldSeed = (room as any).seed || roomId;
-        const worldSizeMap: Record<string, number> = {
-            intimate: 64000,
-            small: 128000,
-            medium: 256000,
-            large: 512000,
-            vast: 512000,
-            epic: 512000,
-        };
-        const worldSize = worldSizeMap[(room as any).worldSize || 'medium'] || 256000;
+    const worldSeed = (room as any).seed || roomId;
+    const worldSizeMap: Record<string, number> = {
+      intimate: 64000,
+      small: 128000,
+      medium: 256000,
+      large: 512000,
+      vast: 512000,
+      epic: 512000,
+    };
+    const worldSize = worldSizeMap[(room as any).worldSize || 'medium'] || 256000;
 
-        const placementMap = await getOrCreatePlacementMap(roomId, worldSeed, worldSize, {
-            minDistance: 30,
-            maxStructures: 50,
-            generateRoads: (room as any).enableRoads ?? true,
-            roadMaterial: 'stone',
-        });
+    const placementMap = await getOrCreatePlacementMap(roomId, worldSeed, worldSize, {
+      minDistance: 30,
+      maxStructures: 50,
+      generateRoads: (room as any).enableRoads ?? true,
+      roadMaterial: 'stone',
+    });
 
-        // Query structures near location
-        const nearbyStructures = getStructuresNear(placementMap.structures, x, y, radius);
+    // Query structures near location
+    const nearbyStructures = getStructuresNear(placementMap.structures, x, y, radius);
 
-        logger.info('[Rooms] Nearby structures queried', {
-            roomId,
-            x,
-            y,
-            radius,
-            resultCount: nearbyStructures.length,
-        });
+    logger.info('[Rooms] Nearby structures queried', {
+      roomId,
+      x,
+      y,
+      radius,
+      resultCount: nearbyStructures.length,
+    });
 
-        res.json({ success: true, data: nearbyStructures });
-    })
+    res.json({ success: true, data: nearbyStructures });
+  })
 );
 
 export default router;

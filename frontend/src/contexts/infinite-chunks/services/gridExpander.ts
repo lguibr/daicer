@@ -4,7 +4,7 @@
  * NO side effects - all functions are deterministic
  */
 
-import type { GridTile } from '../../../../../shared/world';
+import type { GridTile } from "@daicer/shared/world/world";
 import type { TerrainChunk } from '../types';
 
 /**
@@ -100,10 +100,11 @@ export function mergeChunkIntoGrid(
           targetX < newGrid[targetY].length
         ) {
           // Ensure tile is a proper GridTile object
-          const tileObj = typeof tile === 'string'
-            ? { x: worldX, y: worldY, z: 0, biome: tile, blockType: 'grass' } as GridTile
-            : tile;
-            
+          const tileObj =
+            typeof tile === 'string'
+              ? ({ x: worldX, y: worldY, z: 0, biome: tile, blockType: 'grass' } as GridTile)
+              : tile;
+
           newGrid[targetY][targetX] = tileObj;
         }
       });

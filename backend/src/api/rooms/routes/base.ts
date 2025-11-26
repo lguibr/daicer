@@ -6,13 +6,7 @@
 import { Router, type Response } from 'express';
 import { authenticate, type AuthRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/async-handler';
-import {
-    createRoom,
-    getRoom,
-    updateRoomSettings,
-    deleteRoom,
-    getRoomMembershipsForUser,
-} from '@/services/firestore';
+import { createRoom, getRoom, updateRoomSettings, deleteRoom, getRoomMembershipsForUser } from '@/services/firestore';
 import { ApiError } from '@/middleware/error';
 import { worldSettingsSchema, roomIdParamSchema } from '../validators';
 import type { WorldSettings } from '@/types/index';
@@ -44,13 +38,13 @@ const router = Router();
  *         description: Room created successfully
  */
 router.post(
-    '/',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const settings = req.body.settings ? worldSettingsSchema.parse(req.body.settings) : undefined;
-        const room = await createRoom(req.user!.uid, settings as WorldSettings | undefined);
-        res.status(201).json({ success: true, data: room });
-    })
+  '/',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const settings = req.body.settings ? worldSettingsSchema.parse(req.body.settings) : undefined;
+    const room = await createRoom(req.user!.uid, settings as WorldSettings | undefined);
+    res.status(201).json({ success: true, data: room });
+  })
 );
 
 /**
@@ -68,12 +62,12 @@ router.post(
  *         description: List of rooms retrieved successfully
  */
 router.get(
-    '/',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const memberships = await getRoomMembershipsForUser(req.user!.uid);
-        res.json({ success: true, data: memberships });
-    })
+  '/',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const memberships = await getRoomMembershipsForUser(req.user!.uid);
+    res.json({ success: true, data: memberships });
+  })
 );
 
 /**
@@ -97,25 +91,25 @@ router.get(
  *         description: Room details retrieved successfully
  */
 router.get(
-    '/:roomId',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        const db = getDb();
-        const playersSnapshot = await db.collection('rooms').doc(roomId).collection('players').get();
-        const players = playersSnapshot.docs.map((doc) => doc.data());
+    const db = getDb();
+    const playersSnapshot = await db.collection('rooms').doc(roomId).collection('players').get();
+    const players = playersSnapshot.docs.map((doc) => doc.data());
 
-        res.json({
-            success: true,
-            data: { room, players },
-        });
-    })
+    res.json({
+      success: true,
+      data: { room, players },
+    });
+  })
 );
 
 /**
@@ -123,25 +117,25 @@ router.get(
  * @route PATCH /api/rooms/:roomId/settings
  */
 router.patch(
-    '/:roomId/settings',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId/settings',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        if (room.ownerId !== req.user!.uid) {
-            throw new ApiError(403, 'Only room owner can update settings');
-        }
+    if (room.ownerId !== req.user!.uid) {
+      throw new ApiError(403, 'Only room owner can update settings');
+    }
 
-        const settings = worldSettingsSchema.parse(req.body) as WorldSettings;
-        const updatedRoom = await updateRoomSettings(roomId, settings);
+    const settings = worldSettingsSchema.parse(req.body) as WorldSettings;
+    const updatedRoom = await updateRoomSettings(roomId, settings);
 
-        res.json({ success: true, data: updatedRoom });
-    })
+    res.json({ success: true, data: updatedRoom });
+  })
 );
 
 /**
@@ -149,33 +143,33 @@ router.patch(
  * @route PATCH /api/rooms/:roomId
  */
 router.patch(
-    '/:roomId',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        if (room.ownerId !== req.user?.uid) {
-            throw new ApiError(403, 'Only room owner can update room');
-        }
+    if (room.ownerId !== req.user?.uid) {
+      throw new ApiError(403, 'Only room owner can update room');
+    }
 
-        // Allow updating generationEvents
-        const updateData: any = {};
-        if (req.body.generationEvents) {
-            updateData.generationEvents = req.body.generationEvents;
-        }
-        updateData.updatedAt = Date.now();
+    // Allow updating generationEvents
+    const updateData: any = {};
+    if (req.body.generationEvents) {
+      updateData.generationEvents = req.body.generationEvents;
+    }
+    updateData.updatedAt = Date.now();
 
-        const db = getDb();
-        await db.collection('rooms').doc(roomId).update(updateData);
+    const db = getDb();
+    await db.collection('rooms').doc(roomId).update(updateData);
 
-        const updatedRoom = await getRoom(roomId);
-        res.json({ success: true, data: updatedRoom });
-    })
+    const updatedRoom = await getRoom(roomId);
+    res.json({ success: true, data: updatedRoom });
+  })
 );
 
 /**
@@ -183,23 +177,23 @@ router.patch(
  * @route DELETE /api/rooms/:roomId
  */
 router.delete(
-    '/:roomId',
-    authenticate,
-    asyncHandler(async (req: AuthRequest, res: Response) => {
-        const { roomId } = roomIdParamSchema.parse(req.params);
+  '/:roomId',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { roomId } = roomIdParamSchema.parse(req.params);
 
-        const room = await getRoom(roomId);
-        if (!room) {
-            throw new ApiError(404, 'Room not found');
-        }
+    const room = await getRoom(roomId);
+    if (!room) {
+      throw new ApiError(404, 'Room not found');
+    }
 
-        if (room.ownerId !== req.user!.uid) {
-            throw new ApiError(403, 'Only room owner can delete room');
-        }
+    if (room.ownerId !== req.user!.uid) {
+      throw new ApiError(403, 'Only room owner can delete room');
+    }
 
-        await deleteRoom(roomId);
-        res.json({ success: true, data: null });
-    })
+    await deleteRoom(roomId);
+    res.json({ success: true, data: null });
+  })
 );
 
 export default router;

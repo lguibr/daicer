@@ -4,7 +4,14 @@
  * NO IndexedDB - structures can always be regenerated from seed
  */
 
-import { STRUCTURE_TEMPLATES, structureTileToBiome, type StructureFloor , GlobalPlacementMap, StructurePlacement, Structure } from '@daicer/shared/world-gen/structures';
+import {
+  STRUCTURE_TEMPLATES,
+  structureTileToBiome,
+  type StructureFloor,
+  GlobalPlacementMap,
+  StructurePlacement,
+  Structure,
+} from '@daicer/shared/world-gen/structures';
 
 // In-memory structure cache (simple Map, no persistence)
 const structureCache = new Map<string, Structure>();

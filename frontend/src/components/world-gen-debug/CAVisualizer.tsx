@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Label from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipForward, RotateCcw , Info } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCcw, Info } from 'lucide-react';
 import { Alea } from '@daicer/shared/world-gen/noise';
 import { GridCanvas } from './GridCanvas';
 import { SeedControl } from './SeedControl';

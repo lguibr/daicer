@@ -6,8 +6,8 @@ import { joinRoom } from '../services/api';
 import { PrivateLayout } from '../components/layout';
 import { useI18n } from '../i18n';
 import { SpotlightCarousel } from '../components/ui';
-import { JoinHeroSlide } from '../components//JoinHeroSlide';
-import { useJoinSlides } from '../features//joinSlides';
+import { JoinHeroSlide } from "../components/JoinHeroSlide";
+import { useJoinSlides } from "../features/joinSlides";
 import { gildedTokens } from '../theme/gildedTokens';
 
 /**

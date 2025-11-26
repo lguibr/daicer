@@ -8,7 +8,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { CHUNK_SIZE } from '@daicer/shared';
 import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import type { GridTile } from '../../../../shared/world';
+import type { GridTile } from "@daicer/shared/world/world";
 import { VoxelMetadataPanel, type VoxelMetadata } from './VoxelMetadataPanel';
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement';
 import {
@@ -18,10 +18,12 @@ import {
 } from '../../contexts/infinite-chunks';
 import { AspectRatio } from '../ui/aspect-ratio';
 
+import { useSimpleTerrainManager } from './useSimpleTerrainManager';
+
 interface TerrainExplorerProps {
   biomeGrid: GridTile[][]; // 2D grid for backward compatibility (surface layer)
   biomeGrid3D?: GridTile[][][]; // Optional 3D grid [floor][y][x] for multi-floor structures (7 floors: -3 to +3)
-  structures?: Array<{ name: string; x: number; y: number; type: string;[key: string]: any }>;
+  structures?: Array<{ name: string; x: number; y: number; type: string; [key: string]: any }>;
   roomSize?: number;
   initialZoom?: number;
   roomId?: string;
@@ -122,10 +124,6 @@ function getStructureColor(biomeName: string): string | null {
   return null; // Not a structure biome
 }
 
-import { useSimpleTerrainManager } from './useSimpleTerrainManager';
-
-
-
 export function TerrainExplorer({
   biomeGrid,
   biomeGrid3D,
@@ -200,13 +198,15 @@ export function TerrainExplorer({
       expandedGrid={biomeGrid}
       gridWorldOffset={{ x: 0, y: 0 }}
       isLoading={false}
-      checkChunkLoading={() => { }}
+      checkChunkLoading={() => {}}
     />
   );
 }
 
 // Wrapper for Simple Manager
-function SimpleTerrainExplorerWrapper(props: TerrainExplorerProps & { chunkGenerator: NonNullable<TerrainExplorerProps['chunkGenerator']> }) {
+function SimpleTerrainExplorerWrapper(
+  props: TerrainExplorerProps & { chunkGenerator: NonNullable<TerrainExplorerProps['chunkGenerator']> }
+) {
   const { expandedGrid, gridWorldOffset, isLoading, checkChunkLoading } = useSimpleTerrainManager({
     initialGrid: props.biomeGrid,
     chunkSize: CHUNK_SIZE,
@@ -217,7 +217,7 @@ function SimpleTerrainExplorerWrapper(props: TerrainExplorerProps & { chunkGener
   return (
     <TerrainExplorerInternal
       {...props}
-      enableInfinite={true}
+      enableInfinite
       expandedGrid={expandedGrid}
       gridWorldOffset={gridWorldOffset}
       isLoading={isLoading}
@@ -234,7 +234,7 @@ function InfiniteChunksBridge(props: Omit<TerrainExplorerProps, 'chunkGenerator'
   return (
     <TerrainExplorerInternal
       {...props}
-      enableInfinite={true}
+      enableInfinite
       expandedGrid={infiniteChunksView.expandedGrid}
       gridWorldOffset={infiniteChunksView.gridWorldOffset}
       isLoading={infiniteChunksView.isLoading}
@@ -302,11 +302,11 @@ function TerrainExplorerInternal({
     bounds: enableInfinite
       ? undefined // No bounds for infinite terrain
       : {
-        minX: gridWorldOffset.x,
-        maxX: gridWorldOffset.x + gridWidth - 1,
-        minY: gridWorldOffset.y,
-        maxY: gridWorldOffset.y + gridHeight - 1,
-      },
+          minX: gridWorldOffset.x,
+          maxX: gridWorldOffset.x + gridWidth - 1,
+          minY: gridWorldOffset.y,
+          maxY: gridWorldOffset.y + gridHeight - 1,
+        },
     enabled: true,
     coordinateOffset: gridWorldOffset, // Pass for awareness
   });
@@ -549,7 +549,7 @@ function TerrainExplorerInternal({
               ctx.setLineDash([]); // Reset
             }
           }
-      }
+        }
       }
     }
 
@@ -589,7 +589,7 @@ function TerrainExplorerInternal({
         for (let sy = roomStartY; sy < roomStartY + 3 && sy < height; sy++) {
           for (let sx = roomStartX; sx < roomStartX + 3 && sx < width; sx++) {
             const tile = activeGrid[sy]?.[sx];
-            const biomeName = typeof tile === 'string' ? tile : (tile ? tile.biome : '');
+            const biomeName = typeof tile === 'string' ? tile : tile ? tile.biome : '';
             if (biomeName && (biomeName.startsWith('structure_final_') || biomeName.startsWith('structure_road_'))) {
               hasDetailedTiles = true;
               break;
@@ -812,10 +812,10 @@ function TerrainExplorerInternal({
         // Let's check VoxelMetadataPanel.tsx again. It has optional elevation, temperature, moisture.
         structure: structure
           ? {
-            name: structure.name,
-            type: structure.type,
-            description: structure.description || 'A mysterious structure',
-          }
+              name: structure.name,
+              type: structure.type,
+              description: structure.description || 'A mysterious structure',
+            }
           : undefined,
       };
 
@@ -964,7 +964,7 @@ function TerrainExplorerInternal({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-        // onWheel handled via ref in useEffect
+          // onWheel handled via ref in useEffect
         >
           <AspectRatio ratio={16 / 9} className="w-full h-full">
             <canvas

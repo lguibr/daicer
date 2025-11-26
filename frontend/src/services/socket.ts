@@ -55,7 +55,7 @@ interface SocketEvents {
   onPlayerJoined?: (data: { userId: string }) => void;
   onPlayerLeft?: (data: { userId: string }) => void;
   onPlayerCreated?: (data: { player: Player }) => void;
-  onPlayerReadyUpdated?: (data: { playerId: string; ready: boolean }) => void;
+  onPlayerReadyUpdated?: (data: { userId: string; isReady: boolean }) => void;
   onAllReady?: () => void;
   onPhaseChanged?: (data: { phase: string }) => void;
   onTurnProcessing?: () => void;
@@ -73,6 +73,16 @@ interface SocketEvents {
   onStreamAborted?: (data: { streamId: string; messageId: string }) => void;
   // Presence events
   onPresenceUpdate?: (data: { roomId: string; presence: PresenceData[] }) => void;
+
+  // Unified LLM Stream
+  onLLMStreamEvent?: (data: {
+    streamId: string;
+    roomId: string;
+    type: 'text' | 'tool_start' | 'tool_end' | 'reasoning' | 'error' | 'done';
+    content?: string;
+    metadata?: Record<string, any>;
+    timestamp: number;
+  }) => void;
 }
 
 /**
@@ -192,6 +202,9 @@ export async function initSocket(
 
   // Presence events
   if (events.onPresenceUpdate) socket.on('presence:update', events.onPresenceUpdate);
+
+  // Unified LLM Stream
+  if (events.onLLMStreamEvent) socket.on('llm:stream:event', events.onLLMStreamEvent);
 
   return socket;
 }

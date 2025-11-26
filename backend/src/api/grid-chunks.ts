@@ -161,7 +161,7 @@ router.get('/chunk/:entityId/:chunkX/:chunkY/:z', authenticate, async (req: Auth
     logger.error('[API:GridChunk] ❌❌❌ ERROR IN HANDLER!', {
       error,
       roomId: req.params.entityId,
-      chunkId: `${req.params.chunkX}_${req.params.chunkY}_${req.params.z}`
+      chunkId: `${req.params.chunkX}_${req.params.chunkY}_${req.params.z}`,
     });
     next(error);
   }

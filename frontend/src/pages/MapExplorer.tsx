@@ -63,11 +63,7 @@ export default function MapExplorer() {
             <div className="flex-1">
               <label className="text-xs text-shadow-500 mb-1 block">World Seed</label>
               <div className="flex gap-2">
-                <Input
-                  value={seed}
-                  onChange={(e) => setSeed(e.target.value)}
-                  className="font-mono text-sm"
-                />
+                <Input value={seed} onChange={(e) => setSeed(e.target.value)} className="font-mono text-sm" />
                 <Button variant="outline" size="icon" onClick={handleRandomizeSeed}>
                   <RefreshCw className="h-4 w-4" />
                 </Button>

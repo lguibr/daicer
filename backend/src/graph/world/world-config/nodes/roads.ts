@@ -23,7 +23,6 @@ export const roadsGenerationNode = async (
     structureCount: structures.length,
   });
 
-
   // Generate roads
   const roads = generateRoads(structures as any, null, roomId);
 
@@ -37,7 +36,6 @@ export const roadsGenerationNode = async (
       })
       .slice(0, 5),
   });
-
 
   return {
     roads,

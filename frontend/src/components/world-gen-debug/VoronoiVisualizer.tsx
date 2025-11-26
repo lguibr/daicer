@@ -51,7 +51,7 @@ export function VoronoiVisualizer() {
 
       // Draw Voronoi regions (simple nearest-point coloring)
       const imageData = ctx.createImageData(width, height);
-      const {data} = imageData;
+      const { data } = imageData;
 
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -208,7 +208,9 @@ export function VoronoiVisualizer() {
 
 // Helper: HSL to RGB conversion
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  let r; let g; let b;
+  let r;
+  let g;
+  let b;
 
   if (s === 0) {
     r = g = b = l;

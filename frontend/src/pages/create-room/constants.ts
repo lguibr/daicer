@@ -22,7 +22,7 @@ export const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {
 
 /**
  * Create Room Wizard - Simplified 2-Step Flow
- * 
+ *
  * Step 1: DM & Scope - DM settings + characters + level/points
  * Step 2: Terrain Builder - All worldgen controls + live exploration
  */
@@ -31,7 +31,7 @@ export const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {
 export type WizardGroup = 'dmAndScope' | 'terrainBuilder';
 
 export const WIZARD_GROUPS: WizardGroup[] = [
-  'dmAndScope',     // DM settings, characters, level, points
+  'dmAndScope', // DM settings, characters, level, points
   'terrainBuilder', // Seed, terrain params, live explorer
 ];
 
@@ -71,15 +71,15 @@ export const DETAIL_MARK_KEYS = [
 ] as const;
 
 export const DETAIL_FALLBACK: Record<(typeof DETAIL_MARK_KEYS)[number]['key'], { label: string; description: string }> =
-{
-  minimal: { label: 'Minimal', description: 'Rule-first clarity; bare essential context.' },
-  lean: { label: 'Lean', description: 'Highlights key props and obstacles, nothing more.' },
-  focused: { label: 'Focused', description: 'Mix of mechanical stakes and vivid landmarks.' },
-  balanced: { label: 'Balanced', description: 'Equal parts mechanics, atmosphere, and sensory tone.' },
-  textured: { label: 'Textured', description: 'Layered description of sights, sounds, and culture.' },
-  immersive: { label: 'Immersive', description: 'Every scene painted with historical and emotional nuance.' },
-  cinematic: { label: 'Cinematic', description: 'Panoramic detail, symbolism, and lingering imagery.' },
-};
+  {
+    minimal: { label: 'Minimal', description: 'Rule-first clarity; bare essential context.' },
+    lean: { label: 'Lean', description: 'Highlights key props and obstacles, nothing more.' },
+    focused: { label: 'Focused', description: 'Mix of mechanical stakes and vivid landmarks.' },
+    balanced: { label: 'Balanced', description: 'Equal parts mechanics, atmosphere, and sensory tone.' },
+    textured: { label: 'Textured', description: 'Layered description of sights, sounds, and culture.' },
+    immersive: { label: 'Immersive', description: 'Every scene painted with historical and emotional nuance.' },
+    cinematic: { label: 'Cinematic', description: 'Panoramic detail, symbolism, and lingering imagery.' },
+  };
 
 // Engagement scale
 export const ENGAGEMENT_MARK_KEYS = [

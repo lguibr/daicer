@@ -12,6 +12,7 @@ import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import type { CombatCharacter } from '@/combat/types';
 import type { Position } from '@/types/shared';
 import { DiceRoller } from '@/combat/dice';
+import { streamManager } from '@/services/llm/stream-manager';
 
 // Tool Schemas
 const rollInitiativeSchema = z.object({
@@ -255,7 +256,8 @@ export async function processDMCommand(
   command: string,
   characters: CombatCharacter[],
   diceRoller: DiceRoller,
-  onUpdate: (update: any) => void
+  onUpdate: (update: any) => void,
+  streamId?: string
 ): Promise<string> {
   const agent = await createTacticalDMAgent(characters, diceRoller, onUpdate);
 
@@ -272,15 +274,37 @@ When the user says something like:
 
 Execute the command and describe what happened in narrative form.`;
 
-  const result = await agent.invoke({
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: command },
-    ],
-  });
+  // Use streamEvents to get real-time updates
+  const stream = await agent.streamEvents(
+    {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: command },
+      ],
+    },
+    {
+      version: 'v2',
+    }
+  );
 
-  // Extract final message
-  const messages = result.messages || [];
-  const lastMessage = messages[messages.length - 1];
-  return lastMessage?.content || 'Command processed';
+  let finalContent = '';
+
+  for await (const event of stream) {
+    // Stream text chunks
+    if (event.event === 'on_chat_model_stream') {
+      const content = event.data.chunk?.content;
+      if (content && typeof content === 'string') {
+        if (streamId) streamManager.emitText(streamId, content);
+        finalContent += content;
+      }
+    }
+    // Stream tool usage
+    else if (event.event === 'on_tool_start') {
+      if (streamId) streamManager.emitToolStart(streamId, event.name, event.data.input);
+    } else if (event.event === 'on_tool_end') {
+      if (streamId) streamManager.emitToolEnd(streamId, event.name, event.data.output);
+    }
+  }
+
+  return finalContent || 'Command processed';
 }

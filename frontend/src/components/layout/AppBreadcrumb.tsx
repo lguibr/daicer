@@ -24,7 +24,6 @@ export default function AppBreadcrumb() {
 
   // Route label mappings
   const routeLabels: Record<string, string> = {
-
     room: t('navbar.links.rooms'),
     rooms: t('navbar.links.rooms'),
     game: t('navbar.links.game'),

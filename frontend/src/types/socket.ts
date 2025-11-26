@@ -42,6 +42,16 @@ export interface ServerToClientEvents {
   'message:stream:error': (data: { streamId: string; messageId?: string; error: string }) => void;
   'message:stream:aborted': (data: { streamId: string; messageId: string }) => void;
 
+  // Unified LLM Stream
+  'llm:stream:event': (data: {
+    streamId: string;
+    roomId: string;
+    type: 'text' | 'tool_start' | 'tool_end' | 'reasoning' | 'error' | 'done';
+    content?: string;
+    metadata?: Record<string, any>;
+    timestamp: number;
+  }) => void;
+
   // Presence
   'presence:update': (data: { roomId: string; presence: any[] }) => void;
 

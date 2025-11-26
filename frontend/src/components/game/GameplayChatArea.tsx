@@ -355,9 +355,7 @@ function RAGContextViewer({ text }: { text: string }) {
               {rule.title}
             </h5>
             <div className="flex flex-col items-end gap-1 text-[10px]">
-              <span className="rounded-full bg-aurora-500/10 px-2 py-0.5 text-aurora-300">
-                {rule.relevance} match
-              </span>
+              <span className="rounded-full bg-aurora-500/10 px-2 py-0.5 text-aurora-300">{rule.relevance} match</span>
               <span className="text-shadow-400 uppercase tracking-wider">{rule.category}</span>
             </div>
           </div>
@@ -374,18 +372,13 @@ function ToolCallsViewer({ toolCalls }: { toolCalls: any[] }) {
   return (
     <div className="space-y-2">
       {toolCalls.map((call, idx) => (
-        <div
-          key={idx}
-          className="rounded-md border border-nebula-500/20 bg-midnight-950/50 p-2 font-mono text-[10px]"
-        >
+        <div key={idx} className="rounded-md border border-nebula-500/20 bg-midnight-950/50 p-2 font-mono text-[10px]">
           <div className="mb-1 flex items-center justify-between border-b border-nebula-500/10 pb-1">
             <span className="font-bold text-nebula-300">{call.name || call.function?.name || 'Unknown Tool'}</span>
             <span className="opacity-50">call_id: {call.id?.slice(0, 8)}...</span>
           </div>
           <div className="overflow-x-auto py-1">
-            <pre className="text-shadow-300">
-              {JSON.stringify(call.arguments || call.function?.arguments, null, 2)}
-            </pre>
+            <pre className="text-shadow-300">{JSON.stringify(call.arguments || call.function?.arguments, null, 2)}</pre>
           </div>
         </div>
       ))}

@@ -39,7 +39,7 @@ export default function Assets3DPage() {
   const [viewingAsset, setViewingAsset] = useState<string | null>(null);
   const [movingAsset, setMovingAsset] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'collection' | 'asset'; id: string } | null>(null);
-  
+
   // Inline form state
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -160,7 +160,7 @@ export default function Assets3DPage() {
       if (!response.ok) throw new Error('Generation failed');
 
       toast({ title: 'Generation Started', description: 'Voxel model is being generated' });
-      
+
       // Immediately reload assets to show the new asset in the grid
       if (selectedCollection) {
         await loadAssets(selectedCollection);

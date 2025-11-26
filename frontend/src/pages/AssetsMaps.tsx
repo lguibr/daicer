@@ -10,8 +10,8 @@ import { useAssetsStore } from '@/state/assetsStore';
 import { WorldGenerator } from '@/components/terrain/WorldGenerator';
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, type GenerationParams } from '@/hooks/useWorldGeneration';
-import { GridTile } from '../../../shared/world';
 import { PrivateLayout } from '@/components/layout';
+import { GridTile } from "@daicer/shared/world/world";
 
 export default function AssetsMapsPage() {
   const { worlds, addWorld, removeWorld } = useAssetsStore();
@@ -51,9 +51,7 @@ export default function AssetsMapsPage() {
     setDeleteConfirm(null);
   };
 
-  const filteredWorlds = worlds.filter((w) => 
-    w.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredWorlds = worlds.filter((w) => w.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const selectedWorldData = worlds.find((w) => w.id === selectedWorld);
 
@@ -61,50 +59,77 @@ export default function AssetsMapsPage() {
   const selectedWorldChunkGenerator = useMemo(() => {
     if (!selectedWorldData) {
       return {
-        generateChunk: (worldX: number, worldY: number, width: number, height: number) => 
-          Array(height).fill(0).map(() => 
-            Array(width).fill({
-              x: 0, y: 0, z: 0, biome: 'plains', blockType: 'grass'
-            } as GridTile)
-          ),
-        generateChunk3D: (worldX: number, worldY: number, width: number, height: number) => 
-          Array(1).fill(0).map(() => 
-            Array(height).fill(0).map(() => 
+        generateChunk: (worldX: number, worldY: number, width: number, height: number) =>
+          Array(height)
+            .fill(0)
+            .map(() =>
               Array(width).fill({
-                x: 0, y: 0, z: 0, biome: 'plains', blockType: 'grass'
+                x: 0,
+                y: 0,
+                z: 0,
+                biome: 'plains',
+                blockType: 'grass',
               } as GridTile)
-            )
-          ),
+            ),
+        generateChunk3D: (worldX: number, worldY: number, width: number, height: number) =>
+          Array(1)
+            .fill(0)
+            .map(() =>
+              Array(height)
+                .fill(0)
+                .map(() =>
+                  Array(width).fill({
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    biome: 'plains',
+                    blockType: 'grass',
+                  } as GridTile)
+                )
+            ),
       };
     }
 
-    const generator = createChunkGenerator(selectedWorldData.seed, selectedWorldData.params as unknown as GenerationParams);
+    const generator = createChunkGenerator(
+      selectedWorldData.seed,
+      selectedWorldData.params as unknown as GenerationParams
+    );
     return {
       generateChunk: (worldX: number, worldY: number, width: number, height: number): GridTile[][] => {
         const chunk3D = generator(worldX, worldY, width, height);
-        const surfaceGrid = chunk3D[3] || Array(height).fill(0).map(() => Array(width).fill('plains'));
-        
-        return surfaceGrid.map((row, y) => 
-          row.map((biome, x) => ({
-            x: worldX + x,
-            y: worldY + y,
-            z: 0,
-            biome,
-            blockType: 'grass'
-          } as GridTile))
+        const surfaceGrid =
+          chunk3D[3] ||
+          Array(height)
+            .fill(0)
+            .map(() => Array(width).fill('plains'));
+
+        return surfaceGrid.map((row, y) =>
+          row.map(
+            (biome, x) =>
+              ({
+                x: worldX + x,
+                y: worldY + y,
+                z: 0,
+                biome,
+                blockType: 'grass',
+              }) as GridTile
+          )
         );
       },
       generateChunk3D: (worldX: number, worldY: number, width: number, height: number): GridTile[][][] => {
         const chunk3D = generator(worldX, worldY, width, height);
-        return chunk3D.map((floorGrid, z) => 
-          floorGrid.map((row, y) => 
-            row.map((biome, x) => ({
-              x: worldX + x,
-              y: worldY + y,
-              z: z - 3,
-              biome,
-              blockType: 'grass'
-            } as GridTile))
+        return chunk3D.map((floorGrid, z) =>
+          floorGrid.map((row, y) =>
+            row.map(
+              (biome, x) =>
+                ({
+                  x: worldX + x,
+                  y: worldY + y,
+                  z: z - 3,
+                  biome,
+                  blockType: 'grass',
+                }) as GridTile
+            )
           )
         );
       },
@@ -153,7 +178,7 @@ export default function AssetsMapsPage() {
                     <Plus className="w-4 h-4 mr-2" />
                     Create New World
                   </Button>
-                  
+
                   {filteredWorlds.map((world) => (
                     <div
                       key={world.id}
@@ -211,19 +236,16 @@ export default function AssetsMapsPage() {
                   <div className="flex items-end gap-4">
                     <div className="flex-1 space-y-2">
                       <Label className="text-shadow-200">World Name</Label>
-                      <Input 
-                        value={worldName} 
-                        onChange={(e) => setWorldName(e.target.value)} 
+                      <Input
+                        value={worldName}
+                        onChange={(e) => setWorldName(e.target.value)}
                         placeholder="My New World"
                         className="bg-midnight-800/50 border-midnight-500 text-white"
                       />
                     </div>
                   </div>
 
-                  <WorldGenerator 
-                    onSave={handleSaveWorld}
-                    className="h-full"
-                  />
+                  <WorldGenerator onSave={handleSaveWorld} className="h-full" />
                 </TabsContent>
 
                 <TabsContent value="saved" className="h-full m-0">
@@ -232,9 +254,7 @@ export default function AssetsMapsPage() {
                       <CardHeader className="border-b border-shadow-800/70">
                         <div className="flex justify-between items-center">
                           <CardTitle className="text-white">{selectedWorldData.name}</CardTitle>
-                          <div className="text-sm text-shadow-400">
-                            Seed: {selectedWorldData.seed}
-                          </div>
+                          <div className="text-sm text-shadow-400">Seed: {selectedWorldData.seed}</div>
                         </div>
                       </CardHeader>
                       <CardContent className="flex-1 p-0 relative overflow-hidden">

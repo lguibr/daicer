@@ -29,13 +29,13 @@ export const queryMapTool = new DynamicStructuredTool({
       // In a real implementation, we'd fetch all overlapping chunks
       const chunkX = Math.floor(x / CHUNK_SIZE);
       const chunkY = Math.floor(y / CHUNK_SIZE);
-      
+
       const chunk = await mapService.getChunk(roomId, chunkX, chunkY);
-      
+
       // Find the specific tile
       const localX = Math.abs(x % CHUNK_SIZE);
       const localY = Math.abs(y % CHUNK_SIZE);
-      const tile = chunk.tiles.find(t => t.x === x && t.y === y);
+      const tile = chunk.tiles.find((t) => t.x === x && t.y === y);
 
       if (!tile) {
         return `Location (${x}, ${y}) is uncharted void.`;
@@ -46,7 +46,7 @@ export const queryMapTool = new DynamicStructuredTool({
         biome: tile.biome,
         blockType: tile.blockType,
         elevation: tile.elevation,
-        description: `You are in a ${tile.biome} area. The ground is ${tile.blockType}.`
+        description: `You are in a ${tile.biome} area. The ground is ${tile.blockType}.`,
       });
     } catch (error) {
       logger.error('Error querying map:', error);
@@ -74,12 +74,12 @@ export const moveEntityTool = new DynamicStructuredTool({
       return JSON.stringify({
         success: true,
         message: `Entity ${entityId} moved to (${targetX}, ${targetY}).`,
-        newPosition: { x: targetX, y: targetY }
+        newPosition: { x: targetX, y: targetY },
       });
     } catch (error) {
       return JSON.stringify({
         success: false,
-        error: `Failed to move entity: ${error instanceof Error ? error.message : String(error)}`
+        error: `Failed to move entity: ${error instanceof Error ? error.message : String(error)}`,
       });
     }
   },
@@ -101,15 +101,15 @@ export const scanSurroundingsTool = new DynamicStructuredTool({
   func: async ({ roomId, x, y, radius }) => {
     try {
       const entities = await mapService.getEntitiesInArea(roomId, x - radius, y - radius, x + radius, y + radius);
-      
+
       return JSON.stringify({
         center: { x, y },
         radius,
-        entities: entities.map(e => ({
+        entities: entities.map((e) => ({
           id: e.id,
           name: e.name,
           type: e.type,
-          position: { x: e.x, y: e.y }
+          position: { x: e.x, y: e.y },
         })),
         // TODO: Add terrain features summary
       });

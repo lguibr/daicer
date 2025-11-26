@@ -47,7 +47,7 @@ export default function GameRoomPage() {
     if (!loading && players.length > 0 && user?.uid) {
       // Only redirect if we are in the correct phase
       if (room?.phase === 'CHARACTER_CREATION' || room?.phase === 'SETUP') {
-        const me = players.find(p => p.userId === user.uid);
+        const me = players.find((p) => p.userId === user.uid);
         if (me) {
           if (!me.character && !hasAutoRedirected) {
             setIsCreatingCharacter(true);
@@ -415,11 +415,7 @@ export default function GameRoomPage() {
     if (isCreatingCharacter) {
       return (
         <DynamicLayout showNavbar={false} showLanguageSelector>
-          <CharacterCreation
-            room={room}
-            players={players}
-            onCancel={() => setIsCreatingCharacter(false)}
-          />
+          <CharacterCreation room={room} players={players} onCancel={() => setIsCreatingCharacter(false)} />
         </DynamicLayout>
       );
     }
@@ -444,7 +440,7 @@ export default function GameRoomPage() {
     return (
       <DynamicLayout showRoomInfo>
         <CombatScreen roomId={roomId!} />
-        <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => { }} />
+        <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => {}} />
       </DynamicLayout>
     );
   }
@@ -453,7 +449,7 @@ export default function GameRoomPage() {
   return (
     <DynamicLayout showRoomInfo>
       <GameplayScreen room={room} players={players} />
-      <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => { }} />
+      <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => {}} />
     </DynamicLayout>
   );
 }

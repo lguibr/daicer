@@ -45,13 +45,7 @@ const ASSET_TYPE_ICONS: Record<Asset['assetType'], string> = {
   'character-sheet': '📜',
 };
 
-export function AssetCard({
-  asset,
-  onView,
-  onMove,
-  onDelete,
-  onCreateVariations,
-}: AssetCardProps) {
+export function AssetCard({ asset, onView, onMove, onDelete, onCreateVariations }: AssetCardProps) {
   const statusConfig = STATUS_CONFIG[asset.status] || STATUS_CONFIG.pending;
   const canView = asset.status === 'done' && onView;
   const canCreateVariations = asset.status === 'done' && onCreateVariations;

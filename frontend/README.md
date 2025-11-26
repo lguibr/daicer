@@ -131,7 +131,7 @@ The dev server automatically reloads when `.env.local` changes.
 | Route              | Component           | Overview                                     |
 | ------------------ | ------------------- | -------------------------------------------- |
 | `/`                | `LandingPage`       | Marketing splash + Sign-in                   |
-| `/`           | `LobbyScreen`       | Create/join rooms, view active games         |
+| `/`                | `LobbyScreen`       | Create/join rooms, view active games         |
 | `/create`          | `WorldSettingsPage` | Configure world tone, theme, difficulty      |
 | `/room/:id`        | `RoomShell`         | Hosts character creation + gameplay + combat |
 | `/room/:id/combat` | `CombatScreen`      | Tactical grid + time travel                  |

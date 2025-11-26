@@ -131,7 +131,7 @@ export default function RoomsPage() {
               type="button"
               variant="secondary"
               onClick={() => {
-                fetchMemberships().catch(() => { });
+                fetchMemberships().catch(() => {});
               }}
             >
               {t('rooms.actions.retry')}
@@ -210,7 +210,7 @@ export default function RoomsPage() {
                           variant="ghost"
                           disabled={isProcessing}
                           onClick={() => {
-                            handleLeaveRoom(membership).catch(() => { });
+                            handleLeaveRoom(membership).catch(() => {});
                           }}
                           className="sm:min-w-[140px]"
                         >

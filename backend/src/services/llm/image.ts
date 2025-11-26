@@ -27,8 +27,6 @@ type InlineDataPart = {
   text?: string;
 };
 
-
-
 let client: GoogleGenAI | null = null;
 
 /**
@@ -79,8 +77,6 @@ function buildResponseConfig() {
   };
 }
 
-
-
 /**
  * Convert Gemini errors to ApiError
  */
@@ -106,11 +102,7 @@ function convertGeminiError(error: unknown): Error {
 /**
  * Retry with exponential backoff
  */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000
-): Promise<T> {
+async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries: number = 3, baseDelay: number = 1000): Promise<T> {
   let lastError: Error | undefined;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {

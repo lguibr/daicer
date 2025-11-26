@@ -9,6 +9,7 @@ import { logger } from '@/utils/logger';
 import { processDMCommand } from '@/agents/tacticalDM';
 import { DiceRoller } from '@/combat/dice';
 import type { CombatCharacter } from '@/combat/types';
+import { streamManager } from '@/services/llm/stream-manager';
 
 const dmCommandSchema = z.object({
   sessionId: z.string().min(1),
@@ -76,8 +77,18 @@ export function registerTacticalDMHandlers(socket: Socket, userId: string): void
         });
       };
 
+      // Generate stream ID for this command
+      const streamId = `stream-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Start unified stream
+      // Use sessionId as roomId since that's what we have
+      streamManager.startStream(streamId, sessionId, userId);
+
       // Process command through LLM agent
-      const response = await processDMCommand(command, characters as CombatCharacter[], diceRoller, onUpdate);
+      const response = await processDMCommand(command, characters as CombatCharacter[], diceRoller, onUpdate, streamId);
+
+      // End unified stream
+      streamManager.endStream(streamId);
 
       const elapsed = Date.now() - startTime;
 

@@ -612,7 +612,12 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
       await Promise.all(
         players.map(async (player) => {
           try {
-            const opening = await generateCharacterOpening(room.worldDescription, player.character, mainMessage, language);
+            const opening = await generateCharacterOpening(
+              room.worldDescription,
+              player.character,
+              mainMessage,
+              language
+            );
 
             const msg: Message = {
               id: `msg-${Date.now()}-${player.id}`,
@@ -627,7 +632,6 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
           }
         })
       );
-
     } catch (err) {
       logger.error(`Background story generation failed for room ${roomId}:`, err);
       const errorMsg: Message = {
@@ -645,7 +649,6 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
  * Process game turn
  * @route POST /api/game/:roomId/turn
  */
-
 
 /**
  * Submit player action

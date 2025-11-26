@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Label from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import  Input  from '@/components/ui/input';
+import Input from '@/components/ui/input';
 import { Play, RefreshCw, Settings2, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@/hooks/useWorldGeneration';
-import { GridTile } from '../../../../shared/world';
+import { GridTile } from "@daicer/shared/world/world";
 
 interface WorldGeneratorProps {
   initialSeed?: string;
@@ -29,14 +29,8 @@ export function WorldGenerator({
   const [params, setParams] = useState<GenerationParams>(initialParams);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const {
-    isGenerating,
-    biomeGrid,
-    biomeGrid3D,
-    structures,
-    generateWorld,
-    createChunkGenerator,
-  } = useWorldGeneration();
+  const { isGenerating, biomeGrid, biomeGrid3D, structures, generateWorld, createChunkGenerator } =
+    useWorldGeneration();
 
   // Initial generation
   useEffect(() => {
@@ -78,29 +72,39 @@ export function WorldGenerator({
         // generator returns string[][][] (3D grid of biome strings)
         const chunk3D = generator(worldX, worldY, width, height);
         // Return surface layer (floor 3 - index 3), or empty grid if not available
-        const surfaceGrid = chunk3D[3] || Array(height).fill(0).map(() => Array(width).fill('plains'));
-        
-        return surfaceGrid.map((row, y) => 
-          row.map((biome, x) => ({
-            x: worldX + x,
-            y: worldY + y,
-            z: 0,
-            biome: typeof biome === 'string' ? biome : 'plains',
-            blockType: 'grass'
-          } as GridTile))
+        const surfaceGrid =
+          chunk3D[3] ||
+          Array(height)
+            .fill(0)
+            .map(() => Array(width).fill('plains'));
+
+        return surfaceGrid.map((row, y) =>
+          row.map(
+            (biome, x) =>
+              ({
+                x: worldX + x,
+                y: worldY + y,
+                z: 0,
+                biome: typeof biome === 'string' ? biome : 'plains',
+                blockType: 'grass',
+              }) as GridTile
+          )
         );
       },
       generateChunk3D: (worldX: number, worldY: number, width: number, height: number): GridTile[][][] => {
         const chunk3D = generator(worldX, worldY, width, height);
-        return chunk3D.map((floorGrid, z) => 
-          floorGrid.map((row, y) => 
-            row.map((biome, x) => ({
-              x: worldX + x,
-              y: worldY + y,
-              z: z - 3,
-              biome: typeof biome === 'string' ? biome : 'plains',
-              blockType: 'grass'
-            } as GridTile))
+        return chunk3D.map((floorGrid, z) =>
+          floorGrid.map((row, y) =>
+            row.map(
+              (biome, x) =>
+                ({
+                  x: worldX + x,
+                  y: worldY + y,
+                  z: z - 3,
+                  biome: typeof biome === 'string' ? biome : 'plains',
+                  blockType: 'grass',
+                }) as GridTile
+            )
           )
         );
       },
@@ -133,12 +137,7 @@ export function WorldGenerator({
             </Button>
 
             {onSave && (
-              <Button 
-                type="button" 
-                variant="secondary" 
-                onClick={() => onSave(seed, params)} 
-                className="w-full"
-              >
+              <Button type="button" variant="secondary" onClick={() => onSave(seed, params)} className="w-full">
                 <Save className="w-4 h-4 mr-2" />
                 Save World
               </Button>
@@ -253,23 +252,35 @@ export function WorldGenerator({
             <div className="absolute inset-0">
               <TerrainExplorer
                 biomeGrid={
-                  biomeGrid.length > 0 
-                    ? biomeGrid.map((row, y) => 
-                        row.map((biome, x) => ({
-                          x, y, z: 0, biome: typeof biome === 'string' ? biome : 'plains', blockType: 'grass'
-                        } as GridTile))
+                  biomeGrid.length > 0
+                    ? biomeGrid.map((row, y) =>
+                        row.map(
+                          (biome, x) =>
+                            ({
+                              x,
+                              y,
+                              z: 0,
+                              biome: typeof biome === 'string' ? biome : 'plains',
+                              blockType: 'grass',
+                            }) as GridTile
+                        )
                       )
                     : []
                 }
-                biomeGrid3D={
-                  biomeGrid3D.map((floor, z) =>
-                    floor.map((row, y) =>
-                      row.map((biome, x) => ({
-                        x, y, z: z - 3, biome: typeof biome === 'string' ? biome : 'plains', blockType: 'grass'
-                      } as GridTile))
+                biomeGrid3D={biomeGrid3D.map((floor, z) =>
+                  floor.map((row, y) =>
+                    row.map(
+                      (biome, x) =>
+                        ({
+                          x,
+                          y,
+                          z: z - 3,
+                          biome: typeof biome === 'string' ? biome : 'plains',
+                          blockType: 'grass',
+                        }) as GridTile
                     )
                   )
-                }
+                )}
                 structures={structures}
                 roomSize={32}
                 enableInfinite

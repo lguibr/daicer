@@ -1,11 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import {
-  Package,
-  ShoppingCart,
-  Backpack,
-  Shield,
-  Check,
-} from 'lucide-react';
+import { Package, ShoppingCart, Backpack, Shield, Check } from 'lucide-react';
 import clsx from 'clsx';
 import type { AvatarPreviewResponse, ReferenceImagePayload } from '../../types/assets';
 import type { Room, Attribute } from '../../types/shared';
@@ -40,11 +34,7 @@ import {
   appendReference,
   downscalePreviewImage,
 } from './character-creation/avatarHelpers';
-import {
-  StepValidationGate,
-  RaceSelectionGrid,
-  formatAlignmentOption,
-} from './character-creation/helpers';
+import { StepValidationGate, RaceSelectionGrid, formatAlignmentOption } from './character-creation/helpers';
 import { EpicClassSelectionGrid } from './character-creation/EpicClassCards';
 import {
   FormWizard,
@@ -98,7 +88,6 @@ export default function CharacterCreation({
 
   // GATE: If locked and not in asset mode, show approval screens - REMOVED for auto-unlock
   // if (!assetMode && isLocked) { ... }
-
 
   const { data: alignments, loading: alignmentsLoading } = useAlignments();
   const { data: races, loading: racesLoading } = useRaces();
@@ -516,15 +505,15 @@ export default function CharacterCreation({
       const roomForPayload: Room =
         assetMode || !room
           ? {
-            id: 'asset',
-            code: 'ASSET',
-            phase: GamePhase.CHARACTER_CREATION,
-            worldDescription: 'Character sheet asset creation',
-            settings: null,
-            ownerId: '',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          }
+              id: 'asset',
+              code: 'ASSET',
+              phase: GamePhase.CHARACTER_CREATION,
+              worldDescription: 'Character sheet asset creation',
+              settings: null,
+              ownerId: '',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            }
           : room;
 
       const payload = buildAvatarPayload(formData, roomForPayload, startingLevel, equippedItems, equipmentItems);
@@ -540,7 +529,9 @@ export default function CharacterCreation({
         let portrait = portraitRaw;
         try {
           portrait = await downscalePreviewImage(portraitRaw);
-        } catch (e) { console.warn(e); }
+        } catch (e) {
+          console.warn(e);
+        }
 
         setAvatarPreview((prev) => ({ ...prev, portrait }));
       } else if (slot === 'upperBody') {
@@ -558,7 +549,9 @@ export default function CharacterCreation({
         let upperBody = upperBodyRaw;
         try {
           upperBody = await downscalePreviewImage(upperBodyRaw);
-        } catch (e) { console.warn(e); }
+        } catch (e) {
+          console.warn(e);
+        }
 
         setAvatarPreview((prev) => ({ ...prev, upperBody }));
       } else if (slot === 'fullBody') {
@@ -572,11 +565,18 @@ export default function CharacterCreation({
           ? `data:${avatarPreview.fullBody.mimeType};base64,${avatarPreview.fullBody.data}`
           : null;
 
-        const fullBodyRaw = await generateAvatarFullBody(fullBodyPayload, avatarPreview.portrait, avatarPreview.upperBody, currentFull);
+        const fullBodyRaw = await generateAvatarFullBody(
+          fullBodyPayload,
+          avatarPreview.portrait,
+          avatarPreview.upperBody,
+          currentFull
+        );
         let fullBody = fullBodyRaw;
         try {
           fullBody = await downscalePreviewImage(fullBodyRaw);
-        } catch (e) { console.warn(e); }
+        } catch (e) {
+          console.warn(e);
+        }
 
         setAvatarPreview((prev) => ({ ...prev, fullBody }));
       }
@@ -598,15 +598,15 @@ export default function CharacterCreation({
       const roomForPayload: Room =
         assetMode || !room
           ? {
-            id: 'asset',
-            code: 'ASSET',
-            phase: GamePhase.CHARACTER_CREATION,
-            worldDescription: 'Character sheet asset creation',
-            settings: null,
-            ownerId: '',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          }
+              id: 'asset',
+              code: 'ASSET',
+              phase: GamePhase.CHARACTER_CREATION,
+              worldDescription: 'Character sheet asset creation',
+              settings: null,
+              ownerId: '',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            }
           : room;
 
       const payload = buildAvatarPayload(formData, roomForPayload, startingLevel, equippedItems, equipmentItems);
@@ -627,7 +627,9 @@ export default function CharacterCreation({
         let portrait = portraitRaw;
         try {
           portrait = await downscalePreviewImage(portraitRaw);
-        } catch (e) { console.warn(e); }
+        } catch (e) {
+          console.warn(e);
+        }
 
         setAvatarPreview((prev) => ({ ...prev, portrait }));
         setPreviewLoadState((prev) => ({ ...prev, portrait: false }));
@@ -648,7 +650,9 @@ export default function CharacterCreation({
         let upperBody = upperBodyRaw;
         try {
           upperBody = await downscalePreviewImage(upperBodyRaw);
-        } catch (e) { console.warn(e); }
+        } catch (e) {
+          console.warn(e);
+        }
 
         setAvatarPreview((prev) => ({ ...prev, upperBody }));
         setPreviewLoadState((prev) => ({ ...prev, upperBody: false }));
@@ -669,11 +673,12 @@ export default function CharacterCreation({
         let fullBody = fullBodyRaw;
         try {
           fullBody = await downscalePreviewImage(fullBodyRaw);
-        } catch (e) { console.warn(e); }
+        } catch (e) {
+          console.warn(e);
+        }
 
         setAvatarPreview((prev) => ({ ...prev, fullBody }));
         setPreviewLoadState((prev) => ({ ...prev, fullBody: false }));
-
       } catch (err) {
         setError(err instanceof Error ? err.message : t('characterCreation.errors.generatePortraits'));
         // Reset all loading states on error
@@ -700,7 +705,7 @@ export default function CharacterCreation({
           prompt: 'User Upload',
           width: 512, // Default assumption
           height: 512,
-        }
+        },
       }));
     }
   };
@@ -935,10 +940,7 @@ export default function CharacterCreation({
             </section>
           ) : null}
 
-          <FormWizard
-            steps={wizardSteps}
-            onStepChange={(index) => setActiveStepId(wizardSteps[index]?.id ?? 'class')}
-          >
+          <FormWizard steps={wizardSteps} onStepChange={(index) => setActiveStepId(wizardSteps[index]?.id ?? 'class')}>
             <FormWizardSteps className="mb-4" />
             <FormWizardContent className="space-y-12">
               {/* STEP 1: Class Selection - Epic cards with auto-populate on click */}
@@ -995,9 +997,13 @@ export default function CharacterCreation({
                           : 'bg-red-500/20 text-red-200'
                     )}
                   >
-                    {pointsRemaining === 0
-                      ? <span className="flex items-center gap-1"><Check className="h-4 w-4" /> {t('characterCreation.pointBuy.complete')}</span>
-                      : `${pointsRemaining} ${t('characterCreation.pointBuy.remainingSuffix')}`}
+                    {pointsRemaining === 0 ? (
+                      <span className="flex items-center gap-1">
+                        <Check className="h-4 w-4" /> {t('characterCreation.pointBuy.complete')}
+                      </span>
+                    ) : (
+                      `${pointsRemaining} ${t('characterCreation.pointBuy.remainingSuffix')}`
+                    )}
                   </div>
                   <AttributesSection
                     attributes={formData.attributes}
@@ -1047,14 +1053,14 @@ export default function CharacterCreation({
                 <StepValidationGate
                   valid={Boolean(
                     backgroundValid &&
-                    formData.appearance.height &&
-                    formData.appearance.weight &&
-                    formData.appearance.skin &&
-                    formData.appearance.hair &&
-                    formData.appearance.eyes &&
-                    formData.appearance.gender &&
-                    formData.personality.traits.trim() &&
-                    formData.personality.ideals.trim()
+                      formData.appearance.height &&
+                      formData.appearance.weight &&
+                      formData.appearance.skin &&
+                      formData.appearance.hair &&
+                      formData.appearance.eyes &&
+                      formData.appearance.gender &&
+                      formData.personality.traits.trim() &&
+                      formData.personality.ideals.trim()
                   )}
                 />
                 <div className="space-y-6">
@@ -1382,9 +1388,7 @@ export default function CharacterCreation({
                       <PersonalitySection personality={formData.personality} onPersonalityChange={updatePersonality} />
                     </div>
 
-                    <div className="space-y-6">
-                      {/* AvatarSection removed from Identity step */}
-                    </div>
+                    <div className="space-y-6">{/* AvatarSection removed from Identity step */}</div>
                   </div>
                 </div>
               </FormWizardStep>
@@ -1434,9 +1438,15 @@ export default function CharacterCreation({
                     <div className="space-y-6">
                       <AvatarSection
                         images={{
-                          portrait: avatarPreview.portrait ? `data:${avatarPreview.portrait.mimeType};base64,${avatarPreview.portrait.data}` : null,
-                          upperBody: avatarPreview.upperBody ? `data:${avatarPreview.upperBody.mimeType};base64,${avatarPreview.upperBody.data}` : null,
-                          fullBody: avatarPreview.fullBody ? `data:${avatarPreview.fullBody.mimeType};base64,${avatarPreview.fullBody.data}` : null,
+                          portrait: avatarPreview.portrait
+                            ? `data:${avatarPreview.portrait.mimeType};base64,${avatarPreview.portrait.data}`
+                            : null,
+                          upperBody: avatarPreview.upperBody
+                            ? `data:${avatarPreview.upperBody.mimeType};base64,${avatarPreview.upperBody.data}`
+                            : null,
+                          fullBody: avatarPreview.fullBody
+                            ? `data:${avatarPreview.fullBody.mimeType};base64,${avatarPreview.fullBody.data}`
+                            : null,
                         }}
                         loading={previewLoadState}
                         onUpload={handleAvatarUpload}

@@ -78,50 +78,45 @@ export async function loadChunk(
     const url = `${import.meta.env.VITE_API_URL}/api/grid/chunk/${roomId}/${chunkX}/${chunkY}/${layer}`;
     console.log(`[ChunkLoader] Fetching chunk: ${url}`);
 
-    const response = await fetch(
-      url,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
+    if (!response.ok) {
+      console.error(`[ChunkLoader] Failed to load chunk: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to load chunk: ${response.status} ${response.statusText}`);
+    }
 
-  if (!response.ok) {
-    console.error(`[ChunkLoader] Failed to load chunk: ${response.status} ${response.statusText}`);
-    throw new Error(`Failed to load chunk: ${response.status} ${response.statusText}`);
-  }
+    const result = await response.json();
+    if (!result.success || !result.data) {
+      console.error('[ChunkLoader] Invalid chunk response:', result);
+      throw new Error('Invalid chunk response from backend');
+    }
 
-  const result = await response.json();
-  if (!result.success || !result.data) {
-    console.error('[ChunkLoader] Invalid chunk response:', result);
-    throw new Error('Invalid chunk response from backend');
-  }
+    // Return the raw chunk data (validated by schema in a real app)
+    // The frontend will now consume GridTile[] directly
+    const {data} = result;
+    console.log(`[ChunkLoader] Backend response for ${chunkX},${chunkY}:`, {
+      hasTiles: !!data.tiles,
+      hasBiomes: !!data.biomes,
+      biomesLength: data.biomes?.length,
+      worldOffset: { x: data.worldOffsetX, y: data.worldOffsetY },
+    });
 
-  
-  // Return the raw chunk data (validated by schema in a real app)
-  // The frontend will now consume GridTile[] directly
-  const data = result.data;
-  console.log(`[ChunkLoader] Backend response for ${chunkX},${chunkY}:`, { 
-    hasTiles: !!data.tiles, 
-    hasBiomes: !!data.biomes,
-    biomesLength: data.biomes?.length,
-    worldOffset: { x: data.worldOffsetX, y: data.worldOffsetY }
-  });
+    // Ensure worldOffsetX/Y are present (backend might omit them)
+    const chunk: TerrainChunk = {
+      ...data,
+      chunkX,
+      chunkY,
+      worldOffsetX: data.worldOffsetX ?? worldX,
+      worldOffsetY: data.worldOffsetY ?? worldY,
+    };
 
-  // Ensure worldOffsetX/Y are present (backend might omit them)
-  const chunk: TerrainChunk = {
-    ...data,
-    chunkX,
-    chunkY,
-    worldOffsetX: data.worldOffsetX ?? worldX,
-    worldOffsetY: data.worldOffsetY ?? worldY,
-  };
-
-  return chunk;
+    return chunk;
   } catch (error) {
     console.error(`[ChunkLoader] Error loading chunk ${chunkX},${chunkY}:`, error);
     throw error;

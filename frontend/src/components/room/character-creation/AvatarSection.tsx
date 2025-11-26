@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { Upload, Camera, Wand2, RefreshCw } from 'lucide-react';
+import clsx from 'clsx';
 import type { AvatarPreviewResponse } from '../../../types/assets';
 import { Button } from '../../ui/button';
 import { DiceLoader } from '../../ui/dice-loader';
 import { useI18n } from '../../../i18n';
 import { previewPlaceholders } from './constants';
-import { Upload, Camera, Wand2, RefreshCw } from 'lucide-react';
 import { WebcamCapture } from '../../ui/WebcamCapture';
-import clsx from 'clsx';
 
 export type AvatarSlot = keyof AvatarPreviewResponse;
 
@@ -71,8 +71,8 @@ export function AvatarSection({
           {/* Image Area */}
           <div
             className={clsx(
-              "relative flex items-center justify-center min-h-[320px] w-full",
-              isFullBody ? "bg-midnight-900" : "bg-midnight-800/40"
+              'relative flex items-center justify-center min-h-[320px] w-full',
+              isFullBody ? 'bg-midnight-900' : 'bg-midnight-800/40'
             )}
             style={
               !image && placeholderDims
@@ -88,11 +88,7 @@ export function AvatarSection({
 
             {/* Show either generated image or placeholder */}
             {image ? (
-              <img
-                src={image}
-                alt={translatedLabel}
-                className="w-full h-auto object-contain max-h-[500px]"
-              />
+              <img src={image} alt={translatedLabel} className="w-full h-auto object-contain max-h-[500px]" />
             ) : (
               <img
                 src={placeholderSrc}
@@ -148,9 +144,7 @@ export function AvatarSection({
   return (
     <>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {previewPlaceholders.map(({ key, labelKey, src }) =>
-          renderSlot(key as AvatarSlot, labelKey, src)
-        )}
+        {previewPlaceholders.map(({ key, labelKey, src }) => renderSlot(key as AvatarSlot, labelKey, src))}
       </div>
 
       {/* Single Generate All Button */}
@@ -181,11 +175,7 @@ export function AvatarSection({
         </Button>
       </div>
 
-      <WebcamCapture
-        open={webcamOpen}
-        onOpenChange={setWebcamOpen}
-        onCapture={handleWebcamCapture}
-      />
+      <WebcamCapture open={webcamOpen} onOpenChange={setWebcamOpen} onCapture={handleWebcamCapture} />
     </>
   );
 }

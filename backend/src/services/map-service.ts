@@ -1,14 +1,14 @@
 import { db } from '@/services/firestore';
 import { generateGridChunk } from '@/services/world-gen/grid-chunk-generator';
 import { logger } from '@/utils/logger';
-import { 
-  GridChunk, 
-  GridTile, 
-  Entity, 
-  EntitySchema, 
-  chunkToWorldCoords, 
-  worldToChunkCoords, 
-  CHUNK_SIZE 
+import {
+  GridChunk,
+  GridTile,
+  Entity,
+  EntitySchema,
+  chunkToWorldCoords,
+  worldToChunkCoords,
+  CHUNK_SIZE,
 } from '@daicer/shared/world';
 
 export class MapService {
@@ -55,15 +55,25 @@ export class MapService {
   /**
    * Get entities in a specific area
    */
-  async getEntitiesInArea(roomId: string, minX: number, minY: number, maxX: number, maxY: number, z: number = 0): Promise<Entity[]> {
-    const snapshot = await db.collection('rooms').doc(roomId).collection('entities')
+  async getEntitiesInArea(
+    roomId: string,
+    minX: number,
+    minY: number,
+    maxX: number,
+    maxY: number,
+    z: number = 0
+  ): Promise<Entity[]> {
+    const snapshot = await db
+      .collection('rooms')
+      .doc(roomId)
+      .collection('entities')
       .where('z', '==', z)
       .where('x', '>=', minX)
       .where('x', '<=', maxX)
       .get();
 
     const entities: Entity[] = [];
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       const data = doc.data() as Entity;
       if (data.y >= minY && data.y <= maxY) {
         entities.push(data);
@@ -76,7 +86,13 @@ export class MapService {
   /**
    * Move an entity to a new position
    */
-  async moveEntity(roomId: string, entityId: string, targetX: number, targetY: number, targetZ: number = 0): Promise<Entity> {
+  async moveEntity(
+    roomId: string,
+    entityId: string,
+    targetX: number,
+    targetY: number,
+    targetZ: number = 0
+  ): Promise<Entity> {
     const entityRef = db.collection('rooms').doc(roomId).collection('entities').doc(entityId);
     const doc = await entityRef.get();
 
@@ -90,21 +106,22 @@ export class MapService {
     // For now, just check if target chunk exists/is generated
     const { chunkX, chunkY } = worldToChunkCoords(targetX, targetY);
     const chunk = await this.getChunk(roomId, chunkX, chunkY, targetZ);
-    
+
     // Check if tile is passable (simple check)
     const localX = Math.abs(targetX % CHUNK_SIZE);
     const localY = Math.abs(targetY % CHUNK_SIZE);
-    const tile = chunk.tiles.find(t => t.x === targetX && t.y === targetY); // This search is inefficient for large chunks, but fine for 8x8
+    const tile = chunk.tiles.find((t) => t.x === targetX && t.y === targetY); // This search is inefficient for large chunks, but fine for 8x8
 
-    if (tile && tile.blockType !== 'air' && tile.blockType !== 'water') { // Assuming simple collision
-       // Allow movement for now, maybe add strict collision later
+    if (tile && tile.blockType !== 'air' && tile.blockType !== 'water') {
+      // Assuming simple collision
+      // Allow movement for now, maybe add strict collision later
     }
 
     const updatedEntity = {
       ...entity,
       x: targetX,
       y: targetY,
-      z: targetZ
+      z: targetZ,
     };
 
     await entityRef.set(updatedEntity);
@@ -117,16 +134,16 @@ export class MapService {
   async spawnEntity(roomId: string, entityData: Omit<Entity, 'id'>): Promise<Entity> {
     const collectionRef = db.collection('rooms').doc(roomId).collection('entities');
     const docRef = collectionRef.doc();
-    
+
     const entity: Entity = {
       ...entityData,
       id: docRef.id,
-      roomId
+      roomId,
     };
 
     // Validate with schema
     const validated = EntitySchema.parse(entity);
-    
+
     await docRef.set(validated);
     return validated;
   }

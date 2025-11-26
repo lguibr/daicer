@@ -95,7 +95,7 @@ export default function CharactersPage() {
               type="button"
               variant="secondary"
               onClick={() => {
-                fetchCharacters().catch(() => { });
+                fetchCharacters().catch(() => {});
               }}
             >
               {t('characters.actions.retry')}

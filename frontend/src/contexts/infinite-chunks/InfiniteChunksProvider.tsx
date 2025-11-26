@@ -45,7 +45,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
       enabled,
       chunkGeneratorChanged: !!chunkGenerator,
       placementMapChanged: !!placementMap,
-      layer
+      layer,
     });
 
     dispatch({
@@ -84,7 +84,10 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
   const checkChunkLoadingInternal = useCallback(
     async (playerX: number, playerY: number) => {
       if (!enabled || !state.initialized) {
-        console.log('[InfiniteChunks] Skipping checkChunkLoading: not enabled or initialized', { enabled, initialized: state.initialized });
+        console.log('[InfiniteChunks] Skipping checkChunkLoading: not enabled or initialized', {
+          enabled,
+          initialized: state.initialized,
+        });
         return;
       }
 
@@ -97,7 +100,9 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
         state.loading
       );
 
-      console.log(`[InfiniteChunks] checkChunkLoading(${playerX}, ${playerY}) found ${chunksToLoad.length} chunks to load`);
+      console.log(
+        `[InfiniteChunks] checkChunkLoading(${playerX}, ${playerY}) found ${chunksToLoad.length} chunks to load`
+      );
 
       if (chunksToLoad.length === 0) return;
 

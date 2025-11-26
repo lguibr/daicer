@@ -24,7 +24,6 @@ export const chunksPregenerationNode = async (
     seed: settings.seed,
   });
 
-
   // Use deterministic seed from settings (falls back to roomId if not provided)
   const seed = settings.seed || roomId;
 
@@ -59,7 +58,6 @@ export const chunksPregenerationNode = async (
   logger.info('[chunks_pregeneration] Chunks pre-generated', {
     count: cachedChunks.length,
   });
-
 
   return {
     generatedChunks: cachedChunks,

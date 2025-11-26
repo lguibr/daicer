@@ -29,11 +29,7 @@ export async function setPlayerReady(roomId: string, playerId: string, isReady: 
   try {
     logger.debug('[setPlayerReady] Starting', { roomId, playerId, isReady });
 
-    const playerRef = getDb()
-      .collection('rooms')
-      .doc(roomId)
-      .collection('players')
-      .doc(playerId);
+    const playerRef = getDb().collection('rooms').doc(roomId).collection('players').doc(playerId);
 
     const playerDoc = await playerRef.get();
     if (!playerDoc.exists) {

@@ -85,9 +85,7 @@ export function AppearanceSection({ appearance, onAppearanceChange }: Appearance
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-3">
-          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
-            Gender
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">Gender</span>
           <div className="flex flex-wrap gap-2">
             {GENDER_OPTIONS.map((option) => (
               <OptionPill

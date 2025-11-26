@@ -11,6 +11,7 @@ import type { Language } from '@/types/index';
 import { getFlashModel, getProModel, extractErrorDetails } from './gemini';
 import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
 import { GeminiModel, OpenAIModel, TextGenConfig } from './types';
+import { streamManager } from './stream-manager';
 
 /**
  * Language name mappings
@@ -125,6 +126,12 @@ async function* _streamText(
       for await (const chunk of stream) {
         const content = chunk.content.toString();
         accumulated += content;
+
+        // Emit to unified stream manager if streamId is present
+        if (config.metadata?.streamId) {
+          streamManager.emitText(config.metadata.streamId as string, content);
+        }
+
         yield { content, done: false };
       }
 
@@ -163,6 +170,12 @@ async function* _streamText(
       for await (const chunk of stream) {
         const content = chunk.content.toString();
         accumulated += content;
+
+        // Emit to unified stream manager if streamId is present
+        if (config.metadata?.streamId) {
+          streamManager.emitText(config.metadata.streamId as string, content);
+        }
+
         yield { content, done: false };
       }
 
@@ -249,6 +262,12 @@ async function* _streamWithHistory(
     for await (const chunk of stream) {
       const content = chunk.content.toString();
       accumulated += content;
+
+      // Emit to unified stream manager if streamId is present
+      if (config.metadata?.streamId) {
+        streamManager.emitText(config.metadata.streamId as string, content);
+      }
+
       yield { content, done: false };
     }
 
