@@ -20,14 +20,15 @@ export const unlockCharacterCreationNode = async (
 
   logger.info('[unlock_character_creation] Unlocking character creation', { roomId });
 
-  // Update Firestore
+  // Update Firestore - set phase to CHARACTER_CREATION
   const db = getDb();
   await db.collection('rooms').doc(roomId).update({
     characterCreationLocked: false,
+    phase: 'CHARACTER_CREATION',
     updatedAt: Date.now(),
   });
 
-  logger.info('[unlock_character_creation] Character creation unlocked', { roomId });
+  logger.info('[unlock_character_creation] Character creation unlocked, phase set to CHARACTER_CREATION', { roomId });
 
   return {
     characterCreationLocked: false,

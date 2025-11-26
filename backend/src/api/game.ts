@@ -612,7 +612,7 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
       await Promise.all(
         players.map(async (player) => {
           try {
-            const opening = await generateCharacterOpening(room.worldDescription, player.character, language);
+            const opening = await generateCharacterOpening(room.worldDescription, player.character, mainMessage, language);
 
             const msg: Message = {
               id: `msg-${Date.now()}-${player.id}`,
@@ -645,27 +645,63 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
  * Process game turn
  * @route POST /api/game/:roomId/turn
  */
-router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Response) => {
+
+
+/**
+ * Submit player action
+ * @route POST /api/game/:roomId/action
+ */
+router.post('/:roomId/action', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
+  const { action } = req.body;
+
   if (!roomId) {
     throw new ApiError(400, 'Room ID is required');
   }
 
-  const room = await getRoom(roomId);
+  if (!action || typeof action !== 'string') {
+    throw new ApiError(400, 'Action is required');
+  }
 
+  const room = await getRoom(roomId);
   if (!room) {
     throw new ApiError(404, 'Room not found');
   }
 
   if (room.phase !== GamePhase.GAMEPLAY) {
-    throw new ApiError(400, 'Game not started');
+    throw new ApiError(400, 'Game is not in gameplay phase');
   }
 
+  // Update player action
+  await updatePlayerAction(roomId, req.user!.uid, action);
+
+  // Check if all players have acted
+  const players = await getPlayers(roomId);
+  const allReady = players.every((p) => p.action || p.id === req.user!.uid); // Check current user explicitly in case DB update is slow/async
+
+  if (allReady) {
+    // Trigger turn resolution in background
+    (async () => {
+      try {
+        await resolveTurn(roomId, room);
+      } catch (err) {
+        logger.error(`Turn resolution failed for room ${roomId}:`, err);
+      }
+    })();
+  }
+
+  res.json({ success: true, allReady });
+});
+
+/**
+ * Helper: Resolve turn (process actions and generate narrative)
+ */
+async function resolveTurn(roomId: string, room: any) {
   const players = await getPlayers(roomId);
   const messages = await getMessages(roomId);
   const creatures = await getCreatures(roomId);
 
-  // Add player action messages
+  // 1. Convert pending actions to messages
   for (const player of players) {
     if (player.action) {
       const msg: Message = {
@@ -678,7 +714,7 @@ router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Respons
     }
   }
 
-  // Generate DM response using language and DM style from room settings
+  // 2. Generate DM response
   const language = room.settings?.language || 'en';
   const dmResponse = await processTurn(
     room.worldDescription,
@@ -689,21 +725,60 @@ router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Respons
     room.settings || undefined
   );
 
+  // 3. Send Public Summary
   const dmMessage: Message = {
     id: `msg-${Date.now()}-dm`,
     sender: 'DM',
     text: dmResponse.overall_summary,
     timestamp: Date.now(),
   };
-
   await addMessage(roomId, dmMessage);
 
-  // Clear player actions
+  // 4. Send Private Visions
+  for (const perspective of dmResponse.player_perspectives) {
+    // Match by character name (as returned by LLM)
+    const player = players.find((p) => p.character.name === perspective.playerName);
+    if (player) {
+      const privateMsg: Message = {
+        id: `msg-${Date.now()}-${player.id}-private`,
+        sender: 'DM',
+        text: perspective.perspective,
+        timestamp: Date.now() + 50, // Slight delay to ensure order
+        targetPlayer: player.id,
+      };
+      await addMessage(roomId, privateMsg);
+    }
+  }
+
+  // 5. Clear player actions
   for (const player of players) {
     await updatePlayerAction(roomId, player.id, null);
   }
+}
 
-  res.json({ success: true, data: dmMessage });
+/**
+ * Process game turn (Manual Trigger)
+ * @route POST /api/game/:roomId/turn
+ */
+router.post('/:roomId/turn', authenticate, async (req: AuthRequest, res: Response) => {
+  const { roomId } = req.params;
+  if (!roomId) {
+    throw new ApiError(400, 'Room ID is required');
+  }
+
+  const room = await getRoom(roomId);
+  if (!room) {
+    throw new ApiError(404, 'Room not found');
+  }
+
+  if (room.phase !== GamePhase.GAMEPLAY) {
+    throw new ApiError(400, 'Game not started');
+  }
+
+  // Trigger resolution
+  await resolveTurn(roomId, room);
+
+  res.json({ success: true });
 });
 
 export default router;

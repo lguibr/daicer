@@ -26,11 +26,28 @@ export async function updatePlayerAction(roomId: string, playerId: string, actio
 }
 
 export async function setPlayerReady(roomId: string, playerId: string, isReady: boolean): Promise<void> {
-  await db().collection('rooms').doc(roomId).collection('players').doc(playerId).update({
-    isReady,
-    updatedAt: Date.now(),
-  });
-  logger.info(`Player ${playerId} ready status set to ${isReady}`);
+  try {
+    logger.debug('[setPlayerReady] Starting', { roomId, playerId, isReady });
+
+    const playerRef = getDb()
+      .collection('rooms')
+      .doc(roomId)
+      .collection('players')
+      .doc(playerId);
+
+    const playerDoc = await playerRef.get();
+    if (!playerDoc.exists) {
+      logger.error('[setPlayerReady] Player not found', { roomId, playerId });
+      throw new Error(`Player ${playerId} not found in room ${roomId}`);
+    }
+
+    await playerRef.update({ isReady });
+
+    logger.info(`Player ${playerId} ready status set to ${isReady}`, { roomId, playerId, isReady });
+  } catch (error) {
+    logger.error('[setPlayerReady] Error:', error, { roomId, playerId, isReady });
+    throw error;
+  }
 }
 
 export async function updatePlayerCharacter(

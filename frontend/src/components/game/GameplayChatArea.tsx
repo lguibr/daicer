@@ -98,7 +98,11 @@ export default function GameplayChatArea({
 
   // Filter messages to show public and user-specific private messages
   const visibleMessages = useMemo(
-    () => displayMessages.filter((msg) => !msg.recipientId || msg.recipientId === user?.uid),
+    () =>
+      displayMessages.filter((msg) => {
+        const recipient = msg.recipientId || msg.targetPlayer;
+        return !recipient || recipient === user?.uid;
+      }),
     [displayMessages, user?.uid]
   );
 
@@ -123,14 +127,18 @@ export default function GameplayChatArea({
         {/* Messages */}
         {visibleMessages.map((msg) => {
           const isDM = msg.sender === 'DM';
-          const isPrivate = !!msg.recipientId;
+          const isPrivate = !!(msg.recipientId || msg.targetPlayer);
           const content = msg.isStreaming && msg.streamContent ? msg.streamContent : msg.text;
 
           return (
             <div key={msg.id} className={cn('group flex w-full', isDM ? 'justify-start' : 'justify-end')}>
               <AIMessage
                 from={isDM ? 'assistant' : 'user'}
-                className={cn('w-full max-w-4xl', isPrivate && 'border-nebula-500/40 bg-nebula-900/60')}
+                className={cn(
+                  'w-full max-w-4xl transition-all duration-300',
+                  isPrivate &&
+                    'border-2 border-nebula-500/60 bg-gradient-to-br from-nebula-900/80 to-midnight-900/90 shadow-[0_0_30px_rgba(139,92,246,0.15)]'
+                )}
               >
                 <MessageHeader>
                   <div className="flex items-center gap-3">

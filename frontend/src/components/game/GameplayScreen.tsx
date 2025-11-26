@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Room, Player } from '../../types/shared';
 import useStreamingSocket from '../../hooks/useStreamingSocket';
-import { submitAction, processTurn } from '../../services/socket';
+import { processTurn } from '../../services/socket';
+import { submitAction } from '../../services/api';
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
@@ -55,7 +56,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
 
     try {
       setSubmitting(true);
-      submitAction(room.id, action);
+      await submitAction(room.id, action);
     } catch (err) {
       console.error('Failed to submit action:', err);
     } finally {

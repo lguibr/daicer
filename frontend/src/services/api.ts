@@ -331,3 +331,16 @@ export async function invokeCharacterSetupGraph(
   const result = await response.json();
   return result.data;
 }
+
+/**
+ * Submit player action
+ * @param roomId - Room ID
+ * @param action - Action text
+ * @returns Success status
+ */
+export async function submitAction(roomId: string, action: string): Promise<{ success: boolean; allReady: boolean }> {
+  return apiRequest<{ success: boolean; allReady: boolean }>(`/api/game/${roomId}/action`, {
+    method: 'POST',
+    body: JSON.stringify({ action }),
+  });
+}

@@ -436,6 +436,7 @@ Respond entirely in ${languageName}.`;
 export const generateCharacterOpening = async (
   worldDescription: string,
   character: CharacterSheet,
+  mainContext: string,
   language: Language = 'en'
 ): Promise<string> => {
   const languageMap: Record<Language, string> = {
@@ -446,15 +447,18 @@ export const generateCharacterOpening = async (
   const languageName = languageMap[language] || 'English';
 
   const systemPrompt = `You are the Dungeon Master. You provide immersive, personalized perspectives for each character.
-Your goal is to ground the character in the current moment BEFORE the adventure fully kicks off.
+Your goal is to ground the character in the current moment described in the Main Context.
 
 WORLD CONTEXT:
 ${worldDescription}
 
+MAIN CONTEXT (What is happening publicly):
+${mainContext}
+
 LANGUAGE REQUIREMENT:
 You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
 
-  const userMessage = `Generate a personalized opening for this character:
+  const userMessage = `Generate a personalized opening for this character that aligns PERFECTLY with the Main Context.
 
 CHARACTER:
 - Name: **${character.name}**
@@ -463,26 +467,21 @@ CHARACTER:
 - Alignment: ${character.alignment}
 - Key Stats: STR ${character.attributes.Strength}, DEX ${character.attributes.Dexterity}, INT ${character.attributes.Intelligence}, WIS ${character.attributes.Wisdom}
 
-Describe what THIS specific character is doing or feeling in a moment of relative calm (e.g., at a tavern, resting, traveling) just before the main inciting incident occurs.
-
-**Focus on:**
-1. **Sensory Details:** What are they drinking, eating, or looking at?
-2. **Internal State:** Are they worried, relaxed, eager, or brooding?
-3. **Class Flavor:**
-   - **Fighter/Warrior:** Checking gear, observing the crowd for threats.
-   - **Wizard/Caster:** Reading a tome, sensing a shift in the air.
-   - **Rogue/Scout:** Watching the exits, listening to hushed conversations.
-   - **Cleric/Priest:** Praying, reflecting on their deity's will.
+**Instructions:**
+1.  **Synchronize:** The events in the Main Context are happening RIGHT NOW. Your narration must be the *subjective experience* of those exact events.
+2.  **Sensory Details:** Describe how THIS character perceives the scene (smells, sounds, threats) based on their class and stats.
+3.  **Internal State:** How do they feel about the situation described in the Main Context?
+4.  **Reaction:** End with them poised to react to the specific inciting incident mentioned in the Main Context.
 
 **Format (use markdown):**
 ### Through [Character's] Eyes
 
-[What they see/feel/do in this grounded moment]
+[The scene from their perspective, weaving in specific details from the Main Context but filtered through their senses]
 
 *[Their internal thoughts]*
 
 **[Something they notice with their skills]:**
-- Detail 1 (e.g., a suspicious figure, a strange smell, a tremor)
+- Detail 1 (specific to their class/background)
 - Detail 2
 
 > "[Dialogue, inscription, or inner voice]"
@@ -523,7 +522,8 @@ You MUST respond entirely in ${languageName}. Every word of the narrative must b
 1.  **Grounded Start:** Start in a classic, atmospheric setting (e.g., a bustling tavern, a quiet campfire, a city gate). Establish the mood.
 2.  **Party Unity:** Briefly mention they are together (resting, planning, or celebrating).
 3.  **Inciting Incident:** Halfway through, introduce a SUDDEN event that disrupts the peace (e.g., a desperate messenger, a magical explosion, a monster attack).
-4.  **Call to Action:** End with the immediate aftermath of this event, demanding a reaction.
+4.  **Call to Action:** End with the immediate aftermath of this event.
+5.  **CRITICAL:** Do NOT ask "What do you do?" or pose a direct question to the players. This is a cinematic cutscene.
 
 **Tone:** Atmospheric, immersive, then suddenly urgent.
 
@@ -547,11 +547,13 @@ export const generateCharacterOpenings = async (
 ): Promise<{ openings: Array<{ playerId: string; message: string }>; mainMessage: string }> => {
   logger.info(`Generating personalized openings for ${players.length} characters in language: ${language}`);
 
+  // 1. Generate Main Message FIRST to establish the shared reality
   const mainMessage = await generateMainOpening(worldDescription, language);
 
+  // 2. Generate Character Openings using the Main Message as context
   const openings = await Promise.all(
     players.map(async (player) => {
-      const message = await generateCharacterOpening(worldDescription, player.character, language);
+      const message = await generateCharacterOpening(worldDescription, player.character, mainMessage, language);
       return {
         playerId: player.id,
         message,

@@ -523,15 +523,33 @@ router.get('/dm-story/stream', authenticate, setupSSE, async (req: AuthRequest, 
   }
 
   try {
-    // Check room ownership
+    // Check room exists
     const room = await getRoom(roomId);
     if (!room) {
+      logger.warn('[SSE] Room not found', { roomId, userId: req.user?.uid });
       sendSSEError(res, 'Room not found');
       return;
     }
 
-    if (room.ownerId !== req.user?.uid) {
-      sendSSEError(res, 'Only room owner can stream');
+    logger.debug('[SSE] DM Story stream - room phase check', {
+      roomId,
+      userId: req.user?.uid,
+      ownerId: room.ownerId,
+      phase: room.phase,
+      isOwner: room.ownerId === req.user?.uid,
+    });
+
+    // Only check ownership during early phases (SETUP, TERRAIN_GENERATION)
+    // During CHARACTER_CREATION and GAMEPLAY, all players can connect
+    const restrictedPhases = [GamePhase.SETUP, GamePhase.TERRAIN_GENERATION];
+    if (restrictedPhases.includes(room.phase) && room.ownerId !== req.user?.uid) {
+      logger.warn('[SSE] Non-owner tried to connect during restricted phase', {
+        roomId,
+        userId: req.user?.uid,
+        ownerId: room.ownerId,
+        phase: room.phase,
+      });
+      sendSSEError(res, 'Only room owner can stream during world generation');
       return;
     }
 
