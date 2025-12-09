@@ -6,7 +6,6 @@
 import type { GridChunk, GridTile, GridFeature } from '@daicer/shared';
 import { CHUNK_SIZE } from '@daicer/shared';
 import { SimplexNoise, Alea } from './noise';
-import { selectBiome, type BiomeDefinition } from './biomes';
 import { logger } from '@/utils/logger';
 
 export interface ChunkGenerationParams {
@@ -35,11 +34,7 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
 
     // Initialize noise generators
     const elevationNoise = new SimplexNoise(`${seed}-elev`);
-    const temperatureNoise = new SimplexNoise(`${seed}-temp`);
     const moistureNoise = new SimplexNoise(`${seed}-moist`);
-    const continentalnessNoise = new SimplexNoise(`${seed}-cont`);
-    const erosionNoise = new SimplexNoise(`${seed}-erosion`);
-    const weirdnessNoise = new SimplexNoise(`${seed}-weird`);
 
     // Cave noise (only for underground layers)
     const caveNoise = z < 0 ? new SimplexNoise(`${seed}-cave`) : null;
@@ -68,11 +63,7 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
           z,
           {
             elevationNoise,
-            temperatureNoise,
             moistureNoise,
-            continentalnessNoise,
-            erosionNoise,
-            weirdnessNoise,
             caveNoise,
           },
           {
@@ -100,7 +91,7 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
 
     // Generate features for surface chunks (z === 0)
     if (z === 0) {
-      const chunkFeatures = generateFeatures(chunkX, chunkY, tiles, chunkSeed);
+      const chunkFeatures = generateFeatures(tiles, chunkSeed);
       features.push(...chunkFeatures);
       logger.debug(`[GridChunkGenerator] Added ${chunkFeatures.length} features to chunk`);
     }
@@ -153,11 +144,7 @@ function generateTile(
   z: number,
   noiseGenerators: {
     elevationNoise: SimplexNoise;
-    temperatureNoise: SimplexNoise;
     moistureNoise: SimplexNoise;
-    continentalnessNoise: SimplexNoise;
-    erosionNoise: SimplexNoise;
-    weirdnessNoise: SimplexNoise;
     caveNoise: SimplexNoise | null;
   },
   params: {
@@ -169,79 +156,147 @@ function generateTile(
     continentalnessBias: number;
   }
 ): GridTile {
-  const {
-    elevationNoise,
-    temperatureNoise,
-    moistureNoise,
-    continentalnessNoise,
-    erosionNoise,
-    weirdnessNoise,
-    caveNoise,
-  } = noiseGenerators;
+  const { elevationNoise, moistureNoise, caveNoise } = noiseGenerators;
 
-  // Generate climate data
-  const scale = 0.003;
-  const climate = {
-    temperature: temperatureNoise.octaveNoise(x * scale, y * scale, 4, 0.5, 2.0) + params.temperatureBias,
-    moisture: moistureNoise.octaveNoise(x * scale, y * scale, 4, 0.5, 2.0) + params.moistureBias,
-    continentalness:
-      continentalnessNoise.octaveNoise(x * scale * 0.5, y * scale * 0.5, 3, 0.6, 1.8) + params.continentalnessBias,
-    erosion: erosionNoise.octaveNoise(x * scale * 2, y * scale * 2, 5, 0.4, 2.2),
-    weirdness: weirdnessNoise.domainWarpedNoise(x * scale * 1.5, y * scale * 1.5, 0.5, 4),
-  };
+  // --- FRONTEND PARITY LOGIC ---
+  // Matches useWorldGeneration.ts exactly
 
-  // Generate surface elevation
-  const baseElevation = elevationNoise.domainWarpedNoise(x * 0.005, y * 0.005, 30, 4) * params.mountainousness;
-  const ridges = elevationNoise.ridgeNoise(x * 0.01, y * 0.01, 3) * 0.3 * params.mountainousness;
-  const elevationNormalized = baseElevation + ridges;
-  const elevation = elevationNormalized * 100; // Scale to -100 to +100 range
+  // 1. Elevation (Scale 0.02, 4 octaves)
+  const elevationScale = 0.02;
+  const rawElevation = elevationNoise.octaveNoise(x * elevationScale, y * elevationScale, 4, 0.5);
 
-  // Select biome
-  const biome =
-    z > 0
-      ? selectBiome({ temperature: 0, moisture: 0, continentalness: 0, erosion: 0, weirdness: 0 }, 1.0)
-      : selectBiome(climate, elevationNormalized);
+  // 2. Moisture (Scale 0.03, 3 octaves, offset 1000)
+  const moistureScale = 0.03;
+  const rawMoisture = moistureNoise.octaveNoise(x * moistureScale + 1000, y * moistureScale + 1000, 3, 0.5);
+
+  // 3. Biome Classification
+  let biomeType = 'plains';
+
+  // Frontend logic copy-paste:
+  if (rawElevation < -0.3) {
+    biomeType = 'ocean';
+  } else if (rawElevation < -0.1) {
+    biomeType = 'beach';
+  } else if (rawElevation < 0.1) {
+    if (rawMoisture < -0.2) biomeType = 'desert';
+    else if (rawMoisture < 0.2) biomeType = 'plains';
+    else biomeType = 'swamp';
+  } else if (rawElevation < 0.4) {
+    if (rawMoisture < -0.1) biomeType = 'savanna';
+    else if (rawMoisture < 0.3) biomeType = 'forest';
+    else biomeType = 'jungle';
+  } else if (rawElevation < 0.6) {
+    biomeType = 'hills';
+  } else {
+    biomeType = 'mountains';
+  }
+
+  // --- END FRONTEND PARITY LOGIC ---
+
+  // Map biome name to block types (simplified mapping)
+  // In a real scenario, we might want to use the BiomeDefinition from biomes.ts,
+  // but for now we'll map manually to ensure visual parity with frontend's expectations
+  // or use a helper if available.
+  // Let's try to use the existing selectBiome if we can map the inputs,
+  // OR just define the blocks directly here to be 100% sure.
+
+  // Let's define a simple mapping for now to guarantee the "look" matches
+  let surfaceBlock = 'grass';
+  let subsurfaceBlock = 'dirt';
+  let undergroundBlock = 'stone';
+
+  switch (biomeType) {
+    case 'ocean':
+      surfaceBlock = 'sand';
+      subsurfaceBlock = 'sand';
+      break;
+    case 'beach':
+      surfaceBlock = 'sand';
+      subsurfaceBlock = 'sand';
+      break;
+    case 'desert':
+      surfaceBlock = 'sand';
+      subsurfaceBlock = 'sandstone';
+      break;
+    case 'swamp':
+      surfaceBlock = 'grass';
+      subsurfaceBlock = 'mud';
+      break; // Approximate
+    case 'mountains':
+      surfaceBlock = 'stone';
+      subsurfaceBlock = 'stone';
+      break;
+    case 'hills':
+      surfaceBlock = 'grass';
+      subsurfaceBlock = 'stone';
+      break;
+    case 'jungle':
+      surfaceBlock = 'grass';
+      subsurfaceBlock = 'dirt';
+      break;
+    case 'forest':
+      surfaceBlock = 'grass';
+      subsurfaceBlock = 'dirt';
+      break;
+    case 'savanna':
+      surfaceBlock = 'grass';
+      subsurfaceBlock = 'dirt';
+      break; // Dry grass?
+    case 'ice':
+      surfaceBlock = 'snow';
+      subsurfaceBlock = 'ice';
+      break;
+    default:
+      surfaceBlock = 'grass';
+      subsurfaceBlock = 'dirt';
+  }
 
   // Determine block type based on z-level
+  // Frontend treats z=0 as surface.
+  // Backend supports 3D chunks.
+  // We need to map the "elevation" (which is -1 to 1) to a Z-height.
+
+  // Frontend logic:
+  // if (floor === 3) -> Surface generation.
+  // Frontend doesn't really have "height" in the grid, it just paints the tile.
+  // BUT, for the backend 3D world, we need to give it some depth.
+
+  // Let's say "Surface" is around Z=0.
+  // Elevation -1 to 1.
+  // Let's scale it slightly so mountains actually go up.
+  const terrainHeight = Math.floor(rawElevation * 10); // -10 to +10 range roughly
+
   let blockType: string = 'air';
   let lightLevel = 0;
 
-  if (z > elevation) {
-    // Above surface - air or water
-    if (z <= params.waterLevel * 100 && climate.continentalness < 0) {
-      blockType = climate.temperature < -0.3 ? 'ice' : 'water';
-      lightLevel = Math.max(0, 15 - Math.floor((params.waterLevel * 100 - z) / 10));
+  if (z > terrainHeight) {
+    // Above terrain
+    if (z <= params.waterLevel * 10 && rawElevation < -0.1) {
+      // Water level check
+      blockType = 'water';
+      lightLevel = 15; // Simplified
     } else {
       blockType = 'air';
-      lightLevel = z > elevation ? 15 : 0;
+      lightLevel = 15;
     }
-  } else if (z > elevation - 5) {
-    // Surface layer
-    blockType = biome.surfaceBlock;
-    lightLevel = 12;
-  } else if (z > elevation - 10) {
-    // Subsurface layer
-    blockType = biome.subsurfaceBlock;
-    lightLevel = 5;
+  } else if (z === terrainHeight) {
+    blockType = surfaceBlock;
+    lightLevel = 15;
+  } else if (z > terrainHeight - 4) {
+    blockType = subsurfaceBlock;
+    lightLevel = 0;
   } else {
-    // Underground
-    blockType = biome.undergroundBlock;
+    blockType = undergroundBlock;
+    lightLevel = 0;
 
-    // Check for caves (underground only)
+    // Caves
     if (z < 0 && caveNoise) {
       const isCave = generateCave(x, y, z, caveNoise, params.caveFrequency);
-      if (isCave) {
-        blockType = 'air';
-        lightLevel = 0;
-      }
+      if (isCave) blockType = 'air';
     }
 
-    // Bedrock at bottom
-    if (z < -50) {
-      blockType = 'bedrock';
-    } else if (z < -30) {
-      blockType = 'deepslate';
-    }
+    // Bedrock
+    if (z < -60) blockType = 'bedrock';
   }
 
   return {
@@ -249,8 +304,8 @@ function generateTile(
     y,
     z,
     blockType: blockType as any,
-    biome: biome.type,
-    elevation,
+    biome: biomeType,
+    elevation: rawElevation * 100, // Keep consistent scale for metadata
     lightLevel,
   };
 }
@@ -274,7 +329,7 @@ function generateCave(x: number, y: number, z: number, caveNoise: SimplexNoise, 
 /**
  * Generate features for a chunk (trees, resources, etc.)
  */
-function generateFeatures(chunkX: number, chunkY: number, tiles: GridTile[], seed: string): GridFeature[] {
+function generateFeatures(tiles: GridTile[], seed: string): GridFeature[] {
   const features: GridFeature[] = [];
   const rng = Alea(seed);
 
@@ -328,7 +383,7 @@ function generateFeatures(chunkX: number, chunkY: number, tiles: GridTile[], see
  * Batch generate chunks for starting area
  * Generates 32x32 chunks (256x256 tiles = 2048x2048 pixels with 8px tiles)
  */
-export function generateStartingArea(seed: string, params: ChunkGenerationParams): GridChunk[] {
+export function generateStartingArea(params: ChunkGenerationParams): GridChunk[] {
   logger.info('[GridChunkGenerator] Generating starting area (32x32 chunks = 256x256 tiles)');
 
   const chunks: GridChunk[] = [];

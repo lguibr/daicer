@@ -14,10 +14,13 @@ import {
   addMessage,
   getMessages,
   getCreatures,
+  addCreature,
   updatePlayerAction,
 } from '@/services/firestore';
-import { saveWorldData } from '@/services/firestore/worlds';
-import { generateCharacterOpenings, processTurn } from '@/services/game';
+import { saveWorldData, getMapContext } from '@/services/firestore/worlds';
+import { getStructures } from '@/services/firestore/structures';
+import { processTurn } from '@/services/game';
+import { generateCharacter } from '@/services/character-generator';
 import { ApiError } from '@/middleware/error';
 import { NEW_CHARACTER_TEMPLATE } from '@/constants';
 import { GamePhase, type Player, type Message, type CharacterSheet } from '@/types/index';
@@ -25,6 +28,7 @@ import { getIO } from '@/socket/instance';
 import { mergeCharacterSheet } from '@/utils/character';
 import { storeCharacterAvatarPreviews } from '@/services/character-assets';
 import { logger } from '@/utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
@@ -128,7 +132,8 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
   }
 
   // Check if streaming is available (sockets connected)
-  const hasConnections = io && io.to ? (await io.in(roomId).fetchSockets()).length > 0 : false;
+  const io = getIO();
+  const hasConnections = io ? (await io.in(roomId).fetchSockets()).length > 0 : false;
 
   const initialState = {
     roomId,
@@ -156,22 +161,6 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
     // 2. POST /api/graph/world-config (Section 2)
     // 3. POST /api/graph/character/:playerId (Section 3)
     throw new ApiError(501, 'Old world generation endpoint deprecated. Use section graph APIs.');
-    const { createStreamWriter } = await import('@/graph/utils/streaming');
-
-    const writer = createStreamWriter(io, roomId);
-
-    try {
-      result = await invokeSessionInitializationGraphWithStreaming(initialState, writer);
-    } catch (error) {
-      logger.error(`World generation failed for room ${roomId}:`, error);
-
-      writer({
-        type: 'graph_error',
-        error: error instanceof Error ? error.message : 'World generation failed',
-      });
-
-      throw new ApiError(500, 'World generation failed', { cause: error });
-    }
   } else {
     // Fallback to non-streaming for room creation wizard (no connections yet)
     logger.info(`World generation without streaming for room ${roomId} (no connections)`);
@@ -199,13 +188,18 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
     GamePhase.CHARACTER_CREATION
   );
 
+  // Fetch actual structures from the room's subcollection
+  // The graph returns a structure list, but sometimes it might be empty if not strictly passed through
+  // Fetching from persistence ensures we get what was materialized
+  const savedStructures = await getStructures(roomId);
+
   // Cache world data for AssetsMaps viewing
   await saveWorldData(roomId, {
     name: room.settings?.theme || 'Generated World',
     roomId,
     worldDescription: result.worldDescription,
     worldHistory: result.worldHistory,
-    structures: result.structures || [],
+    structures: savedStructures.length > 0 ? savedStructures : result.structures || [],
     roads: result.roads || [],
     terrain: {
       width: 512,
@@ -360,13 +354,16 @@ router.get('/rooms/:roomId/generate-world', authenticate, async (req: AuthReques
       GamePhase.CHARACTER_CREATION
     );
 
+    // Fetch actual structures from persistence
+    const savedStructures = await getStructures(roomId);
+
     // Cache world data
     await saveWorldData(roomId, {
       name: room.settings?.theme || 'Generated World',
       roomId,
       worldDescription: result.worldDescription,
       worldHistory: result.worldHistory,
-      structures: result.structures || [],
+      structures: savedStructures.length > 0 ? savedStructures : result.structures || [],
       roads: result.roads || [],
       terrain: {
         width: 512,
@@ -535,6 +532,7 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
     action: null,
     isReady: false,
     joinedAt: Date.now(),
+    position: { x: 0, y: 0, z: 0 },
   };
 
   await addPlayer(roomId, player);
@@ -574,6 +572,7 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
 
   // Use language from room settings, NOT request body
   const language = room.settings?.language || 'en';
+  const { streamId } = req.body;
 
   // 1. Immediate update to GAMEPLAY phase to unblock UI
   await updateRoomWorld(roomId, { worldDescription: room.worldDescription }, GamePhase.GAMEPLAY);
@@ -595,10 +594,129 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
   (async () => {
     try {
       // Import the granular generation functions
-      const { generateMainOpening, generateCharacterOpening } = await import('@/services/game');
+      const { generateCharacterOpening, generateStoryDraft, extractNPCsFromDraft, generateFinalOpening } = await import(
+        '@/services/game'
+      );
 
-      // A. Generate and send public story message FIRST
-      const mainMessage = await generateMainOpening(room.worldDescription, language);
+      // A. Generate Story Draft
+      await addMessage(roomId, {
+        id: `msg-${Date.now()}-sys-draft`,
+        sender: 'System',
+        text: 'Drafting the opening scene...',
+        timestamp: Date.now(),
+      });
+
+      // Get actual map context (structures, terrain)
+      let mapContext = await getMapContext(roomId);
+
+      if (mapContext === 'No map data available.') {
+        // Fallback: Create default world data if missing
+        const { saveWorldData } = await import('@/services/firestore/worlds');
+        await saveWorldData(roomId, {
+          name: room.settings?.theme || 'Generated World',
+          roomId,
+          worldDescription: room.worldDescription || 'A mysterious world.',
+
+          worldHistory: { overallSummary: 'History not generated yet.', periods: [] },
+          structures: await getStructures(roomId),
+          roads: [],
+          terrain: {
+            width: 512,
+            height: 512,
+          },
+          settings: room.settings || undefined,
+          createdAt: Date.now(),
+          createdBy: room.ownerId,
+        });
+        mapContext = await getMapContext(roomId);
+      }
+
+      await addMessage(roomId, {
+        id: `msg-${Date.now()}-sys-map-context`,
+        sender: 'System',
+        text: `**Map Context Used:**\n\n${mapContext}`,
+        timestamp: Date.now(),
+      });
+
+      const draft = await generateStoryDraft(room.worldDescription, players, mapContext, language, streamId);
+
+      await addMessage(roomId, {
+        id: `msg-${Date.now()}-sys-draft-result`,
+        sender: 'System',
+        text: `**Draft Generated:**\n\n${draft}`,
+        timestamp: Date.now(),
+      });
+
+      // B. Extract and Create NPCs
+      await addMessage(roomId, {
+        id: `msg-${Date.now()}-sys-npc`,
+        sender: 'System',
+        text: 'Summoning NPCs...',
+        timestamp: Date.now(),
+      });
+
+      const npcs = await extractNPCsFromDraft(draft, language, streamId);
+
+      await addMessage(roomId, {
+        id: `msg-${Date.now()}-sys-npc-result`,
+        sender: 'System',
+        text: `**NPCs Summoned:**\n${npcs.map((n) => `- ${n.name}`).join('\n')}`,
+        timestamp: Date.now(),
+      });
+      const createdCreatures: import('@/types/index').Creature[] = [];
+
+      for (const npc of npcs) {
+        const creatureId = uuidv4();
+
+        let sheet;
+        try {
+          // Try to generate based on extracted details
+          sheet = await generateCharacter({
+            name: npc.name,
+            raceId: npc.race,
+            classId: npc.class,
+            level: 3, // Default to level 3 for interesting NPCs
+          });
+        } catch (error) {
+          logger.warn(`Failed to generate specific sheet for ${npc.name}, falling back to random`, error);
+          // Fallback to random
+          sheet = await generateCharacter({ name: npc.name, level: 3 });
+        }
+
+        const creature: import('@/types/index').Creature = {
+          id: creatureId,
+          name: npc.name,
+          hp: sheet.hp,
+          maxHp: sheet.maxHp,
+          ac: sheet.armorClass,
+          position: { x: 0, y: 0, z: 0 },
+          type: 'npc',
+          sheet,
+        };
+        await addCreature(roomId, creature);
+        createdCreatures.push(creature);
+      }
+
+      // Broadcast new creatures
+      const io = getIO();
+      if (io) {
+        io.to(roomId).emit('game:state', {
+          room,
+          players,
+          messages: await getMessages(roomId),
+          creatures: await getCreatures(roomId),
+        });
+      }
+
+      // C. Generate Final Opening
+      await addMessage(roomId, {
+        id: `msg-${Date.now()}-sys-final`,
+        sender: 'System',
+        text: 'Finalizing the story...',
+        timestamp: Date.now(),
+      });
+
+      const mainMessage = await generateFinalOpening(draft, npcs, language, streamId);
 
       const publicMsg: Message = {
         id: `msg-${Date.now()}-dm-public`,
@@ -608,7 +726,7 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
       };
       await addMessage(roomId, publicMsg);
 
-      // B. Generate and send private messages in parallel
+      // D. Generate and send private messages in parallel
       await Promise.all(
         players.map(async (player) => {
           try {
@@ -616,7 +734,8 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
               room.worldDescription,
               player.character,
               mainMessage,
-              language
+              language,
+              streamId
             );
 
             const msg: Message = {
@@ -697,13 +816,148 @@ router.post('/:roomId/action', authenticate, async (req: AuthRequest, res: Respo
 });
 
 /**
+ * Add a creature manually (NPC or Monster)
+ * @route POST /api/game/:roomId/creatures
+ */
+router.post('/:roomId/creatures', authenticate, async (req: AuthRequest, res: Response) => {
+  const { roomId } = req.params;
+  const { type, name, race, class: className, level, monsterId, cr } = req.body;
+
+  if (!roomId) throw new ApiError(400, 'Room ID is required');
+
+  const room = await getRoom(roomId);
+  if (!room) throw new ApiError(404, 'Room not found');
+  if (room.ownerId !== req.user!.uid) throw new ApiError(403, 'Only GM can add creatures');
+
+  let sheet: CharacterSheet;
+  let creatureType: 'npc' | 'monster' = 'npc';
+
+  const { generateMonster } = await import('@/services/character-generator');
+
+  if (type === 'monster') {
+    creatureType = 'monster';
+    const monster = await generateMonster({
+      monsterId,
+      name,
+      cr,
+      type: race, // optional mapping
+    });
+
+    if (!monster) {
+      throw new ApiError(404, 'Monster not found');
+    }
+
+    // Convert monster to sheet-like structure or specialized sheet
+    // For now, we wrap it in a pseudo-sheet or use a union type in the future
+    // But since the system expects CharacterSheet, we'll generate a minimal valid one
+    // or if the creature system supports raw monster data, use that.
+
+    // NOTE: The system currently expects `sheet: CharacterSheet` property on Creature.
+    // We will generate a shell sheet based on the monster stats.
+
+    sheet = {
+      name: monster.name,
+      race: monster.type,
+      characterClass: 'Monster',
+      background: 'Monster',
+      alignment: monster.alignment,
+      level: parseFloat(monster.challenge) || 1, // approximate
+      xp: 0,
+      hp: parseInt(monster.hitPoints) || 10,
+      maxHp: parseInt(monster.hitPoints) || 10,
+      temporaryHp: 0,
+      hitDice: { total: 1, current: 1 },
+      deathSaves: { successes: 0, failures: 0 },
+      armorClass: monster.armorClass,
+      initiative: Math.floor((monster.abilityScores.DEX - 10) / 2),
+      speed: 30, // parsing "30 ft" would be better
+      proficiencyBonus: 2,
+      inspiration: false,
+      attributes: {
+        Strength: monster.abilityScores.STR,
+        Dexterity: monster.abilityScores.DEX,
+        Constitution: monster.abilityScores.CON,
+        Intelligence: monster.abilityScores.INT,
+        Wisdom: monster.abilityScores.WIS,
+        Charisma: monster.abilityScores.CHA,
+      },
+      savingThrows: { fortitude: 0, reflex: 0, will: 0 },
+      skills: {},
+      skillDetails: [],
+      expertises: [],
+      baseAttackBonus: 0,
+      attacks: monster.actions.map((a) => ({ name: a.name, bonus: '+0', damageType: 'physical' })),
+      equipment: '',
+      currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+      proficienciesAndLanguages: monster.languages.join(', '),
+      features: monster.specialAbilities?.map((a) => `${a.name}: ${a.description}`).join('\n') || '',
+      talents: [],
+      appearance: {
+        age: 'Unknown',
+        weight: 'Unknown',
+        height: monster.size,
+        eyes: 'Unknown',
+        skin: 'Unknown',
+        hair: 'Unknown',
+        description: 'A fearsome monster.',
+      },
+      personality: { traits: '', ideals: '', bonds: '', flaws: '' },
+      backstory: '',
+      backgroundDetails: { origin: '', upbringing: '', motivation: '', keyEvents: [] },
+      alliesAndOrganizations: '',
+      treasure: '',
+      resourcePools: [],
+      advancementPoints: { ability: 0, skill: 0, talent: 0 },
+      spellcasting: {
+        class: '',
+        ability: '',
+        saveDC: 10,
+        attackBonus: 0,
+        cantrips: [],
+        spellsKnown: [],
+        slots: [],
+      },
+    };
+  } else {
+    // Generate NPC
+    sheet = await generateCharacter({
+      name,
+      raceId: race,
+      classId: className,
+      level: level || 1,
+    });
+  }
+
+  const creatureId = uuidv4();
+  const creature: import('@/types/index').Creature = {
+    id: creatureId,
+    name: sheet.name,
+    hp: sheet.hp,
+    maxHp: sheet.maxHp,
+    ac: sheet.armorClass,
+    position: { x: 0, y: 0, z: 0 },
+    type: creatureType,
+    sheet,
+  };
+
+  await addCreature(roomId, creature);
+
+  // Broadcast
+  const io = getIO();
+  if (io) {
+    io.to(roomId).emit('creature:added', { creature });
+  }
+
+  res.status(201).json({ success: true, data: creature });
+});
+
+/**
  * Helper: Resolve turn (process actions and generate narrative)
  */
 async function resolveTurn(roomId: string, room: any) {
   const players = await getPlayers(roomId);
   const messages = await getMessages(roomId);
   const creatures = await getCreatures(roomId);
-
   // 1. Convert pending actions to messages
   for (const player of players) {
     if (player.action) {
@@ -719,13 +973,21 @@ async function resolveTurn(roomId: string, room: any) {
 
   // 2. Generate DM response
   const language = room.settings?.language || 'en';
+  const streamId = uuidv4();
+
+  // Fetch map context for the DM
+  const mapContext = await getMapContext(roomId);
+
   const dmResponse = await processTurn(
     room.worldDescription,
     messages,
     players,
     creatures,
     language,
-    room.settings || undefined
+    room.settings || undefined,
+    undefined, // worldConditions
+    mapContext,
+    streamId
   );
 
   // 3. Send Public Summary

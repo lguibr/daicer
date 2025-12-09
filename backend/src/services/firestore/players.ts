@@ -110,3 +110,11 @@ export async function removePlayer(roomId: string, playerId: string): Promise<vo
   await db().collection('rooms').doc(roomId).collection('players').doc(playerId).delete();
   logger.info(`Player removed from room ${roomId}: ${playerId}`);
 }
+
+export async function updatePlayerPosition(
+  roomId: string,
+  playerId: string,
+  position: { x: number; y: number; z: number }
+): Promise<void> {
+  await db().collection('rooms').doc(roomId).collection('players').doc(playerId).update({ position });
+}

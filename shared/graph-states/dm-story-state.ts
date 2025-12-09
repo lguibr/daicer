@@ -32,6 +32,7 @@ const DMStyleSchema = z.object({
 export const DMStoryStateSchema = z.object({
   // === REQUIRED INPUT (from wizard) ===
   roomId: z.string().min(1, 'Room ID required'),
+  streamId: z.string().optional().describe('Socket.IO stream ID for real-time updates'),
   language: z.enum(['en', 'es', 'pt-BR']).default('en'),
 
   settings: z.object({
@@ -76,6 +77,7 @@ export type DMStoryState = z.infer<typeof DMStoryStateSchema>;
  */
 export const DMStoryInputSchema = DMStoryStateSchema.pick({
   roomId: true,
+  streamId: true,
   language: true,
   settings: true,
 });

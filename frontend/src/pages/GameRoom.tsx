@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { getRoomState, startGame } from '../services/api';
 import { joinRoom as joinSocketRoom, setReady } from '../services/socket';
 import useSocket from '../hooks/useSocket';
@@ -20,6 +21,7 @@ import { Button } from '../components/ui/button';
 import ToolCallCard from '../components/chat/ToolCallCard';
 import { auth } from '../services/firebase';
 import useAuth from '../hooks/useAuth';
+import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
 import type { Room, Player } from '../types/shared';
 
@@ -41,6 +43,11 @@ export default function GameRoomPage() {
   const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
 
   const socket = useSocket(roomId);
+
+  // Listen to all streams in the room
+  const streams = useLLMStream(undefined, socket.socket);
+  // Find any active stream to display
+  const activeStream = Object.values(streams).find((s) => s.status === 'active');
 
   // Auto-redirect to character creation if user has no character
   useEffect(() => {
@@ -373,22 +380,6 @@ export default function GameRoomPage() {
     // If user has no character, default to creation mode (optional, can be just lobby)
     // But let's start in Lobby to see everyone
 
-    const handleUnlockRoom = async () => {
-      if (!room?.id) return;
-      try {
-        const token = await user?.getIdToken();
-        await fetch(`${import.meta.env.VITE_API_URL}/api/rooms/${room.id}/unlock-characters`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      } catch (err) {
-        console.error('Failed to unlock room:', err);
-      }
-    };
-
     const handleReadyToggle = async (isReady: boolean) => {
       if (!room?.id) return;
       try {
@@ -402,7 +393,8 @@ export default function GameRoomPage() {
       if (!room) return;
       try {
         setLoading(true);
-        await startGame(room.id, room.settings?.language || 'en');
+        const streamId = uuidv4();
+        await startGame(room.id, room.settings?.language || 'en', streamId);
         // Room update will come via socket
       } catch (err) {
         console.error('Failed to start game:', err);
@@ -429,7 +421,6 @@ export default function GameRoomPage() {
           onReadyToggle={handleReadyToggle}
           isOwner={room.ownerId === user?.uid}
           onStartGame={handleStartGame}
-          onUnlockRoom={handleUnlockRoom}
         />
       </DynamicLayout>
     );
@@ -447,8 +438,19 @@ export default function GameRoomPage() {
 
   // PHASE 5: GAMEPLAY - Active gameplay with chat, turns, etc.
   return (
-    <DynamicLayout showRoomInfo>
+    <DynamicLayout showRoomInfo className="h-dvh overflow-hidden" mainClassName="min-h-0">
       <GameplayScreen room={room} players={players} />
+      {activeStream && activeStream.status === 'active' && (
+        <div className="fixed bottom-20 right-6 z-50 w-96 rounded-lg border border-aurora-500/30 bg-midnight-900/95 p-4 shadow-xl backdrop-blur-md">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-aurora-300">Storyteller Streaming...</h3>
+            <span className="animate-pulse text-xs text-aurora-400">● Live</span>
+          </div>
+          <div className="max-h-60 overflow-y-auto whitespace-pre-wrap text-sm text-aurora-100/90">
+            {activeStream.content}
+          </div>
+        </div>
+      )}
       <ToolNotificationContainer toolCalls={recentToolCalls} onDismiss={() => {}} />
     </DynamicLayout>
   );

@@ -97,7 +97,7 @@ describe('Grid Chunk Generator', () => {
 
   describe('Starting Area Generation', () => {
     it('should generate 32x32 chunks (1024 total)', () => {
-      const chunks = generateStartingArea('starting-area-test', {
+      const chunks = generateStartingArea({
         seed: 'starting-area-test',
       });
 
@@ -105,7 +105,7 @@ describe('Grid Chunk Generator', () => {
     });
 
     it('should mark all chunks as starting area', () => {
-      const chunks = generateStartingArea('starting-flag-test', {
+      const chunks = generateStartingArea({
         seed: 'starting-flag-test',
       });
 
@@ -115,7 +115,7 @@ describe('Grid Chunk Generator', () => {
     });
 
     it('should generate only z=0 (surface) for starting area', () => {
-      const chunks = generateStartingArea('surface-only-test', {
+      const chunks = generateStartingArea({
         seed: 'surface-only-test',
       });
 

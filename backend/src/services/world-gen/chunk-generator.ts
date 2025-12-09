@@ -4,8 +4,9 @@
  * Default 4x4 for maximum granularity and smooth loading
  */
 
-import { generateBiomeMap } from './biome-generator';
+import { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS } from '@daicer/shared/world-gen';
 import { logger } from '@/utils/logger';
+import { getStructuresForChunk } from './structure-stamper';
 
 export interface TerrainChunk {
   chunkX: number;
@@ -18,6 +19,7 @@ export interface TerrainChunk {
     type: string;
     x: number;
     y: number;
+    material: string; // Added material
     [key: string]: any;
   }>;
 }
@@ -40,14 +42,17 @@ interface GenerateChunkOptions {
   chunkX: number;
   chunkY: number;
   chunkSize?: number;
+  seed?: string;
+  structures?: any[];
+  generationParams?: any;
 }
 
-/**
- * Generate a single terrain chunk with caching
- * Uses SAME seed as original map for continuity, but different world offset
- * Default 4x4 for ultra-granular loading
- */
-export function generateTerrainChunk({ roomId, chunkX, chunkY, chunkSize = 4 }: GenerateChunkOptions): TerrainChunk {
+// Generate a single terrain chunk with caching
+// Uses SAME seed as original map for continuity, but different world offset
+// Default 4x4 for ultra-granular loading
+export function generateTerrainChunk(options: GenerateChunkOptions): TerrainChunk {
+  const { roomId, chunkX, chunkY, chunkSize = 4, seed, structures = [], generationParams = {} } = options;
+
   // Bounds check: prevent infinite chunk generation
   if (Math.abs(chunkX) > CHUNK_BOUNDS || Math.abs(chunkY) > CHUNK_BOUNDS) {
     logger.warn(`[Chunk] Chunk coordinates out of bounds: (${chunkX}, ${chunkY}), max ±${CHUNK_BOUNDS}`);
@@ -69,29 +74,60 @@ export function generateTerrainChunk({ roomId, chunkX, chunkY, chunkSize = 4 }: 
   const worldOffsetY = chunkY * chunkSize;
 
   // IMPORTANT: Use SAME seed + world offset for continuous noise
-  const biomeMap = generateBiomeMap({
-    seed: roomId, // Same seed as main world for continuity
-    width: chunkSize,
-    height: chunkSize,
-    offsetX: worldOffsetX, // Sample noise at correct world position
-    offsetY: worldOffsetY,
-    temperatureBias: 0,
-    moistureBias: 0,
-    continentalnessBias: 0,
-    biomeRegionSize: 16, // Even smaller regions for 4x4 chunks
-  });
+  // Fallback to roomId if no seed provided (legacy/default behavior)
+  const generatorSeed = seed || roomId;
 
-  // For now, chunks don't have structures (structures only in initial map)
-  // Future: could generate procedural structures based on chunk seed
-  const structures: TerrainChunk['structures'] = [];
+  // Generate biomes using Shared Logic (Frontend Parity)
+  // This ensures the terrain matches the preview exactly
+  // Merge default params with provided params
+  const finalParams = { ...DEFAULT_GENERATION_PARAMS, ...generationParams };
+
+  // Create generator (instantiates noise with seed)
+  const generator = createSimpleChunkGenerator(generatorSeed, finalParams);
+
+  // Generate 3D grid [floor][y][x]
+  const chunkBiomes3D = generator(worldOffsetX, worldOffsetY, chunkSize, chunkSize);
+
+  // Extract surface layer (floor 0 is index 3 in the 7-layer system: -3, -2, -1, 0, 1, 2, 3)
+  // Wait, the shared generator loop: for (let floor = 0; floor < 7; floor++)
+  // Floor index 3 is typically the "surface" (z=0) in the daice system.
+  const biomeGrid = chunkBiomes3D[3] || [];
+
+  // Stamp structures if provided (Metadata only)
+  // The shared generator ALREADY stamps the visual tiles into the grid.
+  // We only need to populate the 'structures' metadata array for the client to know "this is a house".
+  const chunkStructures: TerrainChunk['structures'] = [];
+
+  if (structures && structures.length > 0) {
+    // 1. Identify relevant structures
+    const overlappingStructures = getStructuresForChunk(
+      structures,
+      worldOffsetX,
+      worldOffsetY,
+      chunkSize,
+      generatorSeed
+    );
+
+    // 2. Add metadata
+    for (const structure of overlappingStructures) {
+      chunkStructures.push({
+        name: structure.name,
+        type: structure.type,
+        x: structure.worldX,
+        y: structure.worldY,
+        material: structure.material,
+      });
+      // Note: We deliberately SKIP stamping tiles here because createSimpleChunkGenerator does it.
+    }
+  }
 
   const chunk: TerrainChunk = {
     chunkX,
     chunkY,
     worldOffsetX,
     worldOffsetY,
-    biomes: biomeMap.grid,
-    structures,
+    biomes: biomeGrid,
+    structures: chunkStructures,
   };
 
   // Store in cache before returning

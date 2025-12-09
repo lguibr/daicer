@@ -22,6 +22,7 @@ interface UseKeyboardMovementOptions {
   };
   enabled?: boolean;
   coordinateOffset?: { x: number; y: number }; // For grid-to-world coordinate conversion
+  onMove?: (newPosition: Position) => void;
 }
 
 export function useKeyboardMovement({
@@ -30,6 +31,7 @@ export function useKeyboardMovement({
   bounds = {},
   enabled = true,
   coordinateOffset = { x: 0, y: 0 },
+  onMove,
 }: UseKeyboardMovementOptions) {
   const [position, setPosition] = useState<Position>(initialPosition);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -103,6 +105,7 @@ export function useKeyboardMovement({
       }
 
       setPosition({ x: newX, y: newY });
+      onMove?.({ x: newX, y: newY });
 
       // Prevent default for WASD and arrow keys
       e.preventDefault();

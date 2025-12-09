@@ -4,6 +4,26 @@
 
 import type { Server, Socket } from 'socket.io';
 import { handleStreamRequest, handleStreamAbort, cleanupUserStreams } from '../streaming';
+import { jest } from '@jest/globals';
+
+// Mock LLM services
+jest.mock('@/services/llm', () => ({
+  streamText: jest.fn().mockImplementation(async function* () {
+    yield { content: 'Test content', done: false };
+    yield { content: '', done: true };
+  }),
+  streamWithHistory: jest.fn(),
+  batchStreamChunks: jest.fn().mockImplementation((stream) => stream),
+}));
+
+jest.mock('@/services/llm/stream-manager', () => ({
+  streamManager: {
+    startStream: jest.fn(),
+    endStream: jest.fn(),
+  },
+}));
+
+jest.mock('@/utils/logger');
 
 describe('Streaming Socket Handlers', () => {
   let mockIo: Partial<Server>;

@@ -78,7 +78,7 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
  * @param options - Optional room creation options
  * @returns Created room
  */
-export async function createRoom(options?: { settings?: WorldSettings }): Promise<Room> {
+export async function createRoom(options?: { settings?: WorldSettings; structures?: any[] }): Promise<Room> {
   return apiRequest<Room>('/api/rooms', {
     method: 'POST',
     body: options ? JSON.stringify(options) : undefined,
@@ -172,10 +172,10 @@ export async function addCharacter(roomId: string, character: CreateCharacterPay
  * @param language - Language code
  * @returns Opening message
  */
-export async function startGame(roomId: string, language: string): Promise<Message> {
+export async function startGame(roomId: string, language: string, streamId?: string): Promise<Message> {
   return apiRequest<Message>(`/api/game/${roomId}/start`, {
     method: 'POST',
-    body: JSON.stringify({ language }),
+    body: JSON.stringify({ language, streamId }),
   });
 }
 
@@ -226,6 +226,7 @@ interface DMStorySettings {
 
 export async function invokeDMStoryGraph(input: {
   roomId: string;
+  streamId?: string;
   language?: 'en' | 'es' | 'pt-BR';
   settings: DMStorySettings;
 }): Promise<{

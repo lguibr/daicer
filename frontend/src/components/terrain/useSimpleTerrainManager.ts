@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
-import { GridTile } from "@daicer/shared/world/world";
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { GridTile } from '@daicer/shared/world/world';
 
 interface ChunkGenerator {
   generateChunk: (worldX: number, worldY: number, width: number, height: number) => GridTile[][];
@@ -26,6 +26,14 @@ export function useSimpleTerrainManager({
 
   // Track loaded chunk keys to avoid re-generation
   const loadedChunksRef = useRef<Set<string>>(new Set());
+
+  // Reset state when generator or initial grid changes (e.g. seed change)
+  useEffect(() => {
+    console.log('[SimpleTerrainManager] Resetting state due to generator/grid change');
+    setChunks(new Map());
+    loadedChunksRef.current = new Set();
+    setGridWorldOffset({ x: 0, y: 0 });
+  }, [chunkGenerator, initialGrid]);
 
   // Calculate the expanded grid by merging all chunks
   const expandedGrid = useMemo<{ grid: (GridTile | null)[][]; offset: { x: number; y: number } }>(() => {
@@ -197,14 +205,7 @@ export function useSimpleTerrainManager({
           const chunk = chunkGenerator.generateChunk(chunkStartX, chunkStartY, chunkSize, chunkSize);
 
           // Log first few tiles to verify content
-          const sampleTiles = chunk.slice(0, 2).map((row) =>
-            row
-              .slice(0, 4)
-              .map((t) => t.biome)
-              .join(',')
-          );
-          console.log(`[SimpleTerrainManager] Chunk content sample: [${sampleTiles.join('] [')}]`);
-
+          // Chunk generated successfully
           newChunks.set(key, chunk);
           loadedChunksRef.current.add(key);
           hasNew = true;

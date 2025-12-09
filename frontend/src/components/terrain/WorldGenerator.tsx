@@ -8,12 +8,13 @@ import { Play, RefreshCw, Settings2, ChevronDown, ChevronUp, Save } from 'lucide
 
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@/hooks/useWorldGeneration';
-import { GridTile } from "@daicer/shared/world/world";
+import { GridTile } from '@daicer/shared/world/world';
 
 interface WorldGeneratorProps {
   initialSeed?: string;
   initialParams?: GenerationParams;
   onParamsChange?: (params: GenerationParams, seed: string) => void;
+  onStructuresGenerated?: (structures: any[]) => void;
   onSave?: (seed: string, params: GenerationParams) => void;
   className?: string;
 }
@@ -22,6 +23,7 @@ export function WorldGenerator({
   initialSeed,
   initialParams = DEFAULT_GENERATION_PARAMS,
   onParamsChange,
+  onStructuresGenerated,
   onSave,
   className,
 }: WorldGeneratorProps) {
@@ -39,15 +41,25 @@ export function WorldGenerator({
 
   // Notify parent of changes
   const onParamsChangeRef = useRef(onParamsChange);
+  const onStructuresGeneratedRef = useRef(onStructuresGenerated);
+
   useEffect(() => {
     onParamsChangeRef.current = onParamsChange;
-  }, [onParamsChange]);
+    onStructuresGeneratedRef.current = onStructuresGenerated;
+  }, [onParamsChange, onStructuresGenerated]);
 
   useEffect(() => {
     if (onParamsChangeRef.current) {
       onParamsChangeRef.current(params, seed);
     }
   }, [params, seed]);
+
+  // Notify parent of structures
+  useEffect(() => {
+    if (onStructuresGeneratedRef.current && structures.length > 0) {
+      onStructuresGeneratedRef.current(structures);
+    }
+  }, [structures]);
 
   const handleRegenerate = () => {
     generateWorld(seed, 128, params);

@@ -75,6 +75,7 @@ export interface WorldData {
     eraCount?: number;
   };
   createdAt: number;
+  updatedAt?: number;
   createdBy: string;
 }
 
@@ -175,4 +176,104 @@ export async function updateWorldData(roomId: string, updates: Partial<WorldData
     logger.error(`Failed to update world data for room ${roomId}:`, error);
     throw new Error('Failed to update world data');
   }
+}
+/**
+ * Helper: Fetch structures directly from room subcollection
+ * avoiding circular dependency with structures.ts
+ */
+async function fetchStructuresDirectly(roomId: string): Promise<Structure[]> {
+  try {
+    const snapshot = await db().collection('rooms').doc(roomId).collection('structures').get();
+
+    if (snapshot.empty) return [];
+
+    const structures: Structure[] = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      structures.push({
+        id: data.id,
+        name: data.name,
+        type: data.type,
+        size: data.size,
+        significance: data.significance,
+        era: data.era,
+        description: data.description,
+        position: {
+          x: data.x,
+          y: data.y,
+        },
+      } as Structure);
+    });
+    return structures;
+  } catch (err) {
+    logger.error('Error fetching structures directly in worlds.ts:', err);
+    return [];
+  }
+}
+
+/**
+ * Get a text description of the map context for LLM consumption
+ * @param roomId - Room ID
+ * @param center - Optional center point for local context
+ * @param radius - Radius to search (default 50)
+ */
+export async function getMapContext(
+  roomId: string,
+  center?: { x: number; y: number },
+  radius: number = 50
+): Promise<string> {
+  const worldData = await getWorldData(roomId);
+  if (!worldData) return 'No map data available.';
+
+  // repair/active-fetch: if structures are empty, try to fetch from room
+  let structures = worldData.structures || [];
+  if (structures.length === 0) {
+    const missingStructures = await fetchStructuresDirectly(roomId);
+    if (missingStructures.length > 0) {
+      structures = missingStructures;
+      // Self-heal: update the world data asynchronously
+      saveWorldData(roomId, { structures }).catch((e) => logger.warn('Failed to self-heal world structures:', e));
+    }
+  }
+
+  let context = `WORLD MAP CONTEXT:\n`;
+
+  // 1. Structures
+  const relevantStructures = structures.filter((s) => {
+    if (!center) return true; // Global context
+    const dx = s.position.x - center.x;
+    const dy = s.position.y - center.y;
+    return Math.sqrt(dx * dx + dy * dy) <= radius;
+  });
+
+  if (relevantStructures.length > 0) {
+    context += `\nSTRUCTURES (within ${center ? radius : 'all'} units):\n`;
+    relevantStructures.forEach((s) => {
+      const dist = center
+        ? Math.round(Math.sqrt(Math.pow(s.position.x - center.x, 2) + Math.pow(s.position.y - center.y, 2)))
+        : 0;
+      context += `- ${s.name} (${s.type}): ${s.description || 'No description'} [${dist} units away]\n`;
+    });
+  } else {
+    context += `\nNo major structures nearby.\n`;
+  }
+
+  // 2. Terrain / Biomes (Simplified)
+  // If we have a center, describe the biome at that location
+  if (center && worldData.terrain.biomes) {
+    const x = Math.round(center.x);
+    const y = Math.round(center.y);
+    if (
+      x >= 0 &&
+      x < worldData.terrain.width &&
+      y >= 0 &&
+      y < worldData.terrain.height &&
+      worldData.terrain.biomes[y] &&
+      worldData.terrain.biomes[y][x]
+    ) {
+      context += `\nCURRENT BIOME: ${worldData.terrain.biomes[y][x]}\n`;
+    }
+  }
+
+  return context;
 }

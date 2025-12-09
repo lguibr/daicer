@@ -36,6 +36,8 @@ export const worldSettingsSchema = z.object({
   enableRoads: z.boolean().optional(),
   roadQuality: z.string().optional(),
   terrainComplexity: z.number().optional(),
+  seed: z.string().optional(),
+  generationParams: z.record(z.unknown()).optional(),
 });
 
 /**

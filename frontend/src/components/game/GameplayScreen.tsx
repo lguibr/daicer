@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { BookOpen } from 'lucide-react';
 import type { Room, Player } from '../../types/shared';
 import useStreamingSocket from '../../hooks/useStreamingSocket';
-import { processTurn } from '../../services/socket';
+import { processTurn, movePlayer } from '../../services/socket';
 import { submitAction } from '../../services/api';
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
@@ -13,8 +15,10 @@ import { RoomTabs } from '../room/RoomTabs';
 import { PlayerListTab } from '../room/PlayerListTab';
 import { RoomSettingsTab } from '../room/RoomSettingsTab';
 import { TerrainExplorer } from '../terrain/TerrainExplorer';
+import { EntityListModal } from '../room/EntityListModal';
+import { Button } from '../ui/button';
 
-const EMPTY_GRID: any[] = [];
+const EMPTY_GRID: number[][] = [];
 
 interface GameplayScreenProps {
   room: Room;
@@ -31,6 +35,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const socket = useStreamingSocket(room.id);
   const { t } = useI18n();
   const [submitting, setSubmitting] = useState(false);
+  const [showEntityList, setShowEntityList] = useState(false);
 
   const hasPlayerAction = (playerAction: Player['action']) =>
     typeof playerAction === 'string' && playerAction.trim().length > 0;
@@ -67,6 +72,12 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
       setSubmitting(false);
     }
   }, [socket.isProcessing]);
+
+  useEffect(() => {
+    if (socket.error) {
+      toast.error(socket.error);
+    }
+  }, [socket.error]);
 
   const navigate = useNavigate();
 
@@ -157,12 +168,64 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   return (
     <>
       {submitting && socket.isProcessing && <LoadingOverlay message={t('gameplay.processing')} />}
-      <RoomTabs
+
+      {/* Desktop Split View (lg+) */}
+      <div className="hidden h-full w-full lg:flex">
+        {/* Left Panel: Chat (35%) */}
+        <div className="w-[35%] min-w-[350px] border-r border-midnight-700 bg-midnight-900/95">{chatContent}</div>
+
+        {/* Right Panel: Map (65%) */}
+        <div className="relative flex-1 bg-black">
+          <TerrainExplorer
+            roomId={room.id}
+            biomeGrid={EMPTY_GRID}
+            roomSize={32}
+            enableInfinite
+            players={players}
+            creatures={socket.creatures}
+            structures={room.structures}
+            onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}
+          />
+
+          {/* Overlay Controls */}
+          <div className="absolute right-4 top-4 flex gap-2">
+            <Button size="icon" variant="secondary" onClick={() => setShowEntityList(true)} title="Entities & Sheets">
+              <BookOpen className="w-4 h-4" />
+            </Button>
+            <RoomSettingsTab room={room} onLeave={handleLeaveRoom} asModal />
+            <PlayerListTab players={players} currentUserId={user?.uid || ''} asModal />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile/Tablet Tabs (< lg) */}
+      <div className="h-full w-full lg:hidden">
+        <RoomTabs
+          roomId={room.id}
+          chatContent={chatContent}
+          mapContent={
+            <TerrainExplorer
+              roomId={room.id}
+              biomeGrid={EMPTY_GRID}
+              roomSize={32}
+              enableInfinite
+              players={players}
+              creatures={socket.creatures}
+              structures={room.structures}
+              onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}
+            />
+          }
+          playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
+          settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}
+        />
+      </div>
+
+      <EntityListModal
+        isOpen={showEntityList}
+        onClose={() => setShowEntityList(false)}
+        creatures={socket.creatures}
+        players={players}
         roomId={room.id}
-        chatContent={chatContent}
-        mapContent={<TerrainExplorer roomId={room.id} biomeGrid={EMPTY_GRID} roomSize={32} enableInfinite />}
-        playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
-        settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}
       />
     </>
   );

@@ -172,9 +172,14 @@ export interface CharacterSheet {
  * Creature/NPC in combat
  */
 export interface Creature {
+  id: string;
   name: string;
   hp: number;
   maxHp: number;
-  attackBonus: number;
-  damage: string;
+  ac: number;
+  attackBonus?: number;
+  damage?: string;
+  position: { x: number; y: number; z: number };
+  type: 'npc' | 'monster';
+  sheet?: CharacterSheet;
 }

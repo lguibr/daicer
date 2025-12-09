@@ -44,7 +44,7 @@ function invalidateRoomCache(roomId: string): void {
 // Room Operations
 // ============================================================================
 
-export async function createRoom(ownerId: string, settings?: WorldSettings): Promise<Room> {
+export async function createRoom(ownerId: string, settings?: WorldSettings, structures?: any[]): Promise<Room> {
   const code = generateRoomCode();
   const roomRef = db().collection('rooms').doc();
 
@@ -56,6 +56,7 @@ export async function createRoom(ownerId: string, settings?: WorldSettings): Pro
     worldDescription: '',
     characterCreationLocked: true, // Lock by default, owner must approve
     settings: settings || null,
+    structures: structures || [],
     isActive: true,
     createdAt: Date.now(),
     updatedAt: Date.now(),

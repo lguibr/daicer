@@ -47,6 +47,7 @@ export default function CreateRoomPage() {
   // Terrain generation state
   const [seed, setSeed] = useState<string>('daicer-world');
   const [generationParams, setGenerationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS);
+  const [structures, setStructures] = useState<any[]>([]);
 
   const verbosityMarks = useMemo<SliderMark[]>(
     () =>
@@ -388,6 +389,7 @@ export default function CreateRoomPage() {
           seed,
           generationParams,
         },
+        structures,
       });
 
       // Redirect immediately to the room
@@ -668,6 +670,7 @@ export default function CreateRoomPage() {
                     setGenerationParams(params);
                     setSeed(newSeed);
                   }}
+                  onStructuresGenerated={setStructures}
                   className="h-full"
                 />
               </div>

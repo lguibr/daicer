@@ -41,6 +41,7 @@ import exploreRouter from '@/routes/explore';
 // Socket.io handlers
 import { initializeSocketHandlers } from '@/socket/handlers';
 import { setIO } from '@/socket/instance';
+import { streamManager } from '@/services/llm/stream-manager';
 
 // Get directory path for ES modules
 // Load environment variables from backend and root
@@ -159,6 +160,7 @@ app.use(errorHandler);
 
 // Socket.IO initialization
 setIO(io); // Store instance for use in API routes
+streamManager.setSocketServer(io);
 initializeSocketHandlers(io);
 
 // Socket.IO engine error monitoring

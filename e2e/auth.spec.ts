@@ -1,39 +1,41 @@
-/**
- * @file E2E auth tests
- * @description Test login flow with Firebase emulators
- */
-
 import { test, expect } from '@playwright/test';
-import { faker } from '@faker-js/faker';
-import { signInWithEmulator } from './utils/helpers';
+import { signInWithEmulator, TEST_USER } from './utils/helpers';
 
-test.describe('Authentication', () => {
-  test('shows login screen when not authenticated', async ({ page }) => {
-    await page.goto('/');
+test.describe('Authentication Flows', () => {
+  test('should protect routes when unauthenticated', async ({ page }) => {
+    // Attempt to visit a protected route
+    await page.goto('/create');
 
-    await expect(page.locator('h1')).toContainText('DAIcer');
-    await expect(page.getByRole('button', { name: /Continue with Google/i })).toBeVisible();
+    // Should NOT stay on /create
+    await expect(page).toHaveURL(/\/$/, { timeout: 10000 });
+
+    // Should see the login button
+    await expect(page.getByRole('button', { name: /Continue with Google/i }).first()).toBeVisible();
   });
 
-  test('redirects to lobby after login', async ({ page }) => {
-    const email = faker.internet.email();
-    const displayName = faker.person.fullName();
+  test('should allow successful login with Emulator', async ({ page }) => {
+    // Perform login
+    await signInWithEmulator(page, TEST_USER.email, TEST_USER.displayName);
 
-    // Use proper emulator sign-in from helpers
-    await signInWithEmulator(page, email, displayName);
+    // Verify successful login state (e.g., presence of "Create Adventure" button)
+    await expect(page.getByTestId('lobby-create-room-btn')).toBeVisible({ timeout: 10000 });
 
-    // Should already be at / after signInWithEmulator
-    await expect(page).toHaveURL('/');
-
-    // Verify user menu shows displayName
-    await expect(page.getByText(displayName)).toBeVisible();
+    // Should not see the login button anymore
+    await expect(page.getByRole('button', { name: /Continue with Google/i }).first()).not.toBeVisible();
   });
 
-  test('protects routes when not authenticated', async ({ page }) => {
-    await page.goto('/');
+  test('should persist session across reloads', async ({ page }) => {
+    // Login first
+    await signInWithEmulator(page, TEST_USER.email, TEST_USER.displayName);
 
-    // Should redirect to login
-    await expect(page).toHaveURL('/');
-    await expect(page.getByRole('button', { name: /Continue with Google/i })).toBeVisible();
+    // Verify initial state
+    await expect(page.getByTestId('lobby-create-room-btn')).toBeVisible({ timeout: 10000 });
+
+    // Reload page
+    await page.reload();
+
+    // Verify session passes
+    await expect(page.getByTestId('lobby-create-room-btn')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: /Continue with Google/i }).first()).not.toBeVisible();
   });
 });

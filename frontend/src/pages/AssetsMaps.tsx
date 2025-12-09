@@ -11,7 +11,7 @@ import { WorldGenerator } from '@/components/terrain/WorldGenerator';
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, type GenerationParams } from '@/hooks/useWorldGeneration';
 import { PrivateLayout } from '@/components/layout';
-import { GridTile } from "@daicer/shared/world/world";
+import { GridTile } from '@daicer/shared/world/world';
 
 export default function AssetsMapsPage() {
   const { worlds, addWorld, removeWorld } = useAssetsStore();

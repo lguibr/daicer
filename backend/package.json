@@ -24,10 +24,10 @@
     "format": "echo '✨ Formatting backend code...' && prettier --write \"src/**/*.ts\" --log-level silent && echo '✅ Formatting complete!'",
     "format:check": "echo '🔍 Checking formatting...' && prettier --check \"src/**/*.ts\"",
     "typecheck": "echo '🔬 Type checking backend...' && NODE_OPTIONS='--max-old-space-size=8192' tsc --noEmit && echo '✅ Type check passed!'",
-    "test": "echo '🧪 Running backend tests...' && NODE_ENV=test jest",
+    "test": "echo '🧪 Running backend tests...' && NODE_ENV=test jest --forceExit",
     "test:watch": "echo '👀 Running tests in watch mode...' && NODE_ENV=test jest --watch",
-    "test:coverage": "echo '📊 Running tests with coverage...' && NODE_ENV=test jest --coverage && echo '✅ Coverage report: coverage/index.html'",
-    "test:ci": "echo '🤖 Running tests (CI mode)...' && NODE_ENV=test jest --coverage --ci --maxWorkers=2",
+    "test:coverage": "echo '📊 Running tests with coverage...' && NODE_ENV=test jest --coverage --forceExit && echo '✅ Coverage report: coverage/index.html'",
+    "test:ci": "echo '🤖 Running tests (CI mode)...' && NODE_ENV=test jest --coverage --ci --maxWorkers=2 --forceExit",
     "test:ui": "echo '⚠️  Backend uses Jest (no UI mode). Starting watch mode instead...' && yarn test:watch",
     "fix": "echo '🔧 Auto-fixing backend...' && yarn format && yarn lint:fix && echo '✅ Backend auto-fix complete!'"
   },
@@ -61,7 +61,7 @@
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
     "winston": "^3.18.3",
-    "zod": "^4.1.12",
+    "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {

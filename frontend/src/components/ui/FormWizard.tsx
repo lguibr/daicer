@@ -255,6 +255,7 @@ function FormWizardActions({
           disabled={isFirstStep || isProcessing}
           className="w-full min-w-[140px] border-2 font-semibold sm:w-auto"
           size="lg"
+          data-testid="wizard-back-btn"
         >
           {previousLabel}
         </Button>
@@ -267,6 +268,7 @@ function FormWizardActions({
           disabled={!canGoNext || isProcessing}
           className="w-full min-w-[140px] border-2 border-aurora-400/40 font-semibold shadow-[0_8px_24px_rgba(29,143,242,0.25)] hover:shadow-[0_12px_32px_rgba(29,143,242,0.35)] sm:w-auto"
           size="lg"
+          data-testid={isLastStep ? 'wizard-complete-btn' : 'wizard-next-btn'}
         >
           {isProcessing ? 'Processing...' : isLastStep ? completeLabel : nextLabel}
         </Button>

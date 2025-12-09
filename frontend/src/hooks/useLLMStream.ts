@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Socket } from 'socket.io-client';
 import { getSocket } from '../services/socket';
 
 export interface StreamEvent {
@@ -28,13 +29,14 @@ export interface StreamState {
 /**
  * Hook to consume unified LLM streaming events
  * @param filterStreamId - Optional stream ID to filter events
+ * @param socketInstance - Optional socket instance (to trigger re-subscription on reconnect)
  * @returns Map of active streams
  */
-export function useLLMStream(filterStreamId?: string) {
+export function useLLMStream(filterStreamId?: string, socketInstance?: Socket | null) {
   const [streams, setStreams] = useState<Record<string, StreamState>>({});
 
   useEffect(() => {
-    const socket = getSocket();
+    const socket = socketInstance || getSocket();
     if (!socket) return;
 
     const handleEvent = (event: StreamEvent) => {
@@ -94,7 +96,7 @@ export function useLLMStream(filterStreamId?: string) {
     return () => {
       socket.off('llm:stream:event', handleEvent);
     };
-  }, [filterStreamId]);
+  }, [filterStreamId, socketInstance]);
 
   return streams;
 }

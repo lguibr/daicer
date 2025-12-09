@@ -80,7 +80,7 @@ interface SocketEvents {
     roomId: string;
     type: 'text' | 'tool_start' | 'tool_end' | 'reasoning' | 'error' | 'done';
     content?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     timestamp: number;
   }) => void;
 }
@@ -242,13 +242,11 @@ export function leaveRoom(roomId: string): void {
  * @param ready - Ready state
  */
 export function setReady(roomId: string, ready: boolean): void {
-  if (!socket || !socket.connected) {
-    console.error('❌ Socket not connected when trying to setReady', {
-      socket: !!socket,
-      connected: socket?.connected,
-    });
+  if (!socket) {
+    console.error('❌ Socket not initialized when trying to setReady');
     return;
   }
+  // Allow emitting even if disconnected - Socket.IO will buffer
   console.log('✅ Emitting player:ready', { roomId, isReady: ready });
   socket.emit('player:ready', { roomId, isReady: ready });
 }
@@ -259,7 +257,7 @@ export function setReady(roomId: string, ready: boolean): void {
  * @param action - Player action text
  */
 export function submitAction(roomId: string, action: string): void {
-  if (!socket || !socket.connected) {
+  if (!socket) {
     return;
   }
   socket.emit('player:action', { roomId, action });
@@ -271,7 +269,7 @@ export function submitAction(roomId: string, action: string): void {
  * @param language - Language code
  */
 export function processTurn(roomId: string, language = 'en'): void {
-  if (!socket || !socket.connected) {
+  if (!socket) {
     return;
   }
   socket.emit('turn:process', { roomId, language });
@@ -317,4 +315,15 @@ export function abortStream(streamId: string): void {
     return;
   }
   socket.emit('message:stream:abort', { streamId });
+}
+
+/**
+ * Update player position
+ * @param roomId - Room ID
+ * @param position - New position {x, y, z}
+ */
+export function movePlayer(roomId: string, position: { x: number; y: number; z: number }): void {
+  if (!socket) return;
+  // Allow emitting even if disconnected - Socket.IO will buffer
+  socket.emit('player:move', { roomId, position });
 }

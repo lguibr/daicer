@@ -49,7 +49,7 @@ export interface Section3Output {
  * Cache Section 1 output to localStorage
  * NO-OP: Caching disabled to avoid quota issues. Data persists in Firestore.
  */
-export function cacheSection1Output(roomId: string, output: Section1Output): void {
+export function cacheSection1Output(_roomId: string, _output: Section1Output): void {
   // No-op - caching disabled
 }
 
@@ -70,7 +70,7 @@ export function getSection1Output(roomId: string): Section1Output | null {
  * Cache Section 2 output to localStorage
  * NO-OP: Caching disabled to avoid quota issues. Data persists in Firestore.
  */
-export function cacheSection2Output(roomId: string, output: Section2Output): void {
+export function cacheSection2Output(_roomId: string, _output: Section2Output): void {
   // No-op - caching disabled
 }
 
@@ -172,7 +172,7 @@ export function clearSectionCache(roomId: string): void {
  * Clear Section 2 and 3 (used when Section 1 changes invalidate later sections)
  * NO-OP: Caching disabled.
  */
-export function clearSection2And3Cache(roomId: string): void {
+export function clearSection2And3Cache(_roomId: string): void {
   // No-op - caching disabled
 }
 

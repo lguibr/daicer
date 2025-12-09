@@ -5,9 +5,13 @@
 
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
-import { generateBiomeMap } from '@/services/world-gen/biome-generator';
+// import { generateBiomeMap } from '@/services/world-gen/biome-generator';
 import type { TerrainGenerationState } from '../state';
 
+/**
+ * Generate biome map using existing biome generation system
+ * Structures and roads influence biome distribution
+ */
 /**
  * Generate biome map using existing biome generation system
  * Structures and roads influence biome distribution
@@ -18,30 +22,43 @@ export const biomeCollapseNode = async (
 ): Promise<Partial<TerrainGenerationState>> => {
   const { roomId, structures, roads, settings } = state;
 
-  logger.info('[biome_collapse] Starting biome map generation', {
-    roomId,
-    gridSize: `${settings.gridWidth}x${settings.gridHeight}`,
-    structureCount: structures.length,
-    roadCount: roads.length,
+  // Use Shared Simple Generator for Parity
+  const { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS } = await import('@daicer/shared/world-gen');
+
+  const seed = settings.seed || roomId;
+
+  // Merge defaults with custom params
+  const finalParams = {
+    ...DEFAULT_GENERATION_PARAMS,
+    ...(settings.generationParams || {}),
+  };
+
+  logger.info('[biome_collapse] Genering with params:', {
+    seed,
+    gridWidth: settings.gridWidth,
+    elevationScale: finalParams.elevationScale,
   });
 
-  // Use existing biome generator with room as seed
-  const biomeMap = generateBiomeMap({
-    seed: roomId, // Use roomId as seed for deterministic generation
-    width: settings.gridWidth,
-    height: settings.gridHeight,
-    temperatureBias: 0,
-    moistureBias: 0,
-    continentalnessBias: 0,
-    biomeRegionSize: 64, // Voronoi region size
-  });
+  // Create generator
+  const generator = createSimpleChunkGenerator(seed, finalParams);
 
-  logger.info('[biome_collapse] Biome map generated', {
+  // Generate entire grid (as one big chunk)
+  // Simple generator returns [floor][y][x]
+  const chunk3D = generator(0, 0, settings.gridWidth, settings.gridHeight);
+
+  // Extract surface layer (floor 0 is index 3)
+  const biomeGrid = chunk3D[3] || [];
+
+  logger.info('[biome_collapse] Biome map generated (Simple Mode)', {
     gridSize: `${settings.gridWidth}x${settings.gridHeight}`,
-    biomeMapKeys: Object.keys(biomeMap || {}),
   });
 
   return {
-    biomeMap: biomeMap as any,
+    biomeMap: {
+      width: settings.gridWidth,
+      height: settings.gridHeight,
+      seed,
+      grid: biomeGrid,
+    },
   };
 };

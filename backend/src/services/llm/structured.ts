@@ -8,10 +8,11 @@ import { task } from '@langchain/langgraph';
 import { z } from 'zod';
 import { logger } from '@/utils/logger';
 import type { Language } from '@/types/index';
-import { getFlashModel, getProModel, extractErrorDetails } from './gemini';
+import { extractErrorDetails } from './gemini';
 import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
 import { GeminiModel, OpenAIModel, type TextGenConfig } from './types';
 import { createMetricsTracker } from '@/middleware/llm-metrics';
+import { streamManager } from './stream-manager';
 
 /**
  * Language name mappings
@@ -128,7 +129,44 @@ async function internalGenerateStructured<T extends z.ZodType>(
 
     try {
       // LangChain's withStructuredOutput() already validates against the Zod schema
-      const response = await structuredModel.invoke(messages, runnableConfig);
+      let response;
+      const streamId = config.metadata?.streamId as string | undefined;
+
+      if (streamId) {
+        const stream = await structuredModel.streamEvents(messages, {
+          ...runnableConfig,
+          version: 'v2',
+        });
+
+        let rootRunId: string | undefined;
+
+        for await (const event of stream) {
+          if (!rootRunId && event.event === 'on_chain_start') {
+            rootRunId = event.run_id;
+          }
+
+          if (event.event === 'on_chat_model_stream') {
+            const chunk = event.data.chunk;
+            if (chunk.content) {
+              streamManager.emitText(streamId, chunk.content.toString());
+            } else if (chunk.tool_call_chunks && chunk.tool_call_chunks.length > 0) {
+              const args = chunk.tool_call_chunks[0].args;
+              if (args) streamManager.emitText(streamId, args);
+            }
+          }
+
+          if (event.event === 'on_chain_end' && event.run_id === rootRunId) {
+            response = event.data.output;
+          }
+        }
+
+        if (!response) {
+          throw new Error('Stream ended without output');
+        }
+      } else {
+        response = await structuredModel.invoke(messages, runnableConfig);
+      }
+
       logger.debug('[LLM Structured] Response >>>\n%s', JSON.stringify(response, null, 2));
 
       // Log success metrics
@@ -161,7 +199,7 @@ async function internalGenerateStructured<T extends z.ZodType>(
   );
 
   for (let i = 0; i < modelFactories.length; i += 1) {
-    const modelFactory = modelFactories[i];
+    const modelFactory = modelFactories[i]!;
     const { name, factory } = modelFactory;
 
     const attemptLabel = `[LLM Structured] ${name} (${i + 1}/${modelFactories.length})`;
@@ -190,7 +228,44 @@ async function internalGenerateStructured<T extends z.ZodType>(
       logger.debug(`${attemptLabel} structured output configured, invoking model...`);
 
       // LangChain's withStructuredOutput() already validates against the Zod schema
-      const response = await structuredModel.invoke(messages, runnableConfig);
+      let response;
+      const streamId = config.metadata?.streamId as string | undefined;
+
+      if (streamId) {
+        const stream = await structuredModel.streamEvents(messages, {
+          ...runnableConfig,
+          version: 'v2',
+        });
+
+        let rootRunId: string | undefined;
+
+        for await (const event of stream) {
+          if (!rootRunId && event.event === 'on_chain_start') {
+            rootRunId = event.run_id;
+          }
+
+          if (event.event === 'on_chat_model_stream') {
+            const chunk = event.data.chunk;
+            if (chunk.content) {
+              streamManager.emitText(streamId, chunk.content.toString());
+            } else if (chunk.tool_call_chunks && chunk.tool_call_chunks.length > 0) {
+              const args = chunk.tool_call_chunks[0].args;
+              if (args) streamManager.emitText(streamId, args);
+            }
+          }
+
+          if (event.event === 'on_chain_end' && event.run_id === rootRunId) {
+            response = event.data.output;
+          }
+        }
+
+        if (!response) {
+          throw new Error('Stream ended without output');
+        }
+      } else {
+        response = await structuredModel.invoke(messages, runnableConfig);
+      }
+
       const durationMs = Date.now() - attemptStart;
 
       logger.info(`${attemptLabel} succeeded`, { durationMs });

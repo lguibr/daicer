@@ -185,6 +185,7 @@ export default function LandingPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
+                  data-testid="lobby-create-room-btn"
                   onClick={handleCreateRoom}
                   disabled={loading}
                   className={gildedTokens.primaryAction}

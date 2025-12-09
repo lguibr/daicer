@@ -4,7 +4,7 @@
 
 /* eslint-disable no-console */
 
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -17,24 +17,34 @@ const EMULATOR_START_TIMEOUT = 60000; // 60 seconds (increased for slower system
 const IS_E2E = process.env.TEST_ENV === 'e2e' || process.env.NODE_ENV === 'test';
 const FIRESTORE_PORT = IS_E2E ? 8081 : 8080;
 const AUTH_PORT = IS_E2E ? 9100 : 9099;
-const EMULATOR_UI_PORT = IS_E2E ? 4001 : 4000;
+const HUB_PORT = IS_E2E ? 4401 : 4400; // Hub/UI port
 
 /**
- * Check if emulators are already running
+ * Check if emulators are already running (via Emulator Hub)
  */
 async function areEmulatorsRunning(): Promise<boolean> {
-  console.log(`🔍 Checking if emulators are running on ports: Firestore ${FIRESTORE_PORT}, Auth ${AUTH_PORT}...`);
+  console.log(`🔍 Checking if emulators are running via Hub on port ${HUB_PORT}...`);
   try {
-    // Try to connect to Firestore emulator
-    const firestoreResponse = await fetch(`http://localhost:${FIRESTORE_PORT}`, { signal: AbortSignal.timeout(2000) });
-    const authResponse = await fetch(`http://localhost:${AUTH_PORT}`, { signal: AbortSignal.timeout(2000) });
+    // The Hub API returns JSON status of all emulators
+    // http://localhost:4400/emulators
+    const response = await fetch(`http://localhost:${HUB_PORT}/emulators`, { signal: AbortSignal.timeout(2000) });
 
-    console.log(`✅ Firestore emulator: ${firestoreResponse.status} ${firestoreResponse.statusText}`);
-    console.log(`✅ Auth emulator: ${authResponse.status} ${authResponse.statusText}`);
+    if (!response.ok) return false;
 
-    return firestoreResponse.ok && authResponse.ok;
+    const data = (await response.json()) as Record<string, { port?: number; status?: string }>;
+
+    // Check if Firestore and Auth are running
+    const firestoreRunning = data.firestore?.port === FIRESTORE_PORT;
+    const authRunning = data.auth?.port === AUTH_PORT;
+
+    if (firestoreRunning && authRunning) {
+      console.log(`✅ Emulators detected via Hub: Firestore (: ${FIRESTORE_PORT}), Auth (: ${AUTH_PORT})`);
+      return true;
+    }
+
+    return false;
   } catch (error) {
-    console.log(`❌ Emulators not running: ${error instanceof Error ? error.message : 'Connection failed'}`);
+    // Fetch failed means Hub is likely not running
     return false;
   }
 }
@@ -133,10 +143,13 @@ export default async function globalSetup(): Promise<void> {
   console.log(`🔧 Command: ${command}`);
   console.log(`📄 Config file: ${emulatorConfig}`);
 
-  const emulatorProcess = exec(command, {
+  // Use spawn instead of exec for better long-running process control and 'detached' support
+  const emulatorProcess = spawn(command, {
     cwd: rootDir,
     env: { ...process.env, FORCE_COLOR: '0' },
     detached: true,
+    shell: true,
+    stdio: 'pipe',
   });
 
   // Log emulator output for debugging

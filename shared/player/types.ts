@@ -18,6 +18,11 @@ export interface Player {
   isReady: boolean;
   joinedAt: number;
   updatedAt?: number;
+  position?: {
+    x: number;
+    y: number;
+    z: number;
+  };
   avatarPreview?: {
     portrait: AvatarPreviewImage;
     upperBody: AvatarPreviewImage;

@@ -19,7 +19,15 @@ export interface BiomeGenerationParams {
   moistureBias?: number;
   continentalnessBias?: number;
   biomeRegionSize?: number; // Size of Voronoi regions (default 100 tiles)
+  // Simple Generation Params (Matching Frontend)
+  elevationScale?: number;
+  elevationPersistence?: number;
+  moistureScale?: number;
+  moisturePersistence?: number;
 }
+
+// Deprecated generateSimpleBiomeMap removed in favor of @daicer/shared/world-gen/simple-gen
+// for strict frontend/backend parity.
 
 /**
  * Generate biome map combining noise climate with Voronoi regions

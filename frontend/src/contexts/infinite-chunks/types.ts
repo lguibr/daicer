@@ -6,7 +6,6 @@
 import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
 import type { GridChunk, GridTile } from '../../../../../shared/world';
 
-
 export type TerrainChunk = GridChunk & {
   worldOffsetX: number;
   worldOffsetY: number;

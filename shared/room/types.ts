@@ -49,6 +49,8 @@ export interface WorldSettings {
   enableRoads?: boolean;
   roadQuality?: string;
   terrainComplexity?: number;
+  seed?: string;
+  generationParams?: Record<string, any>;
 }
 
 export interface Room {

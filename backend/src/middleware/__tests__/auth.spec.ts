@@ -85,7 +85,7 @@ describe('Authentication Middleware', () => {
       expect(mockNext).toHaveBeenCalledWith(
         expect.objectContaining({
           statusCode: 401,
-          message: 'Invalid authentication scheme',
+          message: 'No authentication token provided',
         })
       );
     });

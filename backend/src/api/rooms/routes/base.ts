@@ -42,7 +42,8 @@ router.post(
   authenticate,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const settings = req.body.settings ? worldSettingsSchema.parse(req.body.settings) : undefined;
-    const room = await createRoom(req.user!.uid, settings as WorldSettings | undefined);
+    const structures = req.body.structures; // Optional structures array
+    const room = await createRoom(req.user!.uid, settings as WorldSettings | undefined, structures);
     res.status(201).json({ success: true, data: room });
   })
 );

@@ -74,16 +74,21 @@ export async function loadChunk(
     }
 
     const token = await user.getIdToken();
-    const layer = config.layer || 0;
-    const url = `${import.meta.env.VITE_API_URL}/api/grid/chunk/${roomId}/${chunkX}/${chunkY}/${layer}`;
-    console.log(`[ChunkLoader] Fetching chunk: ${url}`);
+    const url = `${import.meta.env.VITE_API_URL}/api/terrain/chunk`;
+    console.log(`[ChunkLoader] Fetching chunk via POST: ${url} for ${chunkX},${chunkY}`);
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
+      body: JSON.stringify({
+        roomId,
+        chunkX,
+        chunkY,
+        chunkSize,
+      }),
     });
 
     if (!response.ok) {
@@ -99,9 +104,9 @@ export async function loadChunk(
 
     // Return the raw chunk data (validated by schema in a real app)
     // The frontend will now consume GridTile[] directly
-    const {data} = result;
+    const { data } = result;
     console.log(`[ChunkLoader] Backend response for ${chunkX},${chunkY}:`, {
-      hasTiles: !!data.tiles,
+      hasTiles: !!data.tiles, // Legacy check
       hasBiomes: !!data.biomes,
       biomesLength: data.biomes?.length,
       worldOffset: { x: data.worldOffsetX, y: data.worldOffsetY },

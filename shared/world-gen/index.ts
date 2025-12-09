@@ -27,3 +27,6 @@ export * from './wfc';
 
 // Utilities
 export * from './utils';
+
+// Simple Generation (Parity)
+export * from './simple-gen';

@@ -340,7 +340,9 @@ export const processTurn = async (
   creatures: Creature[],
   language: Language = 'en',
   settings?: WorldSettings,
-  worldConditions?: WorldCondition[]
+  worldConditions?: WorldCondition[],
+  mapContext?: string,
+  streamId?: string
 ): Promise<{
   overall_summary: string;
   player_perspectives: Array<{ playerName: string; perspective: string }>;
@@ -400,6 +402,7 @@ ${relevantRules ? `RELEVANT D&D 5E RULES:\n${relevantRules}\n\n` : ''}You MUST r
 PREVIOUS STORY:
 ${conversationHistory}
 
+${mapContext ? `MAP CONTEXT:\n${mapContext}\n` : ''}
 CURRENT TURN ACTIONS:
 ${currentActions}
 
@@ -409,7 +412,7 @@ Respond entirely in ${languageName}.`;
 
   logger.info('Processing turn with LLM and structured output');
 
-  const response = await structuredModel.invoke(fullPrompt);
+  const response = await structuredModel.invoke(fullPrompt, { metadata: { streamId } });
 
   logger.info('Turn processed successfully');
 
@@ -446,7 +449,8 @@ export const generateCharacterOpening = async (
   worldDescription: string,
   character: CharacterSheet,
   mainContext: string,
-  language: Language = 'en'
+  language: Language = 'en',
+  streamId?: string
 ): Promise<string> => {
   const languageMap: Record<Language, string> = {
     en: 'English',
@@ -499,7 +503,7 @@ What do you do?
 
 REMEMBER: NO meta-text. Start directly with ### header.`;
 
-  const response = await generateText(systemPrompt, userMessage, language);
+  const response = await generateText(systemPrompt, userMessage, language, { metadata: { streamId } });
   return response;
 };
 
@@ -509,7 +513,11 @@ REMEMBER: NO meta-text. Start directly with ### header.`;
  * @param language - Game language
  * @returns Main opening narration
  */
-export const generateMainOpening = async (worldDescription: string, language: Language = 'en'): Promise<string> => {
+export const generateMainOpening = async (
+  worldDescription: string,
+  language: Language = 'en',
+  streamId?: string
+): Promise<string> => {
   const languageMap: Record<Language, string> = {
     en: 'English',
     es: 'Spanish',
@@ -536,7 +544,7 @@ You MUST respond entirely in ${languageName}. Every word of the narrative must b
 WORLD:
 ${worldDescription}`;
 
-  return generateText(openingSystemPrompt, openingUserPrompt, language);
+  return generateText(openingSystemPrompt, openingUserPrompt, language, { metadata: { streamId } });
 };
 
 /**
@@ -569,4 +577,120 @@ export const generateCharacterOpenings = async (
 
   logger.info('All character openings generated');
   return { openings, mainMessage };
+};
+
+/**
+ * Generate a draft of the opening story based on map context
+ */
+export const generateStoryDraft = async (
+  worldDescription: string,
+  players: Player[],
+  mapContext: string,
+  language: Language = 'en',
+  streamId?: string
+): Promise<string> => {
+  const languageMap: Record<Language, string> = {
+    en: 'English',
+    es: 'Spanish',
+    'pt-BR': 'Brazilian Portuguese',
+  };
+  const languageName = languageMap[language] || 'English';
+
+  const systemPrompt = `You are a world-class Dungeon Master. Draft a compelling opening scene for an RPG adventure.
+This is a DRAFT that will be used to identify NPCs and finalize the scene later.
+Focus on the immediate environment, the atmosphere, and the inciting incident.
+
+LANGUAGE REQUIREMENT:
+You MUST respond entirely in ${languageName}.`;
+
+  const userPrompt = `Draft an opening scene based on the following context:
+
+WORLD:
+${worldDescription}
+
+MAP CONTEXT (Nearby structures/terrain):
+${mapContext}
+
+PLAYERS:
+${players.map((p) => `- ${p.character.name} (${p.character.race} ${p.character.characterClass})`).join('\n')}
+
+Requirements:
+1. Set the scene in a specific location mentioned in the Map Context (or a generic one if none fits).
+2. Establish a mood (e.g., tense, festive, ominous).
+3. Introduce an inciting incident involving NPCs (e.g., a messenger, an attacker, a mysterious figure).
+4. Do NOT resolve the incident.
+5. Mention 1-2 specific NPCs by name and description.`;
+
+  return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
+};
+
+/**
+ * Extract NPCs from a story draft
+ */
+export const extractNPCsFromDraft = async (
+  draft: string,
+  language: Language = 'en',
+  streamId?: string
+): Promise<Array<{ name: string; race: string; class: string; description: string }>> => {
+  const NPCSchema = z.object({
+    npcs: z.array(
+      z.object({
+        name: z.string().describe('Name of the NPC'),
+        race: z.string().describe('Race of the NPC (e.g., Human, Elf, Goblin)'),
+        class: z.string().describe('Class or role of the NPC (e.g., Fighter, Merchant, Guard)'),
+        description: z.string().describe('Brief visual description of the NPC'),
+      })
+    ),
+  });
+
+  const systemPrompt = `You are an expert at analyzing RPG stories. Identify all significant NPCs mentioned in the text.`;
+  const userPrompt = `Extract the NPCs from the following story draft:
+
+${draft}
+
+Return a list of NPCs with their details.
+IMPORTANT: For 'race' and 'class', you MUST use standard D&D 5e SRD options where possible (e.g., 'Human', 'Elf', 'Dwarf', 'Fighter', 'Wizard', 'Rogue'). 
+If an NPC is a monster, use the monster name as 'race' (e.g. 'Goblin') and 'Monster' or their role as 'class'.`;
+
+  const result = await generateStructured(NPCSchema, systemPrompt, userPrompt, language, { metadata: { streamId } });
+  return result.npcs;
+};
+
+/**
+ * Generate the final opening narrative
+ */
+export const generateFinalOpening = async (
+  draft: string,
+  npcs: Array<{ name: string; description: string }>,
+  language: Language = 'en',
+  streamId?: string
+): Promise<string> => {
+  const languageMap: Record<Language, string> = {
+    en: 'English',
+    es: 'Spanish',
+    'pt-BR': 'Brazilian Portuguese',
+  };
+  const languageName = languageMap[language] || 'English';
+
+  const systemPrompt = `You are a world-class Dungeon Master. Write the final, polished opening narrative for an RPG adventure.
+Use the provided draft and NPC details to create a cinematic scene.
+
+LANGUAGE REQUIREMENT:
+You MUST respond entirely in ${languageName}.`;
+
+  const userPrompt = `Finalize this opening scene:
+
+DRAFT:
+${draft}
+
+NPCs PRESENT:
+${npcs.map((n) => `- ${n.name}: ${n.description}`).join('\n')}
+
+Requirements:
+1. Polish the prose to be immersive and atmospheric.
+2. Clearly describe the NPCs and their actions.
+3. End with a strong Call to Action or immediate threat.
+4. Do NOT ask "What do you do?".`;
+
+  return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
 };

@@ -89,6 +89,7 @@ export interface ClientToServerEvents {
   // Player
   'player:ready': (data: { roomId: string; isReady: boolean }) => void;
   'player:action': (data: { roomId: string; action: string }) => void;
+  'player:move': (data: { roomId: string; position: { x: number; y: number; z: number } }) => void;
 
   // Game
   'game:start': (data: { roomId: string }) => void;

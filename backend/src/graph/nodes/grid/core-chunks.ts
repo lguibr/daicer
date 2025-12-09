@@ -13,7 +13,7 @@ import type { CharacterCreationState } from '../../state';
  * Generate starting area chunks (task-wrapped)
  */
 const generateStartingAreaTask = task('generate_starting_area', async (params: { seed: string }) => {
-  return generateStartingArea(params.seed, {
+  return generateStartingArea({
     seed: params.seed,
     waterLevel: -0.1,
     mountainousness: 1.0,

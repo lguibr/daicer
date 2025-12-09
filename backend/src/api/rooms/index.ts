@@ -7,7 +7,6 @@ import { Router } from 'express';
 import baseRoutes from './routes/base';
 import membershipRoutes from './routes/membership';
 import worldRoutes from './routes/world';
-import characterRoutes from './routes/character';
 
 const router = Router();
 
@@ -15,6 +14,5 @@ const router = Router();
 router.use('/', baseRoutes);
 router.use('/', membershipRoutes);
 router.use('/', worldRoutes);
-router.use('/', characterRoutes);
 
 export default router;

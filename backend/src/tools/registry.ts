@@ -44,6 +44,7 @@ import {
 } from '@/combat/tools/dm-override-tools';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { queryGeospatialContextTool } from '@/combat/tools/geospatial-tools';
+import { createNpcTool, createMonsterTool } from '@/combat/tools/creation-tools';
 
 /**
  * Tool metadata schema
@@ -65,6 +66,7 @@ export const ToolMetadataSchema = z.object({
     'state-mutation',
     'dm-override',
     'geospatial',
+    'generation',
   ]),
   inputSchema: z.string().describe('Name of input Zod schema'),
   outputSchema: z.string().describe('Name of output Zod schema'),
@@ -599,6 +601,38 @@ export const GEOSPATIAL_TOOLS_METADATA: ToolMetadata[] = [
 ];
 
 /**
+ * Creation Tools (Generation)
+ */
+export const CREATION_TOOLS_METADATA: ToolMetadata[] = [
+  {
+    id: 'create_npc',
+    name: 'create_npc',
+    description:
+      'Generate a full D&D 5e Character Sheet for an NPC. Can specify race, class, etc. or leave empty for random.',
+    category: 'generation',
+    inputSchema: 'CreateNpcSchema',
+    outputSchema: 'CreateNpcResult',
+    requiresState: false,
+    isPure: true, // It generates new data but doesn't mutate existing game state directly
+    tags: ['generation', 'npc', 'character', 'creator'],
+    exampleUsage: 'create_npc({ race: "elf", class: "wizard", level: 3 })',
+  },
+  {
+    id: 'create_monster',
+    name: 'create_monster',
+    description: 'Retrieve a Monster stat block based on name, CR, or type. Useful for spawning enemies.',
+    category: 'generation',
+    inputSchema: 'CreateMonsterSchema',
+    outputSchema: 'CreateMonsterResult',
+    requiresState: false,
+    isPure: true,
+    tags: ['generation', 'monster', 'creature', 'enemy'],
+    exampleUsage: 'create_monster({ name: "Goblin", cr: 0.25 })',
+    agentRestrictions: ['dm-agent'],
+  },
+];
+
+/**
  * Main tool registry
  */
 export const TOOL_REGISTRY: Record<string, ToolMetadata> = {};
@@ -614,6 +648,7 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {};
   ...STATE_MUTATION_TOOLS_METADATA,
   ...DM_OVERRIDE_TOOLS_METADATA,
   ...GEOSPATIAL_TOOLS_METADATA,
+  ...CREATION_TOOLS_METADATA,
 ].forEach((tool) => {
   TOOL_REGISTRY[tool.id] = tool;
 });
@@ -696,6 +731,9 @@ export function getToolInstances(toolIds: string[]): unknown[] {
     declare_narrative_immunity: declareNarrativeImmunityTool,
     // Geospatial
     query_geospatial_context: queryGeospatialContextTool,
+    // Generation
+    create_npc: createNpcTool,
+    create_monster: createMonsterTool,
   };
 
   return toolIds.map((id) => toolMap[id]).filter(Boolean);

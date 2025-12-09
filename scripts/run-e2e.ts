@@ -165,8 +165,12 @@ async function main(): Promise<void> {
     // 4. Run Playwright tests
     log('🧪', `Running E2E tests ${isHeaded ? '(headed mode)' : '(headless)'}...\n`);
 
-    const testCommand = isHeaded ? 'yarn test:headed' : 'yarn test';
-    const testProc = spawn(testCommand, {
+    const extraArgs = process.argv.slice(2).filter((arg) => arg !== '--headed');
+    let cmd = `yarn playwright test${isHeaded ? ' --headed' : ''}`;
+    if (extraArgs.length > 0) {
+      cmd += ` ${extraArgs.join(' ')}`;
+    }
+    const testProc = spawn(cmd, {
       shell: true,
       cwd: path.resolve(__dirname, '..', 'e2e'),
       stdio: 'inherit',

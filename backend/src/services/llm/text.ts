@@ -17,6 +17,7 @@ import type { Language } from '@/types/index';
 import { getFlashModel, getProModel, extractErrorDetails } from './gemini';
 import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
 import { GeminiModel, OpenAIModel, TextGenConfig } from './types';
+import { streamManager } from './stream-manager';
 
 /**
  * Language name mappings
@@ -112,6 +113,21 @@ async function _generateText(
     }
 
     try {
+      const streamId = config.metadata?.streamId as string | undefined;
+
+      if (streamId) {
+        let fullText = '';
+        const stream = await model.stream(messages, runnableConfig);
+
+        for await (const chunk of stream) {
+          const content = chunk.content.toString();
+          fullText += content;
+          streamManager.emitText(streamId, content);
+        }
+
+        return fullText;
+      }
+
       const response = await model.invoke(messages, runnableConfig);
       return response.content.toString();
     } catch (error) {
@@ -138,6 +154,24 @@ async function _generateText(
     logger.info(`${attemptLabel} invoking`);
 
     try {
+      const streamId = config.metadata?.streamId as string | undefined;
+
+      if (streamId) {
+        let fullText = '';
+        const stream = await instance.stream(messages, runnableConfig);
+
+        for await (const chunk of stream) {
+          const content = chunk.content.toString();
+          fullText += content;
+          streamManager.emitText(streamId, content);
+        }
+
+        const durationMs = Date.now() - attemptStart;
+        logger.info(`${attemptLabel} succeeded (streaming)`, { durationMs });
+        logger.debug(`${attemptLabel} raw response >>>\n%s`, fullText);
+        return fullText;
+      }
+
       const response = await instance.invoke(messages, runnableConfig);
       const durationMs = Date.now() - attemptStart;
 

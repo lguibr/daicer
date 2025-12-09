@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Plus, CheckCircle, Crown, Shield, Lock, Unlock } from 'lucide-react';
+import { Users, Plus, CheckCircle, Crown, Shield } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import type { Room, Player } from '../../types/shared';
@@ -13,7 +13,6 @@ interface LobbyScreenProps {
   onReadyToggle: (isReady: boolean) => void;
   isOwner: boolean;
   onStartGame?: () => void;
-  onUnlockRoom?: () => void;
 }
 
 export function LobbyScreen({
@@ -23,7 +22,6 @@ export function LobbyScreen({
   onReadyToggle,
   isOwner,
   onStartGame,
-  onUnlockRoom,
 }: LobbyScreenProps) {
   const { user } = useAuth();
   const currentPlayer = players.find((p) => p.userId === user?.uid);
@@ -157,7 +155,11 @@ export function LobbyScreen({
                   </div>
                   <div>
                     <p className="text-shadow-300 mb-4">You haven't created a character yet.</p>
-                    <Button onClick={onCreateCharacter} className="w-full btn-primary py-6 text-lg group">
+                    <Button
+                      onClick={onCreateCharacter}
+                      className="w-full btn-primary py-6 text-lg group"
+                      data-testid="lobby-create-char"
+                    >
                       <Shield className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                       Create Character
                     </Button>
@@ -178,6 +180,7 @@ export function LobbyScreen({
                       size="sm"
                       onClick={onCreateCharacter}
                       className="ml-auto text-xs text-shadow-500 hover:text-aurora-300"
+                      data-testid="lobby-edit-char"
                     >
                       Edit
                     </Button>
@@ -194,6 +197,7 @@ export function LobbyScreen({
                         ? 'bg-green-600 hover:bg-green-700 text-white shadow-[0_0_20px_rgba(34,197,94,0.3)]'
                         : 'bg-midnight-700 hover:bg-midnight-600 text-shadow-300'
                     }`}
+                    data-testid="lobby-ready-toggle"
                   >
                     {isReady ? (
                       <>
@@ -213,21 +217,11 @@ export function LobbyScreen({
                     Game Master Controls
                   </p>
 
-                  {onUnlockRoom && (
-                    <Button
-                      variant="outline"
-                      onClick={onUnlockRoom}
-                      className="w-full border-midnight-600 hover:bg-midnight-700 text-shadow-300"
-                    >
-                      <Unlock className="w-4 h-4 mr-2" />
-                      Unlock Characters
-                    </Button>
-                  )}
-
                   <Button
                     onClick={onStartGame}
                     disabled={!allReady || players.length === 0}
                     className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold py-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid="lobby-start-game"
                   >
                     Start Adventure
                   </Button>

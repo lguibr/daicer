@@ -104,8 +104,10 @@ function convertFirestoreTimestamp(timestamp: unknown): Date {
 
   if (typeof timestamp === 'object' && timestamp !== null) {
     const ts = timestamp as { _seconds?: number; _nanoseconds?: number };
+    // eslint-disable-next-line no-underscore-dangle
     if (typeof ts._seconds === 'number') {
       // Firestore Timestamp: convert seconds to milliseconds
+      // eslint-disable-next-line no-underscore-dangle
       return new Date(ts._seconds * 1000 + (ts._nanoseconds || 0) / 1000000);
     }
   }

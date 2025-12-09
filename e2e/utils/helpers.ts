@@ -30,39 +30,84 @@ export async function setupAuth(page: Page, user: { email: string; displayName: 
  * Sign in using Firebase emulator with fake Google account
  */
 export async function signInWithEmulator(page: Page, email: string, displayName: string): Promise<void> {
+  console.log(`[signInWithEmulator] Starting login for ${email}...`);
   await page.goto('/');
 
   // Wait for page to be fully loaded
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.getByRole('button', { name: /Continue with Google/i }).click(),
-  ]);
-
-  await popup.waitForLoadState('domcontentloaded');
-  await popup.getByRole('button', { name: 'Add new account' }).click();
-  await popup.locator('#email-input').fill(email);
-  await popup.locator('#display-name-input').fill(displayName);
-
-  // Click sign in and wait for both popup close AND page navigation
-  try {
-    await Promise.all([
-      popup.waitForEvent('close'),
-      page.waitForURL(/\//, { timeout: 15000 }), // Increased timeout
-      popup.getByRole('button', { name: /Sign in with/i }).click(),
-    ]);
-  } catch (error) {
-    // If popup already closed, just wait for navigation
-    console.log('⚠️  Popup close race condition, waiting for navigation...');
-    await page.waitForURL(/\//, { timeout: 10000 });
+  // Check if we are already logged in (optional optimization)
+  if (await page.getByRole('button', { name: /create adventure/i }).isVisible()) {
+    console.log('[signInWithEmulator] Already logged in!');
+    return;
   }
 
-  // Verify we're on lobby page
-  await expect(page).toHaveURL(/\//, { timeout: 5000 });
+  // Target the button specifically in the main content area to avoid navbar duplicates
+  const googleBtn = page.getByRole('main').getByRole('button', { name: /Continue with Google/i });
+  await expect(googleBtn).toBeVisible({ timeout: 10000 });
 
-  // Wait for auth to fully settle and propagate
-  await page.waitForTimeout(2000);
+  console.log('[signInWithEmulator] Clicking Google button...');
+
+  // Handle both popup logic and potential immediate redirect
+  try {
+    console.log('[signInWithEmulator] Attempting to click Google button (force: true)...');
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup', { timeout: 15000 }),
+      googleBtn.click({ force: true }),
+    ]);
+
+    console.log('[signInWithEmulator] Popup opened. Waiting for load...');
+    await popup.waitForLoadState('domcontentloaded');
+
+    // Check if it's the account selector (sometimes it auto-selects if only one account?)
+    // In emulator, it usually shows clean "Add new account" list
+    await popup.getByRole('button', { name: 'Add new account' }).click();
+    await popup.locator('#email-input').fill(email);
+    await popup.locator('#display-name-input').fill(displayName);
+
+    console.log('[signInWithEmulator] Submitting auth form in popup...');
+    // Click sign in and wait for both popup close AND page navigation
+    try {
+      await Promise.all([
+        popup.waitForEvent('close', { timeout: 10000 }),
+        page.waitForURL(/\//, { timeout: 15000 }),
+        popup.getByRole('button', { name: /Sign in with/i }).click(),
+      ]);
+    } catch (innerError) {
+      console.log('⚠️  Popup close race condition or navigation timeout, checking URL...');
+      if (page.url().endsWith('/')) {
+        console.log('[signInWithEmulator] URL seems correct.');
+      }
+    }
+  } catch (error) {
+    console.log('[signInWithEmulator] ❌ Popup flow failed or timed out.');
+    console.log(`[signInWithEmulator] Current URL: ${page.url()}`);
+    // Check if we essentially logged in anyway (e.g. redirect flow)
+    if (await page.getByRole('button', { name: /create adventure/i }).isVisible()) {
+      console.log('[signInWithEmulator] Login seems to have succeeded despite popup error!');
+    } else {
+      throw error;
+    }
+  }
+
+  // Verify we're on lobby page AND authenticated
+  console.log('[signInWithEmulator] Verifying lobby and auth state...');
+  await expect(page).toHaveURL(/\//, { timeout: 10000 });
+
+  // Wait for the "Create Room" button to appear, confirming we are in the authenticated view
+  // valid user = Lobby view = Create Room button present
+  try {
+    await expect(page.getByTestId('lobby-create-room-btn')).toBeVisible({ timeout: 15000 });
+  } catch (error) {
+    console.log('[signInWithEmulator] ❌ Failed to find Create Room button. Auth might have failed.');
+    // Check if we are still on login screen
+    if ((await page.getByRole('button', { name: /Continue with Google/i }).count()) > 0) {
+      console.log('[signInWithEmulator] Still seeing Google button - Auth failed.');
+    }
+    throw error;
+  }
+
+  console.log('[signInWithEmulator] Login complete - Authenticated view confirmed.');
 }
 
 // ============================================================================

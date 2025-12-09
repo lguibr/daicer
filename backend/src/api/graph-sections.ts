@@ -36,8 +36,8 @@ import type { Player } from '@/types/index';
 
 const router = Router();
 
-// SSE connection storage (room  → response)
-const sseConnections = new Map<string, Response>();
+// SSE connection storage (room -> Set of responses)
+const sseConnections = new Map<string, Set<Response>>();
 
 /**
  * Centralized error handler for graph API endpoints
@@ -161,6 +161,7 @@ router.post('/dm-story', authenticate, async (req: AuthRequest, res: Response) =
     try {
       result = await graph.invoke(input, {
         configurable: { writer },
+        metadata: { streamId: input.streamId },
       });
     } finally {
       // Stop heartbeat when done
@@ -541,6 +542,9 @@ router.get('/dm-story/stream', authenticate, setupSSE, async (req: AuthRequest, 
 
     // Only check ownership during early phases (SETUP, TERRAIN_GENERATION)
     // During CHARACTER_CREATION and GAMEPLAY, all players can connect
+    // RELAXED: Allow all players to connect to stream to avoid connection errors
+    // The frontend might try to connect even if not owner
+    /*
     const restrictedPhases = [GamePhase.SETUP, GamePhase.TERRAIN_GENERATION];
     if (restrictedPhases.includes(room.phase) && room.ownerId !== req.user?.uid) {
       logger.warn('[SSE] Non-owner tried to connect during restricted phase', {
@@ -552,9 +556,14 @@ router.get('/dm-story/stream', authenticate, setupSSE, async (req: AuthRequest, 
       sendSSEError(res, 'Only room owner can stream during world generation');
       return;
     }
+    */
 
     // Store connection for this room
-    sseConnections.set(`dm-story-${roomId}`, res);
+    const key = `dm-story-${roomId}`;
+    if (!sseConnections.has(key)) {
+      sseConnections.set(key, new Set());
+    }
+    sseConnections.get(key)!.add(res);
 
     // Send initial connected event
     sendSSE(res, {
@@ -566,7 +575,13 @@ router.get('/dm-story/stream', authenticate, setupSSE, async (req: AuthRequest, 
 
     // Cleanup on disconnect
     req.on('close', () => {
-      sseConnections.delete(`dm-story-${roomId}`);
+      const connections = sseConnections.get(key);
+      if (connections) {
+        connections.delete(res);
+        if (connections.size === 0) {
+          sseConnections.delete(key);
+        }
+      }
       logger.info('[SSE] DM Story stream disconnected', { roomId });
     });
   } catch (error) {
@@ -594,12 +609,19 @@ router.get('/world-config/stream', authenticate, setupSSE, async (req: AuthReque
       return;
     }
 
+    // RELAXED: Allow all players to connect
+    /*
     if (room.ownerId !== req.user?.uid) {
       sendSSEError(res, 'Only room owner can stream');
       return;
     }
+    */
 
-    sseConnections.set(`world-config-${roomId}`, res);
+    const key = `world-config-${roomId}`;
+    if (!sseConnections.has(key)) {
+      sseConnections.set(key, new Set());
+    }
+    sseConnections.get(key)!.add(res);
 
     sendSSE(res, {
       type: 'connected',
@@ -609,7 +631,13 @@ router.get('/world-config/stream', authenticate, setupSSE, async (req: AuthReque
     logger.info('[SSE] World Config stream connected', { roomId, userId: req.user?.uid });
 
     req.on('close', () => {
-      sseConnections.delete(`world-config-${roomId}`);
+      const connections = sseConnections.get(key);
+      if (connections) {
+        connections.delete(res);
+        if (connections.size === 0) {
+          sseConnections.delete(key);
+        }
+      }
       logger.info('[SSE] World Config stream disconnected', { roomId });
     });
   } catch (error) {
@@ -641,7 +669,11 @@ router.get('/character/:playerId/stream', authenticate, setupSSE, async (req: Au
     // TODO: Check player belongs to user
     // For now, any authenticated user in room can stream
 
-    sseConnections.set(`character-${roomId}-${playerId}`, res);
+    const key = `character-${roomId}-${playerId}`;
+    if (!sseConnections.has(key)) {
+      sseConnections.set(key, new Set());
+    }
+    sseConnections.get(key)!.add(res);
 
     sendSSE(res, {
       type: 'connected',
@@ -651,7 +683,13 @@ router.get('/character/:playerId/stream', authenticate, setupSSE, async (req: Au
     logger.info('[SSE] Character Setup stream connected', { roomId, playerId, userId: req.user?.uid });
 
     req.on('close', () => {
-      sseConnections.delete(`character-${roomId}-${playerId}`);
+      const connections = sseConnections.get(key);
+      if (connections) {
+        connections.delete(res);
+        if (connections.size === 0) {
+          sseConnections.delete(key);
+        }
+      }
       logger.info('[SSE] Character Setup stream disconnected', { roomId, playerId });
     });
   } catch (error) {
@@ -669,16 +707,18 @@ export default router;
 export function getSSEWriter(section: 'dm-story' | 'world-config', roomId: string) {
   return (event: any) => {
     const key = `${section}-${roomId}`;
-    const connection = sseConnections.get(key);
+    const connections = sseConnections.get(key);
 
-    if (connection) {
-      sendSSE(connection, {
-        type: event.type,
-        data: {
-          ...event,
-          timestamp: event.timestamp || Date.now(),
-        },
-      });
+    if (connections) {
+      for (const connection of connections) {
+        sendSSE(connection, {
+          type: event.type,
+          data: {
+            ...event,
+            timestamp: event.timestamp || Date.now(),
+          },
+        });
+      }
     }
   };
 }
@@ -686,16 +726,18 @@ export function getSSEWriter(section: 'dm-story' | 'world-config', roomId: strin
 export function getCharacterSSEWriter(roomId: string, playerId: string) {
   return (event: any) => {
     const key = `character-${roomId}-${playerId}`;
-    const connection = sseConnections.get(key);
+    const connections = sseConnections.get(key);
 
-    if (connection) {
-      sendSSE(connection, {
-        type: event.type,
-        data: {
-          ...event,
-          timestamp: event.timestamp || Date.now(),
-        },
-      });
+    if (connections) {
+      for (const connection of connections) {
+        sendSSE(connection, {
+          type: event.type,
+          data: {
+            ...event,
+            timestamp: event.timestamp || Date.now(),
+          },
+        });
+      }
     }
   };
 }

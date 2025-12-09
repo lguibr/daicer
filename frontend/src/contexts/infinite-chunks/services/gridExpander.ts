@@ -4,7 +4,7 @@
  * NO side effects - all functions are deterministic
  */
 
-import type { GridTile } from "@daicer/shared/world/world";
+import type { GridTile } from '@daicer/shared/world/world';
 import type { TerrainChunk } from '../types';
 
 /**

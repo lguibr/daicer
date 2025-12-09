@@ -76,6 +76,8 @@ router.post('/generate', authenticate, async (req: AuthRequest, res: Response) =
         gridHeight: gridSize,
         gridDepth: 3, // Only 3 levels: -1 (underground), 0 (surface), 1 (sky/2nd floor)
         roomSize: 32,
+        seed: room.settings?.seed, // Pass user seed to graph
+        generationParams: room.settings?.generationParams, // Pass custom generation params
       },
     };
 
@@ -131,6 +133,9 @@ router.post('/generate', authenticate, async (req: AuthRequest, res: Response) =
 
     // Broadcast update
     const updatedRoom = await getRoom(roomId);
+    if (!updatedRoom) {
+      throw new ApiError(404, 'Room not found after update');
+    }
     const io = getIO();
     const playersSnapshot = await db.collection('rooms').doc(roomId).collection('players').get();
     const playersList = playersSnapshot.docs.map((doc) => doc.data() as Player);
@@ -270,11 +275,35 @@ router.post('/chunk', authenticate, async (req: AuthRequest, res: Response) => {
 
     logger.info('[Terrain Chunk] Generating chunk', { roomId, chunkX, chunkY });
 
+    // Fetch structures using safe service
+    const { getStructures } = await import('@/services/firestore/structures');
+    const roomStructures = await getStructures(roomId);
+
+    // DEBUG: Log seed resolution
+    const settingsSeed = room.settings?.seed;
+    const metadataSeed = room.terrainData?.biomeMapMetadata?.seed;
+    const finalSeed = settingsSeed || metadataSeed;
+
+    // Get generation params (scales/noise settings)
+    const generationParams = room.settings?.generationParams;
+
+    logger.info('[Terrain Chunk] Seed Resolution:', {
+      roomId,
+      settingsSeed,
+      metadataSeed,
+      finalSeed,
+      usingFallback: !finalSeed,
+      hasGenerationParams: !!generationParams,
+    });
+
     const chunk = generateTerrainChunk({
       roomId,
       chunkX,
       chunkY,
       chunkSize: chunkSize || 4, // Default 4x4 ultra-small chunks
+      seed: finalSeed,
+      structures: roomStructures,
+      generationParams, // Pass custom scales for parity
     });
 
     res.json({

@@ -8,7 +8,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { CHUNK_SIZE } from '@daicer/shared';
 import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import type { GridTile } from "@daicer/shared/world/world";
+import type { GridTile } from '@daicer/shared/world/world';
 import { VoxelMetadataPanel, type VoxelMetadata } from './VoxelMetadataPanel';
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement';
 import {
@@ -17,7 +17,7 @@ import {
   useInfiniteChunksActions,
 } from '../../contexts/infinite-chunks';
 import { AspectRatio } from '../ui/aspect-ratio';
-
+import { DebugMapExport } from '../debug/DebugMapExport';
 import { useSimpleTerrainManager } from './useSimpleTerrainManager';
 
 interface TerrainExplorerProps {
@@ -28,6 +28,8 @@ interface TerrainExplorerProps {
   initialZoom?: number;
   roomId?: string;
   enableInfinite?: boolean;
+  players?: import('@daicer/shared/player/types').Player[];
+  creatures?: import('@daicer/shared/types').Creature[];
   chunkGenerator?: {
     generateChunk: (worldX: number, worldY: number, width: number, height: number) => GridTile[][];
     generateChunk3D?: (worldX: number, worldY: number, width: number, height: number) => GridTile[][][];
@@ -38,6 +40,7 @@ interface TerrainExplorerProps {
   gridWorldOffset?: { x: number; y: number };
   isLoading?: boolean;
   checkChunkLoading?: (x: number, y: number) => void;
+  onPlayerMove?: (x: number, y: number) => void;
 }
 
 const BIOME_COLORS: Record<string, string> = {
@@ -134,11 +137,10 @@ export function TerrainExplorer({
   enableInfinite = true,
   chunkGenerator,
   placementMap,
+  players,
+  creatures,
+  onPlayerMove,
 }: TerrainExplorerProps) {
-  useEffect(() => {
-    console.log('[TerrainExplorer] MOUNTED', { roomId, enableInfinite });
-    return () => console.log('[TerrainExplorer] UNMOUNTED', { roomId });
-  }, [roomId, enableInfinite]);
   // Case 1: Client-side generation (Preview Mode)
   // If we have a chunkGenerator, we use the simple manager directly.
   // This bypasses the complex InfiniteChunksProvider.
@@ -153,6 +155,7 @@ export function TerrainExplorer({
         roomId={roomId}
         chunkGenerator={chunkGenerator}
         placementMap={placementMap}
+        onPlayerMove={onPlayerMove}
       />
     );
   }
@@ -179,6 +182,9 @@ export function TerrainExplorer({
           roomSize={roomSize}
           initialZoom={initialZoom}
           roomId={roomId}
+          players={players}
+          creatures={structures.length > 0 ? [] : creatures} // Pass creatures if not static mode
+          onPlayerMove={onPlayerMove}
         />
       </InfiniteChunksProvider>
     );
@@ -193,12 +199,14 @@ export function TerrainExplorer({
       roomSize={roomSize}
       initialZoom={initialZoom}
       roomId={roomId}
+      players={structures.length > 0 ? players : undefined} // Pass players if we have structures (hacky check for game mode)
       enableInfinite={false}
       // Static props
       expandedGrid={biomeGrid}
       gridWorldOffset={{ x: 0, y: 0 }}
       isLoading={false}
       checkChunkLoading={() => {}}
+      onPlayerMove={onPlayerMove}
     />
   );
 }
@@ -215,31 +223,50 @@ function SimpleTerrainExplorerWrapper(
   });
 
   return (
-    <TerrainExplorerInternal
-      {...props}
-      enableInfinite
-      expandedGrid={expandedGrid}
-      gridWorldOffset={gridWorldOffset}
-      isLoading={isLoading}
-      checkChunkLoading={checkChunkLoading}
-    />
+    <>
+      <TerrainExplorerInternal
+        {...props}
+        enableInfinite
+        expandedGrid={expandedGrid}
+        gridWorldOffset={gridWorldOffset}
+        isLoading={isLoading}
+        checkChunkLoading={checkChunkLoading}
+      />
+      <DebugMapExport
+        context="PREVIEW"
+        grid={expandedGrid}
+        seed="unknown-in-explorer" // We don't have seed prop here unfortunately unless passed
+        params={{ offset: gridWorldOffset }}
+      />
+    </>
   );
 }
 
 // Bridge for InfiniteChunksContext
-function InfiniteChunksBridge(props: Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'>) {
+function InfiniteChunksBridge({ creatures, ...props }: Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'>) {
   const infiniteChunksView = useInfiniteChunksView();
   const infiniteChunksActions = useInfiniteChunksActions();
 
   return (
-    <TerrainExplorerInternal
-      {...props}
-      enableInfinite
-      expandedGrid={infiniteChunksView.expandedGrid}
-      gridWorldOffset={infiniteChunksView.gridWorldOffset}
-      isLoading={infiniteChunksView.isLoading}
-      checkChunkLoading={infiniteChunksActions.checkChunkLoading}
-    />
+    <>
+      <TerrainExplorerInternal
+        {...props}
+        enableInfinite
+        expandedGrid={infiniteChunksView.expandedGrid}
+        gridWorldOffset={infiniteChunksView.gridWorldOffset}
+        isLoading={infiniteChunksView.isLoading}
+        checkChunkLoading={infiniteChunksActions.checkChunkLoading}
+        players={props.players}
+        onPlayerMove={props.onPlayerMove}
+      />
+      <DebugMapExport
+        context="GAME"
+        grid={infiniteChunksView.expandedGrid}
+        seed={props.roomId} // Using props.roomId as proxy for seed
+        roomId={props.roomId}
+        params={{ offset: infiniteChunksView.gridWorldOffset }}
+      />
+    </>
   );
 }
 
@@ -248,6 +275,9 @@ interface TerrainExplorerInternalProps extends Omit<TerrainExplorerProps, 'chunk
   gridWorldOffset: { x: number; y: number };
   isLoading: boolean;
   checkChunkLoading: (x: number, y: number) => void;
+  players?: import('@daicer/shared/player/types').Player[];
+  creatures?: import('@daicer/shared/types').Creature[];
+  onPlayerMove?: (x: number, y: number) => void;
 }
 
 function TerrainExplorerInternal({
@@ -262,6 +292,9 @@ function TerrainExplorerInternal({
   gridWorldOffset,
   isLoading,
   checkChunkLoading,
+  players,
+  creatures,
+  onPlayerMove,
 }: TerrainExplorerInternalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -286,6 +319,12 @@ function TerrainExplorerInternal({
     [enableInfinite, expandedGrid, biomeGrid]
   );
 
+  // Expose grid for E2E testing
+  useEffect(() => {
+    // @ts-ignore
+    window.__TERRAIN_GRID__ = activeGrid;
+  }, [activeGrid]);
+
   const gridWidth = activeGrid[0]?.length || 128;
   const gridHeight = activeGrid.length || 128;
 
@@ -309,6 +348,7 @@ function TerrainExplorerInternal({
         },
     enabled: true,
     coordinateOffset: gridWorldOffset, // Pass for awareness
+    onMove: (pos) => onPlayerMove?.(pos.x, pos.y),
   });
 
   // Track previous offset to adjust pan when grid expands
@@ -343,15 +383,18 @@ function TerrainExplorerInternal({
       // Fixed scale logic
       const renderScale = TILE_SIZE * zoom;
 
-      console.log('[TerrainExplorer] Vision Debug:', {
-        gridSize: `${width}x${height}`,
-        containerSize: `${containerWidth}x${containerHeight}`,
+      // Vision debug info removed
+      /*
+      console.log('Vision Debug:', {
+        gridSize: `${simpleGrid?.[0]?.length || 0}x${simpleGrid?.length || 0}`,
+        containerSize: `${dimensions.width}x${dimensions.height}`,
         zoom: zoom.toFixed(2),
         renderScale: renderScale.toFixed(4),
-        visionRadiusPixels: (visionRadius * renderScale).toFixed(1),
-        visionRadiusTiles: visionRadius,
-        pan,
+        visionRadiusPixels: visionRadiusPixels.toFixed(1),
+        visibleTilesX: visibleTilesX.toFixed(1),
+        visibleTilesY: visibleTilesY.toFixed(1)
       });
+      */
     }
   }, [activeGrid, zoom, visionRadius, pan]);
 
@@ -651,14 +694,92 @@ function TerrainExplorerInternal({
       });
     }
 
+    // Draw players (portraits)
+    // If no players prop provided (legacy usage), render red dot for local user
+    if (!players && userPosition) {
+      const userGridX = userPosition.x - gridWorldOffset.x;
+      const userGridY = userPosition.y - gridWorldOffset.y;
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(userGridX * renderScale, userGridY * renderScale, Math.max(3, renderScale), 0, Math.PI * 2);
+      ctx.fill();
+    } else if (players) {
+      // Render all players with portraits
+      players.forEach((player) => {
+        if (!player.position) return;
+
+        const pGridX = player.position.x - gridWorldOffset.x;
+        const pGridY = player.position.y - gridWorldOffset.y;
+
+        // Draw circle background
+        ctx.fillStyle = '#1e293b'; // Slate 800
+        ctx.beginPath();
+        ctx.arc(pGridX * renderScale, pGridY * renderScale, renderScale * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw border (Gold for current user/turn, White for others)
+        // TODO: Check if it's current user
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw portrait if available
+        if (player.avatarPreview?.portrait?.url) {
+          // We need to load images - for now just draw colored circle with initial
+          // TODO: Implement proper image loading/caching
+          ctx.fillStyle = '#3b82f6'; // Blue
+          ctx.beginPath();
+          ctx.arc(pGridX * renderScale, pGridY * renderScale, renderScale, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Fallback: Colored circle with initial
+          ctx.fillStyle = '#64748b'; // Slate 500
+          ctx.beginPath();
+          ctx.arc(pGridX * renderScale, pGridY * renderScale, renderScale, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${Math.max(10, renderScale)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(player.name.charAt(0).toUpperCase(), pGridX * renderScale, pGridY * renderScale);
+        }
+      });
+    }
+
+    // Draw creatures (NPCs/Monsters)
+    if (creatures) {
+      creatures.forEach((creature) => {
+        if (!creature.position || creature.hp <= 0) return;
+
+        const cGridX = creature.position.x - gridWorldOffset.x;
+        const cGridY = creature.position.y - gridWorldOffset.y;
+
+        // Draw circle background (Red for enemies, Green for friendly/neutral?)
+        // For now, default to Red/Orange for NPCs
+        ctx.fillStyle = '#ea580c'; // Orange 600
+        ctx.beginPath();
+        ctx.arc(cGridX * renderScale, cGridY * renderScale, renderScale * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw initial
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.max(8, renderScale * 0.8)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(creature.name.charAt(0).toUpperCase(), cGridX * renderScale, cGridY * renderScale);
+      });
+    }
+
     // Draw user position (red dot) - userPosition is in WORLD coordinates
     const userGridX = userPosition.x - gridWorldOffset.x;
     const userGridY = userPosition.y - gridWorldOffset.y;
-
-    ctx.fillStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.arc(userGridX * renderScale, userGridY * renderScale, Math.max(3, renderScale), 0, Math.PI * 2);
-    ctx.fill();
 
     // Draw vision radius (green circle)
     if (showVisionRadius) {

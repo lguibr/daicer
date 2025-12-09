@@ -13,6 +13,7 @@ import { registerPresenceHandlers, clearUserPresence } from './handlers/presence
 import { registerWorldChunkHandlers } from './handlers/worldChunks';
 import { registerMapFeatureHandlers } from './handlers/mapFeatures';
 import { registerTacticalDMHandlers } from './handlers/tacticalDM';
+import { handlePlayerMove } from './handlers/move';
 
 import { streamManager } from '@/services/llm/stream-manager';
 
@@ -47,6 +48,7 @@ export function initializeSocketHandlers(io: Server): void {
     socket.on('turn:process', (data) => handleProcessTurn(io, socket, userId, data));
     socket.on('combat:action', (data) => handleCombatAction(io, socket, userId, data));
     socket.on('combat:restore', (data) => handleRestoreCombatState(io, socket, userId, data));
+    socket.on('player:move', (data) => handlePlayerMove(io, socket, userId, data));
     socket.on('disconnect', () => {
       // Cleanup streaming and presence on disconnect
       cleanupUserStreams(userId);
