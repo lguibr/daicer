@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { logger } from '@/utils/logger';
 import { processDMCommand } from '@/agents/tacticalDM';
 import { DiceRoller } from '@/combat/dice';
-import type { CombatCharacter } from '@/combat/types';
+import type { CombatCharacter } from '@/types/combat'; // Assuming this is where it is, or we'll find it
 import { streamManager } from '@/services/llm/stream-manager';
 
 const dmCommandSchema = z.object({

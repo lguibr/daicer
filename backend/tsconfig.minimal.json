@@ -11,5 +11,5 @@
       "@daicer/shared/*": ["../shared/*"]
     }
   },
-  "include": ["src/types", "src/utils", "src/services/llm/tools/map-tools.ts", "src/graph/state.ts", "src/graph/gameplay-graph.ts", "src/graph/grid-generation-graph.ts", "src/graph/character"]
+  "include": ["src/types", "src/utils", "src/services/llm/tools/map-tools.ts", "src/graph/state.ts"]
 }

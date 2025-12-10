@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { logger } from '@/utils/logger';
 import { getRoom } from '@/services/firestore/rooms';
 import { getEntitiesInRadius } from '@/services/geospatialQuery';
-import { getRoomById } from '@/services/room/queries';
+// import { getRoomById } from '@/services/room/queries';
 
 const queryFeaturesSchema = z.object({
   roomId: z.string().min(1),
@@ -107,7 +107,7 @@ export function registerMapFeatureHandlers(socket: Socket, userId: string): void
         return;
       }
 
-      const { roomId, x, y, z } = validation.data;
+      const { roomId, x, y, z: posZ } = validation.data;
 
       // Verify room access
       const room = await getRoom(roomId);
@@ -123,7 +123,7 @@ export function registerMapFeatureHandlers(socket: Socket, userId: string): void
       // Query with 0.5 radius (same tile only)
       const result = getEntitiesInRadius(
         gameState,
-        { x, y, z },
+        { x, y, z: posZ },
         0.5,
         'dm' // Always show everything for single tile
       );

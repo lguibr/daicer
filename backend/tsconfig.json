@@ -30,9 +30,12 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@daicer/shared/*": ["../shared/*"]
+      "@daicer/shared/*": ["../shared/dist/*"]
     }
   },
+  "references": [
+    { "path": "../shared" }
+  ],
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "src/graph"]
 }
