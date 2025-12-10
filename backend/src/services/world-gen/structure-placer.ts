@@ -11,7 +11,7 @@ interface RelativePosition {
   distance: 'near' | 'moderate' | 'far';
 }
 
-interface StructureWithRelative extends Structure {
+interface StructureWithRelative extends Omit<Structure, 'relativePosition'> {
   relativePosition?: RelativePosition | string; // Can be object or string like "northeast-far"
 }
 
@@ -64,8 +64,11 @@ export function placeStructuresOnGrid(
     // Calculate tile dimensions based on significance (1-10)
     const { width, height } = calculateStructureDimensions(structure.significance, structure.type);
 
+    // Destructure to separate relativePosition from the rest of the structure properties
+    const { relativePosition, ...baseStructure } = structure;
+
     const placed: Structure = {
-      ...structure,
+      ...baseStructure,
       x: position.x,
       y: position.y,
       width,
@@ -143,7 +146,7 @@ function parseRelativePosition(relativePosition: RelativePosition | string | und
 
   // Parse string format: "direction-distance"
   const parts = relativePosition.split('-');
-  if (parts.length !== 2) {
+  if (!parts || parts.length !== 2) {
     logger.warn(`[StructurePlacer] Invalid relativePosition format: ${relativePosition}`);
     return null;
   }
@@ -162,14 +165,14 @@ function parseRelativePosition(relativePosition: RelativePosition | string | und
     'southwest',
     'central',
   ];
-  if (!validDirections.includes(direction)) {
+  if (!direction || !validDirections.includes(direction)) {
     logger.warn(`[StructurePlacer] Invalid direction: ${direction}`);
     return null;
   }
 
   // Validate distance
   const validDistances = ['near', 'moderate', 'far'];
-  if (!validDistances.includes(distance)) {
+  if (!distance || !validDistances.includes(distance)) {
     logger.warn(`[StructurePlacer] Invalid distance: ${distance}`);
     return null;
   }
@@ -238,15 +241,15 @@ function getTargetFromRelative(
     central: 0,
   };
 
-  const angle = directionMap[relative.direction];
+  const angle = directionMap[relative.direction] ?? 0;
 
   // Calculate target position
   let x = centerX;
   let y = centerY;
 
   if (relative.direction !== 'central') {
-    x += Math.cos(angle) * distance;
-    y += Math.sin(angle) * distance;
+    x += Math.cos(angle) * (distance || 0);
+    y += Math.sin(angle) * (distance || 0);
   }
 
   // Clamp to map bounds with margin

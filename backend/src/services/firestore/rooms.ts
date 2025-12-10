@@ -68,6 +68,7 @@ export async function createRoom(ownerId: string, settings?: WorldSettings, stru
   const ownerPlayer: Player = {
     id: ownerId,
     userId: ownerId,
+    name: 'Room Owner',
     character: null,
     action: null,
     isReady: false,

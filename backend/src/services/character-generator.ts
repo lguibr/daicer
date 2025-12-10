@@ -139,7 +139,27 @@ export async function generateCharacter(options: GenerationOptions = {}): Promis
     expertises: [], // TODO: Add logic for Rogue/Bard expertise
     baseAttackBonus: Math.floor((level - 1) / 2), // Simplification
     attacks: [], // To be populated by equipment
-    equipment: charClass.startingEquipmentEmbedded?.map((e) => e.name).join(', ') || 'Standard Gear',
+    equipment: {
+      equippedItems: {
+        mainHand: null,
+        offHand: null,
+        armor: null,
+        shield: null,
+        head: null,
+        cloak: null,
+        belt: null,
+        boots: null,
+        gloves: null,
+        ring1: null,
+        ring2: null,
+        necklace: null,
+        accessory1: null,
+        accessory2: null,
+      },
+      inventory: [],
+      totalWeight: 0,
+    },
+    equipmentDescription: charClass.startingEquipmentEmbedded?.map((e) => e.name).join(', ') || 'Standard Gear',
     currency: { cp: 0, sp: 0, ep: 0, gp: 10, pp: 0 },
     proficienciesAndLanguages: `Languages: Common${race.traits?.includes('Elvish') ? ', Elvish' : ''}`, // Simplified
     features: [

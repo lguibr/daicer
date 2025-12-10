@@ -158,6 +158,7 @@ function buildDMSystemInstruction(
   const playerSummaries = players
     .map((p) => {
       const char = p.character;
+      if (!char) return `- ${p.name} (No character sheet)`;
       return `- ${char.name} (${char.alignment} ${char.race} ${char.characterClass} Lvl ${char.level}) | HP: ${char.hp}/${char.maxHp} | AC: ${char.armorClass}`;
     })
     .join('\n');
@@ -381,7 +382,8 @@ export const processTurn = async (
 
   const currentActions = players
     .filter((p) => p.action)
-    .map((p) => `${p.character.name}: ${p.action}`)
+    .filter((p) => p.action && p.character)
+    .map((p) => `${p.character!.name}: ${p.action}`)
     .join('\n');
 
   // Fetch relevant D&D rules via RAG
@@ -566,13 +568,20 @@ export const generateCharacterOpenings = async (
 
   // 2. Generate Character Openings using the Main Message as context
   const openings = await Promise.all(
-    players.map(async (player) => {
-      const message = await generateCharacterOpening(worldDescription, player.character, mainMessage, language);
-      return {
-        playerId: player.id,
-        message,
-      };
-    })
+    players
+      .filter((p) => p.character !== null)
+      .map(async (player) => {
+        const message = await generateCharacterOpening(
+          worldDescription,
+          player.character!, // Safe assertion due to filter
+          mainMessage,
+          language
+        );
+        return {
+          playerId: player.id,
+          message,
+        };
+      })
   );
 
   logger.info('All character openings generated');
@@ -612,7 +621,10 @@ MAP CONTEXT (Nearby structures/terrain):
 ${mapContext}
 
 PLAYERS:
-${players.map((p) => `- ${p.character.name} (${p.character.race} ${p.character.characterClass})`).join('\n')}
+${players
+  .filter((p) => p.character)
+  .map((p) => `- ${p.character!.name} (${p.character!.race} ${p.character!.characterClass})`)
+  .join('\n')}
 
 Requirements:
 1. Set the scene in a specific location mentioned in the Map Context (or a generic one if none fits).

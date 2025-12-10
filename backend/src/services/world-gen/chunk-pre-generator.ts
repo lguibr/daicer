@@ -11,7 +11,7 @@ import { logger } from '@/utils/logger';
 import { getDb } from '@/config/firebase';
 
 const CHUNK_SIZE = 32; // 32x32 tiles per chunk
-const TILES_PER_CHUNK = CHUNK_SIZE * CHUNK_SIZE;
+// const TILES_PER_CHUNK = CHUNK_SIZE * CHUNK_SIZE; // Unused
 
 interface CollapseData {
   influences: Array<{
@@ -61,10 +61,17 @@ function getStructureChunks(structures: Structure[]): Array<{ x: number; y: numb
     }
   }
 
-  return Array.from(chunkSet).map((key) => {
-    const [x, y] = key.split(',').map(Number);
-    return { x, y };
-  });
+  return Array.from(chunkSet)
+    .map((key) => {
+      const parts = key.split(',');
+      const xStr = parts[0];
+      const yStr = parts[1];
+      if (!xStr || !yStr) return null;
+      const x = parseInt(xStr, 10);
+      const y = parseInt(yStr, 10);
+      return { x, y };
+    })
+    .filter((c): c is { x: number; y: number } => c !== null && !isNaN(c.x) && !isNaN(c.y));
 }
 
 /**
@@ -75,17 +82,24 @@ function getRoadChunks(roads: Road[]): Array<{ x: number; y: number }> {
 
   for (const road of roads) {
     // Roads have path array of points
-    for (const point of road.path || []) {
+    for (const point of road.waypoints || []) {
       const chunkX = Math.floor(point.x / CHUNK_SIZE);
       const chunkY = Math.floor(point.y / CHUNK_SIZE);
       chunkSet.add(`${chunkX},${chunkY}`);
     }
   }
 
-  return Array.from(chunkSet).map((key) => {
-    const [x, y] = key.split(',').map(Number);
-    return { x, y };
-  });
+  return Array.from(chunkSet)
+    .map((key) => {
+      const parts = key.split(',');
+      const xStr = parts[0];
+      const yStr = parts[1];
+      if (!xStr || !yStr) return null;
+      const x = parseInt(xStr, 10);
+      const y = parseInt(yStr, 10);
+      return { x, y };
+    })
+    .filter((c): c is { x: number; y: number } => c !== null && !isNaN(c.x) && !isNaN(c.y));
 }
 
 /**
@@ -128,10 +142,15 @@ export async function preGenerateChunks(
   // Combine and deduplicate
   const allChunkCoords = [spawnChunk, ...structureChunks, ...roadChunks];
 
-  const uniqueChunks = Array.from(new Set(allChunkCoords.map((c) => `${c.x},${c.y}`))).map((key) => {
-    const [x, y] = key.split(',').map(Number);
-    return { x, y };
-  });
+  const uniqueChunks = Array.from(new Set(allChunkCoords.map((c) => `${c.x},${c.y}`)))
+    .map((key) => {
+      const parts = key.split(',');
+      const xStr = parts[0];
+      const yStr = parts[1];
+      if (!xStr || !yStr) return null;
+      return { x: parseInt(xStr, 10), y: parseInt(yStr, 10) };
+    })
+    .filter((c): c is { x: number; y: number } => c !== null && !isNaN(c.x) && !isNaN(c.y));
 
   logger.info(`[ChunkPreGen] Generating ${uniqueChunks.length} critical chunks`);
 

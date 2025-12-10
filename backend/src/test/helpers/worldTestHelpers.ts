@@ -4,7 +4,6 @@
 
 import type { WorldGenerationParams } from '@/services/world-gen/worldGenService';
 import type { StructureTemplate } from '@/services/world-gen/structures';
-import { Server } from 'socket.io';
 import { Socket as ClientSocket } from 'socket.io-client';
 
 /**
@@ -244,18 +243,21 @@ export function assertWorldGenPhaseSequence(phases: string[]) {
     'complete',
   ];
 
-  const foundPhases = new Set(phases);
-
   for (let i = 0; i < phases.length - 1; i++) {
-    const currentIdx = expectedSequence.indexOf(phases[i]);
-    const nextIdx = expectedSequence.indexOf(phases[i + 1]);
+    const curr = phases[i];
+    const next = phases[i + 1];
+
+    if (!curr || !next) continue;
+
+    const currentIdx = expectedSequence.indexOf(curr);
+    const nextIdx = expectedSequence.indexOf(next);
 
     if (currentIdx === -1 || nextIdx === -1) {
-      throw new Error(`Unexpected phase in sequence: ${phases[i]} or ${phases[i + 1]}`);
+      throw new Error(`Unexpected phase in sequence: ${curr} or ${next}`);
     }
 
-    if (phases[i] !== 'history_period' && currentIdx >= nextIdx) {
-      throw new Error(`Phase sequence violation: ${phases[i]} should come before ${phases[i + 1]}`);
+    if (curr !== 'history_period' && currentIdx >= nextIdx) {
+      throw new Error(`Phase sequence violation: ${curr} should come before ${next}`);
     }
   }
 }

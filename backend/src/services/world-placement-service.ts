@@ -25,8 +25,6 @@ const placementMapCache = new Map<string, GlobalPlacementMap>();
  * Firestore collection paths
  */
 const PLACEMENT_COLLECTION = 'worldPlacement';
-const STRUCTURES_SUBCOLLECTION = 'structures';
-const ROADS_SUBCOLLECTION = 'roads';
 
 /**
  * Firestore document size limit is 1MB
@@ -63,7 +61,7 @@ export async function getOrCreatePlacementMap(
 
   // Check Firestore
   try {
-    const placementDoc = await db
+    const placementDoc = await db()
       .collection('rooms')
       .doc(roomId)
       .collection(PLACEMENT_COLLECTION)
@@ -124,8 +122,8 @@ export async function getOrCreatePlacementMap(
 async function savePlacementMapToFirestore(roomId: string, placementMap: GlobalPlacementMap): Promise<void> {
   logger.info(`[PlacementService] Saving placement map to Firestore for room ${roomId}`);
 
-  const batch = db.batch();
-  const baseRef = db.collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
+  const batch = db().batch();
+  const baseRef = db().collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
 
   // Save metadata
   const metadataRef = baseRef.doc('metadata');
@@ -162,9 +160,9 @@ async function savePlacementMapToFirestore(roomId: string, placementMap: GlobalP
 /**
  * Load structures from Firestore grid cells
  */
-async function loadStructuresFromFirestore(roomId: string, worldSize: number): Promise<StructurePlacement[]> {
-  const baseRef = db.collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
-  const numCells = Math.ceil(worldSize / GRID_CELL_SIZE);
+async function loadStructuresFromFirestore(roomId: string, _worldSize: number): Promise<StructurePlacement[]> {
+  const baseRef = db().collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
+  // const numCells = Math.ceil(worldSize / GRID_CELL_SIZE);
 
   const structures: StructurePlacement[] = [];
 
@@ -187,8 +185,8 @@ async function loadStructuresFromFirestore(roomId: string, worldSize: number): P
 /**
  * Load roads from Firestore grid cells
  */
-async function loadRoadsFromFirestore(roomId: string, worldSize: number): Promise<RoadSegment[]> {
-  const baseRef = db.collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
+async function loadRoadsFromFirestore(roomId: string, _worldSize: number): Promise<RoadSegment[]> {
+  const baseRef = db().collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
 
   const roads: RoadSegment[] = [];
 
@@ -211,7 +209,7 @@ async function loadRoadsFromFirestore(roomId: string, worldSize: number): Promis
  */
 function batchIntoGridCells<T extends { worldX: number; worldY: number }>(
   items: T[],
-  worldSize: number,
+  _worldSize: number,
   cellSize: number
 ): Record<string, T[]> {
   const grids: Record<string, T[]> = {};
@@ -235,7 +233,7 @@ function batchIntoGridCells<T extends { worldX: number; worldY: number }>(
  */
 function batchRoadsIntoGridCells(
   roads: RoadSegment[],
-  worldSize: number,
+  _worldSize: number,
   cellSize: number
 ): Record<string, RoadSegment[]> {
   const grids: Record<string, RoadSegment[]> = {};
@@ -269,10 +267,10 @@ export function clearPlacementMapCache(roomId: string): void {
 export async function deletePlacementMap(roomId: string): Promise<void> {
   logger.info(`[PlacementService] Deleting placement map for room ${roomId}`);
 
-  const baseRef = db.collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
+  const baseRef = db().collection('rooms').doc(roomId).collection(PLACEMENT_COLLECTION);
   const docs = await baseRef.get();
 
-  const batch = db.batch();
+  const batch = db().batch();
   for (const doc of docs.docs) {
     batch.delete(doc.ref);
   }

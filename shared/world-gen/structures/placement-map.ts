@@ -9,7 +9,7 @@
 
 import { Alea } from '../noise/alea';
 import { poissonDiskSampling2D } from '../voronoi/poisson-disc';
-import type { StructureType, StructureMaterial } from './types';
+import type { StructureType, StructureMaterial, RoadSegment } from './types';
 import { STRUCTURE_TEMPLATES, DEFAULT_STRUCTURE_WEIGHTS } from './presets';
 
 /**
@@ -24,19 +24,6 @@ export interface StructurePlacement {
   size: number; // Approximate radius for collision/rendering
   gridX: number; // Grid cell coordinates for spatial indexing
   gridY: number;
-}
-
-/**
- * Road segment connecting structures
- */
-export interface RoadSegment {
-  id: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  path: Array<[number, number]>; // Smoothed path points
-  material: StructureMaterial;
 }
 
 /**

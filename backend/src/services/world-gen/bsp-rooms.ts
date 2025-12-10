@@ -156,14 +156,34 @@ function addDoorsBetweenRooms(rooms: BSPRoom[], rng: () => number): void {
       const room2 = rooms[j];
 
       // Check if rooms are adjacent
-      const adjacency = checkAdjacency(room1, room2);
+      if (room1 && room2) {
+        const adjacency = checkAdjacency(room1, room2);
+        if (adjacency) {
+          // Changed from adjacency.adjacent to adjacency
+          const doorPos = calculateDoorPosition(room1, room2, adjacency.direction, rng);
+          if (!room1.doorPositions) room1.doorPositions = [];
+          room1.doorPositions.push({ ...doorPos, direction: adjacency.direction });
 
-      if (adjacency) {
-        // Add door at random position along shared edge
-        const doorPos = calculateDoorPosition(room1, room2, adjacency.direction, rng);
+          // Determine opposite direction for room2
+          let oppositeDir: 'north' | 'south' | 'east' | 'west';
+          switch (adjacency.direction) {
+            case 'north':
+              oppositeDir = 'south';
+              break;
+            case 'south':
+              oppositeDir = 'north';
+              break;
+            case 'east':
+              oppositeDir = 'west';
+              break;
+            case 'west':
+              oppositeDir = 'east';
+              break;
+          }
 
-        if (!room1.doorPositions) room1.doorPositions = [];
-        room1.doorPositions.push({ ...doorPos, direction: adjacency.direction });
+          if (!room2.doorPositions) room2.doorPositions = [];
+          room2.doorPositions.push({ ...doorPos, direction: oppositeDir });
+        }
       }
     }
   }

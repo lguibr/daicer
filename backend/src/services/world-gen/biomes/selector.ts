@@ -3,7 +3,7 @@
  * 5-layer climate-based biome selection with weighted scoring
  */
 
-import type { BiomeType, BiomeDefinition, ClimateData } from './types';
+import type { BiomeDefinition, ClimateData } from './types';
 import { BIOMES } from './data';
 
 /**
@@ -79,23 +79,28 @@ export function selectBiome(climate: ClimateData, elevation: number): BiomeDefin
       score -= erosionDist * 40;
     }
 
-    // Weirdness match
-    if (climate.weirdness >= biome.weirdness.min && climate.weirdness <= biome.weirdness.max) {
-      score += 50;
-    } else {
-      const weirdDist = Math.min(
-        Math.abs(climate.weirdness - biome.weirdness.min),
-        Math.abs(climate.weirdness - biome.weirdness.max)
-      );
-      score -= weirdDist * 30;
+    // 5. Weirdness (optional, default to match)
+    let weirdnessScore = 1;
+    if (biome.weirdness && climate.weirdness !== undefined) {
+      if (climate.weirdness >= biome.weirdness.min && climate.weirdness <= biome.weirdness.max) {
+        weirdnessScore = 50;
+      } else {
+        const weirdDist = Math.min(
+          Math.abs(climate.weirdness - biome.weirdness.min),
+          Math.abs(climate.weirdness - biome.weirdness.max)
+        );
+        weirdnessScore = -weirdDist * 30;
+      }
     }
 
     // Elevation bonus/penalty
     const elevationDiff = Math.abs(elevation - biome.baseElevation);
-    score -= elevationDiff * 20;
+    const elevationScore = -elevationDiff * 20;
 
-    if (score > bestScore) {
-      bestScore = score;
+    const totalScore = score + weirdnessScore + elevationScore;
+
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
       bestBiome = biome;
     }
   }

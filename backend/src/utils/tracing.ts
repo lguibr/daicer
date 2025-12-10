@@ -292,7 +292,7 @@ export function buildTracingConfigFromGameplay(
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     players: state.players as any,
-    creatures: state.creatures,
+    creatures: state.creatures as unknown as Creature[],
     phase: 'GAMEPLAY' as GamePhase,
     turnNumber,
     additionalTags,

@@ -52,7 +52,7 @@ export function registerMapFeatureHandlers(socket: Socket, userId: string): void
       }
 
       // Get game state from room
-      const gameState = room.state || null;
+      const gameState = null; // room.state is not available on Room type
 
       // Query entities and features
       const result = getEntitiesInRadius(gameState, { x, y, z }, radius, viewMode);
@@ -118,7 +118,7 @@ export function registerMapFeatureHandlers(socket: Socket, userId: string): void
         return;
       }
 
-      const gameState = room.state || null;
+      const gameState = null; // room.state is not available on Room type
 
       // Query with 0.5 radius (same tile only)
       const result = getEntitiesInRadius(

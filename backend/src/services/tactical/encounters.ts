@@ -3,7 +3,7 @@
  * Manages tactical combat encounters in Firestore
  */
 
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import type { Unit, Action } from '@/schemas/tactical';
 
 export interface TacticalEncounter {

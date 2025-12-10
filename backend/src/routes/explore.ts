@@ -10,9 +10,9 @@ const router = Router();
  */
 router.get('/chunk/:x/:y/:z', async (req: Request, res: Response) => {
   try {
-    const x = parseInt(req.params.x, 10);
-    const y = parseInt(req.params.y, 10);
-    const z = parseInt(req.params.z, 10);
+    const x = parseInt(req.params.x || '0', 10);
+    const y = parseInt(req.params.y || '0', 10);
+    const z = parseInt(req.params.z || '0', 10);
 
     if (isNaN(x) || isNaN(y) || isNaN(z)) {
       return res.status(400).json({ error: 'Invalid coordinates' });

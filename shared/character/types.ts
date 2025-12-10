@@ -61,6 +61,30 @@ export interface AdvancementPoints {
   talent: number;
 }
 
+export interface CharacterEquipment {
+  equippedItems: {
+    mainHand: string | null;
+    offHand: string | null;
+    armor: string | null;
+    shield: string | null;
+    head: string | null;
+    cloak: string | null;
+    belt: string | null;
+    boots: string | null;
+    gloves: string | null;
+    ring1: string | null;
+    ring2: string | null;
+    necklace: string | null;
+    accessory1: string | null;
+    accessory2: string | null;
+  };
+  inventory: Array<{
+    itemIndex: string;
+    quantity: number;
+  }>;
+  totalWeight: number;
+}
+
 /**
  * Complete character sheet
  */
@@ -113,7 +137,9 @@ export interface CharacterSheet {
   // Combat & equipment
   baseAttackBonus: number;
   attacks: Array<{ name: string; bonus: string; damageType: string }>;
-  equipment: string;
+  equipment: CharacterEquipment;
+  equipmentDescription?: string;
+  // Legacy fields, keeping optional for backward compat if needed, but equipment object is primary
   inventory?: Array<{ index: string; name: string; quantity: number }>;
   equippedItems?: Record<string, string>;
 

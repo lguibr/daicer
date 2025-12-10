@@ -9,11 +9,11 @@ import { SimplexNoise } from './noise';
 import { logger } from '@/utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
-interface TerrainCost {
-  x: number;
-  y: number;
-  cost: number; // 1 = easy, higher = difficult
-}
+// interface TerrainCost {
+//   x: number;
+//   y: number;
+//   cost: number;
+// }
 
 interface ClimateHint {
   temperature: number;
@@ -46,9 +46,22 @@ export function generateRoads(
   // Connect structures based on distance and significance
   const connections = determineConnections(structures);
 
-  for (const [fromIdx, toIdx] of connections) {
-    const from = structures[fromIdx];
-    const to = structures[toIdx];
+  // Create a map for quick structure lookup by ID
+  const structMap = new Map<string, Structure>();
+  structures.forEach((s) => structMap.set(s.id, s));
+
+  for (const pair of connections) {
+    const s1 = structures[pair[0]];
+    const s2 = structures[pair[1]];
+    if (!s1 || !s2) continue;
+
+    const from = structMap.get(s1.id);
+    const to = structMap.get(s2.id);
+
+    if (!from || !to) {
+      logger.warn(`[RoadGenerator] Skipping road due to missing structure: from=${pair[0]}, to=${pair[1]}`);
+      continue;
+    }
 
     logger.debug(`[RoadGenerator] Creating road from ${from.name} to ${to.name}`);
 
@@ -87,7 +100,9 @@ function determineConnections(structures: Structure[]): Array<[number, number]> 
   // Connect high-significance structures to nearby structures
   for (let i = 0; i < sortedIndices.length; i++) {
     const fromIdx = sortedIndices[i];
+    if (fromIdx === undefined) continue;
     const from = structures[fromIdx];
+    if (!from) continue;
 
     // Find nearest unconnected structures
     const distances = structures
@@ -102,7 +117,19 @@ function determineConnections(structures: Structure[]): Array<[number, number]> 
     const connectionCount = Math.min(Math.ceil(from.significance / 3), 4, distances.length);
 
     for (let j = 0; j < connectionCount; j++) {
-      const pair: [number, number] = [fromIdx, distances[j].toIdx];
+      const dist = distances[j];
+      if (!dist) continue;
+      const toIdx = dist.toIdx;
+
+      // Strict check for valid index
+      if (typeof toIdx !== 'number' || toIdx < 0 || toIdx >= structures.length) {
+        continue;
+      }
+
+      const to = structures[toIdx];
+      if (!to) continue;
+
+      const pair: [number, number] = [fromIdx, toIdx];
 
       // Avoid duplicate connections (both directions)
       const alreadyExists = connections.some(
@@ -177,7 +204,15 @@ function generatePath(
  * Get terrain cost for pathfinding (higher = harder to traverse)
  */
 function getTerrainCost(x: number, y: number, terrainHints: ClimateHint[][] | null): number {
-  if (!terrainHints || !terrainHints[y] || !terrainHints[y][x]) {
+  if (
+    !terrainHints ||
+    y < 0 ||
+    y >= terrainHints.length ||
+    !terrainHints[y] ||
+    x < 0 ||
+    x >= terrainHints[y].length ||
+    !terrainHints[y][x]
+  ) {
     return 1; // Default flat terrain
   }
 
@@ -203,9 +238,15 @@ function determineTerrain(waypoints: Waypoint[], terrainHints: ClimateHint[][] |
   let validSamples = 0;
 
   for (const wp of waypoints) {
-    if (terrainHints[wp.y] && terrainHints[wp.y][wp.x]) {
-      avgElevation += terrainHints[wp.y][wp.x].elevation;
-      validSamples++;
+    if (terrainHints && wp.y >= 0 && wp.y < terrainHints.length) {
+      const row = terrainHints[wp.y];
+      if (row && wp.x >= 0 && wp.x < row.length && row[wp.x]) {
+        const cell = row[wp.x];
+        if (cell) {
+          avgElevation += cell.elevation;
+          validSamples++;
+        }
+      }
     }
   }
 

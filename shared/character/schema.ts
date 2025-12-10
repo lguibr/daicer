@@ -78,6 +78,24 @@ const spellSlotSchema = z.object({
   expended: z.number().int().min(0),
 });
 
+const characterEquipmentSchema = z.object({
+  equippedItems: z.object({
+    mainHand: z.string().nullable(),
+    offHand: z.string().nullable(),
+    armor: z.string().nullable(),
+    shield: z.string().nullable(),
+    accessory1: z.string().nullable(),
+    accessory2: z.string().nullable(),
+  }),
+  inventory: z.array(
+    z.object({
+      itemIndex: z.string(),
+      quantity: z.number().int().positive(),
+    })
+  ),
+  totalWeight: z.number().default(0),
+});
+
 export const characterSheetSchema = z.object({
   name: z.string().min(1),
   race: z.string().min(1),
@@ -110,7 +128,7 @@ export const characterSheetSchema = z.object({
   skillDetails: z.array(skillDetailSchema),
   expertises: z.array(z.string().min(1)),
   attacks: z.array(z.object({ name: z.string(), bonus: z.string(), damageType: z.string() })),
-  equipment: z.string(),
+  equipment: characterEquipmentSchema,
   currency: currencySchema,
   proficienciesAndLanguages: z.string(),
   features: z.string(),

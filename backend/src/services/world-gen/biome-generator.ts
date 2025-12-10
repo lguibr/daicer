@@ -5,7 +5,7 @@
 
 import type { BiomeMap } from '@daicer/shared/world/biome-schema';
 import { logger } from '@/utils/logger';
-import { SimplexNoise, Alea } from './noise';
+import { SimplexNoise } from './noise';
 import { poissonDiscSampling, type Point2D } from './poisson';
 import { selectBiome, type ClimateData } from './biomes';
 
@@ -49,7 +49,7 @@ export function generateBiomeMap(params: BiomeGenerationParams): BiomeMap {
     `[BiomeGenerator] Generating ${width}x${height} biome map with seed: ${seed} at offset (${offsetX}, ${offsetY})`
   );
 
-  const rng = Alea(seed);
+  // const _rng = Alea(seed);
 
   // For infinite terrain chunks (non-zero offset), skip Voronoi regions
   // Only use pure noise-based biomes for seamless generation
@@ -127,7 +127,7 @@ export function generateBiomeMap(params: BiomeGenerationParams): BiomeMap {
     width,
     height,
     seed,
-    grid,
+    grid: grid as any,
     temperatureBias,
     moistureBias,
     continentalnessBias,
@@ -177,7 +177,7 @@ function findNearestVoronoiSeed(x: number, y: number, seeds: Point2D[]): Point2D
     }
   }
 
-  return nearest;
+  return nearest!;
 }
 
 /**
@@ -189,9 +189,14 @@ export function getBiomeAt(biomeMap: BiomeMap, x: number, y: number): string {
   const gridX = Math.floor(x / sampleScale);
   const gridY = Math.floor(y / sampleScale);
 
+  if (!biomeMap.grid || biomeMap.grid.length === 0 || !biomeMap.grid[0]) {
+    return 'plains';
+  }
+
   // Clamp to grid bounds
   const clampedX = Math.max(0, Math.min(biomeMap.grid[0].length - 1, gridX));
   const clampedY = Math.max(0, Math.min(biomeMap.grid.length - 1, gridY));
 
-  return biomeMap.grid[clampedY][clampedX];
+  const gridRow = biomeMap.grid[clampedY];
+  return gridRow ? gridRow[clampedX] || 'plains' : 'plains';
 }

@@ -18,13 +18,13 @@ export interface ServerToClientEvents {
   'game:state': (data: { room: Room; players: Player[]; messages: Message[]; creatures: Creature[] }) => void;
 
   // Room events - actual structure from handlePlayerAction
-  'room:updated': (data: { type: string; userId: string; action?: string | null }) => void;
+  'room:updated': (data: { room: Room }) => void;
   'room:all_ready': (data: { roomId: string }) => void;
   'room:phase_changed': (data: { roomId: string; phase: string }) => void;
 
   // Player events - actual structures from handlers
-  'player:joined': (data: { userId: string }) => void;
-  'player:left': (data: { userId: string }) => void;
+  'player:joined': (data: { player: Player }) => void;
+  'player:left': (data: { playerId: string }) => void;
   'player:created': (data: { player: Player }) => void;
   'player:ready_updated': (data: { userId: string; isReady: boolean }) => void;
 

@@ -5,7 +5,8 @@
 
 import { db, initializeFirebase } from '../config/firebase.js';
 import { logger } from '../utils/logger.js';
-import { SRD_RULES, type SRDRule } from '../../../seeds/data/srd-rules.ts';
+// @ts-ignore - Importing from outside rootDir for seeds
+import { SRD_RULES } from '../../../seeds/data/srd-rules';
 import {
   GAME_DATA_COLLECTIONS,
   type RaceDocument,

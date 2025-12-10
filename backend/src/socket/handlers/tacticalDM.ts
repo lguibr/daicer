@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { logger } from '@/utils/logger';
 import { processDMCommand } from '@/agents/tacticalDM';
 import { DiceRoller } from '@/combat/dice';
-import type { CombatCharacter } from '@/types/combat'; // Assuming this is where it is, or we'll find it
+import type { CombatCharacter } from '@/graph/state';
 import { streamManager } from '@/services/llm/stream-manager';
 
 const dmCommandSchema = z.object({
@@ -26,6 +26,7 @@ const dmCommandSchema = z.object({
       position: z.object({
         x: z.number(),
         y: z.number(),
+        z: z.number().default(0),
       }),
       movementRemaining: z.number(),
     })
@@ -64,7 +65,7 @@ export function registerTacticalDMHandlers(socket: Socket, userId: string): void
       });
 
       // Create dice roller with seed for determinism
-      const diceRoller = new DiceRoller(seed || Date.now());
+      const diceRoller = new DiceRoller({ seed: seed || Date.now() });
 
       // Track updates to emit
       const updates: any[] = [];
@@ -84,8 +85,32 @@ export function registerTacticalDMHandlers(socket: Socket, userId: string): void
       // Use sessionId as roomId since that's what we have
       streamManager.startStream(streamId, sessionId, userId);
 
+      // Map request characters to full CombatCharacter objects
+      const combatCharacters: CombatCharacter[] = characters.map((c) => ({
+        ...c,
+        armorClass: c.ac,
+        initiative: 0,
+        speed: 30,
+        proficiencyBonus: 2,
+        tempHp: 0,
+        avatar: '',
+        hasMoved: false,
+        hasActed: false,
+        hasReaction: true,
+        hasBonusAction: true,
+        conditions: [],
+        strength: 10,
+        dexterity: 10,
+        constitution: 10,
+        intelligence: 10,
+        wisdom: 10,
+        charisma: 10,
+        reach: 5,
+        movementRemaining: c.movementRemaining ?? 30,
+      }));
+
       // Process command through LLM agent
-      const response = await processDMCommand(command, characters as CombatCharacter[], diceRoller, onUpdate, streamId);
+      const response = await processDMCommand(command, combatCharacters, diceRoller, onUpdate, streamId);
 
       // End unified stream
       streamManager.endStream(streamId);

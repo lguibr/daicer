@@ -29,99 +29,7 @@ export const MessageSchema = z.object({
 /**
  * Character sheet schema (complete D&D 5e character)
  */
-const CharacterSheetSchema = z.object({
-  name: z.string(),
-  race: z.string(),
-  characterClass: z.string(),
-  background: z.string(),
-  alignment: z.string(),
-  level: z.number(),
-  xp: z.number(),
-  hp: z.number(),
-  maxHp: z.number(),
-  temporaryHp: z.number(),
-  hitDice: z.object({ total: z.number(), current: z.number() }),
-  deathSaves: z.object({ successes: z.number(), failures: z.number() }),
-  armorClass: z.number(),
-  initiative: z.number(),
-  speed: z.number(),
-  proficiencyBonus: z.number(),
-  inspiration: z.boolean(),
-  attributes: z.record(z.string(), z.number()),
-  savingThrows: z.object({
-    fortitude: z.number(),
-    reflex: z.number(),
-    will: z.number(),
-  }),
-  skills: z.record(z.string(), z.number()),
-  baseAttackBonus: z.number(),
-  attacks: z.array(
-    z.object({
-      name: z.string(),
-      bonus: z.string(),
-      damageType: z.string(),
-    })
-  ),
-  equipment: z.object({
-    equippedItems: z.object({
-      mainHand: z.string().nullable(),
-      offHand: z.string().nullable(),
-      armor: z.string().nullable(),
-      shield: z.string().nullable(),
-      accessory1: z.string().nullable(),
-      accessory2: z.string().nullable(),
-    }),
-    inventory: z.array(
-      z.object({
-        itemIndex: z.string(),
-        quantity: z.number().int().positive(),
-      })
-    ),
-    totalWeight: z.number().default(0),
-  }),
-  currency: z.object({
-    cp: z.number(),
-    sp: z.number(),
-    ep: z.number(),
-    gp: z.number(),
-    pp: z.number(),
-  }),
-  proficienciesAndLanguages: z.string(),
-  features: z.string(),
-  appearance: z.object({
-    age: z.string(),
-    height: z.string(),
-    weight: z.string(),
-    eyes: z.string(),
-    skin: z.string(),
-    hair: z.string(),
-    description: z.string(),
-  }),
-  personality: z.object({
-    traits: z.string(),
-    ideals: z.string(),
-    bonds: z.string(),
-    flaws: z.string(),
-  }),
-  backstory: z.string(),
-  alliesAndOrganizations: z.string(),
-  treasure: z.string(),
-  spellcasting: z.object({
-    class: z.string(),
-    ability: z.string(),
-    saveDC: z.number(),
-    attackBonus: z.number(),
-    cantrips: z.array(z.string()),
-    spellsKnown: z.array(z.string()),
-    slots: z.array(
-      z.object({
-        level: z.number(),
-        total: z.number(),
-        expended: z.number(),
-      })
-    ),
-  }),
-});
+import { characterSheetSchema as CharacterSheetSchema } from '@daicer/shared/character/schema';
 
 /**
  * Player schema
@@ -130,21 +38,35 @@ export const PlayerSchema = z.object({
   id: z.string(),
   userId: z.string(),
   name: z.string(),
-  character: CharacterSheetSchema,
+  character: CharacterSheetSchema as any,
   action: z.string().nullable(),
   isReady: z.boolean(),
   joinedAt: z.number(),
 });
 
 /**
+ * Position on the grid
+ */
+export const PositionSchema = z.object({
+  x: z.number().int().min(0),
+  y: z.number().int().min(0),
+  z: z.number().int().default(0),
+});
+
+/**
  * Creature schema
  */
 export const CreatureSchema = z.object({
+  id: z.string(),
   name: z.string(),
   hp: z.number(),
   maxHp: z.number(),
-  attackBonus: z.number(),
-  damage: z.string(),
+  ac: z.number(),
+  attackBonus: z.number().optional(),
+  damage: z.string().optional(),
+  position: PositionSchema,
+  type: z.enum(['npc', 'monster']),
+  sheet: (CharacterSheetSchema as any).optional(),
 });
 
 /**
@@ -163,10 +85,6 @@ export const MapFeatureSchema = z.object({
 /**
  * Position on the grid
  */
-export const PositionSchema = z.object({
-  x: z.number().int().min(0),
-  y: z.number().int().min(0),
-});
 
 /**
  * D&D 5e conditions

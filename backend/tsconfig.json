@@ -33,9 +33,7 @@
       "@daicer/shared/*": ["../shared/dist/*"]
     }
   },
-  "references": [
-    { "path": "../shared" }
-  ],
+  "references": [{ "path": "../shared" }],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts", "src/graph"]
 }

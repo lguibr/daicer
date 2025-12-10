@@ -13,7 +13,8 @@ export interface Player {
   id: string;
   userId: string;
   name: string;
-  character: CharacterSheet;
+  isOnline?: boolean;
+  character: CharacterSheet | null;
   action: string | null;
   isReady: boolean;
   joinedAt: number;

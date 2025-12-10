@@ -113,10 +113,11 @@ export interface GeneratedImage {
  * Default configurations
  */
 export const DEFAULT_TEXT_CONFIG: Required<GeminiConfig> = {
-  temperature: 0.4,
-  maxTokens: 4096,
-  topP: 0.95,
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 0.8,
   topK: 40,
+  timeout: 0,
 };
 
 export const DEFAULT_IMAGE_CONFIG: Required<ImageGenConfig> = {

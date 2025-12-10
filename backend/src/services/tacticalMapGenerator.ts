@@ -86,7 +86,9 @@ export function generateTacticalMap(params: GenerateTacticalMapParams): Tactical
     throw new Error('Grid size must be between 8 and 20');
   }
 
+  // @ts-ignore
   const terrainNoise = new SimplexNoise(`${seed}-terrain`);
+  // @ts-ignore
   const elevationNoise = new SimplexNoise(`${seed}-elevation`);
 
   const tiles: TacticalTile[][] = [];

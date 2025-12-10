@@ -35,7 +35,7 @@ export interface CollapseData {
 export function collapseWorldAroundStructures(
   structures: Structure[],
   roads: Road[],
-  params: WorldGenerationParams
+  _params: WorldGenerationParams
 ): CollapseData {
   logger.info(`[WorldCollapse] Creating collapse data for ${structures.length} structures and ${roads.length} roads`);
 
@@ -75,6 +75,8 @@ export function collapseWorldAroundStructures(
       const wp1 = road.waypoints[i];
       const wp2 = road.waypoints[i + 1];
 
+      if (!wp1 || !wp2) continue;
+
       roadSegments.push({
         x1: wp1.x,
         y1: wp1.y,
@@ -98,15 +100,17 @@ export function collapseWorldAroundStructures(
     // Last waypoint
     if (road.waypoints.length > 0) {
       const lastWp = road.waypoints[road.waypoints.length - 1];
-      influences.push({
-        x: lastWp.x,
-        y: lastWp.y,
-        radius: getRoadWidth(road.quality) * 2,
-        type: 'road',
-        flatten: true,
-        targetElevation: 0.1,
-        strength: 0.6,
-      });
+      if (lastWp) {
+        influences.push({
+          x: lastWp.x,
+          y: lastWp.y,
+          radius: getRoadWidth(road.quality) * 2,
+          type: 'road',
+          flatten: true,
+          targetElevation: 0.1,
+          strength: 0.6,
+        });
+      }
     }
   }
 

@@ -71,7 +71,8 @@ export function calculateCharacterStats(equippedItems: EquippedItems, baseAC: nu
   const equippedWeapons: CharacterStats['equippedWeapons'] = [];
 
   // Iterate through stat-relevant equipment slots
-  for (const slot of STAT_EQUIPMENT_SLOTS) {
+  for (const slotKey of STAT_EQUIPMENT_SLOTS) {
+    const slot = slotKey as keyof EquippedItems;
     const itemIndex = equippedItems[slot];
     if (!itemIndex) continue;
 
@@ -92,7 +93,7 @@ export function calculateCharacterStats(equippedItems: EquippedItems, baseAC: nu
       } else {
         // Armor with AC calculation
         armorAC = item.armorClass.base;
-        canAddDexToAC = item.armorClass.dexBonus;
+        canAddDexToAC = item.armorClass.dexBonus ?? true;
         maxDexBonus = item.armorClass.maxBonus ?? null;
       }
     }
@@ -139,7 +140,8 @@ export function getVisualEquipment(equippedItems: EquippedItems): VisualEquipmen
   const allEquipment = loadEquipmentData();
   const visualItems: VisualEquipment['visualItems'] = [];
 
-  for (const slot of VISUAL_EQUIPMENT_SLOTS) {
+  for (const slotKey of VISUAL_EQUIPMENT_SLOTS) {
+    const slot = slotKey as keyof EquippedItems;
     const itemIndex = equippedItems[slot];
     if (!itemIndex) continue;
 
@@ -149,7 +151,7 @@ export function getVisualEquipment(equippedItems: EquippedItems): VisualEquipmen
     visualItems.push({
       slot: slot as string,
       name: item.name,
-      category: item.equipmentCategory,
+      category: typeof item.equipmentCategory === 'string' ? item.equipmentCategory : item.equipmentCategory.name,
       description: item.description,
     });
   }

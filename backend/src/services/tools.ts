@@ -53,10 +53,14 @@ export const attributeCheckTool = new DynamicStructuredTool({
     // TODO: Pass game state through proper tool context
     // For now, return a placeholder response
     const players: Player[] = [];
-    const character = players.find((p) => p.character.name === characterName);
+    const character = players.find((p) => p.character?.name === characterName) as Player | undefined;
 
     if (!character) {
       return JSON.stringify({ success: false, error: 'Character not found' });
+    }
+
+    if (!character?.character) {
+      return JSON.stringify({ success: false, error: 'Character sheet not found' });
     }
 
     const attrScore = character.character.attributes[attribute as Attribute];
@@ -107,10 +111,14 @@ export const savingThrowTool = new DynamicStructuredTool({
   }) => {
     // TODO: Pass game state through proper tool context
     const players: Player[] = [];
-    const character = players.find((p) => p.character.name === characterName);
+    const character = players.find((p) => p.character?.name === characterName);
 
     if (!character) {
       return JSON.stringify({ success: false, error: 'Character not found' });
+    }
+
+    if (!character?.character) {
+      return JSON.stringify({ success: false, error: 'Character sheet not found' });
     }
 
     const saveBonus = character.character.savingThrows[saveType];
@@ -152,8 +160,9 @@ export const attackRollTool = new DynamicStructuredTool({
     const creatures: Creature[] = [];
 
     const attacker =
-      players.find((p) => p.character.name === attackerName) || creatures.find((c) => c.name === attackerName);
-    const target = players.find((p) => p.character.name === targetName) || creatures.find((c) => c.name === targetName);
+      players.find((p) => p.character?.name === attackerName) || creatures.find((c) => c.name === attackerName);
+    const target =
+      players.find((p) => p.character?.name === targetName) || creatures.find((c) => c.name === targetName);
 
     if (!attacker || !target) {
       return JSON.stringify({ success: false, error: 'Attacker or target not found' });
@@ -164,11 +173,14 @@ export const attackRollTool = new DynamicStructuredTool({
     let targetAC = 10;
 
     if ('character' in attacker) {
+      if (!attacker.character) return JSON.stringify({ success: false, error: 'Attacker has no character sheet' });
       attackBonus = attacker.character.baseAttackBonus;
-      targetAC = 'character' in target ? target.character.armorClass : 10;
+      targetAC =
+        'character' in target && target.character ? target.character.armorClass : 'ac' in target ? target.ac : 10;
     } else {
-      attackBonus = attacker.attackBonus;
-      targetAC = 'character' in target ? target.character.armorClass : 10;
+      attackBonus = attacker.attackBonus || 0;
+      targetAC =
+        'character' in target && target.character ? target.character.armorClass : 'ac' in target ? target.ac : 10;
     }
 
     const total = roll + attackBonus;

@@ -18,6 +18,7 @@ export interface GameDataCost {
 
 export interface RaceDocument {
   id: string;
+  index: string;
   name: string;
   description: string;
   speed: number;
@@ -36,6 +37,7 @@ export interface RaceDocument {
 
 export interface CharacterClassDocument {
   id: string;
+  index: string;
   name: string;
   description: string;
   hitDie: number;

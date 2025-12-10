@@ -192,9 +192,9 @@ export const generateSinglePeriodTask = task(
  */
 export const generateOverallSummaryTask = task(
   'generateHistorySummary',
-  async (params: { context: GenerationContext }, config?: LangGraphRunnableConfig): Promise<string> => {
+  async (params: { context: GenerationContext }, _config?: LangGraphRunnableConfig): Promise<string> => {
     const { context } = params;
-    const writer = config?.configurable?.writer as ((event: any) => void) | undefined;
+    // const writer = config?.configurable?.writer as ((event: any) => void) | undefined;
 
     logger.info('[HistorySummary] ━━━ Generating overall summary ━━━', {
       totalPeriods: context.periods.length,

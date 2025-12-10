@@ -36,14 +36,16 @@ export type ConversationSummary = z.infer<typeof ConversationSummarySchema>;
  * Summarize conversation history
  * Reduces message array to compact summary with key information
  */
-export const summarizeConversation = traceable(
-  async (messages: Message[], language: Language = 'en'): Promise<ConversationSummary> => {
-    logger.info('[Summarization] Starting conversation summary', {
-      messageCount: messages.length,
-      language,
-    });
+export const summarizeConversation = async (
+  messages: Message[],
+  language: Language = 'en'
+): Promise<ConversationSummary> => {
+  logger.info('[Summarization] Starting conversation summary', {
+    messageCount: messages.length,
+    language,
+  });
 
-    const systemPrompt = `You are an expert at summarizing D&D game sessions.
+  const systemPrompt = `You are an expert at summarizing D&D game sessions.
 Extract the most important information from the conversation history while preserving:
 - Key events and decisions
 - Combat encounters and outcomes
@@ -53,14 +55,14 @@ Extract the most important information from the conversation history while prese
 
 Be concise but comprehensive. The summary will be used to provide context to the DM.`;
 
-    const messageText = messages
-      .map((m) => {
-        const timestamp = new Date(m.timestamp).toISOString();
-        return `[${timestamp}] ${m.sender}: ${m.text}`;
-      })
-      .join('\n');
+  const messageText = messages
+    .map((m) => {
+      const timestamp = new Date(m.timestamp).toISOString();
+      return `[${timestamp}] ${m.sender}: ${m.text}`;
+    })
+    .join('\n');
 
-    const userPrompt = `Summarize this game session conversation:
+  const userPrompt = `Summarize this game session conversation:
 
 ${messageText}
 
@@ -71,29 +73,23 @@ Provide:
 4. Notable character states
 5. Approximate in-game time covered`;
 
-    const summary = await generateStructured(ConversationSummarySchema, systemPrompt, userPrompt, language, {
-      tags: ['conversation-summarization', `message-count:${messages.length}`],
-      metadata: {
-        originalMessageCount: messages.length,
-        language,
-      },
-    });
+  const summary = await generateStructured(ConversationSummarySchema, systemPrompt, userPrompt, language, {
+    tags: ['conversation-summarization', `message-count:${messages.length}`],
+    metadata: {
+      originalMessageCount: messages.length,
+      language,
+    },
+  });
 
-    logger.info('[Summarization] Summary generated', {
-      originalMessages: messages.length,
-      summaryLength: summary.summary.length,
-      keyEvents: summary.keyEvents.length,
-      activeThreads: summary.activeThreads.length,
-    });
+  logger.info('[Summarization] Summary generated', {
+    originalMessages: messages.length,
+    summaryLength: summary.summary.length,
+    keyEvents: summary.keyEvents.length,
+    activeThreads: summary.activeThreads.length,
+  });
 
-    return summary;
-  },
-  {
-    name: 'summarize_conversation',
-    run_type: 'chain',
-    tags: ['summarization'],
-  }
-);
+  return summary;
+};
 
 /**
  * Determine if summarization is needed

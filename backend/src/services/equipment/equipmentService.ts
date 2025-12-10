@@ -5,13 +5,7 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import type {
-  EquipmentItem,
-  EquipmentStatModifiers,
-  PurchaseTransaction,
-  CharacterEquipment,
-  EquippedItems,
-} from '../../types/equipment';
+import type { EquipmentItem, EquipmentStatModifiers, CharacterEquipment, EquippedItems } from '../../types/equipment';
 import { logger } from '../../utils/logger';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -236,7 +230,7 @@ export function applyPurchase(
   const existingItemIndex = equipment.inventory.findIndex((inv) => inv.itemIndex === itemIndex);
 
   let newInventory = [...equipment.inventory];
-  if (existingItemIndex >= 0) {
+  if (existingItemIndex >= 0 && newInventory[existingItemIndex]) {
     newInventory[existingItemIndex] = {
       ...newInventory[existingItemIndex],
       quantity: newInventory[existingItemIndex].quantity + quantity,
@@ -284,7 +278,7 @@ export function equipItem(
   if (currentItem) {
     // Return current item to inventory
     const existingIndex = newInventory.findIndex((inv) => inv.itemIndex === currentItem);
-    if (existingIndex >= 0) {
+    if (existingIndex >= 0 && newInventory[existingIndex]) {
       newInventory[existingIndex].quantity += 1;
     } else {
       newInventory.push({ itemIndex: currentItem, quantity: 1 });
@@ -293,10 +287,12 @@ export function equipItem(
 
   // Remove item from inventory
   const itemIndexInInventory = newInventory.findIndex((inv) => inv.itemIndex === itemIndex);
-  if (newInventory[itemIndexInInventory].quantity > 1) {
-    newInventory[itemIndexInInventory].quantity -= 1;
-  } else {
-    newInventory = newInventory.filter((inv) => inv.itemIndex !== itemIndex);
+  if (itemIndexInInventory >= 0 && newInventory[itemIndexInInventory]) {
+    if (newInventory[itemIndexInInventory].quantity > 1) {
+      newInventory[itemIndexInInventory].quantity -= 1;
+    } else {
+      newInventory = newInventory.filter((inv) => inv.itemIndex !== itemIndex);
+    }
   }
 
   const newEquipment: CharacterEquipment = {
@@ -328,7 +324,7 @@ export function unequipItem(
   let newInventory = [...equipment.inventory];
   const existingIndex = newInventory.findIndex((inv) => inv.itemIndex === itemIndex);
 
-  if (existingIndex >= 0) {
+  if (existingIndex >= 0 && newInventory[existingIndex]) {
     newInventory[existingIndex].quantity += 1;
   } else {
     newInventory.push({ itemIndex, quantity: 1 });

@@ -5,11 +5,11 @@
  * This file provides backward compatibility while we migrate to the shared package.
  */
 
-// Re-export all types from shared package
-export * from '../../../shared/character/types';
-export * from '../../../shared/room/types';
-export * from '../../../shared/player/types';
-export * from '../../../shared/user/types';
+// Re-export shared types
+export * from '@daicer/shared/character/types';
+export * from '@daicer/shared/room/types';
+export * from '@daicer/shared/player/types';
+export * from '@daicer/shared/user/types';
 
 // Keep assets types here as they're backend-specific
 export interface AvatarAssetResponse {

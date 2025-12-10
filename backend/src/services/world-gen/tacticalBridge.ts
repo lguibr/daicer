@@ -4,12 +4,12 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import type { BiomeType } from './biomes.js';
-import { selectBiome } from './biomes.js';
-import { createWorldNoise } from './noise.js';
-import type { GridCell } from '../../tactical/types/arena.js';
-import { TerrainType, createGridCell } from '../../tactical/types/arena.js';
-import type { TacticalArena } from '../../tactical/state/schema.js';
+import type { BiomeType } from './biomes';
+import { selectBiome } from './biomes';
+import { createWorldNoise } from './noise';
+import type { GridCell } from '../../tactical/types/arena';
+import { TerrainType, createGridCell } from '../../tactical/types/arena';
+import type { TacticalArena } from '../../tactical/state/schema';
 
 /**
  * Map 37 world-gen biome types to tactical terrain

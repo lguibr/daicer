@@ -16,7 +16,7 @@ import { WorldMap } from '../generation/types';
 import { SimplexNoise } from './noise';
 import { selectBiome, BIOMES, ClimateData } from './biomes';
 import type { CollapseData } from './world-collapse';
-import { applyCollapseInfluence, isInStructureFootprint } from './world-collapse';
+import { applyCollapseInfluence } from './world-collapse';
 
 // Lazy-load Firestore to avoid initialization issues
 const getDb = () => getFirestore();
@@ -390,7 +390,7 @@ export function generateChunk(
         biomesInChunk.add(biome.type);
 
         // Apply biome-specific terrain modifiers
-        const biomeElevation = elevation + biome.baseElevation * 100 + biome.elevationVariance * 50;
+        const biomeElevation = elevation + biome.baseElevation * 100 + (biome.elevationVariance || 0) * 50;
 
         // Determine block type based on z-level
         let blockType: BlockType = 'air';

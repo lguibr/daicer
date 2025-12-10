@@ -45,8 +45,8 @@ const buildAppearanceAttributes = (character: CharacterSheet): AppearanceAttribu
   genderPresentation: undefined,
   hair: character.appearance.hair,
   eyes: character.appearance.eyes,
-  attire: character.appearance.description || character.equipment,
-  accessories: character.equipment,
+  attire: character.appearance.description || character.equipmentDescription || 'Standard attire',
+  accessories: character.equipmentDescription || 'None',
   notableFeatures: character.features,
 });
 

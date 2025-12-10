@@ -46,7 +46,23 @@ export const FIGHTER_THORIN: CharacterSheet = {
 
   baseAttackBonus: 6,
   attacks: [{ name: 'Battleaxe', bonus: '+6', damageType: '1d8+3 slashing' }],
-  equipment: 'Plate armor, battleaxe, shield, crossbow',
+  equipment: {
+    equippedItems: {
+      mainHand: 'Battleaxe',
+      offHand: 'Shield',
+      armor: 'Plate armor',
+      shield: 'Shield',
+      accessory1: null,
+      accessory2: null,
+    },
+    inventory: [
+      { itemIndex: 'Battleaxe', quantity: 1 },
+      { itemIndex: 'Shield', quantity: 1 },
+      { itemIndex: 'Plate armor', quantity: 1 },
+      { itemIndex: 'Crossbow', quantity: 1 },
+    ],
+    totalWeight: 65,
+  },
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 50, pp: 0 },
 
@@ -137,7 +153,23 @@ export const FIGHTER_ARIA: CharacterSheet = {
 
   baseAttackBonus: 5,
   attacks: [{ name: 'Rapier', bonus: '+5', damageType: '1d8+2 piercing' }],
-  equipment: 'Chain mail, rapier, longbow, arrows',
+  equipment: {
+    equippedItems: {
+      mainHand: 'Rapier',
+      offHand: null,
+      armor: 'Chain mail',
+      shield: null,
+      accessory1: null,
+      accessory2: null,
+    },
+    inventory: [
+      { itemIndex: 'Rapier', quantity: 1 },
+      { itemIndex: 'Chain mail', quantity: 1 },
+      { itemIndex: 'Longbow', quantity: 1 },
+      { itemIndex: 'Arrows', quantity: 20 },
+    ],
+    totalWeight: 55,
+  },
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 150, pp: 5 },
 
@@ -228,7 +260,23 @@ export const WIZARD_ELARA: CharacterSheet = {
 
   baseAttackBonus: 2,
   attacks: [{ name: 'Quarterstaff', bonus: '+2', damageType: '1d6-1 bludgeoning' }],
-  equipment: 'Robes, quarterstaff, spellbook, component pouch',
+  equipment: {
+    equippedItems: {
+      mainHand: 'Quarterstaff',
+      offHand: null,
+      armor: 'Robes',
+      shield: null,
+      accessory1: null,
+      accessory2: null,
+    },
+    inventory: [
+      { itemIndex: 'Quarterstaff', quantity: 1 },
+      { itemIndex: 'Robes', quantity: 1 },
+      { itemIndex: 'Spellbook', quantity: 1 },
+      { itemIndex: 'Component pouch', quantity: 1 },
+    ],
+    totalWeight: 15,
+  },
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 75, pp: 0 },
 
@@ -322,7 +370,23 @@ export const WIZARD_GANDOR: CharacterSheet = {
 
   baseAttackBonus: 3,
   attacks: [{ name: 'Staff', bonus: '+3', damageType: '1d6 bludgeoning' }],
-  equipment: 'Grey robes, gnarled staff, spellbook, holy symbol',
+  equipment: {
+    equippedItems: {
+      mainHand: 'Gnarled staff',
+      offHand: null,
+      armor: 'Grey robes',
+      shield: null,
+      accessory1: 'Holy symbol',
+      accessory2: null,
+    },
+    inventory: [
+      { itemIndex: 'Gnarled staff', quantity: 1 },
+      { itemIndex: 'Grey robes', quantity: 1 },
+      { itemIndex: 'Spellbook', quantity: 1 },
+      { itemIndex: 'Holy symbol', quantity: 1 },
+    ],
+    totalWeight: 12,
+  },
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 100, pp: 2 },
 

@@ -68,11 +68,18 @@ export function createCharacter(overrides: Partial<CharacterSheet> = {}): Charac
         damageType: '1d8+3 slashing',
       },
     ],
-    equipment: faker.helpers.arrayElement([
-      'Chain mail, longsword, shield',
-      'Leather armor, rapier, shortbow',
-      'Robes, quarterstaff, component pouch',
-    ]),
+    equipment: {
+      equippedItems: {
+        mainHand: null,
+        offHand: null,
+        armor: null,
+        shield: null,
+        accessory1: null,
+        accessory2: null,
+      },
+      inventory: [],
+      totalWeight: 0,
+    },
 
     // Currency
     currency: {

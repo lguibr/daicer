@@ -3,6 +3,17 @@
  * Structures are first-class biomes in the generation pipeline
  */
 
+export interface RoadSegment {
+  id: string;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  width?: number;
+  material: StructureMaterial;
+  path: Array<[number, number]>;
+}
+
 export type StructureMaterial = 'wood' | 'stone' | 'metal' | 'marble' | 'rock';
 
 export type StructureType =

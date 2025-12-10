@@ -18,9 +18,9 @@ import type { TerrainGenerationState } from '../state';
  */
 export const biomeCollapseNode = async (
   state: TerrainGenerationState,
-  config?: LangGraphRunnableConfig
+  _config?: LangGraphRunnableConfig
 ): Promise<Partial<TerrainGenerationState>> => {
-  const { roomId, structures, roads, settings } = state;
+  const { roomId, settings } = state;
 
   // Use Shared Simple Generator for Parity
   const { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS } = await import('@daicer/shared/world-gen');

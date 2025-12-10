@@ -1,10 +1,7 @@
-import { db } from '@/services/firestore';
+import { db } from '@/config/firebase';
 import { generateGridChunk } from '@/services/world-gen/grid-chunk-generator';
-import { logger } from '@/utils/logger';
-import { GridChunk, chunkToWorldCoords, worldToChunkCoords, CHUNK_SIZE } from '@daicer/shared/world/grid-chunk-schema';
-import { GridTile } from '@daicer/shared/world/grid-tile-schema';
+import { GridChunk, worldToChunkCoords } from '@daicer/shared/world/grid-chunk-schema';
 import { Entity, EntitySchema } from '@daicer/shared/world/entity-schema';
-import type { WorldSettings } from '@daicer/shared/world/world-settings-schema';
 
 export class MapService {
   private static instance: MapService;
@@ -23,7 +20,7 @@ export class MapService {
    */
   async getChunk(roomId: string, chunkX: number, chunkY: number, z: number = 0): Promise<GridChunk> {
     const chunkId = `${chunkX}_${chunkY}_${z}`;
-    const chunkRef = db.collection('rooms').doc(roomId).collection('grid_chunks').doc(chunkId);
+    const chunkRef = db().collection('rooms').doc(roomId).collection('grid_chunks').doc(chunkId);
     const doc = await chunkRef.get();
 
     if (doc.exists) {
@@ -32,7 +29,7 @@ export class MapService {
 
     // Generate new chunk
     // First get room seed
-    const roomDoc = await db.collection('rooms').doc(roomId).get();
+    const roomDoc = await db().collection('rooms').doc(roomId).get();
     const seed = roomDoc.data()?.seed || roomId;
 
     const chunk = generateGridChunk(chunkX, chunkY, z, {
@@ -58,7 +55,7 @@ export class MapService {
     maxY: number,
     z: number = 0
   ): Promise<Entity[]> {
-    const snapshot = await db
+    const snapshot = await db()
       .collection('rooms')
       .doc(roomId)
       .collection('entities')
@@ -88,7 +85,7 @@ export class MapService {
     targetY: number,
     targetZ: number = 0
   ): Promise<Entity> {
-    const entityRef = db.collection('rooms').doc(roomId).collection('entities').doc(entityId);
+    const entityRef = db().collection('rooms').doc(roomId).collection('entities').doc(entityId);
     const doc = await entityRef.get();
 
     if (!doc.exists) {
@@ -103,8 +100,8 @@ export class MapService {
     const chunk = await this.getChunk(roomId, chunkX, chunkY, targetZ);
 
     // Check if tile is passable (simple check)
-    const localX = Math.abs(targetX % CHUNK_SIZE);
-    const localY = Math.abs(targetY % CHUNK_SIZE);
+    // const localX = Math.abs(targetX % CHUNK_SIZE);
+    // const localY = Math.abs(targetY % CHUNK_SIZE);
     const tile = chunk.tiles.find((t) => t.x === targetX && t.y === targetY); // This search is inefficient for large chunks, but fine for 8x8
 
     if (tile && tile.blockType !== 'air' && tile.blockType !== 'water') {
@@ -127,7 +124,7 @@ export class MapService {
    * Spawn a new entity
    */
   async spawnEntity(roomId: string, entityData: Omit<Entity, 'id'>): Promise<Entity> {
-    const collectionRef = db.collection('rooms').doc(roomId).collection('entities');
+    const collectionRef = db().collection('rooms').doc(roomId).collection('entities');
     const docRef = collectionRef.doc();
 
     const entity: Entity = {

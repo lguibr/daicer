@@ -26,8 +26,8 @@ interface VoronoiEdge {
 export function generateVoronoiRoads(
   structures: Structure[],
   seed: string,
-  mapWidth: number,
-  mapHeight: number
+  _mapWidth: number,
+  _mapHeight: number
 ): Road[] {
   if (structures.length < 2) {
     logger.warn('[VoronoiRoads] Need at least 2 structures for road network');
@@ -42,7 +42,7 @@ export function generateVoronoiRoads(
   const points: Point[] = structures.map((s) => ({ x: s.x, y: s.y }));
 
   // Generate Voronoi diagram (simplified Delaunay triangulation approach)
-  const edges = generateVoronoiEdges(points, mapWidth, mapHeight);
+  const edges = generateVoronoiEdges(points, _mapWidth, _mapHeight);
 
   // Convert edges to roads
   const roads: Road[] = [];
@@ -50,6 +50,7 @@ export function generateVoronoiRoads(
 
   for (let i = 0; i < edges.length; i++) {
     const edge = edges[i];
+    if (!edge) continue;
 
     // Determine road quality based on edge length and structure significance
     const quality = determineRoadQuality(edge.length, structures, rng);
@@ -59,10 +60,15 @@ export function generateVoronoiRoads(
 
     roads.push({
       id: `voronoi_road_${roadIdBase}_${i}`,
-      name: `Road ${i + 1}`,
-      waypoints,
+      from: 'struct-A', // Placeholder
+      to: 'struct-B', // Placeholder
+      terrain: 'flat', // Placeholder
+      waypoints: waypoints.map((p, idx) => ({
+        x: p.x,
+        y: p.y,
+        type: idx === 0 || idx === waypoints.length - 1 ? 'junction' : 'path',
+      })),
       quality,
-      era: 0,
     });
   }
 
@@ -74,7 +80,7 @@ export function generateVoronoiRoads(
  * Generate Voronoi edges (simplified using minimum spanning tree)
  * For production, consider using d3-delaunay library
  */
-function generateVoronoiEdges(points: Point[], mapWidth: number, mapHeight: number): VoronoiEdge[] {
+function generateVoronoiEdges(points: Point[], _mapWidth: number, _mapHeight: number): VoronoiEdge[] {
   const edges: VoronoiEdge[] = [];
 
   // Use minimum spanning tree approach (connects all points with minimal total distance)
@@ -87,8 +93,14 @@ function generateVoronoiEdges(points: Point[], mapWidth: number, mapHeight: numb
 
     // Find shortest edge from connected to unconnected
     for (const fromIdx of connected) {
+      const p1 = points[fromIdx];
+      if (!p1) continue;
+
       for (const toIdx of unconnected) {
-        const dist = distance(points[fromIdx], points[toIdx]);
+        const p2 = points[toIdx];
+        if (!p2) continue;
+
+        const dist = distance(p1, p2);
         if (dist < minDist) {
           minDist = dist;
           bestEdge = { from: fromIdx, to: toIdx };
@@ -97,11 +109,16 @@ function generateVoronoiEdges(points: Point[], mapWidth: number, mapHeight: numb
     }
 
     if (bestEdge) {
-      edges.push({
-        start: points[bestEdge.from],
-        end: points[bestEdge.to],
-        length: minDist,
-      });
+      const startPoint = points[bestEdge.from];
+      const endPoint = points[bestEdge.to];
+
+      if (startPoint && endPoint) {
+        edges.push({
+          start: startPoint,
+          end: endPoint,
+          length: minDist,
+        });
+      }
       connected.add(bestEdge.to);
       unconnected.delete(bestEdge.to);
     } else {
@@ -122,7 +139,7 @@ function distance(p1: Point, p2: Point): number {
 /**
  * Determine road quality based on length and structure significance
  */
-function determineRoadQuality(length: number, structures: Structure[], rng: () => number): Road['quality'] {
+function determineRoadQuality(length: number, structures: Structure[], _rng: () => number): Road['quality'] {
   // Shorter roads or roads between significant structures = higher quality
   const avgSignificance = structures.reduce((sum, s) => sum + s.significance, 0) / structures.length;
 
@@ -237,10 +254,15 @@ export function createConnectedRoadNetwork(structures: Structure[], seed: string
 
       roads.push({
         id: `road_${from.id}_${to.id}`,
-        name: `Road: ${from.name} to ${to.name}`,
-        waypoints,
+        from: from.id,
+        to: to.id,
+        terrain: 'flat', // Default
+        waypoints: waypoints.map((p, idx) => ({
+          x: p.x,
+          y: p.y,
+          type: idx === 0 || idx === waypoints.length - 1 ? 'junction' : 'path',
+        })),
         quality,
-        era: Math.max(from.era, to.era),
       });
 
       connected.add(bestPair.to);

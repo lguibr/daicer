@@ -21,13 +21,13 @@ export interface EquipmentRange {
 export interface EquipmentArmorClass {
   base: number;
   dexBonus?: boolean;
-  maxBonus?: number;
+  maxBonus?: number | null;
 }
 
 export interface EquipmentItem {
   index: string;
   name: string;
-  equipmentCategory: 'Weapon' | 'Armor' | 'Adventuring Gear' | 'Tools' | 'Mounts and Vehicles';
+  equipmentCategory: string | { index: string; name: string; url?: string };
   cost: EquipmentCost;
   weight: number;
   damage?: EquipmentDamage;
@@ -37,6 +37,7 @@ export interface EquipmentItem {
   armorCategory?: 'Light' | 'Medium' | 'Heavy' | 'Shield';
   weaponCategory?: 'Simple Melee' | 'Simple Ranged' | 'Martial Melee' | 'Martial Ranged';
   desc?: string[];
+  description?: string;
 }
 
 export interface EquippedItems {
@@ -44,8 +45,16 @@ export interface EquippedItems {
   offHand: string | null;
   armor: string | null;
   shield: string | null;
-  accessory1: string | null;
-  accessory2: string | null;
+  head: string | null;
+  cloak: string | null;
+  belt: string | null;
+  boots: string | null; // feet
+  gloves: string | null; // hands
+  ring1: string | null;
+  ring2: string | null;
+  necklace: string | null;
+  accessory1: string | null; // legacy
+  accessory2: string | null; // legacy
 }
 
 export interface InventoryItem {

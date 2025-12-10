@@ -47,7 +47,7 @@ class ExplorationService {
 
         // Pick biome based on noise value
         const biomeIndex = Math.floor(noise * biomes.length);
-        row.push(biomes[biomeIndex]);
+        row.push(biomes[biomeIndex] || 'ocean');
       }
       chunkData.push(row);
     }

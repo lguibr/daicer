@@ -85,7 +85,9 @@ export async function addItemToInventory(
 
   if (existingItemIndex >= 0) {
     // Stack identical items
-    inventory[existingItemIndex].quantity += item.quantity;
+    if (inventory[existingItemIndex]) {
+      inventory[existingItemIndex].quantity += item.quantity;
+    }
   } else {
     // Add new item
     inventory.push(item);
@@ -218,12 +220,7 @@ export async function unequipItem(roomId: string, playerId: string, slot: string
 /**
  * Apply starting equipment pack to player
  */
-export async function applyStartingPack(
-  roomId: string,
-  playerId: string,
-  packName: string,
-  characterClass: string
-): Promise<PlayerEquipment> {
+export async function applyStartingPack(roomId: string, playerId: string, packName: string): Promise<PlayerEquipment> {
   const pack = getStartingPack(packName.toLowerCase());
 
   if (!pack) {
@@ -253,7 +250,10 @@ export async function applyStartingPack(
     const inventoryItem: InventoryItem = {
       id: equipmentItem.index,
       name: equipmentItem.name,
-      type: equipmentItem.equipment_category.name.toLowerCase(),
+      type: (typeof equipmentItem.equipmentCategory === 'string'
+        ? equipmentItem.equipmentCategory
+        : equipmentItem.equipmentCategory.name
+      ).toLowerCase(),
       weight: equipmentItem.weight,
       value: equipmentItem.cost
         ? {

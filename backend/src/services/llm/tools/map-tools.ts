@@ -1,5 +1,6 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
+import { worldToChunkCoords } from '@daicer/shared/world/grid-chunk-schema';
 import { mapService } from '@/services/map-service';
 import { logger } from '@/utils/logger';
 
@@ -30,7 +31,7 @@ export const queryMapTool = new DynamicStructuredTool({
     try {
       logger.info(`[MapTool] Querying map at ${roomId} ${x},${y} r=${radius}`);
 
-      const { chunkX, chunkY } = mapService.worldToChunkCoords(x, y);
+      const { chunkX, chunkY } = worldToChunkCoords(x, y);
       const chunk = await mapService.getChunk(roomId, chunkX, chunkY);
 
       if (!chunk) return 'No chunk found at these coordinates.';
@@ -43,7 +44,7 @@ export const queryMapTool = new DynamicStructuredTool({
           x: t.x,
           y: t.y,
           biome: t.biome,
-          height: t.height,
+          height: t.elevation || 0,
           feature: 'none', // simplified
         }));
 
