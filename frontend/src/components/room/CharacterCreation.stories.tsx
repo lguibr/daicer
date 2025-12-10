@@ -4,7 +4,9 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { CharacterCreation } from './CharacterCreation';
+import CharacterCreation from './CharacterCreation';
+
+import { GamePhase } from '../../types/shared';
 
 const meta = {
   title: 'Forms/CharacterCreation',
@@ -24,16 +26,21 @@ const mockRoom = {
   code: 'STORY',
   theme: 'High Fantasy',
   dmUserId: 'dm-user-1',
-  phase: 'CHARACTER_CREATION' as const,
+  phase: GamePhase.CHARACTER_CREATION,
   players: [],
   world: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
+  ownerId: 'dm-user-1',
+  settings: null,
+  worldDescription: 'A mock world for testing',
 };
 
 export const Default: Story = {
   args: {
-    room: mockRoom,
+    room: {
+      ...mockRoom,
+    },
   },
 };
 
@@ -41,32 +48,36 @@ export const WithExistingPlayers: Story = {
   args: {
     room: {
       ...mockRoom,
-      players: [
-        {
-          id: 'player-1',
-          userId: 'user-1',
+    },
+    players: [
+      {
+        id: 'player-1',
+        userId: 'user-1',
+        name: 'Thorin Oakenshield',
+        isReady: true,
+        position: { x: 0, y: 0, z: 0 },
+        character: {
           name: 'Thorin Oakenshield',
           race: 'dwarf',
-          class: 'fighter',
-          isReady: true,
+          characterClass: 'fighter',
+          alignment: 'Lawful Good',
           attributes: {
-            strength: 16,
-            dexterity: 12,
-            constitution: 15,
-            intelligence: 10,
-            wisdom: 11,
-            charisma: 8,
+            Strength: 16,
+            Dexterity: 12,
+            Constitution: 15,
+            Intelligence: 10,
+            Wisdom: 11,
+            Charisma: 8,
           },
-          position: { x: 0, y: 0, z: 0 },
-          hp: { current: 30, max: 30 },
-          ac: 16,
+          hp: 30,
+          maxHp: 30,
+          armorClass: 16,
           speed: 25,
           initiative: 1,
           level: 1,
           experiencePoints: 0,
         },
-      ],
-    },
+      } as any, // Cast to any to avoid full Player shape requirement
+    ],
   },
 };
-export { default } from './CharacterCreation';

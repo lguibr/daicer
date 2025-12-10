@@ -137,13 +137,15 @@ export function CharacterAssetPreview({ asset }: { asset: CharacterSheetAsset })
     <div className="rounded-3xl border border-aurora-400/20 bg-midnight-900/70 p-6 shadow-[0_18px_40px_rgba(7,5,10,0.55)]">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
-          <h3 className="text-2xl font-bold text-shadow-50">{asset.name}</h3>
-          <p className="text-sm text-shadow-300">{asset.metadata.summary}</p>
+          <h3 className="text-2xl font-bold text-shadow-50">{asset.summary.name}</h3>
+          <p className="text-sm text-shadow-300">
+            {asset.summary.race} {asset.summary.characterClass}
+          </p>
         </div>
         <div className="text-sm text-shadow-400">
-          <div>Level {asset.metadata.level}</div>
+          <div>Level {asset.summary.level}</div>
           <div>
-            {asset.metadata.race} {asset.metadata.class}
+            {asset.summary.race} {asset.summary.characterClass}
           </div>
         </div>
       </div>

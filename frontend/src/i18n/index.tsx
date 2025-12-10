@@ -34,7 +34,7 @@ export const supportedLanguages = [
 ];
 
 interface I18nContextValue {
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   language: Language;
   setLanguage: (lang: Language) => void;
   availableLanguages: typeof supportedLanguages;
@@ -107,18 +107,22 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string): string => {
-      const localized = translations[language][key];
-      if (localized) {
-        return localized;
+    (key: string, params?: Record<string, string | number>): string => {
+      let localized = translations[language][key];
+      if (!localized && language !== 'en') {
+        localized = translations.en[key];
       }
-      if (language !== 'en') {
-        const fallback = translations.en[key];
-        if (fallback) {
-          return fallback;
-        }
+
+      const text = localized || key;
+
+      if (params) {
+        return Object.entries(params).reduce(
+          (str, [pKey, pValue]) => str.replace(new RegExp(`{{${pKey}}}`, 'g'), String(pValue)),
+          text
+        );
       }
-      return key;
+
+      return text;
     },
     [language]
   );

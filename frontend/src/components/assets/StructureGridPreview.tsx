@@ -3,7 +3,7 @@
  * Shows structure assets rendered on grid (for assets page)
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { GridTile, GridFeature } from '@daicer/shared';
 import { Layers } from 'lucide-react';
 import { GridMapRenderer } from '../world/GridMapRenderer';
@@ -55,7 +55,6 @@ export function StructureGridPreview({ structureId, structureName, structureData
             <span className="text-sm font-mono">{currentLayer}</span>
           </div>
 
-          {/* Grid Renderer - Use assetId instead of roomId */}
           <GridMapRenderer
             assetId={structureId}
             currentLayer={currentLayer}
@@ -67,7 +66,7 @@ export function StructureGridPreview({ structureId, structureName, structureData
           />
 
           {/* Structure Data JSON */}
-          {structureData && (
+          {!!structureData && (
             <details className="mt-4">
               <summary className="cursor-pointer text-sm font-semibold">Structure Data (JSON)</summary>
               <pre className="mt-2 overflow-auto rounded bg-muted p-4 text-xs">

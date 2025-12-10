@@ -43,6 +43,7 @@ export type CharacterFormState = {
     bonds: string;
     flaws: string;
   };
+  backstory?: string;
 };
 
 export interface SelectionCardProps {

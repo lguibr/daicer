@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
+
 import { getRoomState, startGame } from '../services/api';
 import { joinRoom as joinSocketRoom, setReady } from '../services/socket';
 import useSocket from '../hooks/useSocket';
@@ -24,6 +24,7 @@ import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
 import type { Room, Player } from '../types/shared';
+import { useI18n } from '../i18n';
 
 /**
  * Game room page component
@@ -33,6 +34,7 @@ export default function GameRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +75,8 @@ export default function GameRoomPage() {
     Array<{
       type: string;
       tool?: string;
-      args?: any;
-      output?: any;
+      args?: Record<string, unknown>;
+      output?: unknown;
       name?: string;
       node?: string;
       phase?: string;
@@ -115,7 +117,7 @@ export default function GameRoomPage() {
           joinSocketRoom(roomId);
         }, 100);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load room');
+        setError(err instanceof Error ? err.message : t('gameRoom.errors.loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -164,10 +166,10 @@ export default function GameRoomPage() {
       if (isCleanedUp) return;
 
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const user = auth.currentUser;
-      if (!user) return;
+      const { currentUser } = auth;
+      if (!currentUser) return;
 
-      const token = await user.getIdToken();
+      const token = await currentUser.getIdToken();
 
       // Start with Section 1 (dm-story)
       const endpoint = `${API_URL}/api/graph/dm-story/stream?roomId=${roomId}&token=${encodeURIComponent(token)}`;
@@ -214,17 +216,17 @@ export default function GameRoomPage() {
             // Connect to Section 2 stream
             setTimeout(async () => {
               if (isCleanedUp) return;
-              const token2 = await user.getIdToken();
+              const token2 = await currentUser.getIdToken();
               const endpoint2 = `${API_URL}/api/graph/world-config/stream?roomId=${roomId}&token=${encodeURIComponent(token2)}`;
               eventSource = new EventSource(endpoint2, { withCredentials: true });
 
               // Re-register listeners for Section 2
               eventTypes.forEach((type) => {
-                eventSource?.addEventListener(type, (event) => {
+                eventSource?.addEventListener(type, (innerEvent) => {
                   if (isCleanedUp) return;
                   try {
-                    const data = JSON.parse(event.data);
-                    setStreamEvents((prev) => [...prev, { ...data, type }]);
+                    const innerData = JSON.parse(innerEvent.data);
+                    setStreamEvents((prev) => [...prev, { ...innerData, type }]);
                   } catch (err) {
                     console.warn('[SSE] Failed to parse event:', err);
                   }
@@ -255,10 +257,10 @@ export default function GameRoomPage() {
         <div className="flex min-h-screen items-center justify-center">
           {error ? (
             <Card className="max-w-md border-red-500/30 bg-midnight-800/95 p-8 text-center">
-              <h2 className="mb-4 text-xl font-semibold text-red-400">Error</h2>
-              <p className="text-shadow-300">{error || 'Room not found'}</p>
+              <h2 className="mb-4 text-xl font-semibold text-red-400">{t('gameRoom.errors.title')}</h2>
+              <p className="text-shadow-300">{error || t('gameRoom.errors.notFound')}</p>
               <Button onClick={() => navigate('/')} className="mt-6">
-                Return to Lobby
+                {t('gameRoom.actions.returnToLobby')}
               </Button>
             </Card>
           ) : (
@@ -277,12 +279,16 @@ export default function GameRoomPage() {
         <div className="min-h-screen flex items-center justify-center p-6 bg-midnight-950">
           <div className="w-full max-w-4xl space-y-6">
             <div className="text-center space-y-4">
-              <h1 className="font-display text-3xl uppercase tracking-[0.35em] text-aurora-300">Generating World</h1>
-              <p className="text-shadow-300">Creating the history and lore of your realm...</p>
+              <h1 className="font-display text-3xl uppercase tracking-[0.35em] text-aurora-300">
+                {t('gameRoom.generating.title')}
+              </h1>
+              <p className="text-shadow-300">{t('gameRoom.generating.subtitle')}</p>
             </div>
 
             <div className="card p-6">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-shadow-400 mb-4">Generation Log</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-shadow-400 mb-4">
+                {t('gameRoom.generating.logTitle')}
+              </h3>
               <div className="max-h-[70vh] space-y-2 overflow-y-auto">
                 {streamEvents.map((event, index) => {
                   // Filter out LangChain internal noise
@@ -319,7 +325,10 @@ export default function GameRoomPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-aurora-400">📜</span>
                           <span className="text-sm font-semibold text-aurora-200">
-                            Creating Era {event.periodNumber} of {event.totalPeriods}
+                            {t('gameRoom.stream.creatingEra', {
+                              current: event.periodNumber ?? '?',
+                              total: event.totalPeriods ?? '?',
+                            })}
                           </span>
                         </div>
                       </div>
@@ -338,7 +347,7 @@ export default function GameRoomPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-base font-semibold text-nebula-200">
-                                Era {event.periodNumber} Narrative
+                                {t('gameRoom.stream.eraNarrative', { era: event.periodNumber ?? '?' })}
                               </span>
                             </div>
                           </div>
@@ -393,7 +402,7 @@ export default function GameRoomPage() {
       if (!room) return;
       try {
         setLoading(true);
-        const streamId = uuidv4();
+        const streamId = crypto.randomUUID();
         await startGame(room.id, room.settings?.language || 'en', streamId);
         // Room update will come via socket
       } catch (err) {
@@ -443,8 +452,8 @@ export default function GameRoomPage() {
       {activeStream && activeStream.status === 'active' && (
         <div className="fixed bottom-20 right-6 z-50 w-96 rounded-lg border border-aurora-500/30 bg-midnight-900/95 p-4 shadow-xl backdrop-blur-md">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-aurora-300">Storyteller Streaming...</h3>
-            <span className="animate-pulse text-xs text-aurora-400">● Live</span>
+            <h3 className="text-sm font-bold text-aurora-300">{t('gameRoom.stream.title')}</h3>
+            <span className="animate-pulse text-xs text-aurora-400">● {t('gameRoom.stream.live')}</span>
           </div>
           <div className="max-h-60 overflow-y-auto whitespace-pre-wrap text-sm text-aurora-100/90">
             {activeStream.content}

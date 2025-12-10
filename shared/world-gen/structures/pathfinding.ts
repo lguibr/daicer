@@ -140,7 +140,8 @@ export function findPath(
         continue;
       }
 
-      const biome = biomeGrid[neighbor.y][neighbor.x] || 'plains';
+      const row = biomeGrid[neighbor.y];
+      const biome = (row && row[neighbor.x]) || 'plains';
       const terrainCost = getTerrainCost(biome);
 
       const tentativeG = current.g + terrainCost;
@@ -180,7 +181,7 @@ export function findPath(
 export function generateRoadPaths(
   structures: Array<{ worldX: number; worldY: number; width: number; height: number }>,
   biomeGrid: string[][],
-  seed: string
+  _seed: string
 ): Point[] {
   if (structures.length < 2) {
     return [];
@@ -191,6 +192,8 @@ export function generateRoadPaths(
   // Connect each structure to its nearest neighbor(s)
   for (let i = 0; i < structures.length; i++) {
     const structA = structures[i];
+    if (!structA) continue;
+
     const centerA = {
       x: Math.floor(structA.worldX + structA.width / 2),
       y: Math.floor(structA.worldY + structA.height / 2),
@@ -204,6 +207,8 @@ export function generateRoadPaths(
       if (i === j) continue;
 
       const structB = structures[j];
+      if (!structB) continue;
+
       const centerB = {
         x: Math.floor(structB.worldX + structB.width / 2),
         y: Math.floor(structB.worldY + structB.height / 2),
@@ -219,6 +224,8 @@ export function generateRoadPaths(
     if (nearestIndex === -1) continue;
 
     const structB = structures[nearestIndex];
+    if (!structB) continue;
+
     const centerB = {
       x: Math.floor(structB.worldX + structB.width / 2),
       y: Math.floor(structB.worldY + structB.height / 2),
@@ -233,9 +240,8 @@ export function generateRoadPaths(
     }
   }
 
-  // Convert set to array of points
   return Array.from(roadTiles).map((key) => {
-    const [x, y] = key.split(',').map(Number);
-    return { x, y };
+    const parts = key.split(',').map(Number);
+    return { x: parts[0]!, y: parts[1]! };
   });
 }

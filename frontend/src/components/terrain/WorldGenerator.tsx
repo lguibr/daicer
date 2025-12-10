@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Label from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Play, RefreshCw, Settings2, ChevronDown, ChevronUp, Save } from 'lucide
 
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@/hooks/useWorldGeneration';
-import { GridTile } from '@daicer/shared/world/world';
+import { GridTile } from '@daicer/shared';
 
 interface WorldGeneratorProps {
   initialSeed?: string;

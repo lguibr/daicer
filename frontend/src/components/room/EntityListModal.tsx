@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Search, Skull, User, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, Plus, Search, Skull, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import Input from '../ui/input';

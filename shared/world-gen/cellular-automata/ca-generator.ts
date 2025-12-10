@@ -74,8 +74,11 @@ function applyCAStep(grid: boolean[][], birthLimit: number, deathLimit: number):
     for (let x = 0; x < width; x++) {
       const neighbors = countSolidNeighbors(grid, x, y);
 
+      const currentRow = grid[y];
+      const currentCell = currentRow ? currentRow[x] : false;
+
       // Apply CA rule
-      if (grid[y][x]) {
+      if (currentCell) {
         // Currently solid
         row.push(neighbors >= deathLimit);
       } else {
@@ -110,7 +113,9 @@ function countSolidNeighbors(grid: boolean[][], x: number, y: number): number {
         continue;
       }
 
-      if (grid[ny][nx]) count++;
+      // Safe access
+      const row = grid[ny];
+      if (row && row[nx]) count++;
     }
   }
 
@@ -129,7 +134,12 @@ function removeSmallRegions(grid: boolean[][], minSize: number): boolean[][] {
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (visited[y][x] || grid[y][x]) continue; // Skip visited or solid
+      // Check visited or solid safely
+      const rowVisited = visited[y];
+      if (!rowVisited || rowVisited[x]) continue;
+
+      const rowGrid = grid[y];
+      if (!rowGrid || rowGrid[x]) continue;
 
       // Flood fill to find region size
       const region = floodFill(grid, x, y, visited);
@@ -137,7 +147,8 @@ function removeSmallRegions(grid: boolean[][], minSize: number): boolean[][] {
       // If region too small, fill it in
       if (region.length < minSize) {
         for (const pos of region) {
-          result[pos.y][pos.x] = true; // Make solid
+          const resultRow = result[pos.y];
+          if (resultRow) resultRow[pos.x] = true; // Make solid
         }
       }
     }
@@ -164,10 +175,16 @@ function floodFill(
     const pos = queue.shift()!;
 
     if (pos.x < 0 || pos.x >= width || pos.y < 0 || pos.y >= height) continue;
-    if (visited[pos.y][pos.x]) continue;
-    if (grid[pos.y][pos.x]) continue; // Solid, not part of cave
 
-    visited[pos.y][pos.x] = true;
+    // Check visited safely
+    const visitedRow = visited[pos.y];
+    if (visitedRow && visitedRow[pos.x]) continue;
+
+    // Check solid safely
+    const gridRow = grid[pos.y];
+    if (gridRow && gridRow[pos.x]) continue; // Solid, not part of cave
+
+    if (visitedRow) visitedRow[pos.x] = true;
     region.push(pos);
 
     // Add 4-way neighbors

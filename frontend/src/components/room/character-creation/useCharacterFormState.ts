@@ -8,7 +8,7 @@ import type { AvatarPreviewResponse, ReferenceImagePayload } from '../../../type
 import type { CharacterFormState } from './types';
 import type { EquipmentItemData } from '../../equipment/EquipmentItemCard';
 
-export function useCharacterFormState(startingLevel: number, attributeBudget: number, assetMode: boolean) {
+export function useCharacterFormState(startingLevel: number, _attributeBudget: number, assetMode: boolean) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -38,14 +38,23 @@ export function useCharacterFormState(startingLevel: number, attributeBudget: nu
     background: '',
     alignment: 'Neutral Good',
     attributes: {
-      Strength: 10,
-      Dexterity: 10,
-      Constitution: 10,
-      Intelligence: 10,
-      Wisdom: 10,
-      Charisma: 10,
+      Strength: 8,
+      Dexterity: 8,
+      Constitution: 8,
+      Intelligence: 8,
+      Wisdom: 8,
+      Charisma: 8,
     },
-    appearance: { age: '', height: '', weight: '', eyes: '', skin: '', hair: '', description: '' },
+    skills: {},
+    equipment: '',
+    proficienciesAndLanguages: '',
+    features: '',
+    treasure: '',
+    currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+    resourcePools: [],
+    talents: [],
+    expertises: [],
+    appearance: { age: '', height: '', weight: '', eyes: '', skin: '', hair: '', description: '', gender: '' },
     personality: { traits: '', ideals: '', bonds: '', flaws: '' },
     backstory: '',
   });

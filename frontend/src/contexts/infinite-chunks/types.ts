@@ -3,12 +3,15 @@
  * All interfaces and types for the infinite chunk system
  */
 
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import type { GridChunk, GridTile } from '../../../../../shared/world';
+import type { GlobalPlacementMap } from 'daicer/shared/world-gen/structures';
+import type { GridChunk, GridTile } from 'daicer/shared/world';
 
-export type TerrainChunk = GridChunk & {
+export type TerrainChunk = Omit<GridChunk, 'tiles' | 'biomes'> & {
+  tiles: GridTile[][];
+  biomes: string[][];
   worldOffsetX: number;
   worldOffsetY: number;
+  structures: any[];
 };
 
 export interface ChunkGenerator {

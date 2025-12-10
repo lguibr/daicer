@@ -8,7 +8,6 @@ import {
   Wand2,
   UserX,
   Cross,
-  Trees,
   Shield,
   Flame,
   Music,

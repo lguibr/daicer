@@ -8,7 +8,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { CHUNK_SIZE } from '@daicer/shared';
 import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import type { GridTile } from '@daicer/shared/world/world';
+import type { GridTile, Player, Creature } from 'daicer/shared';
 import { VoxelMetadataPanel, type VoxelMetadata } from './VoxelMetadataPanel';
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement';
 import {
@@ -28,8 +28,8 @@ interface TerrainExplorerProps {
   initialZoom?: number;
   roomId?: string;
   enableInfinite?: boolean;
-  players?: import('@daicer/shared/player/types').Player[];
-  creatures?: import('@daicer/shared/types').Creature[];
+  players?: Player[];
+  creatures?: Creature[];
   chunkGenerator?: {
     generateChunk: (worldX: number, worldY: number, width: number, height: number) => GridTile[][];
     generateChunk3D?: (worldX: number, worldY: number, width: number, height: number) => GridTile[][][];
@@ -275,14 +275,14 @@ interface TerrainExplorerInternalProps extends Omit<TerrainExplorerProps, 'chunk
   gridWorldOffset: { x: number; y: number };
   isLoading: boolean;
   checkChunkLoading: (x: number, y: number) => void;
-  players?: import('@daicer/shared/player/types').Player[];
-  creatures?: import('@daicer/shared/types').Creature[];
+  players?: Player[];
+  creatures?: Creature[];
   onPlayerMove?: (x: number, y: number) => void;
 }
 
 function TerrainExplorerInternal({
   biomeGrid,
-  biomeGrid3D,
+  biomeGrid3D: _biomeGrid3D,
   structures = [],
   roomSize = 32,
   initialZoom = 2,
@@ -311,7 +311,7 @@ function TerrainExplorerInternal({
   const [selectedMetadata, setSelectedMetadata] = useState<VoxelMetadata | null>(null);
 
   // Helper to convert Z-layer to floor index (for 3D grid)
-  const getFloorIndex = (layer: number): number => layer + 3; // -3 to +3 maps to 0 to 6
+  // const getFloorIndex = (layer: number): number => layer + 3; // Unused
 
   // Use expanded grid if infinite chunks enabled, otherwise use initial grid
   const activeGrid = useMemo(
@@ -375,14 +375,14 @@ function TerrainExplorerInternal({
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (canvas && container && activeGrid.length > 0) {
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      const width = activeGrid[0]?.length || 0;
-      const height = activeGrid.length;
-
-      // Fixed scale logic
-      const renderScale = TILE_SIZE * zoom;
-
+      /*
+      // Unused debug variables removed
+      // const containerWidth = container.clientWidth;
+      // const containerHeight = container.clientHeight;
+      // const width = activeGrid[0]?.length || 0;
+      // const height = activeGrid.length;
+      // const renderScale = TILE_SIZE * zoom;
+      */
       // Vision debug info removed
       /*
       console.log('Vision Debug:', {

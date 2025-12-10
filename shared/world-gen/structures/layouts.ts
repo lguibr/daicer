@@ -9,16 +9,6 @@ import { generateBSPLayout } from '../bsp';
 import { generateCaveCA } from '../cellular-automata';
 
 /**
- * Room definition for BSP-based layouts
- */
-interface Room {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/**
  * Generate a multi-room layout using Binary Space Partitioning
  * Perfect for houses, castles, temples with rectangular rooms
  */
@@ -48,28 +38,37 @@ export function generateRoomLayout(
   if (!rooms || rooms.length === 0) {
     // Fallback: create a simple room
     for (let y = 1; y < height - 1; y++) {
+      const row = grid[y];
+      if (!row) continue;
       for (let x = 1; x < width - 1; x++) {
-        grid[y][x] = { material, tileType: 'floor', floor };
+        row[x] = { material, tileType: 'floor', floor };
       }
     }
     for (let y = 0; y < height; y++) {
+      const row = grid[y];
+      if (!row) continue;
       for (let x = 0; x < width; x++) {
         if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
-          grid[y][x] = { material, tileType: 'wall', floor };
+          row[x] = { material, tileType: 'wall', floor };
         }
       }
     }
     // Add a door
-    grid[0][Math.floor(width / 2)] = { material, tileType: 'door', floor };
+    const firstRow = grid[0];
+    if (firstRow) {
+      firstRow[Math.floor(width / 2)] = { material, tileType: 'door', floor };
+    }
     return grid;
   }
 
   // Place floors in rooms
   for (const room of rooms) {
     for (let ry = room.y; ry < room.y + room.height && ry < height; ry++) {
+      const row = grid[ry];
+      if (!row) continue;
       for (let rx = room.x; rx < room.x + room.width && rx < width; rx++) {
         if (ry >= 0 && rx >= 0) {
-          grid[ry][rx] = { material, tileType: 'floor', floor };
+          row[rx] = { material, tileType: 'floor', floor };
         }
       }
     }
@@ -78,11 +77,13 @@ export function generateRoomLayout(
   // Place walls around rooms
   for (const room of rooms) {
     for (let ry = room.y - 1; ry <= room.y + room.height && ry < height; ry++) {
+      const row = grid[ry];
+      if (!row) continue;
       for (let rx = room.x - 1; rx <= room.x + room.width && rx < width; rx++) {
         if (ry >= 0 && rx >= 0) {
           if (ry === room.y - 1 || ry === room.y + room.height || rx === room.x - 1 || rx === room.x + room.width) {
-            if (grid[ry][rx].tileType === 'empty') {
-              grid[ry][rx] = { material, tileType: 'wall', floor };
+            if (row[rx]?.tileType === 'empty') {
+              row[rx] = { material, tileType: 'wall', floor };
             }
           }
         }
@@ -94,6 +95,9 @@ export function generateRoomLayout(
   for (let i = 0; i < rooms.length - 1; i++) {
     const roomA = rooms[i];
     const roomB = rooms[i + 1];
+
+    if (!roomA || !roomB) continue;
+
     const centerA = {
       x: Math.floor(roomA.x + roomA.width / 2),
       y: Math.floor(roomA.y + roomA.height / 2),
@@ -110,15 +114,24 @@ export function generateRoomLayout(
     // Horizontal then vertical
     while (currentX !== centerB.x) {
       if (currentX >= 0 && currentX < width && currentY >= 0 && currentY < height) {
-        if (grid[currentY][currentX].tileType === 'empty') {
-          grid[currentY][currentX] = { material, tileType: 'floor', floor };
-        }
-        // Add walls beside corridor
-        if (currentY > 0 && grid[currentY - 1][currentX].tileType === 'empty') {
-          grid[currentY - 1][currentX] = { material, tileType: 'wall', floor };
-        }
-        if (currentY < height - 1 && grid[currentY + 1][currentX].tileType === 'empty') {
-          grid[currentY + 1][currentX] = { material, tileType: 'wall', floor };
+        const row = grid[currentY];
+        if (row) {
+          if (row[currentX]?.tileType === 'empty') {
+            row[currentX] = { material, tileType: 'floor', floor };
+          }
+          // Add walls beside corridor
+          if (currentY > 0) {
+            const aboveRow = grid[currentY - 1];
+            if (aboveRow && aboveRow[currentX]?.tileType === 'empty') {
+              aboveRow[currentX] = { material, tileType: 'wall', floor };
+            }
+          }
+          if (currentY < height - 1) {
+            const belowRow = grid[currentY + 1];
+            if (belowRow && belowRow[currentX]?.tileType === 'empty') {
+              belowRow[currentX] = { material, tileType: 'wall', floor };
+            }
+          }
         }
       }
       currentX += currentX < centerB.x ? 1 : -1;
@@ -126,15 +139,18 @@ export function generateRoomLayout(
 
     while (currentY !== centerB.y) {
       if (currentX >= 0 && currentX < width && currentY >= 0 && currentY < height) {
-        if (grid[currentY][currentX].tileType === 'empty') {
-          grid[currentY][currentX] = { material, tileType: 'floor', floor };
-        }
-        // Add walls beside corridor
-        if (currentX > 0 && grid[currentY][currentX - 1].tileType === 'empty') {
-          grid[currentY][currentX - 1] = { material, tileType: 'wall', floor };
-        }
-        if (currentX < width - 1 && grid[currentY][currentX + 1].tileType === 'empty') {
-          grid[currentY][currentX + 1] = { material, tileType: 'wall', floor };
+        const row = grid[currentY];
+        if (row) {
+          if (row[currentX]?.tileType === 'empty') {
+            row[currentX] = { material, tileType: 'floor', floor };
+          }
+          // Add walls beside corridor
+          if (currentX > 0 && row[currentX - 1]?.tileType === 'empty') {
+            row[currentX - 1] = { material, tileType: 'wall', floor };
+          }
+          if (currentX < width - 1 && row[currentX + 1]?.tileType === 'empty') {
+            row[currentX + 1] = { material, tileType: 'wall', floor };
+          }
         }
       }
       currentY += currentY < centerB.y ? 1 : -1;
@@ -165,16 +181,17 @@ export function generateRoomLayout(
       }
 
       if (doorX >= 0 && doorX < width && doorY >= 0 && doorY < height) {
-        if (grid[doorY][doorX].tileType === 'wall') {
+        const row = grid[doorY];
+        if (row && row[doorX]?.tileType === 'wall') {
           // Check if there's floor on both sides
           const hasFloorNearby =
-            (doorY > 0 && grid[doorY - 1][doorX].tileType === 'floor') ||
-            (doorY < height - 1 && grid[doorY + 1][doorX].tileType === 'floor') ||
-            (doorX > 0 && grid[doorY][doorX - 1].tileType === 'floor') ||
-            (doorX < width - 1 && grid[doorY][doorX + 1].tileType === 'floor');
+            (doorY > 0 && grid[doorY - 1]?.[doorX]?.tileType === 'floor') ||
+            (doorY < height - 1 && grid[doorY + 1]?.[doorX]?.tileType === 'floor') ||
+            (doorX > 0 && row[doorX - 1]?.tileType === 'floor') ||
+            (doorX < width - 1 && row[doorX + 1]?.tileType === 'floor');
 
           if (hasFloorNearby) {
-            grid[doorY][doorX] = { material, tileType: 'door', floor };
+            row[doorX] = { material, tileType: 'door', floor };
           }
         }
       }
@@ -194,11 +211,8 @@ export function generateWFCLayout(
   height: number,
   floor: StructureFloor,
   material: StructureMaterial,
-  seed: string
+  _seed: string
 ): StructureTile[][] {
-  const rng = Alea(seed);
-
-  // Create a simple symmetrical temple layout instead of full WFC
   const grid: StructureTile[][] = Array(height)
     .fill(null)
     .map(() =>
@@ -214,9 +228,11 @@ export function generateWFCLayout(
 
   // Horizontal corridor
   for (let y = centerY - corridorWidth; y <= centerY + corridorWidth; y++) {
+    const row = grid[y];
+    if (!row) continue;
     for (let x = 0; x < width; x++) {
       if (y >= 0 && y < height) {
-        grid[y][x] = { material, tileType: 'floor', floor };
+        row[x] = { material, tileType: 'floor', floor };
       }
     }
   }
@@ -224,8 +240,10 @@ export function generateWFCLayout(
   // Vertical corridor
   for (let x = centerX - corridorWidth; x <= centerX + corridorWidth; x++) {
     for (let y = 0; y < height; y++) {
+      const row = grid[y];
+      if (!row) continue;
       if (x >= 0 && x < width) {
-        grid[y][x] = { material, tileType: 'floor', floor };
+        row[x] = { material, tileType: 'floor', floor };
       }
     }
   }
@@ -241,9 +259,11 @@ export function generateWFCLayout(
 
   for (const room of rooms) {
     for (let ry = room.y; ry < room.y + roomSize && ry < height; ry++) {
+      const row = grid[ry];
+      if (!row) continue;
       for (let rx = room.x; rx < room.x + roomSize && rx < width; rx++) {
         if (ry >= 0 && rx >= 0) {
-          grid[ry][rx] = { material, tileType: 'floor', floor };
+          row[rx] = { material, tileType: 'floor', floor };
         }
       }
     }
@@ -251,8 +271,10 @@ export function generateWFCLayout(
 
   // Place walls around the perimeter and around floor areas
   for (let y = 0; y < height; y++) {
+    const row = grid[y];
+    if (!row) continue;
     for (let x = 0; x < width; x++) {
-      if (grid[y][x].tileType === 'floor') {
+      if (row[x]?.tileType === 'floor') {
         // Check neighbors for walls
         const neighbors = [
           { dx: -1, dy: 0 },
@@ -265,8 +287,9 @@ export function generateWFCLayout(
           const nx = x + dx;
           const ny = y + dy;
           if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-            if (grid[ny][nx].tileType === 'empty') {
-              grid[ny][nx] = { material, tileType: 'wall', floor };
+            const neighborRow = grid[ny];
+            if (neighborRow && neighborRow[nx]?.tileType === 'empty') {
+              neighborRow[nx] = { material, tileType: 'wall', floor };
             }
           }
         }
@@ -284,8 +307,9 @@ export function generateWFCLayout(
 
   for (const door of doors) {
     if (door.x >= 0 && door.x < width && door.y >= 0 && door.y < height) {
-      if (grid[door.y][door.x].tileType === 'wall') {
-        grid[door.y][door.x] = { material, tileType: 'door', floor };
+      const row = grid[door.y];
+      if (row && row[door.x]?.tileType === 'wall') {
+        row[door.x] = { material, tileType: 'door', floor };
       }
     }
   }
@@ -324,13 +348,21 @@ export function generateCALayout(
     );
 
   for (let y = 0; y < height; y++) {
+    const row = grid[y];
+    if (!row) continue;
+
+    const caRow = caGrid[y];
+    if (!caRow) continue;
+
     for (let x = 0; x < width; x++) {
-      if (!caGrid[y][x]) {
+      if (caRow[x] === undefined) continue;
+
+      if (!caRow[x]) {
         // false = Open space = floor
-        grid[y][x] = { material, tileType: 'floor', floor };
+        row[x] = { material, tileType: 'floor', floor };
       } else {
         // true = Walls
-        grid[y][x] = { material, tileType: 'wall', floor };
+        row[x] = { material, tileType: 'wall', floor };
       }
     }
   }
@@ -345,16 +377,17 @@ export function generateCALayout(
       const x = Math.floor(rng() * width);
       const y = Math.floor(rng() * height);
 
-      if (grid[y][x].tileType === 'wall') {
+      const row = grid[y];
+      if (row && row[x]?.tileType === 'wall') {
         // Check if adjacent to floor
         const hasFloor =
-          (y > 0 && grid[y - 1][x].tileType === 'floor') ||
-          (y < height - 1 && grid[y + 1][x].tileType === 'floor') ||
-          (x > 0 && grid[y][x - 1].tileType === 'floor') ||
-          (x < width - 1 && grid[y][x + 1].tileType === 'floor');
+          (y > 0 && grid[y - 1]?.[x]?.tileType === 'floor') ||
+          (y < height - 1 && grid[y + 1]?.[x]?.tileType === 'floor') ||
+          (x > 0 && row[x - 1]?.tileType === 'floor') ||
+          (x < width - 1 && row[x + 1]?.tileType === 'floor');
 
         if (hasFloor) {
-          grid[y][x] = { material, tileType: 'door', floor };
+          row[x] = { material, tileType: 'door', floor };
           break;
         }
       }
@@ -385,10 +418,13 @@ export function addStairs(
     const x = Math.floor(rng() * (width - 2)) + 1;
     const y = Math.floor(rng() * (height - 2)) + 1;
 
-    if (lowerFloorGrid[y][x].tileType === 'floor' && upperFloorGrid[y][x].tileType === 'floor') {
+    const lowerRow = lowerFloorGrid[y];
+    const upperRow = upperFloorGrid[y];
+
+    if (lowerRow && upperRow && lowerRow[x]?.tileType === 'floor' && upperRow[x]?.tileType === 'floor') {
       // Place stairs
-      lowerFloorGrid[y][x] = { material, tileType: 'stairs', floor: lowerFloor };
-      upperFloorGrid[y][x] = { material, tileType: 'stairs', floor: upperFloor };
+      lowerRow[x] = { material, tileType: 'stairs', floor: lowerFloor };
+      upperRow[x] = { material, tileType: 'stairs', floor: upperFloor };
       return;
     }
   }

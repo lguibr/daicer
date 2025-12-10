@@ -10,7 +10,7 @@
 
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
-import { CharacterStateSchema } from '@daicer/shared/graph-states';
+import { CharacterStateSchema } from '@daicer/shared/graph-states/character-state';
 
 // Nodes
 import { characterOpeningsNode } from './nodes/openings';

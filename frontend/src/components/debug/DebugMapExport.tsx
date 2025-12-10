@@ -1,5 +1,5 @@
 import { Download } from 'lucide-react';
-import type { GridTile } from '@daicer/shared/world/world';
+import type { GridTile } from '@daicer/shared';
 import { Button } from '../ui/button';
 
 interface DebugMapExportProps {

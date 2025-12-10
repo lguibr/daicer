@@ -3,7 +3,7 @@
  * Interactive simplex noise generator with real-time preview
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Label from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -76,7 +76,7 @@ export function NoiseVisualizer() {
               <Label>Scale: {params.scale.toFixed(3)}</Label>
               <Slider
                 value={[params.scale * 1000]}
-                onValueChange={(v) => setParams({ ...params, scale: v[0] / 1000 })}
+                onValueChange={(v) => v[0] != null && setParams({ ...params, scale: v[0] / 1000 })}
                 min={1}
                 max={100}
                 step={1}
@@ -92,7 +92,7 @@ export function NoiseVisualizer() {
                   <Label>Octaves: {params.octaves}</Label>
                   <Slider
                     value={[params.octaves]}
-                    onValueChange={(v) => setParams({ ...params, octaves: v[0] })}
+                    onValueChange={(v) => v[0] != null && setParams({ ...params, octaves: v[0] })}
                     min={1}
                     max={8}
                     step={1}
@@ -105,7 +105,7 @@ export function NoiseVisualizer() {
                       <Label>Persistence: {params.persistence.toFixed(2)}</Label>
                       <Slider
                         value={[params.persistence * 100]}
-                        onValueChange={(v) => setParams({ ...params, persistence: v[0] / 100 })}
+                        onValueChange={(v) => v[0] != null && setParams({ ...params, persistence: v[0] / 100 })}
                         min={10}
                         max={100}
                         step={1}
@@ -116,7 +116,7 @@ export function NoiseVisualizer() {
                       <Label>Lacunarity: {params.lacunarity.toFixed(2)}</Label>
                       <Slider
                         value={[params.lacunarity * 10]}
-                        onValueChange={(v) => setParams({ ...params, lacunarity: v[0] / 10 })}
+                        onValueChange={(v) => v[0] != null && setParams({ ...params, lacunarity: v[0] / 10 })}
                         min={10}
                         max={40}
                         step={1}
@@ -130,7 +130,7 @@ export function NoiseVisualizer() {
                     <Label>Warp Strength: {params.warpStrength.toFixed(2)}</Label>
                     <Slider
                       value={[params.warpStrength * 100]}
-                      onValueChange={(v) => setParams({ ...params, warpStrength: v[0] / 100 })}
+                      onValueChange={(v) => v[0] != null && setParams({ ...params, warpStrength: v[0] / 100 })}
                       min={0}
                       max={200}
                       step={1}

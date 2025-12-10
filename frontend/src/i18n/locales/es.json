@@ -324,10 +324,41 @@
       "cta": "Ir al Lobby"
     },
     "messages": {
-      "error": "No se pueden cargar las salas en este momento."
+      "loading": "Cargando aventuras...",
+      "error": "No se pueden cargar las aventuras en este momento."
     }
   },
-  "worldSettings": {
+  "landing": {
+    "errors": {
+      "missingCode": "Por favor ingresa un código de sala",
+      "joinFailed": "Error al unirse a la sala"
+    }
+  },
+  "testSetup": {
+    "scenarios": {
+      "goblins": {
+        "name": "Pelea de 2 Goblins",
+        "description": "Combate rápido con 2 goblins. DM simple, narración directa.",
+        "worldDescription": "Estás en un claro del bosque. Dos goblins bloquean tu camino."
+      },
+      "dragon": {
+        "name": "Batalla contra Jefe Dragón",
+        "description": "Pelea épica con dragón. DM dramático, narración detallada.",
+        "worldDescription": "El antiguo dragón rojo Infernius guarda un tesoro en la cima del volcán."
+      },
+      "puzzle": {
+        "name": "Sala de Enigmas",
+        "description": "Sin combate. Investigación y acertijos. DM detallado.",
+        "worldDescription": "Una cámara antigua con runas, palancas y símbolos misteriosos. Sin enemigos."
+      },
+      "pirate": {
+        "name": "Aventura Pirata",
+        "description": "DM habla como pirata. Combate naval.",
+        "worldDescription": "¡Navegas por los siete mares, camarada! ¡Tesoro y aventura te esperan!"
+      }
+    }
+  },
+  "assetsCharacterSheet": {
     "title": "Crear Aventura",
     "subtitle": "Configurar mundo",
     "story": "Historia",
@@ -407,6 +438,10 @@
     "prompt": {
       "title": "Vista Previa del Prompt del Sistema",
       "caption": "Este es el bloque exacto enviado al agente Director de Juego."
+    },
+    "errors": {
+      "incomplete": "Por favor completa todos los campos requeridos antes de continuar",
+      "createFailed": "Error al crear la sala"
     },
     "history": {
       "title": "Configuración de Historia del Mundo",
@@ -690,6 +725,27 @@
         "detail": "Planos",
         "description": "Odisea interplanar con apuestas cósmicas."
       }
+    }
+  },
+  "gameRoom": {
+    "errors": {
+      "title": "Error",
+      "notFound": "Sala no encontrada",
+      "loadFailed": "Error al cargar la sala"
+    },
+    "actions": {
+      "returnToLobby": "Volver al Lobby"
+    },
+    "generating": {
+      "title": "Generando Mundo",
+      "subtitle": "Creando la historia y el lore de tu reino...",
+      "logTitle": "Registro de Generación"
+    },
+    "stream": {
+      "title": "Narrador Transmitiendo...",
+      "live": "En Vivo",
+      "creatingEra": "Creando Era {{current}} de {{total}}",
+      "eraNarrative": "Narrativa de la Era {{era}}"
     }
   },
   "dev": {

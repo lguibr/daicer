@@ -8,7 +8,7 @@ import { logger } from '@/utils/logger';
 import { materializeAllStructures } from '@/services/world-gen/structure-materializer';
 import { db } from '@/config/firebase';
 import { splitIntoChunks } from '@/schemas/structure-storage';
-import type { WorldConfigState } from '@daicer/shared/graph-states';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
 import { emitProgress } from '@/graph/shared-nodes/stream-progress';
 
 /**

@@ -1,15 +1,10 @@
 import { db } from '@/services/firestore';
 import { generateGridChunk } from '@/services/world-gen/grid-chunk-generator';
 import { logger } from '@/utils/logger';
-import {
-  GridChunk,
-  GridTile,
-  Entity,
-  EntitySchema,
-  chunkToWorldCoords,
-  worldToChunkCoords,
-  CHUNK_SIZE,
-} from '@daicer/shared/world';
+import { GridChunk, chunkToWorldCoords, worldToChunkCoords, CHUNK_SIZE } from '@daicer/shared/world/grid-chunk-schema';
+import { GridTile } from '@daicer/shared/world/grid-tile-schema';
+import { Entity, EntitySchema } from '@daicer/shared/world/entity-schema';
+import type { WorldSettings } from '@daicer/shared/world/world-settings-schema';
 
 export class MapService {
   private static instance: MapService;

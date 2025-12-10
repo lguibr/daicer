@@ -18,7 +18,7 @@ import { TerrainExplorer } from '../terrain/TerrainExplorer';
 import { EntityListModal } from '../room/EntityListModal';
 import { Button } from '../ui/button';
 
-const EMPTY_GRID: number[][] = [];
+const EMPTY_GRID: any[] = [];
 
 interface GameplayScreenProps {
   room: Room;

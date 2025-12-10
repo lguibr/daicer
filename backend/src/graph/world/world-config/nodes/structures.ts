@@ -7,7 +7,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import { placeStructuresOnGrid } from '@/services/world-gen/structure-placer';
-import type { WorldConfigState } from '@daicer/shared/graph-states';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
 
 /**
  * Generate and place structures on map grid using seed-based generation

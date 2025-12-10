@@ -9,7 +9,6 @@ import type {
   StructurePlacementParams,
   StructureGenerationResult,
   StructureType,
-  StructureMaterial,
   StructureFloor,
 } from './types';
 import { structureTileToBiome, isStructureBiome, isReservedBiome, getFloorIndex } from './types';
@@ -81,7 +80,8 @@ export function generateStructureFootprints(
 
     // Check for overlap with existing structures (check surface floor)
     const surfaceIndex = getFloorIndex(0);
-    if (hasOverlap(biomeGrid[surfaceIndex], worldX, worldY, template.width, template.height)) {
+    const surfaceGrid = biomeGrid[surfaceIndex];
+    if (surfaceGrid && hasOverlap(surfaceGrid, worldX, worldY, template.width, template.height)) {
       continue;
     }
 
@@ -117,20 +117,23 @@ export function generateStructureFootprints(
   let roadTileCount = 0;
   if (params.generateRoads && structures.length > 1) {
     const surfaceIndex = getFloorIndex(0);
-    const roadPoints = generateRoadPaths(structures, biomeGrid[surfaceIndex], seed);
-    roadTileCount = roadPoints.length;
-    console.log(`[Structures] Generated ${roadTileCount} road tiles`);
+    const surfaceGrid = biomeGrid[surfaceIndex];
+    if (surfaceGrid) {
+      const roadPoints = generateRoadPaths(structures, surfaceGrid, seed);
+      roadTileCount = roadPoints.length;
+      console.log(`[Structures] Generated ${roadTileCount} road tiles`);
 
-    // Place road reserved markers on floor 0
-    for (const point of roadPoints) {
-      if (
-        point.x >= 0 &&
-        point.x < width &&
-        point.y >= 0 &&
-        point.y < height &&
-        !isStructureBiome(biomeGrid[surfaceIndex][point.y][point.x])
-      ) {
-        biomeGrid[surfaceIndex][point.y][point.x] = `structure_reserved_road`;
+      // Place road reserved markers on floor 0
+      for (const point of roadPoints) {
+        if (point.x >= 0 && point.x < width && point.y >= 0 && point.y < height) {
+          const row = surfaceGrid[point.y];
+          if (row && row[point.x] !== undefined) {
+            const cell = row[point.x];
+            if (cell !== undefined && !isStructureBiome(cell)) {
+              row[point.x] = `structure_reserved_road`;
+            }
+          }
+        }
       }
     }
   }
@@ -144,7 +147,7 @@ export function generateStructureFootprints(
  * This replaces reserved markers with final detailed tiles
  */
 export function stampDetailedStructures(
-  biomeGrid: string[][][],
+  _biomeGrid: string[][][],
   structures: Structure[],
   terrainGrid: string[][][]
 ): string[][][] {
@@ -210,10 +213,13 @@ function hasOverlap(biomeGrid: string[][], worldX: number, worldY: number, width
       const gridY = worldY + y;
       const gridX = worldX + x;
 
-      if (gridY >= 0 && gridY < biomeGrid.length && gridX >= 0 && biomeGrid[gridY] && gridX < biomeGrid[gridY].length) {
-        const biome = biomeGrid[gridY][gridX];
-        if (biome && isStructureBiome(biome)) {
-          return true;
+      if (gridY >= 0 && gridY < biomeGrid.length) {
+        const row = biomeGrid[gridY];
+        if (row && gridX >= 0 && gridX < row.length) {
+          const biome = row[gridX];
+          if (biome && isStructureBiome(biome)) {
+            return true;
+          }
         }
       }
     }
@@ -231,23 +237,27 @@ function placeReservedFootprint(biomeGrid: string[][][], structure: Structure): 
     const gridIndex = getFloorIndex(floor);
 
     if (gridIndex < 0 || gridIndex >= biomeGrid.length) continue;
+    const targetGrid = biomeGrid[gridIndex];
+    if (!targetGrid) continue;
 
     for (let y = 0; y < tiles.length; y++) {
-      for (let x = 0; x < tiles[y].length; x++) {
-        const tile = tiles[y][x];
+      const tileRow = tiles[y];
+      if (!tileRow) continue;
+
+      for (let x = 0; x < tileRow.length; x++) {
+        const tile = tileRow[x];
+        if (!tile) continue; // Safety check
+
         const worldX = structure.worldX + x;
         const worldY = structure.worldY + y;
 
-        if (
-          worldY >= 0 &&
-          worldY < biomeGrid[gridIndex].length &&
-          worldX >= 0 &&
-          biomeGrid[gridIndex][worldY] &&
-          worldX < biomeGrid[gridIndex][worldY].length
-        ) {
-          // Place reserved marker
-          if (tile.tileType !== 'empty') {
-            biomeGrid[gridIndex][worldY][worldX] = `structure_reserved_${structure.id}`;
+        if (worldY >= 0 && worldY < targetGrid.length) {
+          const gridRow = targetGrid[worldY];
+          if (gridRow && worldX >= 0 && worldX < gridRow.length) {
+            // Place reserved marker
+            if (tile.tileType !== 'empty') {
+              gridRow[worldX] = `structure_reserved_${structure.id}`;
+            }
           }
         }
       }
@@ -264,26 +274,30 @@ function stampStructure(biomeGrid: string[][][], structure: Structure): void {
     const gridIndex = getFloorIndex(floor);
 
     if (gridIndex < 0 || gridIndex >= biomeGrid.length) continue;
+    const targetGrid = biomeGrid[gridIndex];
+    if (!targetGrid) continue;
 
     for (let y = 0; y < tiles.length; y++) {
-      for (let x = 0; x < tiles[y].length; x++) {
-        const tile = tiles[y][x];
+      const tileRow = tiles[y];
+      if (!tileRow) continue;
+
+      for (let x = 0; x < tileRow.length; x++) {
+        const tile = tileRow[x];
+        if (!tile) continue;
+
         const worldX = structure.worldX + x;
         const worldY = structure.worldY + y;
 
-        if (
-          worldY >= 0 &&
-          worldY < biomeGrid[gridIndex].length &&
-          worldX >= 0 &&
-          biomeGrid[gridIndex][worldY] &&
-          worldX < biomeGrid[gridIndex][worldY].length
-        ) {
-          // Only stamp if this was a reserved tile
-          const currentBiome = biomeGrid[gridIndex][worldY][worldX];
-          if (isReservedBiome(currentBiome)) {
-            const biomeName = structureTileToBiome(tile, floor, false, structure.id);
-            if (biomeName) {
-              biomeGrid[gridIndex][worldY][worldX] = biomeName;
+        if (worldY >= 0 && worldY < targetGrid.length) {
+          const gridRow = targetGrid[worldY];
+          if (gridRow && worldX >= 0 && worldX < gridRow.length) {
+            // Only stamp if this was a reserved tile
+            const currentBiome = gridRow[worldX];
+            if (currentBiome && isReservedBiome(currentBiome)) {
+              const biomeName = structureTileToBiome(tile, floor, false, structure.id);
+              if (biomeName) {
+                gridRow[worldX] = biomeName;
+              }
             }
           }
         }
@@ -297,10 +311,10 @@ function stampStructure(biomeGrid: string[][][], structure: Structure): void {
  * (i.e., it's not already a structure)
  */
 export function canAssignBiome(biomeGrid: string[][], x: number, y: number): boolean {
-  if (y < 0 || y >= biomeGrid.length || x < 0 || !biomeGrid[y] || x >= biomeGrid[y].length) {
-    return false;
-  }
+  if (y < 0 || y >= biomeGrid.length) return false;
+  const row = biomeGrid[y];
+  if (!row || x < 0 || x >= row.length) return false;
 
-  const biome = biomeGrid[y][x];
+  const biome = row[x];
   return !biome || !isStructureBiome(biome);
 }

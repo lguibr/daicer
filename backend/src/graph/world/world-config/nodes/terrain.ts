@@ -6,7 +6,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import { collapseWorldAroundStructures } from '@/services/world-gen/world-collapse';
-import type { WorldConfigState } from '@daicer/shared/graph-states';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
 
 /**
  * Collapse terrain around structures

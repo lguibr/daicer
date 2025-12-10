@@ -3,7 +3,7 @@
  * Combines noise-based climate with Voronoi regions for biome distribution
  */
 
-import type { BiomeMap } from '@daicer/shared';
+import type { BiomeMap } from '@daicer/shared/world/biome-schema';
 import { logger } from '@/utils/logger';
 import { SimplexNoise, Alea } from './noise';
 import { poissonDiscSampling, type Point2D } from './poisson';

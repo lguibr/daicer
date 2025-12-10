@@ -110,7 +110,7 @@ export const AllBiomes: Story = {
 
     for (let cy = -2; cy <= 2; cy++) {
       for (let cx = -2; cx <= 2; cx++) {
-        const biome = biomes[biomeIndex % biomes.length];
+        const biome = biomes[biomeIndex % biomes.length] as string;
         chunks[`${cx}_${cy}_0`] = createBiomeChunk(cx, cy, 0, biome);
         biomeIndex++;
       }

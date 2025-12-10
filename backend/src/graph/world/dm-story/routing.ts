@@ -3,7 +3,7 @@
  * Conditional edge functions for history generation flow
  */
 
-import type { DMStoryState } from '@daicer/shared/graph-states';
+import type { DMStoryState } from '@daicer/shared/graph-states/dm-story-state';
 import { logger } from '@/utils/logger';
 
 /**

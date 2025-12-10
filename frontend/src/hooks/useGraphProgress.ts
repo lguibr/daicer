@@ -132,7 +132,7 @@ export function useGraphProgress(roomId: string, playerId?: string): GraphProgre
 
       // Generic error handler
       eventSource.onerror = (err) => {
-        logger.error('[SSE] EventSource error:', err);
+        logger.error('[SSE] EventSource error:', err as any);
         if (eventSource) {
           eventSource.close();
         }

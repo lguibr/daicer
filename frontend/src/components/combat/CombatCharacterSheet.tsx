@@ -134,7 +134,7 @@ export function CombatCharacterSheet({ character, characterSheet, onClose }: Com
 
   const availablePortraitViews = useMemo(() => {
     if (!characterSheet?.avatarAssets) return [];
-    return ['portrait']; // avatarAssets is single asset, not multiple views
+    return ['portrait'] as PortraitView[]; // avatarAssets is single asset, not multiple views
   }, [characterSheet?.avatarAssets]);
 
   useEffect(() => {

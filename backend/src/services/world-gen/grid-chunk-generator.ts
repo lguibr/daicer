@@ -3,8 +3,10 @@
  * Generates chunks on-demand for the infinite grid system
  */
 
-import type { GridChunk, GridTile, GridFeature } from '@daicer/shared';
-import { CHUNK_SIZE } from '@daicer/shared';
+import type { GridChunk } from '@daicer/shared/world/grid-chunk-schema';
+import type { GridTile } from '@daicer/shared/world/grid-tile-schema';
+import type { GridFeature } from '@daicer/shared/world/grid-feature-schema';
+import { CHUNK_SIZE } from '@daicer/shared/world/grid-chunk-schema';
 import { SimplexNoise, Alea } from './noise';
 import { logger } from '@/utils/logger';
 

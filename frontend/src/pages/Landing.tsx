@@ -40,7 +40,7 @@ export default function LandingPage() {
     e.preventDefault();
 
     if (!roomCode.trim()) {
-      setError('Please enter a room code');
+      setError(t('landing.errors.missingCode'));
       return;
     }
 
@@ -50,7 +50,7 @@ export default function LandingPage() {
       const room = await joinRoom(roomCode.toUpperCase());
       navigate(`/room/${room.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to join room');
+      setError(err instanceof Error ? err.message : t('landing.errors.joinFailed'));
     } finally {
       setLoading(false);
     }

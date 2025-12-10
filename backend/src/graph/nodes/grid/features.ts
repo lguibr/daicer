@@ -6,7 +6,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import type { CharacterCreationState } from '../../state';
-import type { GridFeature } from '@daicer/shared';
+import type { GridFeature } from '@daicer/shared/world/grid-feature-schema';
 import { Alea } from '@/services/world-gen/noise';
 
 /**

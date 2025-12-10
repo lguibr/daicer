@@ -69,7 +69,7 @@ export function CAVisualizer() {
             count++;
             continue;
           }
-          if (grid[ny][nx]) count++;
+          if (grid[ny]?.[nx]) count++;
         }
       }
       return count;
@@ -88,7 +88,7 @@ export function CAVisualizer() {
       const row: boolean[] = [];
       for (let x = 0; x < gridSize.width; x++) {
         const neighbors = countNeighbors(currentGrid, x, y);
-        if (currentGrid[y][x]) {
+        if (currentGrid[y]?.[x]) {
           row.push(neighbors >= params.deathLimit);
         } else {
           row.push(neighbors >= params.birthLimit);
@@ -155,7 +155,7 @@ export function CAVisualizer() {
               <Label>Width: {gridSize.width}</Label>
               <Slider
                 value={[gridSize.width]}
-                onValueChange={([w]) => setGridSize((prev) => ({ ...prev, width: w }))}
+                onValueChange={([w]) => w != null && setGridSize((prev) => ({ ...prev, width: w }))}
                 min={16}
                 max={128}
                 step={8}
@@ -165,7 +165,7 @@ export function CAVisualizer() {
               <Label>Height: {gridSize.height}</Label>
               <Slider
                 value={[gridSize.height]}
-                onValueChange={([h]) => setGridSize((prev) => ({ ...prev, height: h }))}
+                onValueChange={([h]) => h != null && setGridSize((prev) => ({ ...prev, height: h }))}
                 min={16}
                 max={128}
                 step={8}
@@ -180,11 +180,11 @@ export function CAVisualizer() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Fill Percentage: {(params.fillPercentage * 100).toFixed(0)}%</Label>
-                <Info className="w-4 h-4 text-gray-500" title="Initial random density" />
+                <Info className="w-4 h-4 text-gray-500" />
               </div>
               <Slider
                 value={[params.fillPercentage * 100]}
-                onValueChange={([v]) => setParams((prev) => ({ ...prev, fillPercentage: v / 100 }))}
+                onValueChange={([v]) => v != null && setParams((prev) => ({ ...prev, fillPercentage: v / 100 }))}
                 min={30}
                 max={60}
                 step={1}
@@ -204,7 +204,7 @@ export function CAVisualizer() {
               <Label>Max Iterations: {params.iterations}</Label>
               <Slider
                 value={[params.iterations]}
-                onValueChange={([v]) => setParams((prev) => ({ ...prev, iterations: v }))}
+                onValueChange={([v]) => v != null && setParams((prev) => ({ ...prev, iterations: v }))}
                 min={1}
                 max={10}
                 step={1}
@@ -224,7 +224,7 @@ export function CAVisualizer() {
               <Label>Birth Limit: {params.birthLimit} neighbors</Label>
               <Slider
                 value={[params.birthLimit]}
-                onValueChange={([v]) => setParams((prev) => ({ ...prev, birthLimit: v }))}
+                onValueChange={([v]) => v != null && setParams((prev) => ({ ...prev, birthLimit: v }))}
                 min={2}
                 max={6}
                 step={1}
@@ -244,7 +244,7 @@ export function CAVisualizer() {
               <Label>Death Limit: {params.deathLimit} neighbors</Label>
               <Slider
                 value={[params.deathLimit]}
-                onValueChange={([v]) => setParams((prev) => ({ ...prev, deathLimit: v }))}
+                onValueChange={([v]) => v != null && setParams((prev) => ({ ...prev, deathLimit: v }))}
                 min={2}
                 max={6}
                 step={1}
@@ -266,7 +266,7 @@ export function CAVisualizer() {
             <Label>Animation Speed: {animationSpeed}ms</Label>
             <Slider
               value={[animationSpeed]}
-              onValueChange={([v]) => setAnimationSpeed(v)}
+              onValueChange={([v]) => v != null && setAnimationSpeed(v)}
               min={100}
               max={1000}
               step={100}

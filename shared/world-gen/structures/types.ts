@@ -55,7 +55,7 @@ export interface Structure {
   material: StructureMaterial;
   width: number;
   height: number;
-  tiles: Record<StructureFloor, StructureTile[][]>; // floor -> [y][x]
+  tiles: Partial<Record<StructureFloor, StructureTile[][]>>; // floor -> [y][x]
   worldX: number;
   worldY: number;
   npcSpawnPoints: NPCSpawnPoint[];

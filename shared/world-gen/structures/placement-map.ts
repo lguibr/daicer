@@ -107,7 +107,10 @@ export function generateGlobalPlacementMap(
   const totalWeight = Object.values(structureWeights).reduce((sum, w) => sum + w, 0);
 
   for (let i = 0; i < placementPoints.length; i++) {
-    const [x, y] = placementPoints[i];
+    const point = placementPoints[i];
+    if (!point) continue;
+
+    const { x, y } = point;
 
     // Probability-based culling to control structure density
     const structureProbability = Math.min(maxStructures / 50, 0.3);
@@ -155,6 +158,7 @@ export function generateGlobalPlacementMap(
 
     for (let i = 0; i < structures.length; i++) {
       const structure = structures[i];
+      if (!structure) continue;
 
       // Find nearby structures
       const nearby = structures
@@ -243,7 +247,8 @@ function generateStraightPath(x0: number, y0: number, x1: number, y1: number): A
   }
 
   // Always include end point
-  if (path[path.length - 1][0] !== x1 || path[path.length - 1][1] !== y1) {
+  const lastPoint = path[path.length - 1];
+  if (!lastPoint || lastPoint[0] !== x1 || lastPoint[1] !== y1) {
     path.push([x1, y1]);
   }
 

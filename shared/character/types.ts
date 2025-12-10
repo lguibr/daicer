@@ -114,6 +114,8 @@ export interface CharacterSheet {
   baseAttackBonus: number;
   attacks: Array<{ name: string; bonus: string; damageType: string }>;
   equipment: string;
+  inventory?: Array<{ index: string; name: string; quantity: number }>;
+  equippedItems?: Record<string, string>;
 
   // Currency
   currency: { cp: number; sp: number; ep: number; gp: number; pp: number };

@@ -16,6 +16,8 @@ interface AssetCardProps {
   onMove?: () => void;
   onDelete: () => void;
   onCreateVariations?: () => void;
+  onGenerate?: () => void;
+  showGenerateButton?: boolean;
 }
 
 const STATUS_CONFIG = {
@@ -45,7 +47,15 @@ const ASSET_TYPE_ICONS: Record<Asset['assetType'], string> = {
   'character-sheet': '📜',
 };
 
-export function AssetCard({ asset, onView, onMove, onDelete, onCreateVariations }: AssetCardProps) {
+export function AssetCard({
+  asset,
+  onView,
+  onMove,
+  onDelete,
+  onCreateVariations,
+  onGenerate,
+  showGenerateButton,
+}: AssetCardProps) {
   const statusConfig = STATUS_CONFIG[asset.status] || STATUS_CONFIG.pending;
   const canView = asset.status === 'done' && onView;
   const canCreateVariations = asset.status === 'done' && onCreateVariations;
@@ -135,6 +145,28 @@ export function AssetCard({ asset, onView, onMove, onDelete, onCreateVariations 
               size="sm"
               className="bg-accent/20 text-accent hover:bg-accent/30"
               data-testid={`asset-card-${asset.id}-view-button`}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          {showGenerateButton && onGenerate && (
+            <Button
+              onClick={onGenerate}
+              variant="default"
+              size="sm"
+              className="bg-blue-600/20 text-blue-400 hover:bg-blue-600/30"
+              title="Generate"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          {showGenerateButton && onGenerate && (
+            <Button
+              onClick={onGenerate}
+              variant="default"
+              size="sm"
+              className="bg-accent/20 text-accent hover:bg-accent/30"
+              title="Generate Structure"
             >
               <Eye className="h-4 w-4" />
             </Button>

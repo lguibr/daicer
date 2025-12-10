@@ -99,7 +99,7 @@ export function WFCVisualizer() {
     }
 
     if (candidates.length === 0) return null;
-    return candidates[Math.floor(Math.random() * candidates.length)];
+    return candidates[Math.floor(Math.random() * candidates.length)] || null;
   }, []);
 
   // Collapse one cell
@@ -114,6 +114,7 @@ export function WFCVisualizer() {
     const optionsArray = Array.from(cell.options);
     const chosen = optionsArray[Math.floor(rng() * optionsArray.length)];
 
+    if (!chosen) return;
     cell.collapsed = true;
     cell.tileId = chosen;
     cell.options = new Set([chosen]);
@@ -223,7 +224,7 @@ export function WFCVisualizer() {
                 <Label>Width: {gridSize.width} cells</Label>
                 <Slider
                   value={[gridSize.width]}
-                  onValueChange={([w]) => setGridSize((prev) => ({ ...prev, width: w }))}
+                  onValueChange={([w]) => w != null && setGridSize((prev) => ({ ...prev, width: w }))}
                   min={8}
                   max={32}
                   step={2}
@@ -233,7 +234,7 @@ export function WFCVisualizer() {
                 <Label>Height: {gridSize.height} cells</Label>
                 <Slider
                   value={[gridSize.height]}
-                  onValueChange={([h]) => setGridSize((prev) => ({ ...prev, height: h }))}
+                  onValueChange={([h]) => h != null && setGridSize((prev) => ({ ...prev, height: h }))}
                   min={8}
                   max={32}
                   step={2}
@@ -285,7 +286,7 @@ export function WFCVisualizer() {
             <Label>Animation Speed: {animationSpeed}ms</Label>
             <Slider
               value={[animationSpeed]}
-              onValueChange={([v]) => setAnimationSpeed(v)}
+              onValueChange={([v]) => v != null && setAnimationSpeed(v)}
               min={50}
               max={500}
               step={50}
@@ -335,6 +336,7 @@ export function WFCVisualizer() {
               'Grid Size': `${gridSize.width}x${gridSize.height}`,
               Collapsed: `${collapsedCount}/${totalCells}`,
               Step: currentStep,
+              Time: `${generationTime.toFixed(2)}ms`,
               Preset: preset,
             }}
           />

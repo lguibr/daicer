@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { GridTile } from '@daicer/shared/world/world';
+import { GridTile } from '@daicer/shared';
 
 interface ChunkGenerator {
   generateChunk: (worldX: number, worldY: number, width: number, height: number) => GridTile[][];
@@ -22,7 +22,7 @@ export function useSimpleTerrainManager({
   const [chunks, setChunks] = useState<Map<string, GridTile[][]>>(new Map());
 
   // Track the top-left corner of the expanded grid in world coordinates
-  const [gridWorldOffset, setGridWorldOffset] = useState({ x: 0, y: 0 });
+  const [, setGridWorldOffset] = useState({ x: 0, y: 0 });
 
   // Track loaded chunk keys to avoid re-generation
   const loadedChunksRef = useRef<Set<string>>(new Set());

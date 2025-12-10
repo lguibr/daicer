@@ -324,8 +324,46 @@
       "cta": "Ir para o Lobby"
     },
     "messages": {
-      "error": "Não foi possível carregar as salas agora."
+      "loading": "Carregando aventuras...",
+      "error": "Não foi possível carregar as aventuras agora."
     }
+  },
+  "landing": {
+    "errors": {
+      "missingCode": "Por favor, insira um código de sala",
+      "joinFailed": "Falha ao entrar na sala"
+    }
+  },
+  "testSetup": {
+    "scenarios": {
+      "goblins": {
+        "name": "Luta com 2 Goblins",
+        "description": "Combate rápido com 2 goblins. DM simples, narração direta.",
+        "worldDescription": "Você está em uma clareira na floresta. Dois goblins bloqueiam seu caminho."
+      },
+      "dragon": {
+        "name": "Batalha contra Chefe Dragão",
+        "description": "Luta épica contra dragão. DM dramático, narração detalhada.",
+        "worldDescription": "O antigo dragão vermelho Infernius guarda um tesouro no topo do vulcão."
+      },
+      "puzzle": {
+        "name": "Sala de Enigmas",
+        "description": "Sem combate. Investigação e quebra-cabeças. DM detalhado.",
+        "worldDescription": "Uma câmara antiga com runas, alavancas e símbolos misteriosos. Sem inimigos."
+      },
+      "pirate": {
+        "name": "Aventura Pirata",
+        "description": "DM fala como pirata. Combate naval.",
+        "worldDescription": "Você está navegando pelos sete mares, marujo. Tesouro e aventura esperam por você!"
+      }
+    }
+  },
+  "assetsCharacterSheet": {
+    "title": "Criar Aventura",
+    "subtitle": "Configure o mundo",
+    "story": "História",
+    "scope": "Escopo",
+    "theme": "Tema"
   },
   "worldSettings": {
     "title": "Criar Aventura",
@@ -407,6 +445,10 @@
     "prompt": {
       "title": "Prévia do Prompt do Sistema",
       "caption": "Este é o bloco exato enviado ao agente Mestre da Masmorra."
+    },
+    "errors": {
+      "incomplete": "Por favor complete todos os campos obrigatórios antes de continuar",
+      "createFailed": "Falha ao criar sala"
     },
     "history": {
       "title": "Configuração de História do Mundo",
@@ -690,6 +732,27 @@
         "detail": "Planos",
         "description": "Odisseia interplanar com apostas cósmicas."
       }
+    }
+  },
+  "gameRoom": {
+    "errors": {
+      "title": "Erro",
+      "notFound": "Sala não encontrada",
+      "loadFailed": "Falha ao carregar sala"
+    },
+    "actions": {
+      "returnToLobby": "Voltar para o Lobby"
+    },
+    "generating": {
+      "title": "Gerando Mundo",
+      "subtitle": "Criando a história e o lore do seu reino...",
+      "logTitle": "Registro de Geração"
+    },
+    "stream": {
+      "title": "Narrador Transmitindo...",
+      "live": "Ao Vivo",
+      "creatingEra": "Criando Era {{current}} de {{total}}",
+      "eraNarrative": "Narrativa da Era {{era}}"
     }
   },
   "dev": {

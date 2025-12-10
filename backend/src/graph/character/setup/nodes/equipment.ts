@@ -6,7 +6,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import { calculateStatModifiers } from '@/services/equipment/equipmentService';
-import type { CharacterState } from '@daicer/shared/graph-states';
+import type { CharacterState } from '@daicer/shared/graph-states/character-state';
 import { emitProgress } from '@/graph/shared-nodes/stream-progress';
 
 /**

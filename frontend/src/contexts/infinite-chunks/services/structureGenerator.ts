@@ -76,8 +76,11 @@ export function getStructuresForChunk(
   const chunkEndY = chunkWorldY + chunkSize;
 
   for (const placement of placementMap.structures) {
-    const structEndX = placement.worldX + placement.width;
-    const structEndY = placement.worldY + placement.height;
+    const template = STRUCTURE_TEMPLATES[placement.type];
+    const width = template ? template.width : placement.size * 2;
+    const height = template ? template.height : placement.size * 2;
+    const structEndX = placement.worldX + width;
+    const structEndY = placement.worldY + height;
 
     // Check if structure overlaps with chunk
     const overlaps =
@@ -128,7 +131,7 @@ export function stampStructureOnChunk(
         const tile = surfaceTiles[localY]?.[localX];
         if (tile && tile.tileType !== 'empty' && newBiomes[y]) {
           const biomeName = structureTileToBiome(tile, 0 as StructureFloor, false, structure.id);
-          newBiomes[y][x] = biomeName;
+          newBiomes[y]![x] = biomeName;
         }
       }
     }

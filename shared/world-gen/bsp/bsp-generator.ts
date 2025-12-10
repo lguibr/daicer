@@ -121,8 +121,10 @@ function splitRoom(
 
   // Recursively split children
   if (room.children) {
-    splitRoom(room.children[0], minSize, maxSize, splitRatio, rng, options);
-    splitRoom(room.children[1], minSize, maxSize, splitRatio, rng, options);
+    const child0 = room.children[0];
+    const child1 = room.children[1];
+    if (child0) splitRoom(child0, minSize, maxSize, splitRatio, rng, options);
+    if (child1) splitRoom(child1, minSize, maxSize, splitRatio, rng, options);
   }
 }
 
@@ -136,8 +138,10 @@ function extractLeafRooms(root: BSPRoom): BSPRoom[] {
     if (room.isLeaf) {
       leaves.push(room);
     } else if (room.children) {
-      traverse(room.children[0]);
-      traverse(room.children[1]);
+      const child0 = room.children[0];
+      const child1 = room.children[1];
+      if (child0) traverse(child0);
+      if (child1) traverse(child1);
     }
   }
 
@@ -154,6 +158,8 @@ function addDoorsBetweenRooms(rooms: BSPRoom[], rng: () => number): void {
     for (let j = i + 1; j < rooms.length; j++) {
       const room1 = rooms[i];
       const room2 = rooms[j];
+
+      if (!room1 || !room2) continue;
 
       // Check if rooms are adjacent
       const adjacency = checkAdjacency(room1, room2);

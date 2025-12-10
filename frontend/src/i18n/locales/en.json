@@ -321,6 +321,36 @@
       "error": "Unable to load adventures right now."
     }
   },
+  "landing": {
+    "errors": {
+      "missingCode": "Please enter a room code",
+      "joinFailed": "Failed to join room"
+    }
+  },
+  "testSetup": {
+    "scenarios": {
+      "goblins": {
+        "name": "2 Goblins Fight",
+        "description": "Quick combat with 2 goblins. Simple DM, straightforward narration.",
+        "worldDescription": "You are in a forest clearing. Two goblins block your path."
+      },
+      "dragon": {
+        "name": "Dragon Boss Battle",
+        "description": "Epic dragon fight. Dramatic DM, verbose storytelling.",
+        "worldDescription": "The ancient red dragon Infernius guards a hoard of treasure atop the volcano."
+      },
+      "puzzle": {
+        "name": "Puzzle Room",
+        "description": "No combat. Investigation and puzzles. Detailed DM.",
+        "worldDescription": "An ancient chamber with runes, levers, and mysterious symbols. No enemies, just puzzles."
+      },
+      "pirate": {
+        "name": "Pirate Adventure",
+        "description": "DM speaks like a pirate. Naval combat.",
+        "worldDescription": "Ye be sailin' the seven seas, matey. Treasure and adventure await!"
+      }
+    }
+  },
   "assetsCharacterSheet": {
     "success": {
       "title": "Character sheet created!",
@@ -441,6 +471,7 @@
       "cta": "Go to Lobby"
     },
     "messages": {
+      "loading": "Loading rooms...",
       "error": "Unable to load rooms right now."
     }
   },
@@ -552,6 +583,10 @@
     "prompt": {
       "title": "System Prompt Preview",
       "caption": "This is the exact instruction block sent to the Dungeon Master agent."
+    },
+    "errors": {
+      "incomplete": "Please complete all required fields before continuing",
+      "createFailed": "Failed to create room"
     },
     "history": {
       "title": "World History Configuration",
@@ -835,6 +870,27 @@
         "detail": "Planes",
         "description": "Interplanar odyssey with cosmic stakes."
       }
+    }
+  },
+  "gameRoom": {
+    "errors": {
+      "title": "Error",
+      "notFound": "Room not found",
+      "loadFailed": "Failed to load room"
+    },
+    "actions": {
+      "returnToLobby": "Return to Lobby"
+    },
+    "generating": {
+      "title": "Generating World",
+      "subtitle": "Creating the history and lore of your realm...",
+      "logTitle": "Generation Log"
+    },
+    "stream": {
+      "title": "Storyteller Streaming...",
+      "live": "Live",
+      "creatingEra": "Creating Era {{current}} of {{total}}",
+      "eraNarrative": "Era {{era}} Narrative"
     }
   },
   "dev": {

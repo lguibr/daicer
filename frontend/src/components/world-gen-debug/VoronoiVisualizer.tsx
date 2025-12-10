@@ -21,7 +21,7 @@ interface Point2D {
 
 export function VoronoiVisualizer() {
   const [seed, setSeed] = useState('voronoi-demo');
-  const [gridSize, setGridSize] = useState({ width: 512, height: 512 });
+  const [gridSize] = useState({ width: 512, height: 512 });
   const [minDistance, setMinDistance] = useState(40);
   const [maxAttempts, setMaxAttempts] = useState(30);
   const [points, setPoints] = useState<Point2D[]>([]);
@@ -60,8 +60,10 @@ export function VoronoiVisualizer() {
           let nearestIdx = 0;
 
           for (let i = 0; i < points.length; i++) {
-            const dx = points[i].x - x;
-            const dy = points[i].y - y;
+            const pt = points[i];
+            if (!pt) continue;
+            const dx = pt.x - x;
+            const dy = pt.y - y;
             const dist = dx * dx + dy * dy;
             if (dist < minDist) {
               minDist = dist;
@@ -127,7 +129,13 @@ export function VoronoiVisualizer() {
 
             <div className="space-y-2">
               <Label>Min Distance: {minDistance}px</Label>
-              <Slider value={[minDistance]} onValueChange={([v]) => setMinDistance(v)} min={20} max={100} step={5} />
+              <Slider
+                value={[minDistance]}
+                onValueChange={([v]) => v != null && setMinDistance(v)}
+                min={20}
+                max={100}
+                step={5}
+              />
               <p className="text-xs text-muted-foreground">
                 <strong>What it does:</strong> Minimum spacing between any two points. Ensures even distribution.
                 <br />
@@ -143,7 +151,13 @@ export function VoronoiVisualizer() {
 
             <div className="space-y-2">
               <Label>Max Attempts: {maxAttempts}</Label>
-              <Slider value={[maxAttempts]} onValueChange={([v]) => setMaxAttempts(v)} min={10} max={50} step={5} />
+              <Slider
+                value={[maxAttempts]}
+                onValueChange={([v]) => v != null && setMaxAttempts(v)}
+                min={10}
+                max={50}
+                step={5}
+              />
               <p className="text-xs text-muted-foreground">
                 <strong>What it does:</strong> How hard algorithm tries to place points near existing ones before giving
                 up.

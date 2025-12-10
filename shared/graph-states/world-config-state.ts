@@ -7,8 +7,8 @@
  */
 
 import { z } from 'zod';
-import { StructureSchema } from '../world/structure-schema';
-import { RoadSchema } from '../world/road-schema';
+// import { StructureSchema } from '../world/structure-schema';
+// import { RoadSchema } from '../world/road-schema';
 import { HistoricalPeriodSchema } from '../world/history-schema';
 import { WorldConditionSchema } from '../world/condition-schema';
 
@@ -74,8 +74,8 @@ export const WorldConfigStateSchema = z.object({
     .describe('Required: synthesized history from Section 1'),
 
   // === INTERNAL STATE ===
-  structures: z.array(StructureSchema).default([]).describe('Placed structures with x,y coordinates'),
-  roads: z.array(RoadSchema).default([]).describe('Generated road network'),
+  structures: z.array(z.any()).default([]).describe('Placed structures with x,y coordinates'),
+  roads: z.array(z.any()).default([]).describe('Generated road network'),
   terrainMap: z.any().optional().describe('Heightmap (Uint8Array) from WFC algorithm'),
   generatedChunks: z.array(z.any()).default([]).describe('Pre-generated 3x3 chunk grid'),
   gridState: z.any().optional().describe('Tactical grid state from grid_generation subgraph'),
@@ -108,8 +108,8 @@ export type WorldConfigInput = z.infer<typeof WorldConfigInputSchema>;
  * Output Schema
  */
 export const WorldConfigOutputSchema = z.object({
-  structures: z.array(StructureSchema),
-  roads: z.array(RoadSchema),
+  structures: z.array(z.any()),
+  roads: z.array(z.any()),
   worldDescription: z.string().min(1, 'World description must be generated'),
   generatedChunks: z.array(z.any()),
   gridState: z.any().optional(),

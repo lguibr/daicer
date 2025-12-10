@@ -130,7 +130,7 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
       return {
         ...state,
         // Reset grid when changing layers as we're entering a new world slice
-        expandedGrid: [['plains']],
+        expandedGrid: [[null]],
         gridWorldOffset: { x: 0, y: 0 },
         chunks: new Map(), // Clear chunks cache for previous layer
         config: {

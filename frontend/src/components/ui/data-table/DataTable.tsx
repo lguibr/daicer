@@ -25,8 +25,6 @@ interface DataTableProps<TData, TValue> {
   toolbarSlot?: ReactNode;
 }
 
-const _EMPTY_ROWS: unknown[] = [];
-
 export function DataTable<TData, TValue>({
   columns,
   data,

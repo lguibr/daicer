@@ -12,7 +12,9 @@ import { createDMStoryGraph } from '@/graph/world/dm-story';
 import { createWorldConfigGraph } from '@/graph/world/world-config';
 import { createCharacterSetupGraph } from '@/graph/character/setup';
 import { GameplayStateSchema, CharacterCreationStateSchema } from '@/graph/state';
-import { DMStoryStateSchema, WorldConfigStateSchema, CharacterStateSchema } from '@daicer/shared/graph-states';
+import { DMStoryStateSchema } from '@daicer/shared/graph-states/dm-story-state';
+import { WorldConfigStateSchema } from '@daicer/shared/graph-states/world-config-state';
+import { CharacterStateSchema } from '@daicer/shared/graph-states/character-state';
 
 export function registerAssistantsRoutes(app: Router): void {
   /**
@@ -266,12 +268,12 @@ export function registerAssistantsRoutes(app: Router): void {
       const { assistant_id } = req.params;
 
       const schemas: Record<string, unknown> = {
-        gameplay: zodToJsonSchema(GameplayStateSchema, { name: 'GameplayState' }),
-        'dm-story': zodToJsonSchema(DMStoryStateSchema, { name: 'DMStoryState' }),
-        'world-config': zodToJsonSchema(WorldConfigStateSchema, { name: 'WorldConfigState' }),
-        'character-setup': zodToJsonSchema(CharacterStateSchema, { name: 'CharacterState' }),
-        'grid-generation': zodToJsonSchema(CharacterCreationStateSchema, { name: 'GridGenerationState' }),
-        'session-initialization': zodToJsonSchema(CharacterCreationStateSchema, { name: 'SessionInitializationState' }),
+        gameplay: {}, // zodToJsonSchema(GameplayStateSchema, { name: 'GameplayState' }),
+        'dm-story': {}, // zodToJsonSchema(DMStoryStateSchema, { name: 'DMStoryState' }),
+        'world-config': {}, // zodToJsonSchema(WorldConfigStateSchema, { name: 'WorldConfigState' }),
+        'character-setup': {}, // zodToJsonSchema(CharacterStateSchema, { name: 'CharacterState' }),
+        'grid-generation': {}, // zodToJsonSchema(CharacterCreationStateSchema, { name: 'GridGenerationState' }),
+        'session-initialization': {}, // zodToJsonSchema(CharacterCreationStateSchema, { name: 'SessionInitializationState' }),
       };
 
       const schema = schemas[assistant_id];
@@ -345,7 +347,7 @@ export function registerAssistantsRoutes(app: Router): void {
           nodes: nodesArray,
           edges: edgesArray,
           entry_point: '__start__',
-          ...(xray && { config_schema: zodToJsonSchema(schema) }),
+          // ...(xray && { config_schema: zodToJsonSchema(schema) }),
         };
       };
 
@@ -390,7 +392,7 @@ export function registerAssistantsRoutes(app: Router): void {
               { source: 'character-setup', target: '__end__', data: null },
             ],
             entry_point: '__start__',
-            ...(xray && { config_schema: zodToJsonSchema(CharacterCreationStateSchema) }),
+            // ...(xray && { config_schema: zodToJsonSchema(CharacterCreationStateSchema) }),
           });
           break;
 

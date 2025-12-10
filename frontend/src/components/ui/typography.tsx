@@ -32,7 +32,8 @@ function createTypographyComponent<TTag extends IntrinsicTag>({
 
   const Component = React.forwardRef<Element, Props>(({ className, ...props }, ref) => {
     const Comp = tag as unknown as React.ElementType;
-    return <Comp ref={ref} className={cn(baseClass, className)} {...props} />;
+    // @ts-ignore
+    return <Comp ref={ref as any} className={cn(baseClass, className)} {...(props as any)} />;
   });
 
   Component.displayName = displayName;

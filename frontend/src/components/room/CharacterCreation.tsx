@@ -493,101 +493,6 @@ export default function CharacterCreation({
     }
   };
 
-  const handleGenerateSingle = async (slot: 'portrait' | 'upperBody' | 'fullBody') => {
-    try {
-      // setPreviewLoading(true);
-      setError(null);
-      setPreviewLoadState((prev) => ({ ...prev, [slot]: true }));
-
-      // Ensure placeholders are loaded
-      const refs = await ensurePlaceholderReferences();
-
-      const roomForPayload: Room =
-        assetMode || !room
-          ? {
-              id: 'asset',
-              code: 'ASSET',
-              phase: GamePhase.CHARACTER_CREATION,
-              worldDescription: 'Character sheet asset creation',
-              settings: null,
-              ownerId: '',
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            }
-          : room;
-
-      const payload = buildAvatarPayload(formData, roomForPayload, startingLevel, equippedItems, equipmentItems);
-
-      if (slot === 'portrait') {
-        // Use current portrait as reference if available (for refinement)
-        const currentPortrait = avatarPreview.portrait
-          ? `data:${avatarPreview.portrait.mimeType};base64,${avatarPreview.portrait.data}`
-          : null;
-
-        const portraitPayload = appendReference(payload, refs?.portrait);
-        const portraitRaw = await generateAvatarPortrait(portraitPayload, currentPortrait);
-        let portrait = portraitRaw;
-        try {
-          portrait = await downscalePreviewImage(portraitRaw);
-        } catch (e) {
-          console.warn(e);
-        }
-
-        setAvatarPreview((prev) => ({ ...prev, portrait }));
-      } else if (slot === 'upperBody') {
-        if (!avatarPreview.portrait) {
-          throw new Error(t('characterCreation.errors.missingPortraitForUpper'));
-        }
-
-        const upperBodyPayload = appendReference(payload, refs?.upperBody);
-        // Use current upper body as reference if available
-        const currentUpper = avatarPreview.upperBody
-          ? `data:${avatarPreview.upperBody.mimeType};base64,${avatarPreview.upperBody.data}`
-          : null;
-
-        const upperBodyRaw = await generateAvatarUpperBody(upperBodyPayload, avatarPreview.portrait, currentUpper);
-        let upperBody = upperBodyRaw;
-        try {
-          upperBody = await downscalePreviewImage(upperBodyRaw);
-        } catch (e) {
-          console.warn(e);
-        }
-
-        setAvatarPreview((prev) => ({ ...prev, upperBody }));
-      } else if (slot === 'fullBody') {
-        if (!avatarPreview.portrait || !avatarPreview.upperBody) {
-          throw new Error(t('characterCreation.errors.missingUpperForFull'));
-        }
-
-        const fullBodyPayload = appendReference(payload, refs?.fullBody);
-        // Use current full body as reference if available
-        const currentFull = avatarPreview.fullBody
-          ? `data:${avatarPreview.fullBody.mimeType};base64,${avatarPreview.fullBody.data}`
-          : null;
-
-        const fullBodyRaw = await generateAvatarFullBody(
-          fullBodyPayload,
-          avatarPreview.portrait,
-          avatarPreview.upperBody,
-          currentFull
-        );
-        let fullBody = fullBodyRaw;
-        try {
-          fullBody = await downscalePreviewImage(fullBodyRaw);
-        } catch (e) {
-          console.warn(e);
-        }
-
-        setAvatarPreview((prev) => ({ ...prev, fullBody }));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('characterCreation.errors.generatePortraits'));
-    } finally {
-      // setPreviewLoading(false);
-      setPreviewLoadState((prev) => ({ ...prev, [slot]: false }));
-    }
-  };
-
   const handleGenerateAll = async () => {
     try {
       setError(null);
@@ -912,7 +817,7 @@ export default function CharacterCreation({
   return (
     <>
       {/* World Generation Progress Overlay */}
-      {room && <WorldGenerationProgress roomId={room.id} />}
+      {room && <WorldGenerationProgress />}
 
       {(loading || dataLoading) && (
         <LoadingOverlay

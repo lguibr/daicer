@@ -4,7 +4,7 @@
  * NO side effects - all functions are deterministic
  */
 
-import type { GridTile } from '@daicer/shared/world/world';
+import type { GridTile } from 'daicer/shared/world';
 import type { TerrainChunk } from '../types';
 
 /**
@@ -82,7 +82,8 @@ export function mergeChunkIntoGrid(
     });
   } else if (chunk.biomes && Array.isArray(chunk.biomes)) {
     // Handle 2D biomes array (standard for new system)
-    chunk.biomes.forEach((row: any[], y: number) => {
+    // Handle 2D biomes array (standard for new system)
+    chunk.biomes.forEach((row: any, y: number) => {
       if (!Array.isArray(row)) return;
       row.forEach((tile: any, x: number) => {
         // Calculate world coordinates from chunk offset
@@ -105,7 +106,7 @@ export function mergeChunkIntoGrid(
               ? ({ x: worldX, y: worldY, z: 0, biome: tile, blockType: 'grass' } as GridTile)
               : tile;
 
-          newGrid[targetY][targetX] = tileObj;
+          newGrid[targetY]![targetX] = tileObj;
         }
       });
     });
@@ -174,7 +175,13 @@ export function getChunkKey(x: number, y: number): string {
  * Parses a chunk key back to coordinates
  */
 export function parseChunkKey(key: string): { x: number; y: number } {
-  const [x, y] = key.split(',').map((n) => parseInt(n, 10));
-  if (isNaN(x) || isNaN(y)) return { x: 0, y: 0 };
+  const parts = key.split(',').map((n) => parseInt(n, 10));
+  const x = parts[0];
+  const y = parts[1];
+
+  if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) {
+    return { x: 0, y: 0 };
+  }
+
   return { x, y };
 }

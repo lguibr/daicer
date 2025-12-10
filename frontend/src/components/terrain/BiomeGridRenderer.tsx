@@ -51,7 +51,7 @@ export function BiomeGridRenderer({
     if (!ctx) return;
 
     const height = biomeGrid.length;
-    const width = biomeGrid[0].length;
+    const width = biomeGrid[0]!.length;
 
     // Set canvas size
     canvas.width = width * scale;
@@ -60,10 +60,13 @@ export function BiomeGridRenderer({
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (!biomeGrid[0]) return;
+
     // Draw biome tiles
     for (let y = 0; y < height; y++) {
+      if (!biomeGrid[y]) continue;
       for (let x = 0; x < width; x++) {
-        const biome = biomeGrid[y][x];
+        const biome = biomeGrid[y]![x]!;
         const color = BIOME_COLORS[biome] || '#666666';
 
         ctx.fillStyle = color;

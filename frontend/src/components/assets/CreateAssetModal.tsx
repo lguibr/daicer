@@ -206,11 +206,9 @@ export function CreateAssetModal({ collectionId, assetType, onClose, onSuccess, 
                       ? 'Character Portrait'
                       : assetType === '3d'
                         ? 'Oak Tree'
-                        : assetType === 'structures'
-                          ? 'Castle Tower'
-                          : assetType === 'character-sheet'
-                            ? 'Fighter Character'
-                            : 'Fantasy World'
+                        : assetType === 'character-sheet'
+                          ? 'Fighter Character'
+                          : 'Fantasy World'
                   }
                   className="mt-1 border-midnight-500 bg-midnight-800/50 text-white placeholder:text-shadow-500"
                   disabled={loading}
@@ -232,11 +230,9 @@ export function CreateAssetModal({ collectionId, assetType, onClose, onSuccess, 
                       ? 'A medieval knight in shining armor...'
                       : assetType === '3d'
                         ? 'A tall oak tree with spreading branches...'
-                        : assetType === 'structures'
-                          ? 'A stone castle tower with battlements...'
-                          : assetType === 'character-sheet'
-                            ? 'A brave fighter with high strength...'
-                            : 'A procedurally generated fantasy world...'
+                        : assetType === 'character-sheet'
+                          ? 'A brave fighter with high strength...'
+                          : 'A procedurally generated fantasy world...'
                   }
                   className="mt-1 border-midnight-500 bg-midnight-800/50 text-white placeholder:text-shadow-500"
                   rows={4}
@@ -245,11 +241,9 @@ export function CreateAssetModal({ collectionId, assetType, onClose, onSuccess, 
                 <p className="mt-1 text-xs text-shadow-500">
                   {assetType === '3d'
                     ? 'Describe the model structure and details for AI generation'
-                    : assetType === 'structures'
-                      ? 'Describe the structure components and layout'
-                      : assetType === 'character-sheet'
-                        ? 'Describe character class, stats, and background'
-                        : 'Describe what you want to generate'}
+                    : assetType === 'character-sheet'
+                      ? 'Describe character class, stats, and background'
+                      : 'Describe what you want to generate'}
                 </p>
               </div>
 
@@ -283,8 +277,7 @@ export function CreateAssetModal({ collectionId, assetType, onClose, onSuccess, 
               <div className="rounded-lg border border-aurora-500/30 bg-aurora-500/10 p-3 text-xs text-aurora-200">
                 {assetType === '2d' && '✨ AI generation will start automatically after creation'}
                 {assetType === '3d' && '✨ Voxel model generation will start automatically after creation'}
-                {assetType === 'map' && '✨ Procedural generation will start automatically after creation'}
-                {assetType === 'structures' && '✨ Structure generation will start automatically after creation'}
+
                 {assetType === 'character-sheet' && '✨ Character sheet will be generated automatically'}
               </div>
 

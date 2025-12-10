@@ -6,7 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { FormWizard, FormWizardSteps, FormWizardContent, FormWizardStep, FormWizardActions } from './FormWizard';
-import { Button } from './button';
+// import { Button } from './button'; // Removed unused
 import Input from './input';
 import Label from './label';
 import Textarea from './textarea';
@@ -41,7 +41,7 @@ function ExampleWizard() {
     <FormWizard steps={steps} onComplete={() => console.log('Wizard completed!', formData)} className="w-[600px]">
       <FormWizardSteps />
       <FormWizardContent>
-        <FormWizardStep stepId="basic">
+        <FormWizardStep step="basic">
           <div className="space-y-4">
             <div>
               <Label htmlFor="name">Name</Label>
@@ -55,7 +55,7 @@ function ExampleWizard() {
           </div>
         </FormWizardStep>
 
-        <FormWizardStep stepId="contact">
+        <FormWizardStep step="contact">
           <div className="space-y-4">
             <div>
               <Label htmlFor="email">Email</Label>
@@ -70,7 +70,7 @@ function ExampleWizard() {
           </div>
         </FormWizardStep>
 
-        <FormWizardStep stepId="details">
+        <FormWizardStep step="details">
           <div className="space-y-4">
             <div>
               <Label htmlFor="bio">Bio</Label>
@@ -86,26 +86,17 @@ function ExampleWizard() {
         </FormWizardStep>
       </FormWizardContent>
 
-      <FormWizardActions>
-        {({ previousStep, nextStep, isFirstStep, isLastStep }) => (
-          <div className="flex gap-3">
-            {!isFirstStep && (
-              <Button type="button" onClick={previousStep} variant="ghost" className="flex-1">
-                Back
-              </Button>
-            )}
-            <Button type="button" onClick={nextStep} className="flex-1">
-              {isLastStep ? 'Complete' : 'Next'}
-            </Button>
-          </div>
-        )}
-      </FormWizardActions>
+      <FormWizardActions previousLabel="Back" nextLabel="Next" completeLabel="Complete" />
     </FormWizard>
   );
 }
 
 export const ThreeStepWizard: Story = {
   render: () => <ExampleWizard />,
+  args: {
+    steps: [],
+    children: null,
+  },
 };
 
 export const SingleStep: Story = {
@@ -113,21 +104,19 @@ export const SingleStep: Story = {
     <FormWizard steps={[{ id: 'only', title: 'Single Step' }]} onComplete={() => console.log('Done!')}>
       <FormWizardSteps />
       <FormWizardContent>
-        <FormWizardStep stepId="only">
+        <FormWizardStep step="only">
           <div className="p-6">
             <p>This wizard has only one step</p>
           </div>
         </FormWizardStep>
       </FormWizardContent>
-      <FormWizardActions>
-        {({ nextStep }) => (
-          <Button type="button" onClick={nextStep}>
-            Complete
-          </Button>
-        )}
-      </FormWizardActions>
+      <FormWizardActions completeLabel="Complete" />
     </FormWizard>
   ),
+  args: {
+    steps: [],
+    children: null,
+  },
 };
 
 export const FiveStepWizard: Story = {
@@ -145,27 +134,18 @@ export const FiveStepWizard: Story = {
       <FormWizardSteps />
       <FormWizardContent>
         {[1, 2, 3, 4, 5].map((num) => (
-          <FormWizardStep key={num} stepId={String(num)}>
+          <FormWizardStep key={num} step={String(num)}>
             <div className="p-6">
               <p>Step {num} content</p>
             </div>
           </FormWizardStep>
         ))}
       </FormWizardContent>
-      <FormWizardActions>
-        {({ previousStep, nextStep, isFirstStep, isLastStep }) => (
-          <div className="flex gap-3">
-            {!isFirstStep && (
-              <Button type="button" onClick={previousStep} variant="ghost">
-                Back
-              </Button>
-            )}
-            <Button type="button" onClick={nextStep}>
-              {isLastStep ? 'Finish' : 'Next'}
-            </Button>
-          </div>
-        )}
-      </FormWizardActions>
+      <FormWizardActions previousLabel="Back" nextLabel="Next" completeLabel="Finish" />
     </FormWizard>
   ),
+  args: {
+    steps: [],
+    children: null,
+  },
 };

@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import { useAuthStore } from '@/stores/auth';
+import { auth } from '@/services/firebase';
 
 interface UseStructurePlacementMapResult {
   placementMap: GlobalPlacementMap | null;
@@ -27,7 +27,6 @@ export function useStructurePlacementMap(roomId: string | null | undefined): Use
   const [placementMap, setPlacementMap] = useState<GlobalPlacementMap | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const { idToken } = useAuthStore();
 
   const fetchPlacementMap = useCallback(async () => {
     if (!roomId) {
@@ -36,7 +35,8 @@ export function useStructurePlacementMap(roomId: string | null | undefined): Use
       return;
     }
 
-    if (!idToken) {
+    const user = auth.currentUser;
+    if (!user) {
       setError('Not authenticated');
       return;
     }
@@ -45,6 +45,7 @@ export function useStructurePlacementMap(roomId: string | null | undefined): Use
     setError(null);
 
     try {
+      const idToken = await user.getIdToken();
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const response = await fetch(`${apiUrl}/api/rooms/${roomId}/world-placement`, {
         method: 'GET',
@@ -79,7 +80,7 @@ export function useStructurePlacementMap(roomId: string | null | undefined): Use
     } finally {
       setIsLoading(false);
     }
-  }, [roomId, idToken]);
+  }, [roomId]);
 
   // Fetch on mount and when roomId/token changes
   useEffect(() => {

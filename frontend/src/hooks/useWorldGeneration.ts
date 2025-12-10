@@ -1,15 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
-import { SimplexNoise, Alea } from '@daicer/shared/world-gen/noise';
+import { SimplexNoise } from '@daicer/shared/world-gen/noise';
 import { generateCaveCA } from '@daicer/shared/world-gen/cellular-automata';
 import { generateBSPLayout } from '@daicer/shared/world-gen/bsp';
 import { poissonDiskSampling2D } from '@daicer/shared/world-gen/voronoi';
 import {
   generateStructureFootprints,
   stampDetailedStructures,
-  STRUCTURE_TEMPLATES,
-  structureTileToBiome,
   type Structure,
-  type StructureFloor,
 } from '@daicer/shared/world-gen/structures';
 
 import { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@daicer/shared/world-gen';
@@ -131,7 +128,7 @@ export function useWorldGeneration() {
 
       // Set 3D grid early so structure footprints are visible on all floors
       setBiomeGrid3D(reservedGrid);
-      setBiomeGrid(reservedGrid[3]); // Surface layer
+      setBiomeGrid(reservedGrid[3] || []); // Surface layer
 
       markStepComplete(0, performance.now() - stepStart);
 
@@ -156,7 +153,7 @@ export function useWorldGeneration() {
       }
       markStepComplete(1, performance.now() - stepStart);
 
-      // Step 3: Moisture noise (same SimplexNoise instance, offset coordinates)
+      // Step 3: Moisture noise
       await new Promise((resolve) => setTimeout(resolve, 50));
       stepStart = performance.now();
       const moistureMap: number[][] = [];
@@ -176,7 +173,7 @@ export function useWorldGeneration() {
       }
       markStepComplete(2, performance.now() - stepStart);
 
-      // Step 4: Biome classification (pure deterministic function, respects structure reserves)
+      // Step 4: Biome classification
       await new Promise((resolve) => setTimeout(resolve, 50));
       stepStart = performance.now();
       const terrainGrid: string[][][] = [];
@@ -184,45 +181,53 @@ export function useWorldGeneration() {
       // Initialize 7 floors
       for (let f = 0; f < 7; f++) {
         const floorGrid: string[][] = [];
+        const reservedFloor = reservedGrid[f];
+
         for (let y = 0; y < mapSize; y++) {
           const row: string[] = [];
+          const reservedRow = reservedFloor ? reservedFloor[y] : undefined;
+          const elevRow = elevationMap[y];
+          const moistRow = moistureMap[y];
+
           for (let x = 0; x < mapSize; x++) {
-            // Check if this tile has a structure reservation (check current floor)
-            if (reservedGrid[f] && reservedGrid[f][y] && reservedGrid[f][y][x]) {
-              // Keep structure reservation from Phase 1
-              row.push(reservedGrid[f][y][x]);
-            } else {
-              // Generate biome based on elevation/moisture (only for surface floor)
-              // Non-surface floors without structures are empty (will be black or sky)
-              if (f === 3) {
-                const elev = elevationMap[y][x];
-                const moist = moistureMap[y][x];
+            // Check specific reserved tile
+            const reservedTile = reservedRow ? reservedRow[x] : undefined;
 
-                let biome = 'plains';
+            if (reservedTile) {
+              row.push(reservedTile);
+            } else if (f === 3 && elevRow && moistRow) {
+              const elev = elevRow[x];
+              const moist = moistRow[x];
 
-                if (elev < -0.3) {
-                  biome = 'ocean';
-                } else if (elev < -0.1) {
-                  biome = 'beach';
-                } else if (elev < 0.1) {
-                  if (moist < -0.2) biome = 'desert';
-                  else if (moist < 0.2) biome = 'plains';
-                  else biome = 'swamp';
-                } else if (elev < 0.4) {
-                  if (moist < -0.1) biome = 'savanna';
-                  else if (moist < 0.3) biome = 'forest';
-                  else biome = 'jungle';
-                } else if (elev < 0.6) {
-                  biome = 'hills';
-                } else {
-                  biome = 'mountains';
-                }
-
-                row.push(biome);
-              } else {
-                // Non-surface floors without structures = empty
-                row.push('');
+              // Ensure values are numbers (though they should be)
+              if (typeof elev !== 'number' || typeof moist !== 'number') {
+                row.push('plains');
+                continue;
               }
+
+              let biome = 'plains';
+
+              if (elev < -0.3) {
+                biome = 'ocean';
+              } else if (elev < -0.1) {
+                biome = 'beach';
+              } else if (elev < 0.1) {
+                if (moist < -0.2) biome = 'desert';
+                else if (moist < 0.2) biome = 'plains';
+                else biome = 'swamp';
+              } else if (elev < 0.4) {
+                if (moist < -0.1) biome = 'savanna';
+                else if (moist < 0.3) biome = 'forest';
+                else biome = 'jungle';
+              } else if (elev < 0.6) {
+                biome = 'hills';
+              } else {
+                biome = 'mountains';
+              }
+
+              row.push(biome);
+            } else {
+              row.push('');
             }
           }
           floorGrid.push(row);
@@ -230,14 +235,14 @@ export function useWorldGeneration() {
         terrainGrid.push(floorGrid);
       }
 
-      setBiomeGrid(terrainGrid[3]); // Show surface floor
+      setBiomeGrid(terrainGrid[3] || []); // Show surface floor
       setBiomeGrid3D(terrainGrid); // Update 3D grid with terrain
       markStepComplete(3, performance.now() - stepStart);
 
       // Step 5: Cellular Automata caves (uses master seed)
       await new Promise((resolve) => setTimeout(resolve, 50));
       stepStart = performance.now();
-      const caveGrid = generateCaveCA(
+      generateCaveCA(
         mapSize,
         mapSize,
         `${masterSeed}-caves`, // Derived from master seed
@@ -253,7 +258,7 @@ export function useWorldGeneration() {
       // Step 6: BSP room layout (uses master seed)
       await new Promise((resolve) => setTimeout(resolve, 50));
       stepStart = performance.now();
-      const rooms = generateBSPLayout(
+      generateBSPLayout(
         params.bspSize,
         params.bspSize,
         `${masterSeed}-bsp`, // Derived from master seed
@@ -264,7 +269,7 @@ export function useWorldGeneration() {
       // Step 7: Poisson disc feature placement (uses master seed)
       await new Promise((resolve) => setTimeout(resolve, 50));
       stepStart = performance.now();
-      const featurePoints = poissonDiskSampling2D(
+      poissonDiskSampling2D(
         mapSize,
         mapSize,
         params.featureMinDistance,
@@ -273,12 +278,12 @@ export function useWorldGeneration() {
       );
       markStepComplete(6, performance.now() - stepStart);
 
-      // Step 8: PHASE 2 - Stamp Detailed Structures (AFTER terrain)
+      // Step 8: Stamp Detailed Structures
       await new Promise((resolve) => setTimeout(resolve, 50));
       stepStart = performance.now();
       const finalGrid = stampDetailedStructures(terrainGrid, detailedStructures, terrainGrid);
-      setBiomeGrid(finalGrid[3]); // Surface layer (floor 0 at index 3)
-      setBiomeGrid3D(finalGrid); // Full 3D grid for multi-floor exploration
+      setBiomeGrid(finalGrid[3] || []); // Surface layer
+      setBiomeGrid3D(finalGrid);
 
       // Convert structures for visualization
       const newStructures: any[] = detailedStructures.map((s: Structure) => ({

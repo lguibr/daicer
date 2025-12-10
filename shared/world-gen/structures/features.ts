@@ -3,7 +3,7 @@
  * Placement of loot, traps, decorations within structures
  */
 
-import type { Structure, FeatureZone, FeatureType, StructureFloor } from './types';
+import type { Structure, FeatureZone, StructureFloor } from './types';
 import { Alea } from '../noise/alea';
 
 /**
@@ -54,13 +54,20 @@ function generateHouseFeatures(structure: Structure, rng: () => number): Feature
 
     // Place furniture in corners
     for (let y = 0; y < floorTiles.length; y++) {
-      for (let x = 0; x < floorTiles[y].length; x++) {
-        if (floorTiles[y][x].tileType === 'floor') {
+      const row = floorTiles[y];
+      if (!row) continue;
+
+      for (let x = 0; x < row.length; x++) {
+        if (row[x]?.tileType === 'floor') {
           // Check if corner (walls on 2 adjacent sides)
-          const hasWallLeft = x > 0 && floorTiles[y][x - 1].tileType === 'wall';
-          const hasWallRight = x < floorTiles[y].length - 1 && floorTiles[y][x + 1].tileType === 'wall';
-          const hasWallUp = y > 0 && floorTiles[y - 1][x].tileType === 'wall';
-          const hasWallDown = y < floorTiles.length - 1 && floorTiles[y + 1][x].tileType === 'wall';
+          const hasWallLeft = x > 0 && row[x - 1]?.tileType === 'wall';
+          const hasWallRight = x < row.length - 1 && row[x + 1]?.tileType === 'wall';
+
+          const rowAbove = y > 0 ? floorTiles[y - 1] : undefined;
+          const hasWallUp = rowAbove ? rowAbove[x]?.tileType === 'wall' : false;
+
+          const rowBelow = y < floorTiles.length - 1 ? floorTiles[y + 1] : undefined;
+          const hasWallDown = rowBelow ? rowBelow[x]?.tileType === 'wall' : false;
 
           if ((hasWallLeft || hasWallRight) && (hasWallUp || hasWallDown)) {
             if (rng() < 0.5) {
@@ -83,16 +90,25 @@ function generateHouseFeatures(structure: Structure, rng: () => number): Feature
     for (let l = 0; l < numLights; l++) {
       const attempts = 30;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
-        const y = Math.floor(rng() * floorTiles.length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        const x = Math.floor(rng() * firstRow.length);
+        const y = Math.floor(rng() * floorTiles.length);
+        const row = floorTiles[y];
+
+        if (row?.[x]?.tileType === 'floor') {
           // Check if adjacent to wall
-          const nearWall =
-            (x > 0 && floorTiles[y][x - 1].tileType === 'wall') ||
-            (x < floorTiles[y].length - 1 && floorTiles[y][x + 1].tileType === 'wall') ||
-            (y > 0 && floorTiles[y - 1][x].tileType === 'wall') ||
-            (y < floorTiles.length - 1 && floorTiles[y + 1][x].tileType === 'wall');
+          const hasWallLeft = x > 0 && row[x - 1]?.tileType === 'wall';
+          const hasWallRight = x < row.length - 1 && row[x + 1]?.tileType === 'wall';
+
+          const rowAbove = y > 0 ? floorTiles[y - 1] : undefined;
+          const hasWallUp = rowAbove ? rowAbove[x]?.tileType === 'wall' : false;
+
+          const rowBelow = y < floorTiles.length - 1 ? floorTiles[y + 1] : undefined;
+          const hasWallDown = rowBelow ? rowBelow[x]?.tileType === 'wall' : false;
+
+          const nearWall = hasWallLeft || hasWallRight || hasWallUp || hasWallDown;
 
           if (nearWall) {
             zones.push({
@@ -127,8 +143,10 @@ function generateCastleFeatures(structure: Structure, rng: () => number): Featur
     // Place treasure/loot in isolated rooms (far from doors)
     const floorPositions: { x: number; y: number }[] = [];
     for (let y = 0; y < floorTiles.length; y++) {
-      for (let x = 0; x < floorTiles[y].length; x++) {
-        if (floorTiles[y][x].tileType === 'floor') {
+      const row = floorTiles[y];
+      if (!row) continue;
+      for (let x = 0; x < row.length; x++) {
+        if (row[x]?.tileType === 'floor') {
           floorPositions.push({ x, y });
         }
       }
@@ -138,15 +156,18 @@ function generateCastleFeatures(structure: Structure, rng: () => number): Featur
       // Place 1-2 loot zones per floor
       const numLoot = Math.floor(rng() * 2) + 1;
       for (let l = 0; l < numLoot; l++) {
-        const pos = floorPositions[Math.floor(rng() * floorPositions.length)];
-        zones.push({
-          x: structure.worldX + pos.x,
-          y: structure.worldY + pos.y,
-          floor,
-          featureType: 'loot',
-          radius: 2,
-          density: 0.6,
-        });
+        const posIndex = Math.floor(rng() * floorPositions.length);
+        const pos = floorPositions[posIndex];
+        if (pos) {
+          zones.push({
+            x: structure.worldX + pos.x,
+            y: structure.worldY + pos.y,
+            floor,
+            featureType: 'loot',
+            radius: 2,
+            density: 0.6,
+          });
+        }
       }
     }
 
@@ -155,10 +176,13 @@ function generateCastleFeatures(structure: Structure, rng: () => number): Featur
     for (let l = 0; l < numLights; l++) {
       const attempts = 30;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
+
+        const x = Math.floor(rng() * firstRow.length);
         const y = Math.floor(rng() * floorTiles.length);
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        if (floorTiles[y]?.[x]?.tileType === 'floor') {
           zones.push({
             x: structure.worldX + x,
             y: structure.worldY + y,
@@ -176,15 +200,18 @@ function generateCastleFeatures(structure: Structure, rng: () => number): Featur
     const numDecorations = Math.floor(rng() * 5) + 3;
     for (let d = 0; d < numDecorations; d++) {
       if (floorPositions.length > 0) {
-        const pos = floorPositions[Math.floor(rng() * floorPositions.length)];
-        zones.push({
-          x: structure.worldX + pos.x,
-          y: structure.worldY + pos.y,
-          floor,
-          featureType: 'decoration',
-          radius: 1,
-          density: 0.7,
-        });
+        const posIndex = Math.floor(rng() * floorPositions.length);
+        const pos = floorPositions[posIndex];
+        if (pos) {
+          zones.push({
+            x: structure.worldX + pos.x,
+            y: structure.worldY + pos.y,
+            floor,
+            featureType: 'decoration',
+            radius: 1,
+            density: 0.7,
+          });
+        }
       }
     }
   }
@@ -205,14 +232,21 @@ function generateDungeonFeatures(structure: Structure, rng: () => number): Featu
 
     // Place traps in corridors (narrow passages)
     for (let y = 1; y < floorTiles.length - 1; y++) {
-      for (let x = 1; x < floorTiles[y].length - 1; x++) {
-        if (floorTiles[y][x].tileType === 'floor') {
+      const row = floorTiles[y];
+      if (!row) continue;
+
+      for (let x = 1; x < row.length - 1; x++) {
+        if (row[x]?.tileType === 'floor') {
           // Count adjacent walls to detect corridors
           let wallCount = 0;
-          if (floorTiles[y - 1][x].tileType === 'wall') wallCount++;
-          if (floorTiles[y + 1][x].tileType === 'wall') wallCount++;
-          if (floorTiles[y][x - 1].tileType === 'wall') wallCount++;
-          if (floorTiles[y][x + 1].tileType === 'wall') wallCount++;
+          if (row[x - 1]?.tileType === 'wall') wallCount++;
+          if (row[x + 1]?.tileType === 'wall') wallCount++;
+
+          const rowAbove = floorTiles[y - 1];
+          if (rowAbove?.[x]?.tileType === 'wall') wallCount++;
+
+          const rowBelow = floorTiles[y + 1];
+          if (rowBelow?.[x]?.tileType === 'wall') wallCount++;
 
           // Corridor if 2 opposite walls
           if (wallCount === 2 && rng() < 0.2) {
@@ -234,16 +268,24 @@ function generateDungeonFeatures(structure: Structure, rng: () => number): Featu
     for (let l = 0; l < numLoot; l++) {
       const attempts = 50;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
-        const y = Math.floor(rng() * floorTiles.length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        const x = Math.floor(rng() * firstRow.length);
+        const y = Math.floor(rng() * floorTiles.length);
+        const row = floorTiles[y];
+
+        if (row?.[x]?.tileType === 'floor') {
           // Check if in open area (few adjacent walls)
           let wallCount = 0;
-          if (y > 0 && floorTiles[y - 1][x].tileType === 'wall') wallCount++;
-          if (y < floorTiles.length - 1 && floorTiles[y + 1][x].tileType === 'wall') wallCount++;
-          if (x > 0 && floorTiles[y][x - 1].tileType === 'wall') wallCount++;
-          if (x < floorTiles[y].length - 1 && floorTiles[y][x + 1].tileType === 'wall') wallCount++;
+          if (row[x - 1]?.tileType === 'wall') wallCount++;
+          if (row[x + 1]?.tileType === 'wall') wallCount++;
+
+          const rowAbove = y > 0 ? floorTiles[y - 1] : undefined;
+          if (rowAbove?.[x]?.tileType === 'wall') wallCount++;
+
+          const rowBelow = y < floorTiles.length - 1 ? floorTiles[y + 1] : undefined;
+          if (rowBelow?.[x]?.tileType === 'wall') wallCount++;
 
           if (wallCount <= 1) {
             zones.push({
@@ -265,10 +307,13 @@ function generateDungeonFeatures(structure: Structure, rng: () => number): Featu
     for (let l = 0; l < numLights; l++) {
       const attempts = 30;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
+
+        const x = Math.floor(rng() * firstRow.length);
         const y = Math.floor(rng() * floorTiles.length);
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        if (floorTiles[y]?.[x]?.tileType === 'floor') {
           zones.push({
             x: structure.worldX + x,
             y: structure.worldY + y,
@@ -300,10 +345,13 @@ function generateTempleFeatures(structure: Structure, rng: () => number): Featur
   for (let d = 0; d < numDecorations; d++) {
     const attempts = 50;
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const x = Math.floor(rng() * floorTiles[0].length);
+      const firstRow = floorTiles[0];
+      if (!firstRow) break;
+
+      const x = Math.floor(rng() * firstRow.length);
       const y = Math.floor(rng() * floorTiles.length);
 
-      if (floorTiles[y][x].tileType === 'floor') {
+      if (floorTiles[y]?.[x]?.tileType === 'floor') {
         zones.push({
           x: structure.worldX + x,
           y: structure.worldY + y,
@@ -322,10 +370,13 @@ function generateTempleFeatures(structure: Structure, rng: () => number): Featur
   for (let l = 0; l < numLights; l++) {
     const attempts = 30;
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const x = Math.floor(rng() * floorTiles[0].length);
+      const firstRow = floorTiles[0];
+      if (!firstRow) break;
+
+      const x = Math.floor(rng() * firstRow.length);
       const y = Math.floor(rng() * floorTiles.length);
 
-      if (floorTiles[y][x].tileType === 'floor') {
+      if (floorTiles[y]?.[x]?.tileType === 'floor') {
         zones.push({
           x: structure.worldX + x,
           y: structure.worldY + y,
@@ -358,10 +409,13 @@ function generateTowerFeatures(structure: Structure, rng: () => number): Feature
     for (let l = 0; l < numLights; l++) {
       const attempts = 30;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
+
+        const x = Math.floor(rng() * firstRow.length);
         const y = Math.floor(rng() * floorTiles.length);
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        if (floorTiles[y]?.[x]?.tileType === 'floor') {
           zones.push({
             x: structure.worldX + x,
             y: structure.worldY + y,
@@ -377,21 +431,24 @@ function generateTowerFeatures(structure: Structure, rng: () => number): Feature
   }
 
   // Major loot at the top floor
-  const topFloor = Math.max(...floors);
+  const topFloor = Math.max(...floors) as StructureFloor;
   const topTiles = structure.tiles[topFloor];
-  if (topTiles) {
-    const centerX = Math.floor(topTiles[0].length / 2);
-    const centerY = Math.floor(topTiles.length / 2);
+  if (topTiles && topTiles.length > 0) {
+    const firstRow = topTiles[0];
+    if (firstRow) {
+      const centerX = Math.floor(firstRow.length / 2);
+      const centerY = Math.floor(topTiles.length / 2);
 
-    if (topTiles[centerY]?.[centerX]?.tileType === 'floor') {
-      zones.push({
-        x: structure.worldX + centerX,
-        y: structure.worldY + centerY,
-        floor: topFloor,
-        featureType: 'loot',
-        radius: 3,
-        density: 0.9,
-      });
+      if (topTiles[centerY]?.[centerX]?.tileType === 'floor') {
+        zones.push({
+          x: structure.worldX + centerX,
+          y: structure.worldY + centerY,
+          floor: topFloor,
+          featureType: 'loot',
+          radius: 3,
+          density: 0.9,
+        });
+      }
     }
   }
 
@@ -412,10 +469,13 @@ function generateCaveFeatures(structure: Structure, rng: () => number): FeatureZ
   for (let l = 0; l < numLights; l++) {
     const attempts = 30;
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const x = Math.floor(rng() * floorTiles[0].length);
+      const firstRow = floorTiles[0];
+      if (!firstRow) break;
+
+      const x = Math.floor(rng() * firstRow.length);
       const y = Math.floor(rng() * floorTiles.length);
 
-      if (floorTiles[y][x].tileType === 'floor') {
+      if (floorTiles[y]?.[x]?.tileType === 'floor') {
         zones.push({
           x: structure.worldX + x,
           y: structure.worldY + y,

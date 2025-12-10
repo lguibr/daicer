@@ -7,7 +7,7 @@ import { task } from '@langchain/langgraph';
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import { generateText, streamText } from '@/services/llm';
-import type { WorldConfigState } from '@daicer/shared/graph-states';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
 import { emitProgress } from '@/graph/shared-nodes/stream-progress';
 
 /**

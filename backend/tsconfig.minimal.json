@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@daicer/shared/*": ["../shared/*"]
+    }
+  },
+  "include": ["src/types", "src/utils", "src/services/llm/tools/map-tools.ts", "src/graph/state.ts", "src/graph/gameplay-graph.ts", "src/graph/grid-generation-graph.ts", "src/graph/character"]
+}

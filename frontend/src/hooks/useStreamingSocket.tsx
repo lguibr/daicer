@@ -184,7 +184,7 @@ export default function useStreamingSocket(roomId?: string) {
             // Update player ready status
             setState((prev) => ({
               ...prev,
-              players: prev.players.map((p) => (p.id === data.playerId ? { ...p, isReady: data.ready } : p)),
+              players: prev.players.map((p) => (p.id === data.userId ? { ...p, isReady: data.isReady } : p)),
             }));
           },
           onPhaseChanged: (data) => {

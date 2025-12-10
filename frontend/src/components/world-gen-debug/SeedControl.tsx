@@ -3,7 +3,6 @@
  * Reusable seed input with randomize button
  */
 
-import React from 'react';
 import Input from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';

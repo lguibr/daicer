@@ -10,9 +10,9 @@ import {
   generateGlobalPlacementMap,
   type GlobalPlacementMap,
   type StructurePlacement,
-  type RoadSegment,
   type PlacementMapParams,
-} from '@daicer/shared/world-gen/structures';
+} from '@daicer/shared/world-gen/structures/placement-map';
+import type { RoadSegment } from '@daicer/shared/world-gen/structures/types';
 import { logger } from '../utils/logger';
 
 /**

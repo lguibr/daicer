@@ -16,16 +16,10 @@ import { ApiError } from '@/middleware/error';
 import { logger } from '@/utils/logger';
 import { setupSSE, sendSSE, sendSSEError } from '@/middleware/sse';
 import { GamePhase } from '@/types/index';
-import {
-  DMStoryInputSchema,
-  DMStoryOutputSchema,
-  WorldConfigInputSchema,
-  WorldConfigOutputSchema,
-  CharacterInputSchema,
-  CharacterOutputSchema,
-  validateSection1Dependencies,
-  validateSection2Dependencies,
-} from '@daicer/shared/graph-states';
+import { DMStoryInputSchema, DMStoryOutputSchema } from '@daicer/shared/graph-states/dm-story-state';
+import { WorldConfigInputSchema, WorldConfigOutputSchema } from '@daicer/shared/graph-states/world-config-state';
+import { CharacterInputSchema, CharacterOutputSchema } from '@daicer/shared/graph-states/character-state';
+import { validateSection1Dependencies, validateSection2Dependencies } from '@daicer/shared/graph-states/mergers';
 import { createDMStoryGraph } from '@/graph/world/dm-story';
 import { createWorldConfigGraph } from '@/graph/world/world-config';
 import { createCharacterSetupGraph } from '@/graph/character/setup';

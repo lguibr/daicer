@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { characterSheetSchema } from '../character/schema';
+// import { characterSheetSchema } from '../character/schema';
 
 /**
  * Character State Schema
@@ -18,7 +18,7 @@ export const CharacterStateSchema = z.object({
   // === REQUIRED INPUT ===
   playerId: z.string().min(1, 'Player ID required'),
   roomId: z.string().min(1, 'Room ID required'),
-  character: characterSheetSchema.describe('Complete character sheet from player'),
+  character: z.any().describe('Complete character sheet from player'),
 
   // === REQUIRED Dependencies from Section 1 & 2 ===
   worldHistory: z
@@ -76,7 +76,7 @@ export type CharacterInput = z.infer<typeof CharacterInputSchema>;
 export const CharacterOutputSchema = z.object({
   playerId: z.string().min(1),
   openingNarrative: z.string().min(1, 'Opening narrative must be generated'),
-  character: characterSheetSchema,
+  character: z.any(),
 });
 
 export type CharacterOutput = z.infer<typeof CharacterOutputSchema>;

@@ -10,7 +10,7 @@
 
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
-import { WorldConfigStateSchema } from '@daicer/shared/graph-states';
+import { WorldConfigStateSchema } from '@daicer/shared/graph-states/world-config-state';
 
 // Nodes
 import { placeStructuresNode } from './nodes/structures';

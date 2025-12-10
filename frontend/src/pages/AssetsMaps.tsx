@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,7 +11,7 @@ import { WorldGenerator } from '@/components/terrain/WorldGenerator';
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
 import { useWorldGeneration, type GenerationParams } from '@/hooks/useWorldGeneration';
 import { PrivateLayout } from '@/components/layout';
-import { GridTile } from '@daicer/shared/world/world';
+import { GridTile } from 'daicer/shared/world';
 
 export default function AssetsMapsPage() {
   const { worlds, addWorld, removeWorld } = useAssetsStore();
@@ -34,7 +34,7 @@ export default function AssetsMapsPage() {
       seed,
       width: 128,
       height: 128,
-      params: params as any,
+      params: params as unknown as Record<string, unknown>,
       createdAt: new Date(),
       createdBy: 'local',
     });
@@ -59,7 +59,7 @@ export default function AssetsMapsPage() {
   const selectedWorldChunkGenerator = useMemo(() => {
     if (!selectedWorldData) {
       return {
-        generateChunk: (worldX: number, worldY: number, width: number, height: number) =>
+        generateChunk: (_worldX: number, _worldY: number, width: number, height: number) =>
           Array(height)
             .fill(0)
             .map(() =>
@@ -71,7 +71,7 @@ export default function AssetsMapsPage() {
                 blockType: 'grass',
               } as GridTile)
             ),
-        generateChunk3D: (worldX: number, worldY: number, width: number, height: number) =>
+        generateChunk3D: (_worldX: number, _worldY: number, width: number, height: number) =>
           Array(1)
             .fill(0)
             .map(() =>

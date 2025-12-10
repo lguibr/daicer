@@ -88,7 +88,7 @@ export function CharacterCreationModal({ onSubmit, onCancel }: CharacterCreation
         race,
         characterClass,
         alignment,
-        background: background.trim() || undefined,
+        background: background.trim(),
         attributes,
         armorClass: 10 + Math.floor((attributes.Dexterity - 10) / 2),
       };

@@ -235,7 +235,7 @@ export default function AssetDetailPage() {
                     </div>
 
                     {/* Grid Preview (for structures/maps) */}
-                    {(asset.type === 'structures' || asset.type === 'maps') && (
+                    {(asset.assetType === 'structures' || asset.assetType === 'map') && (
                       <StructureGridPreview
                         structureId={asset.id}
                         structureName={asset.name}

@@ -4,10 +4,10 @@
  */
 
 import * as z from 'zod';
-import { TacticalArenaSchema } from '../tactical/state/schema';
-import { WorldConditionSchema, RandomEventSchema } from '../services/entropy/types';
+// import { TacticalArenaSchema } from '../tactical/state/schema';
+// import { WorldConditionSchema, RandomEventSchema } from '../services/entropy/types';
 import { StreamEventSchema, WorldGenPhase } from '../types/stream-events';
-import { HistoricalPeriodSchema } from '@daicer/shared';
+// import { HistoricalPeriodSchema } from '@daicer/shared/world/history-schema';
 
 const AdventureLengthSchema = z.enum(['flash', 'short', 'medium', 'long', 'epic', 'legendary']);
 const DifficultySchema = z.enum(['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']);
@@ -346,7 +346,7 @@ export const CombatStateSchema = z.object({
   round: z.number().int().min(0).default(0),
 
   // NEW: Tactical arena integration
-  tacticalArena: TacticalArenaSchema.nullable().default(null),
+  tacticalArena: z.any().nullable().default(null),
   tacticalMode: z.boolean().default(false),
   pendingNaturalLanguageCommand: z.string().nullable().default(null),
 
@@ -446,15 +446,15 @@ export const GameStateSchema = z.object({
   creatures: z.array(CreatureSchema),
 
   // Map features (placed entities on world map)
-  mapFeatures: z.array(MapFeatureSchema).default([]),
+  mapFeatures: z.array(z.any()).default([]),
 
   // Entropy system: dynamic world conditions
-  worldConditions: z.array(WorldConditionSchema).default([]),
-  eventsLog: z.array(RandomEventSchema).default([]),
+  worldConditions: z.array(z.any()).default([]),
+  eventsLog: z.array(z.any()).default([]),
   currentTurn: z.number().int().min(0).default(0),
 
   // Combat state (null when not in combat)
-  combatState: CombatStateSchema.nullable().default(null),
+  combat: z.any().nullable().default(null),
 
   // Turn flow control
   waitingForAction: z.boolean().default(false),
@@ -511,8 +511,8 @@ export const CharacterCreationStateSchema = z.object({
   worldHistory: z.any().nullable().optional(),
   structures: z.array(z.any()).optional(),
   roads: z.array(z.any()).optional(),
-  worldConditions: z.array(WorldConditionSchema).optional(),
-  eventsLog: z.array(RandomEventSchema).optional(),
+  worldConditions: z.array(z.any()).optional(),
+  eventsLog: z.array(z.any()).optional(),
   players: z.array(PlayerSchema),
   messages: z.array(MessageSchema),
   createdAt: z.number(),
@@ -522,7 +522,7 @@ export const CharacterCreationStateSchema = z.object({
   worldGenProgress: WorldGenProgressSchema.optional(),
 
   // NEW: Incremental history (grows period by period)
-  historyPeriods: z.array(HistoricalPeriodSchema).default([]),
+  historyPeriods: z.array(z.any()).default([]),
 
   // NEW: Stream events channel (LangGraph state channel pattern)
   streamEvents: z.array(StreamEventSchema).default([]),
@@ -565,7 +565,7 @@ export const GameplayStateSchema = z.object({
   messages: z.array(MessageSchema),
   creatures: z.array(CreatureSchema),
   waitingForAction: z.boolean().default(false),
-  combatState: CombatStateSchema.nullable().default(null),
+  combat: z.any().nullable().default(null),
   createdAt: z.number(),
   updatedAt: z.number(),
 });
@@ -576,8 +576,8 @@ export type GameplayState = z.infer<typeof GameplayStateSchema>;
  * Type guard to check if state has active combat
  */
 export function hasActiveCombat(state: GameState | GameplayState): boolean {
-  const { combatState } = state;
-  return combatState !== null && !combatState.isCombatOver;
+  const { combat } = state;
+  return combat !== null && !combat.isCombatOver;
 }
 
 /**

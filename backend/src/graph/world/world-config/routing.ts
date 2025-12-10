@@ -3,7 +3,7 @@
  * Conditional edge functions for terrain generation flow
  */
 
-import type { WorldConfigState } from '@daicer/shared/graph-states';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
 import { logger } from '@/utils/logger';
 
 /**

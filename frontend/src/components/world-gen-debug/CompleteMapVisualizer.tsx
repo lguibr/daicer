@@ -20,8 +20,7 @@ export function CompleteMapVisualizer() {
   const [showParams, setShowParams] = useState(false);
 
   // Use the new reusable hook
-  const { isGenerating, steps, biomeGrid, biomeGrid3D, structures, generateWorld, createChunkGenerator } =
-    useWorldGeneration();
+  const { isGenerating, steps, grid, grid3D, structures, generateWorld, createChunkGenerator } = useWorldGeneration();
 
   // Local state for parameters (initialized with defaults)
   const [params, setParams] = useState({
@@ -51,17 +50,45 @@ export function CompleteMapVisualizer() {
   const chunkGenerator = useMemo(() => {
     const generator = createChunkGenerator(seed, params);
     return {
-      generateChunk: (worldX: number, worldY: number, width: number, height: number): string[][] => {
+      generateChunk: (worldX: number, worldY: number, width: number, height: number) => {
         const chunk3D = generator(worldX, worldY, width, height);
         // Return surface layer (floor 3 - index 3), or empty grid if not available
-        return (
+        const surfaceLayer =
           chunk3D[3] ||
           Array(height)
             .fill(0)
-            .map(() => Array(width).fill(''))
+            .map(() => Array(width).fill(''));
+
+        return surfaceLayer.map((row, y) =>
+          row.map(
+            (cell, x) =>
+              ({
+                x: worldX + x,
+                y: worldY + y,
+                z: 0,
+                blockType: 'grass',
+                biome: cell,
+              }) as any
+          )
         );
       },
-      generateChunk3D: generator,
+      generateChunk3D: (worldX: number, worldY: number, width: number, height: number) => {
+        const chunk3D = generator(worldX, worldY, width, height);
+        return chunk3D.map((layer, floorIndex) =>
+          layer.map((row, y) =>
+            row.map(
+              (cell, x) =>
+                ({
+                  x: worldX + x,
+                  y: worldY + y,
+                  z: floorIndex - 3,
+                  blockType: 'grass',
+                  biome: cell,
+                }) as any
+            )
+          )
+        );
+      },
     };
   }, [createChunkGenerator, seed, params]);
 
@@ -184,9 +211,7 @@ export function CompleteMapVisualizer() {
                         <span className={step.completed ? 'text-green-400 font-medium' : 'text-muted-foreground'}>
                           {step.name}
                         </span>
-                        {step.deterministic && (
-                          <Lock className="w-3 h-3 text-green-400" title="Deterministic with seed" />
-                        )}
+                        {step.deterministic && <Lock className="w-3 h-3 text-green-400" />}
                         {step.timeTaken !== undefined && (
                           <span className="text-xs text-blue-400">({step.timeTaken.toFixed(0)}ms)</span>
                         )}
@@ -244,8 +269,8 @@ export function CompleteMapVisualizer() {
         </CardHeader>
         <CardContent>
           <TerrainExplorer
-            biomeGrid={biomeGrid.length > 0 ? biomeGrid : [['plains']]}
-            biomeGrid3D={biomeGrid3D}
+            biomeGrid={grid.length > 0 ? grid : ([[{ biome: 'plains', x: 0, y: 0, z: 0, blockType: 'grass' }]] as any)}
+            biomeGrid3D={grid3D as any}
             structures={structures}
             roomSize={32}
             enableInfinite

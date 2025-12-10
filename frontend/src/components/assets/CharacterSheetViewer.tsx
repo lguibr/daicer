@@ -117,7 +117,7 @@ export function CharacterSheetViewer({ characterData, onClose }: CharacterSheetV
             <div className="relative cursor-pointer group" onClick={handlePortraitClick} title="Click to zoom portrait">
               <div
                 className="overflow-hidden rounded-xl border-4 border-accent/50 hover:border-accent transition-all duration-300 hover:shadow-lg flex items-center justify-center bg-black"
-                style={{ height: currentStyle.height }}
+                style={{ height: currentStyle?.height }}
               >
                 <img
                   src={currentUrl}

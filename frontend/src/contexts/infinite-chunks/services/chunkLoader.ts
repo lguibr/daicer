@@ -4,9 +4,11 @@
  * NO WebSocket - simple REST API only
  */
 
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
+import type { GlobalPlacementMap } from 'daicer/shared/world-gen/structures';
+import type { GridTile } from 'daicer/shared/world';
 import { auth } from '../../../services/firebase';
 import type { TerrainChunk, ChunkGenerator, InfiniteChunksConfig } from '../types';
+
 import { getStructuresForChunk, stampStructureOnChunk } from './structureGenerator';
 import { getChunkKey } from './gridExpander';
 
@@ -49,17 +51,41 @@ export async function loadChunk(
         finalBiomes = stampStructureOnChunk(finalBiomes, structure, worldX, worldY);
       }
 
-      const result = {
+      const tiles: GridTile[][] = finalBiomes.map((row, y) =>
+        row.map(
+          (biome, x) =>
+            ({
+              x: worldX + x,
+              y: worldY + y,
+              z: 0,
+              biome,
+              blockType: 'grass',
+              lightLevel: 15,
+            }) as GridTile
+        )
+      );
+
+      const result: TerrainChunk = {
         chunkX,
         chunkY,
         worldOffsetX: worldX,
         worldOffsetY: worldY,
         biomes: finalBiomes,
+        tiles,
+        seed: roomId,
+        z: 0,
+        generated: true,
+        hasStructure: structures.length > 0,
+        hasCave: false,
+        isStartingArea: chunkX === 0 && chunkY === 0,
+        features: [],
         structures: structures.map((s) => ({
           name: s.name,
           type: s.type,
           x: s.worldX,
           y: s.worldY,
+          rotation: 0,
+          floor: 0,
           material: s.material,
         })),
       };

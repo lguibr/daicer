@@ -5,7 +5,7 @@
 
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from '@/utils/logger';
-import type { GridChunk } from '@daicer/shared';
+import type { GridChunk } from '@daicer/shared/world/grid-chunk-schema';
 import { generateGridChunk } from './world-gen/grid-chunk-generator';
 import { collapseGrid } from './world-gen/wfc/wfc-solver';
 import { getPresetTiles } from './world-gen/wfc/wfc-presets';

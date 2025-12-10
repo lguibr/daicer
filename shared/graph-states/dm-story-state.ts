@@ -7,8 +7,8 @@
  */
 
 import { z } from 'zod';
-import { HistoricalPeriodSchema } from '../world/history-schema';
-import { WorldConditionSchema } from '../world/condition-schema';
+// import { HistoricalPeriodSchema } from '../world/history-schema';
+// import { WorldConditionSchema } from '../world/condition-schema';
 
 /**
  * DM Style subsection defining narrative preferences
@@ -60,13 +60,13 @@ export const DMStoryStateSchema = z.object({
   }),
 
   // === INTERNAL STATE (managed by graph nodes) ===
-  historyPeriods: z.array(HistoricalPeriodSchema).default([]).describe('Generated 50-year historical periods'),
+  historyPeriods: z.array(z.any()).default([]).describe('Generated 50-year historical periods'),
   currentPeriod: z.number().int().default(0).describe('Current period being generated (0-indexed)'),
   totalPeriods: z.number().int().default(0).describe('Total periods to generate (calculated from historyDepth)'),
 
   // === OUTPUT GUARANTEES (populated by final nodes) ===
   worldHistory: z.string().optional().describe('Complete synthesized world history'),
-  conditions: z.array(WorldConditionSchema).default([]).describe('5 world conditions'),
+  conditions: z.array(z.any()).default([]).describe('5 world conditions'),
 });
 
 export type DMStoryState = z.infer<typeof DMStoryStateSchema>;
@@ -91,8 +91,8 @@ export type DMStoryInput = z.infer<typeof DMStoryInputSchema>;
 export const DMStoryOutputSchema = z.object({
   roomId: z.string().min(1),
   worldHistory: z.string().min(1, 'World history must be generated'),
-  conditions: z.array(WorldConditionSchema).min(1, 'Conditions must be generated'),
-  historyPeriods: z.array(HistoricalPeriodSchema),
+  conditions: z.array(z.any()).min(1, 'Conditions must be generated'),
+  historyPeriods: z.array(z.any()),
 });
 
 export type DMStoryOutput = z.infer<typeof DMStoryOutputSchema>;

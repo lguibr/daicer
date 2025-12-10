@@ -4,7 +4,7 @@
  * Default 4x4 for maximum granularity and smooth loading
  */
 
-import { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS } from '@daicer/shared/world-gen';
+import { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS } from '@daicer/shared/world-gen/simple-gen';
 import { logger } from '@/utils/logger';
 import { getStructuresForChunk } from './structure-stamper';
 

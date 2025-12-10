@@ -63,7 +63,13 @@ export function WorldGenProgress({
             <span className="font-medium">{currentPhase ? getPhaseDisplayName(currentPhase) : 'Waiting...'}</span>
             <span className="text-muted-foreground">{progressPercentage}%</span>
           </div>
-          <ProgressBar value={progressPercentage} className="h-2" />
+          <ProgressBar
+            current={progressPercentage}
+            target={100}
+            showETA={false}
+            showPercentage={false}
+            className="h-2"
+          />
         </div>
 
         {/* Retry Warning */}

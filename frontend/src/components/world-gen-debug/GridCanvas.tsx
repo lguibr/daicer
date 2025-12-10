@@ -3,7 +3,7 @@
  * Supports both per-cell and full-canvas rendering
  */
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface GridCanvasProps {
   width: number;

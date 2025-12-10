@@ -4,15 +4,10 @@
  * Replicates logic from frontend/src/contexts/infinite-chunks/services/structureGenerator.ts
  */
 
-import {
-  STRUCTURE_TEMPLATES,
-  structureTileToBiome,
-  type StructureFloor,
-  GlobalPlacementMap,
-  StructurePlacement,
-  Structure,
-} from '@daicer/shared/world-gen/structures';
-import { GridTile } from '@daicer/shared';
+import { STRUCTURE_TEMPLATES } from '@daicer/shared/world-gen/structures/presets';
+import { structureTileToBiome, type StructureFloor, type Structure } from '@daicer/shared/world-gen/structures/types';
+import type { GlobalPlacementMap, StructurePlacement } from '@daicer/shared/world-gen/structures/placement-map';
+import { GridTile } from '@daicer/shared/world/grid-tile-schema';
 
 // In-memory structure cache (simple Map, no persistence)
 // Note: In a serverless/multi-instance environment, this cache might be less effective

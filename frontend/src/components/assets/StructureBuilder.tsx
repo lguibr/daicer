@@ -192,7 +192,7 @@ export function StructureBuilder() {
       )}
 
       {/* List */}
-      {!showForm && <StructureList structures={structures} onEdit={handleEdit} onDelete={handleDelete} />}
+      {!showForm && <StructureList structures={structures as any} onEdit={handleEdit as any} onDelete={handleDelete} />}
     </div>
   );
 }

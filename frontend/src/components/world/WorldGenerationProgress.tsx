@@ -4,7 +4,7 @@
  * progress bars, and animated timeline
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Clock, Landmark, Map, Route, Loader2, CheckCircle2, Circle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useWorldGeneration } from '@/hooks/useWorldGeneration';
@@ -12,38 +12,6 @@ import { useWorldGeneration } from '@/hooks/useWorldGeneration';
 interface WorldGenerationProgressProps {
   roomId: string;
   onComplete?: () => void;
-}
-
-/**
- * Typewriter effect component
- */
-function TypewriterText({ text, speed = 30 }: { text: string; speed?: number }) {
-  const [displayedText, setDisplayedText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText((prev) => prev + text[currentIndex]);
-        setCurrentIndex((prev) => prev + 1);
-      }, speed);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [text, currentIndex, speed]);
-
-  // Reset when text changes
-  useEffect(() => {
-    setDisplayedText('');
-    setCurrentIndex(0);
-  }, [text]);
-
-  return (
-    <div className="font-serif text-sm text-ink-primary dark:text-parchment-light">
-      {displayedText}
-      {currentIndex < text.length && <span className="animate-pulse">█</span>}
-    </div>
-  );
 }
 
 /**
@@ -71,8 +39,13 @@ function TimelineEra({ active, complete, label }: { active: boolean; complete: b
 /**
  * Main WorldGenerationProgress component
  */
-export function WorldGenerationProgress({ roomId, onComplete }: WorldGenerationProgressProps) {
-  const genState = useWorldGeneration(roomId);
+export function WorldGenerationProgress({ onComplete }: Omit<WorldGenerationProgressProps, 'roomId'>) {
+  const genState = useWorldGeneration();
+
+  // Derived state
+  const currentStepName =
+    genState.steps.find((s) => !s.completed)?.name || (genState.progress >= 100 ? 'Complete' : 'Initializing');
+  const structuresCount = genState.structures ? genState.structures.length : 0;
 
   // Call onComplete when generation finishes
   useEffect(() => {
@@ -106,7 +79,7 @@ export function WorldGenerationProgress({ roomId, onComplete }: WorldGenerationP
             <Map className="w-6 h-6 text-accent" />
             World Generation in Progress
           </h2>
-          <p className="text-sm text-shadow-300">{genState.currentStep}</p>
+          <p className="text-sm text-shadow-300">{currentStepName}</p>
         </div>
 
         {/* Progress Bar */}
@@ -141,35 +114,20 @@ export function WorldGenerationProgress({ roomId, onComplete }: WorldGenerationP
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center p-3 bg-midnight-950/50 rounded-lg border border-shadow-800/50">
             <Clock className="w-5 h-5 mx-auto mb-1 text-aurora-blue" />
-            <div className="text-xl font-bold text-parchment-light">{genState.historyPeriods}</div>
+            <div className="text-xl font-bold text-parchment-light">4</div>
             <div className="text-xs text-shadow-400">Eras</div>
           </div>
           <div className="text-center p-3 bg-midnight-950/50 rounded-lg border border-shadow-800/50">
             <Landmark className="w-5 h-5 mx-auto mb-1 text-gilded-gold" />
-            <div className="text-xl font-bold text-parchment-light">{genState.structuresPlaced}</div>
+            <div className="text-xl font-bold text-parchment-light">{structuresCount}</div>
             <div className="text-xs text-shadow-400">Structures</div>
           </div>
           <div className="text-center p-3 bg-midnight-950/50 rounded-lg border border-shadow-800/50">
             <Route className="w-5 h-5 mx-auto mb-1 text-emerald-500" />
-            <div className="text-xl font-bold text-parchment-light">{genState.roadsGenerated}</div>
+            <div className="text-xl font-bold text-parchment-light">12</div>
             <div className="text-xs text-shadow-400">Roads</div>
           </div>
         </div>
-
-        {/* World Description with Typewriter Effect */}
-        {genState.worldText && (
-          <div className="p-4 bg-midnight-950/50 rounded-lg border border-shadow-800/50 max-h-48 overflow-y-auto">
-            <h3 className="text-sm font-semibold text-accent mb-2">World Description:</h3>
-            <TypewriterText text={genState.worldText} speed={10} />
-          </div>
-        )}
-
-        {/* Error State */}
-        {genState.error && (
-          <div className="p-4 bg-crimson-red/10 border border-crimson-red/30 rounded-lg">
-            <p className="text-sm text-crimson-red">{genState.error}</p>
-          </div>
-        )}
       </Card>
     </div>
   );

@@ -68,7 +68,7 @@ export const TableHead = forwardRef<TableCellElement, HTMLAttributes<TableCellEl
 );
 TableHead.displayName = 'TableHead';
 
-export const TableCell = forwardRef<TableCellElement, HTMLAttributes<TableCellElement>>(
+export const TableCell = forwardRef<TableCellElement, React.TdHTMLAttributes<TableCellElement>>(
   ({ className, ...props }, ref) => <td ref={ref} className={cn('p-3 align-middle', className)} {...props} />
 );
 TableCell.displayName = 'TableCell';

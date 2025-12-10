@@ -168,7 +168,8 @@ export function useExplorationMap(options: UseExplorationMapOptions = {}) {
       .map(() => Array(gridWidth).fill('plains'));
 
     // Fill with chunks
-    for (const [key, chunk] of chunks.entries()) {
+    for (const chunk of chunks.values()) {
+      // Removed 'key' as it was unused
       if (chunk.z !== position.z) continue;
 
       const localChunkX = chunk.x - minChunkX;
@@ -180,7 +181,8 @@ export function useExplorationMap(options: UseExplorationMapOptions = {}) {
         for (let x = 0; x < chunkSize && x < row.length; x++) {
           const gridX = localChunkX * chunkSize + x;
           const gridY = localChunkY * chunkSize + y;
-          if (gridY >= 0 && gridY < gridHeight && gridX >= 0 && gridX < gridWidth) {
+          if (gridY >= 0 && gridY < gridHeight && gridX >= 0 && gridX < gridWidth && grid[gridY]) {
+            // Added null check for grid[gridY]
             grid[gridY][gridX] = row[x] || 'plains';
           }
         }

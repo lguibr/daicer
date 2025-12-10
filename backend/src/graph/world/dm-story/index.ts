@@ -9,8 +9,8 @@
 
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
-import { DMStoryStateSchema } from '@daicer/shared/graph-states';
-import type { DMStoryState } from '@daicer/shared/graph-states';
+import { DMStoryStateSchema } from '@daicer/shared/graph-states/dm-story-state';
+import type { DMStoryState } from '@daicer/shared/graph-states/dm-story-state';
 
 // Nodes
 import { initWorldNode } from './nodes/init';

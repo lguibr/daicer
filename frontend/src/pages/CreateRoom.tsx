@@ -332,7 +332,7 @@ export default function CreateRoomPage() {
       setCompletedGroups(new Set([...completedGroups, currentGroup]));
       setCurrentGroup(Math.min(currentGroup + 1, WIZARD_GROUPS.length - 1));
     } else {
-      setError('Please complete all required fields before continuing');
+      setError(t('createWizard.errors.incomplete'));
     }
   };
 
@@ -395,7 +395,7 @@ export default function CreateRoomPage() {
       // Redirect immediately to the room
       navigate(`/room/${room.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create room');
+      setError(err instanceof Error ? err.message : t('createWizard.errors.createFailed'));
     } finally {
       setLoading(false);
     }

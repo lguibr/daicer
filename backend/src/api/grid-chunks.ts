@@ -8,10 +8,10 @@ import type { Response } from 'express';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { authenticate, type AuthRequest } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
-import { GridFeatureSchema, type GridChunk, type GridFeature } from '@daicer/shared';
+import { GridFeatureSchema, type GridFeature } from '@daicer/shared/world/grid-feature-schema';
+import { type GridChunk, CHUNK_SIZE } from '@daicer/shared/world/grid-chunk-schema';
 import { generateGridChunk } from '../services/world-gen/grid-chunk-generator.js';
 import { getStructuresForChunk, stampStructureOnChunk } from '../services/world-gen/structure-stamper.js';
-import { CHUNK_SIZE } from '@daicer/shared';
 import { getRoom } from '../services/firestore/rooms.js';
 
 const router = Router();

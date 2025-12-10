@@ -3,7 +3,7 @@
  * Rules-based placement of NPCs within structures
  */
 
-import type { Structure, NPCSpawnPoint, StructureTile, NPCType, StructureFloor } from './types';
+import type { Structure, NPCSpawnPoint, StructureFloor } from './types';
 import { Alea } from '../noise/alea';
 
 /**
@@ -52,22 +52,30 @@ function generateHouseNPCs(structure: Structure, rng: () => number): NPCSpawnPoi
   const numNPCs = Math.floor(rng() * 2) + 1;
 
   for (let i = 0; i < numNPCs; i++) {
-    const floor = floors[Math.floor(rng() * floors.length)];
+    const floorIndex = Math.floor(rng() * floors.length);
+    const floor = floors[floorIndex];
+    if (floor === undefined) continue;
+
     const floorTiles = structure.tiles[floor];
     if (!floorTiles) continue;
 
     // Find floor tiles (not doors, walls)
     const floorPositions: { x: number; y: number }[] = [];
     for (let y = 0; y < floorTiles.length; y++) {
-      for (let x = 0; x < floorTiles[y].length; x++) {
-        if (floorTiles[y][x].tileType === 'floor') {
+      const row = floorTiles[y];
+      if (!row) continue;
+      for (let x = 0; x < row.length; x++) {
+        if (row[x]?.tileType === 'floor') {
           floorPositions.push({ x, y });
         }
       }
     }
 
     if (floorPositions.length > 0) {
-      const pos = floorPositions[Math.floor(rng() * floorPositions.length)];
+      const posIndex = Math.floor(rng() * floorPositions.length);
+      const pos = floorPositions[posIndex];
+      if (!pos) continue;
+
       points.push({
         x: structure.worldX + pos.x,
         y: structure.worldY + pos.y,
@@ -84,7 +92,7 @@ function generateHouseNPCs(structure: Structure, rng: () => number): NPCSpawnPoi
 /**
  * Castle NPCs: guards near doors and key areas
  */
-function generateCastleNPCs(structure: Structure, rng: () => number): NPCSpawnPoint[] {
+function generateCastleNPCs(structure: Structure, _rng: () => number): NPCSpawnPoint[] {
   const points: NPCSpawnPoint[] = [];
   const floors = Object.keys(structure.tiles).map(Number) as StructureFloor[];
 
@@ -94,8 +102,11 @@ function generateCastleNPCs(structure: Structure, rng: () => number): NPCSpawnPo
 
     // Place guards near doors
     for (let y = 0; y < floorTiles.length; y++) {
-      for (let x = 0; x < floorTiles[y].length; x++) {
-        if (floorTiles[y][x].tileType === 'door') {
+      const row = floorTiles[y];
+      if (!row) continue;
+
+      for (let x = 0; x < row.length; x++) {
+        if (row[x]?.tileType === 'door') {
           // Place guard adjacent to door
           const guardPositions = [
             { x: x - 1, y },
@@ -107,10 +118,10 @@ function generateCastleNPCs(structure: Structure, rng: () => number): NPCSpawnPo
           for (const gPos of guardPositions) {
             if (
               gPos.x >= 0 &&
-              gPos.x < floorTiles[y].length &&
+              gPos.x < row.length &&
               gPos.y >= 0 &&
               gPos.y < floorTiles.length &&
-              floorTiles[gPos.y][gPos.x].tileType === 'floor'
+              floorTiles[gPos.y]?.[gPos.x]?.tileType === 'floor'
             ) {
               points.push({
                 x: structure.worldX + gPos.x,
@@ -128,20 +139,23 @@ function generateCastleNPCs(structure: Structure, rng: () => number): NPCSpawnPo
   }
 
   // Add a boss in the top floor
-  const topFloor = Math.max(...floors);
+  const topFloor = Math.max(...floors) as StructureFloor;
   const topTiles = structure.tiles[topFloor];
-  if (topTiles) {
-    // Find center-ish floor tile
-    const centerX = Math.floor(topTiles[0].length / 2);
-    const centerY = Math.floor(topTiles.length / 2);
-    if (topTiles[centerY]?.[centerX]?.tileType === 'floor') {
-      points.push({
-        x: structure.worldX + centerX,
-        y: structure.worldY + centerY,
-        floor: topFloor,
-        npcType: 'boss',
-        spawnChance: 1.0,
-      });
+  if (topTiles && topTiles.length > 0) {
+    const firstRow = topTiles[0];
+    if (firstRow) {
+      // Find center-ish floor tile
+      const centerX = Math.floor(firstRow.length / 2);
+      const centerY = Math.floor(topTiles.length / 2);
+      if (topTiles[centerY]?.[centerX]?.tileType === 'floor') {
+        points.push({
+          x: structure.worldX + centerX,
+          y: structure.worldY + centerY,
+          floor: topFloor,
+          npcType: 'boss',
+          spawnChance: 1.0,
+        });
+      }
     }
   }
 
@@ -162,8 +176,10 @@ function generateDungeonNPCs(structure: Structure, rng: () => number): NPCSpawnP
     // Count floor tiles
     let floorTileCount = 0;
     for (let y = 0; y < floorTiles.length; y++) {
-      for (let x = 0; x < floorTiles[y].length; x++) {
-        if (floorTiles[y][x].tileType === 'floor') {
+      const row = floorTiles[y];
+      if (!row) continue;
+      for (let x = 0; x < row.length; x++) {
+        if (row[x]?.tileType === 'floor') {
           floorTileCount++;
         }
       }
@@ -174,10 +190,13 @@ function generateDungeonNPCs(structure: Structure, rng: () => number): NPCSpawnP
     for (let m = 0; m < numMonsters; m++) {
       const attempts = 50;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
+
+        const x = Math.floor(rng() * firstRow.length);
         const y = Math.floor(rng() * floorTiles.length);
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        if (floorTiles[y]?.[x]?.tileType === 'floor') {
           points.push({
             x: structure.worldX + x,
             y: structure.worldY + y,
@@ -192,27 +211,30 @@ function generateDungeonNPCs(structure: Structure, rng: () => number): NPCSpawnP
   }
 
   // Add a boss on the deepest floor
-  const deepestFloor = Math.min(...floors);
+  const deepestFloor = Math.min(...floors) as StructureFloor;
   const deepTiles = structure.tiles[deepestFloor];
-  if (deepTiles) {
-    // Find a far corner
-    const corners = [
-      { x: 0, y: 0 },
-      { x: deepTiles[0].length - 1, y: 0 },
-      { x: 0, y: deepTiles.length - 1 },
-      { x: deepTiles[0].length - 1, y: deepTiles.length - 1 },
-    ];
+  if (deepTiles && deepTiles.length > 0) {
+    const firstRow = deepTiles[0];
+    if (firstRow) {
+      // Find a far corner
+      const corners = [
+        { x: 0, y: 0 },
+        { x: firstRow.length - 1, y: 0 },
+        { x: 0, y: deepTiles.length - 1 },
+        { x: firstRow.length - 1, y: deepTiles.length - 1 },
+      ];
 
-    for (const corner of corners) {
-      if (deepTiles[corner.y]?.[corner.x]?.tileType === 'floor') {
-        points.push({
-          x: structure.worldX + corner.x,
-          y: structure.worldY + corner.y,
-          floor: deepestFloor,
-          npcType: 'boss',
-          spawnChance: 1.0,
-        });
-        break;
+      for (const corner of corners) {
+        if (deepTiles[corner.y]?.[corner.x]?.tileType === 'floor') {
+          points.push({
+            x: structure.worldX + corner.x,
+            y: structure.worldY + corner.y,
+            floor: deepestFloor,
+            npcType: 'boss',
+            spawnChance: 1.0,
+          });
+          break;
+        }
       }
     }
   }
@@ -235,10 +257,13 @@ function generateTempleNPCs(structure: Structure, rng: () => number): NPCSpawnPo
   for (let i = 0; i < numMerchants; i++) {
     const attempts = 50;
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const x = Math.floor(rng() * floorTiles[0].length);
+      const firstRow = floorTiles[0];
+      if (!firstRow) break;
+
+      const x = Math.floor(rng() * firstRow.length);
       const y = Math.floor(rng() * floorTiles.length);
 
-      if (floorTiles[y][x].tileType === 'floor') {
+      if (floorTiles[y]?.[x]?.tileType === 'floor') {
         points.push({
           x: structure.worldX + x,
           y: structure.worldY + y,
@@ -270,10 +295,13 @@ function generateTowerNPCs(structure: Structure, rng: () => number): NPCSpawnPoi
     for (let g = 0; g < numGuards; g++) {
       const attempts = 30;
       for (let attempt = 0; attempt < attempts; attempt++) {
-        const x = Math.floor(rng() * floorTiles[0].length);
+        const firstRow = floorTiles[0];
+        if (!firstRow) break;
+
+        const x = Math.floor(rng() * firstRow.length);
         const y = Math.floor(rng() * floorTiles.length);
 
-        if (floorTiles[y][x].tileType === 'floor') {
+        if (floorTiles[y]?.[x]?.tileType === 'floor') {
           points.push({
             x: structure.worldX + x,
             y: structure.worldY + y,
@@ -288,19 +316,22 @@ function generateTowerNPCs(structure: Structure, rng: () => number): NPCSpawnPoi
   }
 
   // Boss at the top
-  const topFloor = Math.max(...floors);
+  const topFloor = Math.max(...floors) as StructureFloor;
   const topTiles = structure.tiles[topFloor];
-  if (topTiles) {
-    const centerX = Math.floor(topTiles[0].length / 2);
-    const centerY = Math.floor(topTiles.length / 2);
-    if (topTiles[centerY]?.[centerX]?.tileType === 'floor') {
-      points.push({
-        x: structure.worldX + centerX,
-        y: structure.worldY + centerY,
-        floor: topFloor,
-        npcType: 'boss',
-        spawnChance: 1.0,
-      });
+  if (topTiles && topTiles.length > 0) {
+    const firstRow = topTiles[0];
+    if (firstRow) {
+      const centerX = Math.floor(firstRow.length / 2);
+      const centerY = Math.floor(topTiles.length / 2);
+      if (topTiles[centerY]?.[centerX]?.tileType === 'floor') {
+        points.push({
+          x: structure.worldX + centerX,
+          y: structure.worldY + centerY,
+          floor: topFloor,
+          npcType: 'boss',
+          spawnChance: 1.0,
+        });
+      }
     }
   }
 
@@ -322,10 +353,13 @@ function generateCaveNPCs(structure: Structure, rng: () => number): NPCSpawnPoin
   for (let m = 0; m < numMonsters; m++) {
     const attempts = 50;
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const x = Math.floor(rng() * floorTiles[0].length);
+      const firstRow = floorTiles[0];
+      if (!firstRow) break;
+
+      const x = Math.floor(rng() * firstRow.length);
       const y = Math.floor(rng() * floorTiles.length);
 
-      if (floorTiles[y][x].tileType === 'floor') {
+      if (floorTiles[y]?.[x]?.tileType === 'floor') {
         points.push({
           x: structure.worldX + x,
           y: structure.worldY + y,

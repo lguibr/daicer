@@ -6,7 +6,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import { preGenerateChunks } from '@/services/world-gen/chunk-pre-generator';
-import type { WorldConfigState } from '@daicer/shared/graph-states';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
 
 /**
  * Pre-generate map chunks

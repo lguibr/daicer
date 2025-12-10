@@ -18,31 +18,37 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-
-// Mock state and handlers
 const mockFormState: CharacterFormState = {
   name: 'Thorin',
   race: 'dwarf',
-  class: 'fighter',
+  characterClass: 'fighter',
   background: 'soldier',
   alignment: 'lawful-good',
   attributes: {
-    strength: 8,
-    dexterity: 8,
-    constitution: 8,
-    intelligence: 8,
-    wisdom: 8,
-    charisma: 8,
+    Strength: 8,
+    Dexterity: 8,
+    Constitution: 8,
+    Intelligence: 8,
+    Wisdom: 8,
+    Charisma: 8,
   },
+  skills: {},
+  proficienciesAndLanguages: '',
+  features: '',
+  treasure: '',
+  currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
+  resourcePools: [],
+  talents: [],
+  expertises: [],
   appearance: {
     gender: 'Male',
-    age: 45,
+    age: '45',
     height: '4\'2"',
     weight: '160 lbs',
     hair: 'Brown',
     eyes: 'Green',
     skin: 'Tan',
-    distinguishingMarks: 'Battle scars',
+    description: 'Battle scars',
   },
   personality: {
     traits: 'Brave and loyal',
@@ -51,62 +57,46 @@ const mockFormState: CharacterFormState = {
     flaws: 'Stubborn',
   },
   backstory: 'A seasoned warrior from the mountains',
-  avatar: { mode: 'portrait', urls: [] },
-  equipment: [],
-};
-
-const handleUpdate = (updates: Partial<CharacterFormState>) => {
-  console.log('Form updated:', updates);
+  equipment: '',
 };
 
 export const Default: Story = {
   args: {
-    formState: mockFormState,
-    onUpdate: handleUpdate,
-    isLoading: false,
-  },
-};
-
-export const Loading: Story = {
-  args: {
-    formState: mockFormState,
-    onUpdate: handleUpdate,
-    isLoading: true,
+    attributes: mockFormState.attributes,
+    pointsRemaining: 5,
+    attributeBudget: 27,
+    onAttributeChange: (attr, value) => console.log(`Change ${attr} to ${value}`),
   },
 };
 
 export const HighAttributes: Story = {
   args: {
-    formState: {
-      ...mockFormState,
-      attributes: {
-        strength: 15,
-        dexterity: 12,
-        constitution: 14,
-        intelligence: 10,
-        wisdom: 11,
-        charisma: 13,
-      },
+    attributes: {
+      Strength: 15,
+      Dexterity: 12,
+      Constitution: 14,
+      Intelligence: 10,
+      Wisdom: 11,
+      Charisma: 13,
     },
-    onUpdate: handleUpdate,
-    isLoading: false,
+    pointsRemaining: 0,
+    attributeBudget: 27,
+    onAttributeChange: (attr, value) => console.log(`Change ${attr} to ${value}`),
   },
 };
 
 export const MinimalPoints: Story = {
   args: {
-    formState: {
-      ...mockFormState,
-      attributes: {
-        strength: 8,
-        dexterity: 8,
-        constitution: 8,
-        intelligence: 8,
-        wisdom: 8,
-        charisma: 8,
-      },
+    attributes: {
+      Strength: 8,
+      Dexterity: 8,
+      Constitution: 8,
+      Intelligence: 8,
+      Wisdom: 8,
+      Charisma: 8,
     },
-    onUpdate: handleUpdate,
-    isLoading: false,
+    pointsRemaining: 27,
+    attributeBudget: 27,
+    onAttributeChange: (attr, value) => console.log(`Change ${attr} to ${value}`),
   },
 };

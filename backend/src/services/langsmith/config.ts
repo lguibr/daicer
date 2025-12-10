@@ -3,7 +3,9 @@
  * Section-specific metadata and tag builders for observability
  */
 
-import type { DMStoryState, WorldConfigState, CharacterState } from '@daicer/shared/graph-states';
+import type { DMStoryState } from '@daicer/shared/graph-states/dm-story-state';
+import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-state';
+import type { CharacterState } from '@daicer/shared/graph-states/character-state';
 
 /**
  * Build tracing config for DM Story Graph (Section 1)

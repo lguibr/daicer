@@ -41,7 +41,7 @@ export function BSPVisualizer() {
     splitRatio: 0.5,
   });
 
-  const [rooms, setRooms] = useState<BSPRoom[]>([]);
+  const [rooms] = useState<BSPRoom[]>([]);
   const [allRooms, setAllRooms] = useState<BSPRoom[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -224,7 +224,7 @@ export function BSPVisualizer() {
               <Label>Width: {gridSize.width}</Label>
               <Slider
                 value={[gridSize.width]}
-                onValueChange={([w]) => setGridSize((prev) => ({ ...prev, width: w }))}
+                onValueChange={([w]) => w != null && setGridSize((prev) => ({ ...prev, width: w }))}
                 min={32}
                 max={128}
                 step={8}
@@ -234,7 +234,7 @@ export function BSPVisualizer() {
               <Label>Height: {gridSize.height}</Label>
               <Slider
                 value={[gridSize.height]}
-                onValueChange={([h]) => setGridSize((prev) => ({ ...prev, height: h }))}
+                onValueChange={([h]) => h != null && setGridSize((prev) => ({ ...prev, height: h }))}
                 min={32}
                 max={128}
                 step={8}
@@ -250,7 +250,7 @@ export function BSPVisualizer() {
               <Label>Min Room Size: {params.minRoomSize} tiles</Label>
               <Slider
                 value={[params.minRoomSize]}
-                onValueChange={([v]) => setParams((prev) => ({ ...prev, minRoomSize: v }))}
+                onValueChange={([v]) => v != null && setParams((prev) => ({ ...prev, minRoomSize: v }))}
                 min={3}
                 max={8}
                 step={1}
@@ -271,7 +271,7 @@ export function BSPVisualizer() {
               <Label>Max Room Size: {params.maxRoomSize} tiles</Label>
               <Slider
                 value={[params.maxRoomSize]}
-                onValueChange={([v]) => setParams((prev) => ({ ...prev, maxRoomSize: v }))}
+                onValueChange={([v]) => v != null && setParams((prev) => ({ ...prev, maxRoomSize: v }))}
                 min={8}
                 max={20}
                 step={1}
@@ -294,7 +294,7 @@ export function BSPVisualizer() {
             <Label>Animation Speed: {animationSpeed}ms</Label>
             <Slider
               value={[animationSpeed]}
-              onValueChange={([v]) => setAnimationSpeed(v)}
+              onValueChange={([v]) => v != null && setAnimationSpeed(v)}
               min={100}
               max={1000}
               step={100}

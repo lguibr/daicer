@@ -3,14 +3,7 @@
  * Predefined structure layouts for common building types
  */
 
-import type {
-  Structure,
-  StructureTile,
-  StructureType,
-  StructureMaterial,
-  StructureFloor,
-  LayoutAlgorithm,
-} from './types';
+import type { StructureTile, StructureType, StructureMaterial, StructureFloor, LayoutAlgorithm } from './types';
 import { generateRoomLayout, generateWFCLayout, generateCALayout, addStairs } from './layouts';
 
 /**
@@ -24,15 +17,18 @@ export interface StructureTemplate {
   defaultMaterial: StructureMaterial;
   floors: StructureFloor[]; // Which floors this structure has (e.g., [-1, 0, 1])
   layoutAlgorithm: LayoutAlgorithm;
-  generator: (material: StructureMaterial, seed: string) => Record<StructureFloor, StructureTile[][]>;
+  generator: (material: StructureMaterial, seed: string) => Partial<Record<StructureFloor, StructureTile[][]>>;
 }
 
 /**
  * Generate a house layout (2 floors: 0 ground, 1 upper)
  */
-function generateHouseLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateHouseLayout(
+  material: StructureMaterial,
+  seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 10;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [0, 1];
 
   for (const floor of floors) {
@@ -40,7 +36,11 @@ function generateHouseLayout(material: StructureMaterial, seed: string): Record<
   }
 
   // Add stairs connecting floors
-  addStairs(layouts[0], layouts[1], 0, 1, material, seed);
+  const l0 = layouts[0];
+  const l1 = layouts[1];
+  if (l0 && l1) {
+    addStairs(l0, l1, 0, 1, material, seed);
+  }
 
   return layouts;
 }
@@ -48,9 +48,12 @@ function generateHouseLayout(material: StructureMaterial, seed: string): Record<
 /**
  * Generate a tower layout (5 floors: -1, 0, 1, 2, 3)
  */
-function generateTowerLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateTowerLayout(
+  material: StructureMaterial,
+  seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 8;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [-1, 0, 1, 2, 3];
 
   for (const floor of floors) {
@@ -59,7 +62,16 @@ function generateTowerLayout(material: StructureMaterial, seed: string): Record<
 
   // Add stairs connecting each floor
   for (let i = 0; i < floors.length - 1; i++) {
-    addStairs(layouts[floors[i]], layouts[floors[i + 1]], floors[i], floors[i + 1], material, seed);
+    const f1 = floors[i];
+    const f2 = floors[i + 1];
+
+    if (f1 === undefined || f2 === undefined) continue;
+
+    const l1 = layouts[f1];
+    const l2 = layouts[f2];
+    if (l1 && l2) {
+      addStairs(l1, l2, f1, f2, material, seed);
+    }
   }
 
   return layouts;
@@ -68,9 +80,12 @@ function generateTowerLayout(material: StructureMaterial, seed: string): Record<
 /**
  * Generate a castle layout (3 floors: -1, 0, 1) with large courtyards
  */
-function generateCastleLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateCastleLayout(
+  material: StructureMaterial,
+  seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 32;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [-1, 0, 1];
 
   for (const floor of floors) {
@@ -79,7 +94,16 @@ function generateCastleLayout(material: StructureMaterial, seed: string): Record
 
   // Add stairs connecting floors
   for (let i = 0; i < floors.length - 1; i++) {
-    addStairs(layouts[floors[i]], layouts[floors[i + 1]], floors[i], floors[i + 1], material, seed);
+    const f1 = floors[i];
+    const f2 = floors[i + 1];
+
+    if (f1 === undefined || f2 === undefined) continue;
+
+    const l1 = layouts[f1];
+    const l2 = layouts[f2];
+    if (l1 && l2) {
+      addStairs(l1, l2, f1, f2, material, seed);
+    }
   }
 
   return layouts;
@@ -88,9 +112,12 @@ function generateCastleLayout(material: StructureMaterial, seed: string): Record
 /**
  * Generate a dungeon using cellular automata (3 floors: -3, -2, -1)
  */
-function generateDungeonLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateDungeonLayout(
+  material: StructureMaterial,
+  seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 20;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [-3, -2, -1];
 
   for (const floor of floors) {
@@ -99,7 +126,16 @@ function generateDungeonLayout(material: StructureMaterial, seed: string): Recor
 
   // Add stairs connecting floors
   for (let i = 0; i < floors.length - 1; i++) {
-    addStairs(layouts[floors[i]], layouts[floors[i + 1]], floors[i], floors[i + 1], material, seed);
+    const f1 = floors[i];
+    const f2 = floors[i + 1];
+
+    if (f1 === undefined || f2 === undefined) continue;
+
+    const l1 = layouts[f1];
+    const l2 = layouts[f2];
+    if (l1 && l2) {
+      addStairs(l1, l2, f1, f2, material, seed);
+    }
   }
 
   return layouts;
@@ -108,9 +144,12 @@ function generateDungeonLayout(material: StructureMaterial, seed: string): Recor
 /**
  * Generate a temple using WFC (2 floors: -1 basement, 0 main hall)
  */
-function generateTempleLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateTempleLayout(
+  material: StructureMaterial,
+  seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 16;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [-1, 0];
 
   for (const floor of floors) {
@@ -118,7 +157,11 @@ function generateTempleLayout(material: StructureMaterial, seed: string): Record
   }
 
   // Add stairs connecting basement to main hall
-  addStairs(layouts[-1], layouts[0], -1, 0, material, seed);
+  const l_1 = layouts[-1];
+  const l0 = layouts[0];
+  if (l_1 && l0) {
+    addStairs(l_1, l0, -1, 0, material, seed);
+  }
 
   return layouts;
 }
@@ -129,16 +172,20 @@ function generateTempleLayout(material: StructureMaterial, seed: string): Record
 function generateCaveEntranceLayout(
   material: StructureMaterial,
   seed: string
-): Record<StructureFloor, StructureTile[][]> {
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 12;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [-1, 0];
 
   for (const floor of floors) {
     layouts[floor] = generateCALayout(size, size, floor, material, `${seed}_${floor}`, 0.4, 3);
   }
 
-  addStairs(layouts[-1], layouts[0], -1, 0, material, seed);
+  const l_1 = layouts[-1];
+  const l0 = layouts[0];
+  if (l_1 && l0) {
+    addStairs(l_1, l0, -1, 0, material, seed);
+  }
 
   return layouts;
 }
@@ -149,9 +196,9 @@ function generateCaveEntranceLayout(
 function generateAncientTreeLayout(
   material: StructureMaterial,
   seed: string
-): Record<StructureFloor, StructureTile[][]> {
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 10;
-  const layouts: Record<StructureFloor, StructureTile[][]> = {};
+  const layouts: Partial<Record<StructureFloor, StructureTile[][]>> = {};
   const floors: StructureFloor[] = [0, 1, 2];
 
   for (const floor of floors) {
@@ -160,7 +207,16 @@ function generateAncientTreeLayout(
 
   // Connect floors with stairs
   for (let i = 0; i < floors.length - 1; i++) {
-    addStairs(layouts[floors[i]], layouts[floors[i + 1]], floors[i], floors[i + 1], material, seed);
+    const f1 = floors[i];
+    const f2 = floors[i + 1];
+
+    if (f1 === undefined || f2 === undefined) continue;
+
+    const l1 = layouts[f1];
+    const l2 = layouts[f2];
+    if (l1 && l2) {
+      addStairs(l1, l2, f1, f2, material, seed);
+    }
   }
 
   return layouts;
@@ -171,8 +227,8 @@ function generateAncientTreeLayout(
  */
 function generateStoneCircleLayout(
   material: StructureMaterial,
-  seed: string
-): Record<StructureFloor, StructureTile[][]> {
+  _seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const size = 8;
   const floor0: StructureTile[][] = [];
 
@@ -202,7 +258,10 @@ function generateStoneCircleLayout(
 /**
  * Road segment (floor 0 only, simple straight line)
  */
-function generateRoadLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateRoadLayout(
+  material: StructureMaterial,
+  _seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const width = 3;
   const height = 1;
   const floor0: StructureTile[][] = [];
@@ -221,7 +280,10 @@ function generateRoadLayout(material: StructureMaterial, seed: string): Record<S
 /**
  * Bridge segment (floor 0 only)
  */
-function generateBridgeLayout(material: StructureMaterial, seed: string): Record<StructureFloor, StructureTile[][]> {
+function generateBridgeLayout(
+  material: StructureMaterial,
+  _seed: string
+): Partial<Record<StructureFloor, StructureTile[][]>> {
   const width = 5;
   const height = 1;
   const floor0: StructureTile[][] = [];

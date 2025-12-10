@@ -7,7 +7,7 @@
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
 import { generateSinglePeriodTask } from '@/services/world-gen/historical-generator';
-import type { DMStoryState } from '@daicer/shared/graph-states';
+import type { DMStoryState } from '@daicer/shared/graph-states/dm-story-state';
 import { emitProgress } from '@/graph/shared-nodes/stream-progress';
 import type { WorldCondition } from '@/services/entropy/types';
 

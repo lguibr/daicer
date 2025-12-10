@@ -87,6 +87,7 @@ export function StructureVisualizer() {
   const roadTileCount = useMemo(() => {
     if (biomeGrids.length === 0) return 0;
     const surfaceGrid = biomeGrids[1];
+    if (!surfaceGrid) return 0;
     let count = 0;
     for (const row of surfaceGrid) {
       for (const biome of row) {
@@ -115,7 +116,7 @@ export function StructureVisualizer() {
             </Label>
             <Slider
               value={[mapSize]}
-              onValueChange={([value]) => setMapSize(value)}
+              onValueChange={([value]) => value != null && setMapSize(value)}
               min={32}
               max={512}
               step={32}
@@ -131,7 +132,7 @@ export function StructureVisualizer() {
             <Label>Min Distance: {params.minDistance} tiles</Label>
             <Slider
               value={[params.minDistance]}
-              onValueChange={([value]) => updateParams({ minDistance: value })}
+              onValueChange={([value]) => value != null && updateParams({ minDistance: value })}
               min={10}
               max={100}
               step={5}
@@ -147,7 +148,7 @@ export function StructureVisualizer() {
             <Label>Max Structures: {params.maxStructures}</Label>
             <Slider
               value={[params.maxStructures || 20]}
-              onValueChange={([value]) => updateParams({ maxStructures: value })}
+              onValueChange={([value]) => value != null && updateParams({ maxStructures: value })}
               min={5}
               max={100}
               step={5}

@@ -5,6 +5,7 @@
  */
 
 import { useContext, useMemo } from 'react';
+import type { GridTile } from 'daicer/shared/world';
 import { InfiniteChunksContext } from './InfiniteChunksProvider';
 import type { InfiniteChunksView } from './types';
 
@@ -34,7 +35,7 @@ export function useInfiniteChunksView(): InfiniteChunksView {
  * Hook to access just the expanded grid (most common use case)
  * Optimized to only re-render when grid changes
  */
-export function useExpandedGrid(): string[][] {
+export function useExpandedGrid(): (GridTile | null)[][] {
   const context = useContext(InfiniteChunksContext);
 
   if (!context) {

@@ -26,11 +26,11 @@
     "isolatedModules": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "rootDirs": ["./src", "../shared"],
+    "rootDirs": ["./src"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "daicer/*": ["../*"]
+      "@daicer/shared/*": ["../shared/*"]
     }
   },
   "include": ["src/**/*"],

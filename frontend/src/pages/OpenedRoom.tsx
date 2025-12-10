@@ -4,21 +4,20 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, CheckCircle, Circle, Sparkles } from 'lucide-react';
+
 import { getRoomState } from '../services/api';
-import { joinRoom as joinSocketRoom, setReady as socketSetReady } from '../services/socket';
+import { joinRoom as joinSocketRoom } from '../services/socket';
 import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
 import { PrivateLayout } from '../components/layout';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
-import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import { DiceLoader } from '../components/ui/dice-loader';
 import { TerrainGenerationScreen } from '../components/terrain/TerrainGenerationScreen';
 import ToolCallCard from '../components/chat/ToolCallCard';
 import { auth } from '../services/firebase';
-import { useI18n } from '../i18n';
-import { gildedTokens } from '../theme/gildedTokens';
+// import { useI18n } from '../i18n';
+
 import type { Room, Player } from '../types/shared';
 import type { ToolCall } from '../services/socket';
 
@@ -28,7 +27,7 @@ import type { ToolCall } from '../services/socket';
 export default function OpenedRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { t } = useI18n();
+  // const { t } = useI18n(); // Unused but might be needed later
 
   const [room, setRoom] = useState<Room | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -41,8 +40,8 @@ export default function OpenedRoomPage() {
     Array<{
       type: string;
       tool?: string;
-      args?: any;
-      output?: any;
+      args?: Record<string, unknown>;
+      output?: unknown;
       name?: string;
       node?: string;
       phase?: string;
@@ -186,11 +185,11 @@ export default function OpenedRoomPage() {
 
               // Re-register listeners for Section 2
               eventTypes.forEach((type) => {
-                eventSource?.addEventListener(type, (event) => {
+                eventSource?.addEventListener(type, (innerEvent) => {
                   if (isCleanedUp) return;
                   try {
-                    const data = JSON.parse(event.data);
-                    setStreamEvents((prev) => [...prev, { ...data, type }]);
+                    const innerData = JSON.parse(innerEvent.data);
+                    setStreamEvents((prev) => [...prev, { ...innerData, type }]);
                   } catch (err) {
                     console.warn('[SSE] Failed to parse event:', err);
                   }
@@ -214,22 +213,11 @@ export default function OpenedRoomPage() {
     };
   }, [roomId, roomPhase, hasWorldDescription]);
 
-  // Get current user's player (may not exist yet if just joined)
-  const currentUser = socket.userId;
-  const currentPlayer = players.find((p) => p.userId === currentUser);
-  const hasCharacter = currentPlayer?.character != null;
-  const isReady = currentPlayer?.isReady ?? false;
-
-  const handleToggleReady = () => {
-    if (!roomId || !hasCharacter) return;
-    socketSetReady(roomId, !isReady);
-  };
-
   if (loading) {
     return (
       <PrivateLayout showRoomInfo={false}>
         <div className="flex min-h-screen items-center justify-center">
-          <DiceLoader size="lg" />
+          <DiceLoader size="large" />
         </div>
       </PrivateLayout>
     );
@@ -251,7 +239,7 @@ export default function OpenedRoomPage() {
     );
   }
 
-  const allReady = players.length > 0 && players.every((p) => p.character && p.isReady);
+  // const allReady = players.length > 0 && players.every((p) => p.character && p.isReady); // Unused
 
   // If terrain is being generated, show terrain screen
   if (room?.phase === 'TERRAIN_GENERATION') {

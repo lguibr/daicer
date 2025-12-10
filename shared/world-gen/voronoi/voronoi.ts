@@ -8,7 +8,11 @@ import type { Point2D } from './types';
  * Find nearest Voronoi seed point
  */
 export function findNearestVoronoiSeed(x: number, y: number, seeds: Point2D[]): Point2D {
-  let nearestSeed = seeds[0];
+  if (seeds.length === 0) {
+    throw new Error('No seeds provided');
+  }
+
+  let nearestSeed = seeds[0]!;
   let minDist = Infinity;
 
   for (const seed of seeds) {
