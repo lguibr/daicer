@@ -5,8 +5,9 @@
 
 import * as z from 'zod';
 
-// Re-export WorldConditionSchema from shared package
-export { WorldConditionSchema, type WorldCondition } from '@daicer/shared/world/condition-schema';
+// Import WorldConditionSchema from shared package
+import { WorldConditionSchema, type WorldCondition } from '@daicer/shared/world/condition-schema';
+export { WorldConditionSchema, type WorldCondition };
 
 /**
  * Random Event Schema

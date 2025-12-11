@@ -2,11 +2,11 @@
  * Authentication API endpoints
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { ApiError } from '@/middleware/error';
-import { authMiddleware } from '@/middleware/auth';
+import { authMiddleware, AuthRequest } from '@/middleware/auth';
 import { logger } from '@/utils/logger';
 
 const router = Router();
@@ -21,7 +21,7 @@ const router = Router();
  * Note: Firebase handles token refresh automatically via the Firebase SDK
  * on the client side. This endpoint is for advanced use cases or custom auth flows.
  */
-router.post('/refresh', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/refresh', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.uid;
     const auth = getAuth();
@@ -74,7 +74,7 @@ router.post('/refresh', authMiddleware, async (req: Request, res: Response, next
  * Revoke all refresh tokens for the current user
  * Useful for "logout from all devices" functionality
  */
-router.post('/revoke', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/revoke', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.uid;
     const auth = getAuth();
@@ -108,7 +108,7 @@ router.post('/revoke', authMiddleware, async (req: Request, res: Response, next:
  * GET /api/auth/session
  * Get current session information
  */
-router.get('/session', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/session', authMiddleware, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.uid;
     const auth = getAuth();

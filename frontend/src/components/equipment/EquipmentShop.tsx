@@ -36,7 +36,7 @@ export function EquipmentShop({
   startingPackCost,
   mode = 'game', // Default to game mode
 }: EquipmentShopProps) {
-  const { t } = useI18n();
+  const { t, localize } = useI18n();
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
 
   // Asset mode gets unlimited gold (9999999)
@@ -125,7 +125,9 @@ export function EquipmentShop({
             return (
               <div key={slot} className="rounded-md border border-border bg-background p-2">
                 <div className="text-xs text-muted-foreground">{t(`equipment.slots.${slot}`)}</div>
-                <div className="truncate text-sm font-medium">{item ? item.name : t('equipment.slots.empty')}</div>
+                <div className="truncate text-sm font-medium">
+                  {item ? localize(item, 'name') : t('equipment.slots.empty')}
+                </div>
               </div>
             );
           })}

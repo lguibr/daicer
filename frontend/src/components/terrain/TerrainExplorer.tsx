@@ -23,6 +23,7 @@ import { useSimpleTerrainManager } from './useSimpleTerrainManager';
 interface TerrainExplorerProps {
   biomeGrid: GridTile[][]; // 2D grid for backward compatibility (surface layer)
   biomeGrid3D?: GridTile[][][]; // Optional 3D grid [floor][y][x] for multi-floor structures (7 floors: -3 to +3)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   structures?: Array<{ name: string; x: number; y: number; type: string; [key: string]: any }>;
   roomSize?: number;
   initialZoom?: number;
@@ -41,6 +42,7 @@ interface TerrainExplorerProps {
   isLoading?: boolean;
   checkChunkLoading?: (x: number, y: number) => void;
   onPlayerMove?: (x: number, y: number) => void;
+  onTileClick?: (tile: { x: number; y: number; z: number }, type: string) => void;
 }
 
 const BIOME_COLORS: Record<string, string> = {
@@ -140,6 +142,7 @@ export function TerrainExplorer({
   players,
   creatures,
   onPlayerMove,
+  onTileClick,
 }: TerrainExplorerProps) {
   // Case 1: Client-side generation (Preview Mode)
   // If we have a chunkGenerator, we use the simple manager directly.
@@ -185,6 +188,7 @@ export function TerrainExplorer({
           players={players}
           creatures={structures.length > 0 ? [] : creatures} // Pass creatures if not static mode
           onPlayerMove={onPlayerMove}
+          onTileClick={onTileClick}
         />
       </InfiniteChunksProvider>
     );
@@ -207,6 +211,7 @@ export function TerrainExplorer({
       isLoading={false}
       checkChunkLoading={() => {}}
       onPlayerMove={onPlayerMove}
+      onTileClick={onTileClick}
     />
   );
 }
@@ -258,6 +263,7 @@ function InfiniteChunksBridge({ creatures, ...props }: Omit<TerrainExplorerProps
         checkChunkLoading={infiniteChunksActions.checkChunkLoading}
         players={props.players}
         onPlayerMove={props.onPlayerMove}
+        onTileClick={props.onTileClick}
       />
       <DebugMapExport
         context="GAME"
@@ -278,6 +284,7 @@ interface TerrainExplorerInternalProps extends Omit<TerrainExplorerProps, 'chunk
   players?: Player[];
   creatures?: Creature[];
   onPlayerMove?: (x: number, y: number) => void;
+  onTileClick?: (tile: { x: number; y: number; z: number }, type: string) => void;
 }
 
 function TerrainExplorerInternal({
@@ -295,6 +302,7 @@ function TerrainExplorerInternal({
   players,
   creatures,
   onPlayerMove,
+  onTileClick,
 }: TerrainExplorerInternalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -437,6 +445,11 @@ function TerrainExplorerInternal({
     // Get the appropriate grid layer based on currentLayer and biomeGrid3D
     let layerGrid: (GridTile | null)[][];
 
+    // Calculate user grid position first for FoW
+    const userGridX = userPosition.x - gridWorldOffset.x;
+    const userGridY = userPosition.y - gridWorldOffset.y;
+    const visionRadiusSq = visionRadius * visionRadius;
+
     // ALWAYS use activeGrid (the expanding grid with new chunks)
     // NOT biomeGrid3D which is static and doesn't include dynamically loaded chunks
     layerGrid = activeGrid;
@@ -508,6 +521,14 @@ function TerrainExplorerInternal({
               ctx.lineWidth = Math.max(2, renderScale * 0.15);
               ctx.strokeRect(x * renderScale + 2, y * renderScale + 2, renderScale - 4, renderScale - 4);
             }
+          }
+
+          // Fog of War: Dim tiles outside vision
+          const dx = x - userGridX;
+          const dy = y - userGridY;
+          if (dx * dx + dy * dy > visionRadiusSq) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; // Heavy fog
+            ctx.fillRect(x * renderScale, y * renderScale, renderScale, renderScale);
           }
         }
       }
@@ -591,6 +612,14 @@ function TerrainExplorerInternal({
               ctx.strokeRect(x * renderScale, y * renderScale, renderScale, renderScale);
               ctx.setLineDash([]); // Reset
             }
+          }
+
+          // Fog of War: Dim tiles outside vision
+          const dx = x - userGridX;
+          const dy = y - userGridY;
+          if (dx * dx + dy * dy > visionRadiusSq) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'; // Medium fog for surface
+            ctx.fillRect(x * renderScale, y * renderScale, renderScale, renderScale);
           }
         }
       }
@@ -697,8 +726,7 @@ function TerrainExplorerInternal({
     // Draw players (portraits)
     // If no players prop provided (legacy usage), render red dot for local user
     if (!players && userPosition) {
-      const userGridX = userPosition.x - gridWorldOffset.x;
-      const userGridY = userPosition.y - gridWorldOffset.y;
+      // use outer userGridX/Y
 
       ctx.fillStyle = '#ef4444';
       ctx.beginPath();
@@ -778,8 +806,7 @@ function TerrainExplorerInternal({
     }
 
     // Draw user position (red dot) - userPosition is in WORLD coordinates
-    const userGridX = userPosition.x - gridWorldOffset.x;
-    const userGridY = userPosition.y - gridWorldOffset.y;
+    // used userGridX/Y calculated above
 
     // Draw vision radius (green circle)
     if (showVisionRadius) {
@@ -788,6 +815,26 @@ function TerrainExplorerInternal({
       ctx.beginPath();
       ctx.arc(userGridX * renderScale, userGridY * renderScale, visionRadius * renderScale, 0, Math.PI * 2);
       ctx.stroke();
+    }
+
+    // Draw selection highlight
+    if (selectedMetadata && selectedMetadata.worldCoords.z === currentLayer) {
+      const sGridX = selectedMetadata.worldCoords.x - gridWorldOffset.x;
+      const sGridY = selectedMetadata.worldCoords.y - gridWorldOffset.y;
+
+      // Only draw if within current view bounds (optimization, though canvas clipping handles it)
+      if (sGridX >= 0 && sGridX < width && sGridY >= 0 && sGridY < height) {
+        const time = Date.now() / 500; // Animation timer
+        const alpha = 0.5 + Math.sin(time) * 0.5; // 0.5 to 1.0 pulse
+
+        ctx.strokeStyle = `rgba(251, 191, 36, ${alpha})`; // Amber-400
+        ctx.lineWidth = Math.max(3, renderScale * 0.2);
+        ctx.strokeRect(sGridX * renderScale, sGridY * renderScale, renderScale, renderScale);
+
+        // Inner highlight
+        ctx.fillStyle = `rgba(251, 191, 36, ${alpha * 0.3})`;
+        ctx.fillRect(sGridX * renderScale, sGridY * renderScale, renderScale, renderScale);
+      }
     }
 
     ctx.restore();
@@ -924,13 +971,11 @@ function TerrainExplorerInternal({
       const metadata: VoxelMetadata = {
         worldCoords: { x: worldX, y: worldY, z: currentLayer },
         roomCoords: { x: roomX, y: roomY },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         biome: (biome as any)?.biome || (typeof biome === 'string' ? biome : 'unknown'),
-        temperature: 0.5, // Placeholder
-        moisture: 0.5, // Placeholder
-        elevation: 0, // Placeholder
-        // isWalkable is not in the interface, so we can omit it or add it if needed, but for now let's stick to the interface to fix the crash.
-        // The interface has [key: string]: any on structure, but not on root.
-        // Let's check VoxelMetadataPanel.tsx again. It has optional elevation, temperature, moisture.
+        temperature: 0.5,
+        moisture: 0.5,
+        elevation: 0,
         structure: structure
           ? {
               name: structure.name,
@@ -940,10 +985,20 @@ function TerrainExplorerInternal({
           : undefined,
       };
 
+      // Call external handler if provided (e.g. for chat injection)
+      if (onTileClick) {
+        onTileClick({ x: worldX, y: worldY, z: currentLayer }, metadata.biome);
+      }
+
       setSelectedMetadata(metadata);
     },
-    [activeGrid, structures, zoom, pan, currentLayer, roomSize]
+    [activeGrid, structures, zoom, pan, currentLayer, roomSize, onTileClick]
   );
+
+  // Wait, I need to add onTileClick to the component props first.
+  // The interface TerrainExplorerProps has it?
+  // Line 23 of TerrainExplorer.tsx only has biomeGrid etc. I suspect I need to add it.
+  // Let's look at lines 23-44.
 
   return (
     <div className="space-y-4">

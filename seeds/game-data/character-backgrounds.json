@@ -2,79 +2,131 @@
   {
     "id": "acolyte",
     "name": "Acolyte",
+    "name_es": "Acólito",
+    "name_ptBR": "Acólito",
     "description": "You have spent your life in service to a temple.",
+    "description_es": "Has pasado tu vida al servicio de un templo.",
+    "description_ptBR": "Você passou sua vida a serviço de um templo.",
     "skillProficiencies": ["Insight", "Religion"]
   },
   {
     "id": "charlatan",
     "name": "Charlatan",
+    "name_es": "Charlatán",
+    "name_ptBR": "Charlatão",
     "description": "You have always had a way with people.",
+    "description_es": "Siempre has sabido tratar con la gente.",
+    "description_ptBR": "Você sempre teve jeito com as pessoas.",
     "skillProficiencies": ["Deception", "Sleight of Hand"]
   },
   {
     "id": "criminal",
     "name": "Criminal",
+    "name_es": "Criminal",
+    "name_ptBR": "Criminoso",
     "description": "You are an experienced criminal with a history of breaking the law.",
+    "description_es": "Eres un criminal experimentado con un historial delictivo.",
+    "description_ptBR": "Você é um criminoso experiente com histórico de infringir a lei.",
     "skillProficiencies": ["Deception", "Stealth"]
   },
   {
     "id": "entertainer",
     "name": "Entertainer",
+    "name_es": "Animador",
+    "name_ptBR": "Artista",
     "description": "You thrive in front of an audience.",
+    "description_es": "Te creces ante el público.",
+    "description_ptBR": "Você se destaca na frente de uma plateia.",
     "skillProficiencies": ["Acrobatics", "Performance"]
   },
   {
     "id": "folk-hero",
     "name": "Folk Hero",
+    "name_es": "Héroe del Pueblo",
+    "name_ptBR": "Herói do Povo",
     "description": "You come from a humble social rank, but you are destined for so much more.",
+    "description_es": "Provienes de una clase social humilde, pero estás destinado a mucho más.",
+    "description_ptBR": "Você vem de uma classe social humilde, mas está destinado a muito mais.",
     "skillProficiencies": ["Animal Handling", "Survival"]
   },
   {
     "id": "guild-artisan",
     "name": "Guild Artisan",
+    "name_es": "Artesano Gremial",
+    "name_ptBR": "Artesão de Guilda",
     "description": "You are a member of an artisan's guild.",
+    "description_es": "Eres miembro de un gremio de artesanos.",
+    "description_ptBR": "Você é membro de uma guilda de artesãos.",
     "skillProficiencies": ["Insight", "Persuasion"]
   },
   {
     "id": "hermit",
     "name": "Hermit",
+    "name_es": "Ermitaño",
+    "name_ptBR": "Eremita",
     "description": "You lived in seclusion for a formative part of your life.",
+    "description_es": "Viviste en reclusión durante una parte formativa de tu vida.",
+    "description_ptBR": "Você viveu em reclusão durante uma parte formativa de sua vida.",
     "skillProficiencies": ["Medicine", "Religion"]
   },
   {
     "id": "noble",
     "name": "Noble",
+    "name_es": "Noble",
+    "name_ptBR": "Nobre",
     "description": "You understand wealth, power, and privilege.",
+    "description_es": "Entiendes la riqueza, el poder y el privilegio.",
+    "description_ptBR": "Você entende riqueza, poder e privilégio.",
     "skillProficiencies": ["History", "Persuasion"]
   },
   {
     "id": "outlander",
     "name": "Outlander",
+    "name_es": "Forastero",
+    "name_ptBR": "Forasteiro",
     "description": "You grew up in the wilds, far from civilization.",
+    "description_es": "Creciste en la naturaleza, lejos de la civilización.",
+    "description_ptBR": "Você cresceu na selva, longe da civilização.",
     "skillProficiencies": ["Athletics", "Survival"]
   },
   {
     "id": "sage",
     "name": "Sage",
+    "name_es": "Sabio",
+    "name_ptBR": "Sábio",
     "description": "You spent years learning the lore of the multiverse.",
+    "description_es": "Pasaste años aprendiendo el saber del multiverso.",
+    "description_ptBR": "Você passou anos aprendendo o conhecimento do multiverso.",
     "skillProficiencies": ["Arcana", "History"]
   },
   {
     "id": "sailor",
     "name": "Sailor",
+    "name_es": "Marinero",
+    "name_ptBR": "Marinheiro",
     "description": "You sailed on a seagoing vessel for years.",
+    "description_es": "Navegaste en un barco de alta mar durante años.",
+    "description_ptBR": "Você navegou em um navio de alto mar por anos.",
     "skillProficiencies": ["Athletics", "Perception"]
   },
   {
     "id": "soldier",
     "name": "Soldier",
+    "name_es": "Soldado",
+    "name_ptBR": "Soldado",
     "description": "You have trained as a warrior and fought in battles.",
+    "description_es": "Te has entrenado como guerrero y luchado en batallas.",
+    "description_ptBR": "Você treinou como guerreiro e lutou em batalhas.",
     "skillProficiencies": ["Athletics", "Intimidation"]
   },
   {
     "id": "urchin",
     "name": "Urchin",
+    "name_es": "Huérfano",
+    "name_ptBR": "Órfão",
     "description": "You grew up on the streets alone, orphaned, and poor.",
+    "description_es": "Creciste solo en las calles, huérfano y pobre.",
+    "description_ptBR": "Você cresceu sozinho nas ruas, órfão e pobre.",
     "skillProficiencies": ["Sleight of Hand", "Stealth"]
   }
 ]

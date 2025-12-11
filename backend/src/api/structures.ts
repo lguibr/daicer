@@ -98,7 +98,10 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
-    const doc = await db().collection('user_structures').doc(id).get();
+    const doc = await db()
+      .collection('user_structures')
+      .doc(id || '')
+      .get();
 
     if (!doc.exists) {
       throw new ApiError(404, 'Structure not found');
@@ -107,7 +110,8 @@ router.get(
     const structure = { id: doc.id, ...doc.data() };
 
     // Ensure user can only get their own structure
-    if (structure.userId !== req.user?.uid) {
+    const data = doc.data();
+    if (data?.userId !== req.user?.uid) {
       throw new ApiError(403, 'Forbidden: Can only access your own structures');
     }
 
@@ -125,7 +129,10 @@ router.put(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
-    const doc = await db().collection('user_structures').doc(id).get();
+    const doc = await db()
+      .collection('user_structures')
+      .doc(id || '')
+      .get();
 
     if (!doc.exists) {
       throw new ApiError(404, 'Structure not found');
@@ -142,7 +149,7 @@ router.put(
     try {
       updates = UpdateStructureSchema.parse(req.body);
     } catch (error) {
-      throw new ApiError(400, 'Invalid structure data', { cause: error });
+      throw new ApiError(400, 'Invalid structure data');
     }
 
     const updatedData = {
@@ -150,9 +157,15 @@ router.put(
       updatedAt: Date.now(),
     };
 
-    await db().collection('user_structures').doc(id).update(updatedData);
+    await db()
+      .collection('user_structures')
+      .doc(id || '')
+      .update(updatedData);
 
-    const updatedDoc = await db().collection('user_structures').doc(id).get();
+    const updatedDoc = await db()
+      .collection('user_structures')
+      .doc(id || '')
+      .get();
 
     res.json({
       success: true,
@@ -174,7 +187,10 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
-    const doc = await db().collection('user_structures').doc(id).get();
+    const doc = await db()
+      .collection('user_structures')
+      .doc(id || '')
+      .get();
 
     if (!doc.exists) {
       throw new ApiError(404, 'Structure not found');
@@ -187,7 +203,10 @@ router.delete(
       throw new ApiError(403, 'Forbidden: Can only delete your own structures');
     }
 
-    await db().collection('user_structures').doc(id).delete();
+    await db()
+      .collection('user_structures')
+      .doc(id || '')
+      .delete();
 
     res.json({ success: true, message: 'Structure deleted successfully' });
   })

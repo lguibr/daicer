@@ -6,8 +6,8 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { logger } from '@/utils/logger';
-import type { WorldCondition, RandomEvent } from './types';
-import { randomEventsPool } from './engine';
+// import type { WorldCondition, RandomEvent } from './types';
+import { randomEventsPool } from './simulation';
 
 /**
  * Query world conditions tool

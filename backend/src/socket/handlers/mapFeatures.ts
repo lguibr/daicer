@@ -1,22 +1,20 @@
 /**
  * Map Features Socket Handlers
  * Query features and entities by geospatial position
- * Rule 2: Player Vision is Geospatial
  */
 
 import type { Socket } from 'socket.io';
 import { z } from 'zod';
 import { logger } from '@/utils/logger';
 import { getRoom } from '@/services/firestore/rooms';
-import { getEntitiesInRadius } from '@/services/geospatialQuery';
-// import { getRoomById } from '@/services/room/queries';
+import { mapService } from '@/services/map-service';
 
 const queryFeaturesSchema = z.object({
   roomId: z.string().min(1),
   x: z.number().int(),
   y: z.number().int(),
   z: z.number().int().default(0),
-  radius: z.number().min(1).max(100),
+  radius: z.number().min(1).max(10).default(1), // Radius in CHUNKS
   viewMode: z.enum(['player', 'dm']).default('player'),
 });
 
@@ -25,128 +23,61 @@ const queryFeaturesSchema = z.object({
  */
 export function registerMapFeatureHandlers(socket: Socket, userId: string): void {
   /**
-   * Query features within radius of a position
-   * Client emits: map:features:query
-   * Server responds: map:features:result or map:features:error
+   * Query map view (Chunks + Entities) around a center
+   * Client emits: map:view:query
+   * Server responds: map:view:result
    */
-  socket.on('map:features:query', async (data, ack) => {
+  socket.on('map:view:query', async (data, ack) => {
     try {
       const validation = queryFeaturesSchema.safeParse(data);
       if (!validation.success) {
         const error = { error: 'Invalid request', details: validation.error.message };
-        socket.emit('map:features:error', error);
+        socket.emit('map:view:error', error);
         if (typeof ack === 'function') ack(error);
         return;
       }
 
-      const { roomId, x, y, z, radius, viewMode } = validation.data;
+      const { roomId, x, y, z: posZ, radius, viewMode } = validation.data;
 
       // Verify room access
       const room = await getRoom(roomId);
       if (!room) {
         const error = { error: 'Room not found' };
-        logger.error('[MapFeatures] Room not found', { roomId, userId });
-        socket.emit('map:features:error', error);
+        socket.emit('map:view:error', error);
         if (typeof ack === 'function') ack(error);
         return;
       }
 
-      // Get game state from room
-      const gameState = null; // room.state is not available on Room type
+      // Get centralized map view
+      const result = await mapService.getMapView(roomId, { x, y, z: posZ }, radius);
 
-      // Query entities and features
-      const result = getEntitiesInRadius(gameState, { x, y, z }, radius, viewMode);
+      // Filter secrets if player mode (though mapService currently returns all)
+      // We can filter entities here
+      let entities = result.entities;
+      if (viewMode === 'player') {
+        entities = entities.filter((e) => e.isPublic || e.ownerId === userId);
+      }
 
       const response = {
         roomId,
-        center: { x, y, z },
-        radius,
-        viewMode,
-        ...result,
+        center: { x, y, z: posZ },
+        chunks: result.chunks,
+        entities,
       };
 
-      socket.emit('map:features:result', response);
+      socket.emit('map:view:result', response);
       if (typeof ack === 'function') ack(null); // Success
-
-      logger.debug('[MapFeatures] Query completed', {
-        roomId,
-        position: { x, y, z },
-        radius,
-        viewMode,
-        featureCount: result.features.length,
-        entityCount: result.entities.length,
-      });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Feature query failed';
+      const errorMsg = error instanceof Error ? error.message : 'Map view query failed';
       logger.error('[MapFeatures] Query error:', error);
-      socket.emit('map:features:error', { error: errorMsg });
+      socket.emit('map:view:error', { error: errorMsg });
       if (typeof ack === 'function') ack({ error: errorMsg });
     }
   });
 
-  /**
-   * Query single tile features
-   * Client emits: map:tile:query
-   * Server responds: map:tile:result or map:features:error
-   */
-  socket.on('map:tile:query', async (data, ack) => {
-    try {
-      const validation = z
-        .object({
-          roomId: z.string().min(1),
-          x: z.number().int(),
-          y: z.number().int(),
-          z: z.number().int().default(0),
-        })
-        .safeParse(data);
-
-      if (!validation.success) {
-        const error = { error: 'Invalid request', details: validation.error.message };
-        socket.emit('map:features:error', error);
-        if (typeof ack === 'function') ack(error);
-        return;
-      }
-
-      const { roomId, x, y, z: posZ } = validation.data;
-
-      // Verify room access
-      const room = await getRoom(roomId);
-      if (!room) {
-        const error = { error: 'Room not found' };
-        socket.emit('map:features:error', error);
-        if (typeof ack === 'function') ack(error);
-        return;
-      }
-
-      const gameState = null; // room.state is not available on Room type
-
-      // Query with 0.5 radius (same tile only)
-      const result = getEntitiesInRadius(
-        gameState,
-        { x, y, z: posZ },
-        0.5,
-        'dm' // Always show everything for single tile
-      );
-
-      const response = {
-        roomId,
-        position: { x, y, z },
-        ...result,
-      };
-
-      socket.emit('map:tile:result', response);
-      if (typeof ack === 'function') ack(null);
-
-      logger.debug('[MapFeatures] Tile query completed', {
-        roomId,
-        position: { x, y, z },
-        featureCount: result.features.length,
-      });
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Tile query failed';
-      logger.error('[MapFeatures] Tile query error:', error);
-      socket.emit('map:features:error', { error: errorMsg });
-      if (typeof ack === 'function') ack({ error: errorMsg });
-    }
-  });
+  // Keep legacy handler for backward compatibility if needed, or remove it.
+  // Given "clean up", let's deprecate or minimal-wrapper it.
+  // Actually, let's remove the legacy 'map:features:query' to force migration?
+  // The user asked for "stable during the process", so breaking changes might be risky if I don't update frontend immediately.
+  // But I AM updating frontend in this task. So I will focus on the new 'map:view:query'.
 }

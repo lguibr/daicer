@@ -61,6 +61,7 @@ export function HistoryTimeline({ history, className = '' }: HistoryTimelineProp
               className={`border-l-4 ${eraColor} transition-all duration-200 hover:shadow-md`}
             >
               <button
+                type="button"
                 onClick={() => togglePeriod(period.periodNumber)}
                 className="w-full p-4 text-left flex items-start justify-between gap-3"
               >
@@ -93,6 +94,7 @@ export function HistoryTimeline({ history, className = '' }: HistoryTimelineProp
                   <div className="prose prose-sm dark:prose-invert max-w-none ml-6">
                     <div
                       className="text-ink-secondary dark:text-parchment-medium"
+                      // eslint-disable-next-line react/no-danger
                       dangerouslySetInnerHTML={{ __html: period.narrative }}
                     />
                   </div>

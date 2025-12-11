@@ -12,6 +12,7 @@ export class ApiError extends Error {
   constructor(
     public statusCode: number,
     message: string,
+    public details?: any,
     public isOperational = true
   ) {
     super(message);
@@ -47,6 +48,7 @@ export function errorHandler(
     success: false,
     error: {
       message,
+      details: err instanceof ApiError ? err.details : undefined,
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     },
   });

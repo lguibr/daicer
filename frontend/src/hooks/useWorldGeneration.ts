@@ -29,6 +29,7 @@ export function useWorldGeneration() {
   // Store both 2D surface grid and 3D multi-floor grid
   const [biomeGrid, setBiomeGrid] = useState<string[][]>([]);
   const [biomeGrid3D, setBiomeGrid3D] = useState<string[][][]>([]); // [floor][y][x], 7 floors
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [structures, setStructures] = useState<any[]>([]);
 
   const [steps, setSteps] = useState<GenerationStep[]>([
@@ -114,7 +115,9 @@ export function useWorldGeneration() {
 
     try {
       // Step 1: PHASE 1 - Structure Footprints (BEFORE terrain)
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       let stepStart = performance.now();
       const structureResult = generateStructureFootprints(mapSize, mapSize, `${masterSeed}-structures`, {
         minDistance: params.structureMinDistance,
@@ -133,7 +136,9 @@ export function useWorldGeneration() {
       markStepComplete(0, performance.now() - stepStart);
 
       // Step 2: Elevation noise
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       const noise = new SimplexNoise(masterSeed); // Uses master seed
       const elevationMap: number[][] = [];
@@ -154,7 +159,9 @@ export function useWorldGeneration() {
       markStepComplete(1, performance.now() - stepStart);
 
       // Step 3: Moisture noise
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       const moistureMap: number[][] = [];
 
@@ -174,7 +181,9 @@ export function useWorldGeneration() {
       markStepComplete(2, performance.now() - stepStart);
 
       // Step 4: Biome classification
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       const terrainGrid: string[][][] = [];
 
@@ -240,7 +249,9 @@ export function useWorldGeneration() {
       markStepComplete(3, performance.now() - stepStart);
 
       // Step 5: Cellular Automata caves (uses master seed)
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       generateCaveCA(
         mapSize,
@@ -256,7 +267,9 @@ export function useWorldGeneration() {
       markStepComplete(4, performance.now() - stepStart);
 
       // Step 6: BSP room layout (uses master seed)
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       generateBSPLayout(
         params.bspSize,
@@ -267,7 +280,9 @@ export function useWorldGeneration() {
       markStepComplete(5, performance.now() - stepStart);
 
       // Step 7: Poisson disc feature placement (uses master seed)
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       poissonDiskSampling2D(
         mapSize,
@@ -279,13 +294,16 @@ export function useWorldGeneration() {
       markStepComplete(6, performance.now() - stepStart);
 
       // Step 8: Stamp Detailed Structures
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       stepStart = performance.now();
       const finalGrid = stampDetailedStructures(terrainGrid, detailedStructures, terrainGrid);
       setBiomeGrid(finalGrid[3] || []); // Surface layer
       setBiomeGrid3D(finalGrid);
 
       // Convert structures for visualization
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newStructures: any[] = detailedStructures.map((s: Structure) => ({
         name: s.name,
         x: s.worldX,
@@ -318,6 +336,7 @@ export function useWorldGeneration() {
                 z: 0,
                 biome,
                 blockType: 'grass',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
               }) as any
           ) // Cast to any to avoid strict GridTile validation issues for now, or import GridTile
       ),
@@ -336,6 +355,7 @@ export function useWorldGeneration() {
                 z: z - 3, // Map 0..6 to -3..3
                 biome,
                 blockType: 'grass',
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
               }) as any
           )
         )

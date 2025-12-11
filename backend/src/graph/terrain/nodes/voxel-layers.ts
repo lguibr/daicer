@@ -17,7 +17,7 @@ import type { TerrainGenerationState } from '../state';
  */
 export const voxelLayersNode = async (
   state: TerrainGenerationState,
-  config?: LangGraphRunnableConfig
+  _config?: LangGraphRunnableConfig
 ): Promise<Partial<TerrainGenerationState>> => {
   const { roomId, biomeMap, settings, structures } = state;
 

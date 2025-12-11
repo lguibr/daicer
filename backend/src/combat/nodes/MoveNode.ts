@@ -86,7 +86,7 @@ export function moveNode(state: CombatState, input: MoveNodeInput): Partial<Comb
   // Update character position and movement
   const updatedCharacter: CombatCharacter = {
     ...baseDefender,
-    position: wasKilled ? character.position : targetPosition,
+    position: wasKilled ? character.position : { ...targetPosition, z: 0 },
     hasMoved: wasKilled ? character.hasMoved : true,
     movementRemaining: wasKilled ? character.movementRemaining : remainingMovement,
   };

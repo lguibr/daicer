@@ -27,7 +27,7 @@ export const combatCoordinatorNode = (state: GameplayState): Partial<GameplaySta
     // Update creature HP based on combat results if they exist in creatures
     const creatures = state.creatures as Creature[];
     const updatedCreatures = creatures.map((creature) => {
-      const combatChar = combatState.characters.find((c) => !c.isPlayer && c.name === creature.name);
+      const combatChar = combatState.characters.find((c: any) => !c.isPlayer && c.name === creature.name);
 
       if (combatChar) {
         return {

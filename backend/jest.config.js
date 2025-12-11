@@ -5,6 +5,8 @@ export default {
   moduleNameMapper: {
     // Map seeds imports from parent directory (MUST come before the .js stripping regex)
     '^../../seeds/(.*)\.js$': '<rootDir>/../seeds/$1.ts',
+    '^@daicer/shared/(.*)$': '<rootDir>/../shared/$1.ts',
+    '^@daicer/shared$': '<rootDir>/../shared/index.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
@@ -22,12 +24,7 @@ export default {
       },
     ],
   },
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.spec.ts',
-    '!src/**/*.test.ts',
-    '!src/server.ts',
-  ],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.spec.ts', '!src/**/*.test.ts', '!src/server.ts'],
   // Coverage thresholds (realistic targets: happy path + errors + critical edges)
   coverageThreshold: {
     global: {
@@ -69,4 +66,3 @@ export default {
   // Test match patterns
   testMatch: ['**/__tests__/**/*.spec.ts', '**/__tests__/**/*.test.ts'],
 };
-

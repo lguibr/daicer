@@ -121,6 +121,7 @@ export class CombatSession {
       tacticalArena: null,
       tacticalMode: false,
       pendingNaturalLanguageCommand: null,
+      features: [], // Initialize empty features
     };
   }
 

@@ -10,6 +10,9 @@ import { CHUNK_SIZE } from '@daicer/shared/world/grid-chunk-schema';
 import { SimplexNoise, Alea } from './noise';
 import { logger } from '@/utils/logger';
 
+// New Z-Level Enum for strict typing logic (matches schema)
+type GridLayer = -3 | -2 | -1 | 0 | 1 | 2 | 3;
+
 export interface ChunkGenerationParams {
   seed: string;
   waterLevel?: number;
@@ -28,11 +31,21 @@ export interface ChunkGenerationParams {
 export function generateGridChunk(chunkX: number, chunkY: number, z: number, params: ChunkGenerationParams): GridChunk {
   logger.info(`[GridChunkGenerator] 🎬 ENTERED generateGridChunk`, { chunkX, chunkY, z });
 
+  // Validate Z-Level (Phase 1 Strictness)
+  if (!isValidLayer(z)) {
+    throw new Error(`[GridChunkGenerator] Invalid Z-Layer ${z}. Must be between -3 and +3.`);
+  }
+
   try {
     const { seed } = params;
     const chunkSeed = `${seed}-${chunkX}-${chunkY}-${z}`;
 
-    logger.info(`[GridChunkGenerator] 🎲 Starting generation`, { chunkX, chunkY, z, seed: chunkSeed.substring(0, 30) });
+    logger.debug(`[GridChunkGenerator] 🎲 Starting generation`, {
+      chunkX,
+      chunkY,
+      z,
+      seed: chunkSeed.substring(0, 30),
+    });
 
     // Initialize noise generators
     const elevationNoise = new SimplexNoise(`${seed}-elev`);
@@ -49,10 +62,6 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
     const mountainousness = params.mountainousness ?? 1.0;
     const caveFrequency = params.caveFrequency ?? 0.5;
 
-    logger.debug(
-      `[GridChunkGenerator] Generating ${CHUNK_SIZE * CHUNK_SIZE} tiles for chunk (${chunkX}, ${chunkY}, ${z})`
-    );
-
     // Generate tiles
     for (let localY = 0; localY < CHUNK_SIZE; localY++) {
       for (let localX = 0; localX < CHUNK_SIZE; localX++) {
@@ -62,7 +71,7 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
         const tile = generateTile(
           worldX,
           worldY,
-          z,
+          z, // Typed as GridLayer via isValidLayer check
           {
             elevationNoise,
             moistureNoise,
@@ -83,25 +92,17 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
       }
     }
 
-    logger.info(`[GridChunkGenerator] ✅ Generated ${tiles.length} tiles, ${biomesInChunk.size} unique biomes`, {
-      chunkX,
-      chunkY,
-      z,
-      tileCount: tiles.length,
-      biomes: Array.from(biomesInChunk),
-    });
-
     // Generate features for surface chunks (z === 0)
+    // TODO: Add different feature logic for other layers (stalagmites in caves, clouds in sky)
     if (z === 0) {
       const chunkFeatures = generateFeatures(tiles, chunkSeed);
       features.push(...chunkFeatures);
-      logger.debug(`[GridChunkGenerator] Added ${chunkFeatures.length} features to chunk`);
     }
 
-    const chunk = {
+    const chunk: GridChunk = {
       chunkX,
       chunkY,
-      z,
+      z: z, // Validated
       tiles,
       features,
       biomes: Array.from(biomesInChunk),
@@ -113,37 +114,32 @@ export function generateGridChunk(chunkX: number, chunkY: number, z: number, par
       isStartingArea: false,
     };
 
-    logger.info(`[GridChunkGenerator] 🎉 Chunk complete!`, {
-      chunkX,
-      chunkY,
-      z,
-      tiles: chunk.tiles.length,
-      features: chunk.features.length,
-      firstTile: chunk.tiles[0] ? `${chunk.tiles[0].blockType} at (${chunk.tiles[0].x}, ${chunk.tiles[0].y})` : 'none',
-    });
-
-    logger.info(`[GridChunkGenerator] 🏁 RETURNING chunk`, { chunkX, chunkY, z });
     return chunk;
   } catch (error) {
-    logger.error(`[GridChunkGenerator] ❌❌❌ GENERATION FAILED!`, {
+    logger.error(`[GridChunkGenerator] ❌ GENERATION FAILED!`, {
       chunkX,
       chunkY,
       z,
-      error,
-      errorMessage: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
+      error: error instanceof Error ? error.message : String(error),
     });
     throw error;
   }
 }
 
 /**
- * Generate a single tile
+ * Type Guard for Z-Layer
+ */
+function isValidLayer(z: number): z is GridLayer {
+  return [-3, -2, -1, 0, 1, 2, 3].includes(z);
+}
+
+/**
+ * Generate a single tile with Phase 1 Layer Logic
  */
 function generateTile(
   x: number,
   y: number,
-  z: number,
+  z: GridLayer,
   noiseGenerators: {
     elevationNoise: SimplexNoise;
     moistureNoise: SimplexNoise;
@@ -160,251 +156,197 @@ function generateTile(
 ): GridTile {
   const { elevationNoise, moistureNoise, caveNoise } = noiseGenerators;
 
-  // --- FRONTEND PARITY LOGIC ---
-  // Matches useWorldGeneration.ts exactly
-
-  // 1. Elevation (Scale 0.02, 4 octaves)
+  // 1. Calculate Physical Terrain Height (The "Ground" Truth)
+  // Scale: 0.02, 4 octaves. Range approx -1 to 1.
+  // We map this to Z-levels.
+  // -1.0 -> -3 (Deep Ocean/Canyon)
+  // 0.0 -> 0 (Sea Level/Plains)
+  // 1.0 -> +3 (High Peak)
   const elevationScale = 0.02;
   const rawElevation = elevationNoise.octaveNoise(x * elevationScale, y * elevationScale, 4, 0.5);
 
-  // 2. Moisture (Scale 0.03, 3 octaves, offset 1000)
+  // Map rawElevation (-1 to 1) to "Ground Z" (-3 to +3)
+  // We amplify it slightly to make mountains reach +2/+3
+  const groundZ = Math.floor(rawElevation * 3.5);
+
+  // 2. Biome Classification (Classic Moisture/Temp map)
   const moistureScale = 0.03;
   const rawMoisture = moistureNoise.octaveNoise(x * moistureScale + 1000, y * moistureScale + 1000, 3, 0.5);
+  const biomeType = determineBiome(rawElevation, rawMoisture);
 
-  // 3. Biome Classification
-  let biomeType = 'plains';
-
-  // Frontend logic copy-paste:
-  if (rawElevation < -0.3) {
-    biomeType = 'ocean';
-  } else if (rawElevation < -0.1) {
-    biomeType = 'beach';
-  } else if (rawElevation < 0.1) {
-    if (rawMoisture < -0.2) biomeType = 'desert';
-    else if (rawMoisture < 0.2) biomeType = 'plains';
-    else biomeType = 'swamp';
-  } else if (rawElevation < 0.4) {
-    if (rawMoisture < -0.1) biomeType = 'savanna';
-    else if (rawMoisture < 0.3) biomeType = 'forest';
-    else biomeType = 'jungle';
-  } else if (rawElevation < 0.6) {
-    biomeType = 'hills';
-  } else {
-    biomeType = 'mountains';
-  }
-
-  // --- END FRONTEND PARITY LOGIC ---
-
-  // Map biome name to block types (simplified mapping)
-  // In a real scenario, we might want to use the BiomeDefinition from biomes.ts,
-  // but for now we'll map manually to ensure visual parity with frontend's expectations
-  // or use a helper if available.
-  // Let's try to use the existing selectBiome if we can map the inputs,
-  // OR just define the blocks directly here to be 100% sure.
-
-  // Let's define a simple mapping for now to guarantee the "look" matches
-  let surfaceBlock = 'grass';
-  let subsurfaceBlock = 'dirt';
-  let undergroundBlock = 'stone';
-
-  switch (biomeType) {
-    case 'ocean':
-      surfaceBlock = 'sand';
-      subsurfaceBlock = 'sand';
-      break;
-    case 'beach':
-      surfaceBlock = 'sand';
-      subsurfaceBlock = 'sand';
-      break;
-    case 'desert':
-      surfaceBlock = 'sand';
-      subsurfaceBlock = 'sandstone';
-      break;
-    case 'swamp':
-      surfaceBlock = 'grass';
-      subsurfaceBlock = 'mud';
-      break; // Approximate
-    case 'mountains':
-      surfaceBlock = 'stone';
-      subsurfaceBlock = 'stone';
-      break;
-    case 'hills':
-      surfaceBlock = 'grass';
-      subsurfaceBlock = 'stone';
-      break;
-    case 'jungle':
-      surfaceBlock = 'grass';
-      subsurfaceBlock = 'dirt';
-      break;
-    case 'forest':
-      surfaceBlock = 'grass';
-      subsurfaceBlock = 'dirt';
-      break;
-    case 'savanna':
-      surfaceBlock = 'grass';
-      subsurfaceBlock = 'dirt';
-      break; // Dry grass?
-    case 'ice':
-      surfaceBlock = 'snow';
-      subsurfaceBlock = 'ice';
-      break;
-    default:
-      surfaceBlock = 'grass';
-      subsurfaceBlock = 'dirt';
-  }
-
-  // Determine block type based on z-level
-  // Frontend treats z=0 as surface.
-  // Backend supports 3D chunks.
-  // We need to map the "elevation" (which is -1 to 1) to a Z-height.
-
-  // Frontend logic:
-  // if (floor === 3) -> Surface generation.
-  // Frontend doesn't really have "height" in the grid, it just paints the tile.
-  // BUT, for the backend 3D world, we need to give it some depth.
-
-  // Let's say "Surface" is around Z=0.
-  // Elevation -1 to 1.
-  // Let's scale it slightly so mountains actually go up.
-  const terrainHeight = Math.floor(rawElevation * 10); // -10 to +10 range roughly
-
-  let blockType: string = 'air';
+  // 3. Block Selection Logic (Strict Layering)
+  let blockType = 'air';
   let lightLevel = 0;
 
-  if (z > terrainHeight) {
-    // Above terrain
-    if (z <= params.waterLevel * 10 && rawElevation < -0.1) {
-      // Water level check
+  // --- SKY LAYER (z > groundZ) ---
+  if (z > groundZ) {
+    if (z <= params.waterLevel * 3 && rawElevation < -0.1) {
+      // Water fills up to sea level (roughly Z=0 or -1 depending on params)
       blockType = 'water';
-      lightLevel = 15; // Simplified
+      lightLevel = 14;
     } else {
       blockType = 'air';
       lightLevel = 15;
     }
-  } else if (z === terrainHeight) {
-    blockType = surfaceBlock;
-    lightLevel = 15;
-  } else if (z > terrainHeight - 4) {
-    blockType = subsurfaceBlock;
-    lightLevel = 0;
-  } else {
-    blockType = undergroundBlock;
+  }
+  // --- SURFACE LAYER (z == groundZ) ---
+  else if (z === groundZ) {
+    blockType = getSurfaceBlock(biomeType);
+    lightLevel = 15; // Sunlit
+  }
+  // --- UNDERGROUND LAYER (z < groundZ) ---
+  else {
+    // Default Subsurface
+    blockType = getSubsurfaceBlock(biomeType);
     lightLevel = 0;
 
-    // Caves
-    if (z < 0 && caveNoise) {
-      const isCave = generateCave(x, y, z, caveNoise, params.caveFrequency);
-      if (isCave) blockType = 'air';
+    // Deep Underground Override
+    if (z <= -2) {
+      blockType = 'stone';
     }
 
-    // Bedrock
-    if (z < -60) blockType = 'bedrock';
+    // Cave Carving (3D Noise)
+    if (caveNoise) {
+      const isCave = generateCave(x, y, z, caveNoise, params.caveFrequency);
+      if (isCave) {
+        blockType = 'air'; // Cave air
+      }
+    }
+
+    // Bedrock Floor (at strictly -3 if we want a hard floor, or just stone)
+    // Spec says Z=-3 is bottom layer. Let's make it Bedrock if strictly -3 and not cave?
+    // Or just leave it as stone/cave. Let's leave it natural for now.
   }
 
   return {
     x,
     y,
     z,
-    blockType: blockType as any,
+    blockType: blockType as any, // Type cast to Enum
     biome: biomeType,
-    elevation: rawElevation * 100, // Keep consistent scale for metadata
+    elevation: rawElevation * 100,
     lightLevel,
   };
+}
+
+/**
+ * Determine Biome from Noise
+ */
+function determineBiome(elevation: number, moisture: number): string {
+  if (elevation < -0.3) return 'ocean';
+  if (elevation < -0.1) return 'beach';
+
+  if (elevation < 0.1) {
+    if (moisture < -0.2) return 'desert';
+    if (moisture < 0.2) return 'plains';
+    return 'swamp';
+  }
+
+  if (elevation < 0.4) {
+    if (moisture < -0.1) return 'savanna';
+    if (moisture < 0.3) return 'forest';
+    return 'jungle';
+  }
+
+  if (elevation < 0.6) return 'hills';
+  return 'mountains';
+}
+
+function getSurfaceBlock(biome: string): string {
+  switch (biome) {
+    case 'desert':
+      return 'sand';
+    case 'beach':
+      return 'sand';
+    case 'ocean':
+      return 'sand';
+    case 'mountains':
+      return 'stone';
+    case 'ice':
+      return 'snow';
+    default:
+      return 'grass';
+  }
+}
+
+function getSubsurfaceBlock(biome: string): string {
+  switch (biome) {
+    case 'desert':
+      return 'sandstone';
+    case 'beach':
+      return 'sandstone';
+    case 'swamp':
+      return 'mud';
+    case 'ice':
+      return 'ice';
+    default:
+      return 'dirt';
+  }
 }
 
 /**
  * Generate cave using 3D noise
  */
 function generateCave(x: number, y: number, z: number, caveNoise: SimplexNoise, frequency: number): boolean {
-  const caveScale = 0.02;
-  const depth = Math.abs(z);
-
-  // 3D noise for cave carving
-  const caveValue = caveNoise.octaveNoise3(x * caveScale, y * caveScale, z * caveScale, 3, 0.5, 2.0);
-
-  // Threshold depends on depth (more caves deeper underground)
-  const threshold = 0.5 + depth * 0.01;
-
-  return Math.abs(caveValue) < threshold * frequency;
+  const caveScale = 0.05; // Tighter scale for smaller Z-range
+  // 3D noise
+  const caveValue = caveNoise.octaveNoise3(x * caveScale, y * caveScale, z * 0.2, 3, 0.5, 2.0); // Z-scale higher to stretch caves vertically?
+  return Math.abs(caveValue) < 0.3 * frequency; // Threshold
 }
 
 /**
- * Generate features for a chunk (trees, resources, etc.)
+ * Generate features for surface chunks
  */
 function generateFeatures(tiles: GridTile[], seed: string): GridFeature[] {
   const features: GridFeature[] = [];
   const rng = Alea(seed);
 
-  // Find surface tiles (biome determines spawn rates)
+  // Filter for valid surface tiles (Grass/Sand/etc)
   for (const tile of tiles) {
-    // Only spawn on surface layer (z === 0)
-    if (tile.z !== 0) continue;
-    if (tile.blockType === 'water' || tile.blockType === 'air') continue;
+    // Only spawn if this tile is solid and above is air (implicit in Phase 1 logic)
+    // But since this function is called for a whole chunk z-slice, we just check blockType
+    if (tile.blockType === 'air' || tile.blockType === 'water') continue;
 
-    // Get biome name for feature spawning
-    const biomeName = tile.biome;
-
-    // Tree spawning (simple example)
-    if (biomeName === 'forest' || biomeName === 'birch_forest' || biomeName === 'dark_forest') {
-      if (rng() < 0.15) {
-        // 15% chance per tile
-        features.push({
-          id: `tree_${tile.x}_${tile.y}`,
-          position: { x: tile.x, y: tile.y, z: 0 },
-          type: 'tree',
-          subtype: biomeName === 'birch_forest' ? 'birch_tree' : 'oak_tree',
-          metadata: { height: Math.floor(rng() * 3) + 5 }, // 5-7 blocks tall
-          isVisible: true,
-          isWalkable: false,
-          blocksLineOfSight: true,
-          interactable: true,
-        });
-      }
-    }
-
-    // Resource spawning
-    if (tile.blockType === 'stone' && rng() < 0.05) {
+    // Feature Logic... (simplified from original)
+    if (tile.biome.includes('forest') && rng() < 0.15) {
       features.push({
-        id: `resource_${tile.x}_${tile.y}`,
-        position: { x: tile.x, y: tile.y, z: 0 },
-        type: 'resource',
-        subtype: 'stone_outcrop',
-        metadata: { quantity: Math.floor(rng() * 10) + 5 },
+        id: `tree_${tile.x}_${tile.y}`,
+        position: { x: tile.x, y: tile.y, z: tile.z },
+        type: 'tree',
+        subtype: 'oak_tree', // simplifying for now
+        metadata: { height: 5 },
         isVisible: true,
-        isWalkable: true,
-        blocksLineOfSight: false,
+        isWalkable: false,
+        blocksLineOfSight: true,
         interactable: true,
       });
     }
   }
-
   return features;
 }
 
 /**
  * Batch generate chunks for starting area
- * Generates 32x32 chunks (256x256 tiles = 2048x2048 pixels with 8px tiles)
  */
 export function generateStartingArea(params: ChunkGenerationParams): GridChunk[] {
-  logger.info('[GridChunkGenerator] Generating starting area (32x32 chunks = 256x256 tiles)');
-
+  logger.info('[GridChunkGenerator] Generating starting area (32x32 chunks)');
   const chunks: GridChunk[] = [];
-  const startChunkX = -16; // Center around 0,0
+  const chunkCount = 32;
+  const startChunkX = -16;
   const startChunkY = -16;
-  const chunkCount = 32; // 32x32 chunks
 
-  // Generate only z=0 (surface) for starting area
   for (let cy = 0; cy < chunkCount; cy++) {
     for (let cx = 0; cx < chunkCount; cx++) {
-      const chunkX = startChunkX + cx;
-      const chunkY = startChunkY + cy;
-
-      const chunk = generateGridChunk(chunkX, chunkY, 0, params);
+      // Generate just the Surface (0) for the starting area?
+      // Or all 7 layers?
+      // For performance, maybe just 0. But Phase 1 says "Vertical World".
+      // Let's generate 0, and maybe -1 if we want caves immediately.
+      // User constraints say "Infinite Coordinates", we load on demand.
+      // For "Starting Area", let's just do Z=0 to keep bootstrap fast.
+      const chunk = generateGridChunk(startChunkX + cx, startChunkY + cy, 0, params);
       chunk.isStartingArea = true;
       chunks.push(chunk);
     }
   }
-
-  logger.info(`[GridChunkGenerator] Generated ${chunks.length} starting area chunks`);
   return chunks;
 }

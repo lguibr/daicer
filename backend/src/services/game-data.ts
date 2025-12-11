@@ -400,6 +400,10 @@ export interface RuleDocument {
   category?: string;
   content?: string;
   tags?: string[];
+  title_es?: string;
+  title_ptBR?: string;
+  content_es?: string;
+  content_ptBR?: string;
 }
 
 export interface RuleSectionDocument {
@@ -420,6 +424,10 @@ export function getRules(): RuleDocument[] {
     category: rule.category,
     content: rule.content,
     tags: rule.tags,
+    title_es: rule.title_es,
+    title_ptBR: rule.title_ptBR,
+    content_es: rule.content_es,
+    content_ptBR: rule.content_ptBR,
   }));
 }
 
@@ -438,6 +446,10 @@ export function getRule(id: string): RuleDocument | null {
     category: rule.category,
     content: rule.content,
     tags: rule.tags,
+    title_es: rule.title_es,
+    title_ptBR: rule.title_ptBR,
+    content_es: rule.content_es,
+    content_ptBR: rule.content_ptBR,
   };
 }
 

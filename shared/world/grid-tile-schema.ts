@@ -41,7 +41,7 @@ export type BlockType = z.infer<typeof BlockTypeEnum>;
 export const GridTileSchema = z.object({
   x: z.number().int(),
   y: z.number().int(),
-  z: z.number().int().min(-6).max(5), // Z-layer: -6 (deep underground) to +5 (sky)
+  z: z.union([z.literal(-3), z.literal(-2), z.literal(-1), z.literal(0), z.literal(1), z.literal(2), z.literal(3)]), // Z-layer index (-3 to +3)
   blockType: BlockTypeEnum,
   biome: z.string(),
   elevation: z.number().optional(), // Surface elevation at this position

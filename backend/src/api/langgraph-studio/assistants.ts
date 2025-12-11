@@ -4,7 +4,7 @@
  */
 
 import type { Router } from 'express';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+// import { zodToJsonSchema } from 'zod-to-json-schema';
 import { logger } from '@/utils/logger';
 import { getGameplayGraph } from '@/graph/gameplay-graph';
 import { createGridGenerationGraph } from '@/graph/grid-generation-graph';
@@ -328,10 +328,10 @@ export function registerAssistantsRoutes(app: Router): void {
   app.get('/assistants/:assistant_id/graph', async (req, res) => {
     try {
       const { assistant_id } = req.params;
-      const xray = req.query.xray === 'true';
+      // const _xray = req.query.xray === 'true';
 
       // Helper to convert graph.getGraph() to Studio format
-      const convertGraphData = (graph: any, schema: any) => {
+      const convertGraphData = (graph: any, _schema: any) => {
         const graphData = graph.getGraph();
         const nodesArray = Object.entries(graphData.nodes).map(([id, node]) => ({
           id,

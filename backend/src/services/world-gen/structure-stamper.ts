@@ -117,52 +117,65 @@ export function getStructuresForChunk(
 /**
  * Stamps structure tiles onto chunk tiles
  * Modifies the tiles array in place (or returns new one)
+ * Supports Z-Layers and Foundations
  */
 export function stampStructureOnChunk(
   tiles: GridTile[],
   structure: Structure,
-  chunkWorldX: number,
-  chunkWorldY: number,
-  chunkSize: number
+  _chunkWorldX: number,
+  _chunkWorldY: number,
+  _chunkSize: number,
+  chunkZ: number // Phase 1: Added Z param
 ): GridTile[] {
-  // Get surface layer tiles (floor 0)
-  const surfaceTiles = structure.tiles[0 as StructureFloor];
-  if (!surfaceTiles) return tiles;
+  // 1. Get tiles for this specific schema-layer (StructureFloor)
+  // We assume Structure Floors map 1:1 to World Z-Levels for now.
+  // Floor 0 = World Z 0.
+  const structureFloor = chunkZ as StructureFloor;
+  const structureTiles = structure.tiles[structureFloor];
 
-  // Iterate through structure tiles and update corresponding chunk tiles
-  for (let y = 0; y < surfaceTiles.length; y++) {
-    for (let x = 0; x < (surfaceTiles[y]?.length || 0); x++) {
-      const globalX = structure.worldX + x;
-      const globalY = structure.worldY + y;
+  // 2. Iterate through local chunk coordinates
+  for (let i = 0; i < tiles.length; i++) {
+    const tile = tiles[i]; // tile.x, tile.y are world coords
+    if (!tile) continue; // Safety check
 
-      // Check if this tile is within the chunk bounds
-      if (
-        globalX >= chunkWorldX &&
-        globalX < chunkWorldX + chunkSize &&
-        globalY >= chunkWorldY &&
-        globalY < chunkWorldY + chunkSize
-      ) {
-        const tile = surfaceTiles[y]?.[x];
-        if (tile && tile.tileType !== 'empty') {
-          // Find the tile in the chunk array
-          const localX = globalX - chunkWorldX;
-          const localY = globalY - chunkWorldY;
-          const tileIndex = localY * chunkSize + localX;
+    // Check if this tile is inside the structure bounds
+    const relativeX = tile.x - structure.worldX;
+    const relativeY = tile.y - structure.worldY;
 
-          if (tiles[tileIndex]) {
-            const biomeName = structureTileToBiome(tile, 0 as StructureFloor, false, structure.id);
+    if (relativeX >= 0 && relativeX < structure.width && relativeY >= 0 && relativeY < structure.height) {
+      // A. Direct Stamping (Structure exists at this Z)
+      // Safe navigation: structureTiles?.[relativeY]?.[relativeX]
+      const structTile = structureTiles?.[relativeY]?.[relativeX];
 
-            tiles[tileIndex].biome = biomeName;
+      if (structTile && structTile.tileType !== 'empty') {
+        // Calculate biome name
+        tile.biome = structureTileToBiome(structTile, structureFloor, false, structure.id);
 
-            // Map structure tile types to valid block types
-            if (tile.tileType === 'wall') {
-              tiles[tileIndex].blockType = 'stone';
-            } else if (tile.tileType === 'floor') {
-              tiles[tileIndex].blockType = 'sandstone'; // Fallback for floor
-            } else if (tile.tileType === 'road') {
-              tiles[tileIndex].blockType = 'gravel';
-            }
-          }
+        // Map material/type to BlockType
+        if (structTile.tileType === 'wall')
+          tile.blockType = 'stone'; // Or 'wood', etc based on material
+        else if (structTile.tileType === 'floor') tile.blockType = 'sandstone';
+        else if (structTile.tileType === 'road') tile.blockType = 'gravel';
+
+        // Material override
+        if (structTile.material === 'wood') tile.blockType = 'dirt'; // Placeholder for wood block
+
+        tile.lightLevel = 10; // Lit inside
+        continue; // Done with this tile
+      }
+
+      // B. Foundation Logic (Structure DOES NOT exist at this Z, but exists ABOVE)
+      // Only if we are underground (Z < 0) and the tile is currently Air (gap)
+      if (chunkZ < 0 && tile.blockType === 'air') {
+        // Check if there is a structure at Z=0 (Ground Floor) at this X,Y
+        const groundTiles = structure.tiles[0 as StructureFloor];
+        const groundTile = groundTiles?.[relativeY]?.[relativeX];
+
+        // If the ground floor has a solid tile here
+        if (groundTile && (groundTile.tileType === 'floor' || groundTile.tileType === 'wall')) {
+          // STAMP FOUNDATION
+          tile.blockType = 'stone'; // Cobblestone foundation
+          tile.biome = `structure_foundation_${structure.id}`;
         }
       }
     }

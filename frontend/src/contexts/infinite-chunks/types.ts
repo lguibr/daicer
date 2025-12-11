@@ -11,7 +11,7 @@ export type TerrainChunk = Omit<GridChunk, 'tiles' | 'biomes'> & {
   biomes: string[][];
   worldOffsetX: number;
   worldOffsetY: number;
-  structures: any[];
+  structures: unknown[];
 };
 
 export interface ChunkGenerator {

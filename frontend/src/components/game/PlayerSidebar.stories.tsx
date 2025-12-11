@@ -67,15 +67,15 @@ export const MultiplePlayersNoActions: Story = {
     players: [
       createPlayer({
         id: 'p1',
-        character: { ...createPlayer({}).character, name: 'Elara', race: 'Elf', characterClass: 'Wizard' },
+        character: { ...createPlayer({}).character, name: 'Elara', race: 'Elf', characterClass: 'Wizard' } as any,
       }),
       createPlayer({
         id: 'p2',
-        character: { ...createPlayer({}).character, name: 'Thrain', race: 'Dwarf', characterClass: 'Fighter' },
+        character: { ...createPlayer({}).character, name: 'Thrain', race: 'Dwarf', characterClass: 'Fighter' } as any,
       }),
       createPlayer({
         id: 'p3',
-        character: { ...createPlayer({}).character, name: 'Luna', race: 'Half-Elf', characterClass: 'Rogue' },
+        character: { ...createPlayer({}).character, name: 'Luna', race: 'Half-Elf', characterClass: 'Rogue' } as any,
       }),
     ],
     creatures: [],
@@ -136,7 +136,7 @@ export const FullPartyWithEnemies: Story = {
           hp: 18,
           maxHp: 24,
           armorClass: 13,
-        },
+        } as any,
         action: 'I prepare a fireball spell',
       }),
       createPlayer({
@@ -149,7 +149,7 @@ export const FullPartyWithEnemies: Story = {
           hp: 32,
           maxHp: 32,
           armorClass: 18,
-        },
+        } as any,
         action: null,
       }),
       createPlayer({
@@ -162,7 +162,7 @@ export const FullPartyWithEnemies: Story = {
           hp: 20,
           maxHp: 24,
           armorClass: 15,
-        },
+        } as any,
         action: 'I scout ahead',
       }),
     ],
@@ -208,11 +208,11 @@ export const WoundedParty: Story = {
   args: {
     players: [
       createPlayer({
-        character: { ...createPlayer({}).character, hp: 5, maxHp: 32 },
+        character: { ...createPlayer({}).character, hp: 5, maxHp: 32 } as any,
       }),
       createPlayer({
         id: 'p2',
-        character: { ...createPlayer({}).character, name: 'Wounded Wizard', hp: 2, maxHp: 18 },
+        character: { ...createPlayer({}).character, name: 'Wounded Wizard', hp: 2, maxHp: 18 } as any,
       }),
     ],
     creatures: [],

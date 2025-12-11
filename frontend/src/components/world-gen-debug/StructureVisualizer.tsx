@@ -271,8 +271,10 @@ export function StructureVisualizer() {
               {/* Canvas */}
               <div className="border rounded overflow-auto" style={{ maxHeight: '600px' }}>
                 <canvas
-                  ref={(canvas) => {
-                    if (!canvas) return;
+                  ref={(c) => {
+                    if (!c) return;
+                    // eslint-disable-next-line
+                    const canvas = c;
                     const ctx = canvas.getContext('2d');
                     if (!ctx) return;
 

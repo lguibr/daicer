@@ -12,6 +12,10 @@ export interface Alignment {
   abbreviation: string;
   description: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface Ability {
@@ -22,6 +26,10 @@ export interface Ability {
   description: string;
   skills: string[];
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface Skill {
@@ -31,6 +39,10 @@ export interface Skill {
   description: string;
   abilityScore: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface Race {
@@ -40,6 +52,10 @@ export interface Race {
   speed: number;
   size: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface CharacterClass {
@@ -50,6 +66,10 @@ export interface CharacterClass {
   primaryAbility: string;
   savingThrows: string[];
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface Background {
@@ -58,6 +78,10 @@ export interface Background {
   description: string;
   skillProficiencies: string[];
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface Language {
@@ -121,6 +145,10 @@ export interface EquipmentItem {
   range?: { normal: number; long?: number };
   properties?: string[];
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 export interface MonsterAbilityScores {

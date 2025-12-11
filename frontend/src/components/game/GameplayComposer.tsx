@@ -10,6 +10,8 @@ interface GameplayComposerProps {
   disabled?: boolean;
   placeholder?: string;
   isProcessing?: boolean;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 /**
@@ -23,19 +25,25 @@ export default function GameplayComposer({
   disabled = false,
   placeholder,
   isProcessing = false,
+  value,
+  onChange,
 }: GameplayComposerProps) {
   const { t } = useI18n();
-  const [action, setAction] = useState('');
+  const [internalAction, setInternalAction] = useState('');
+  const isControlled = value !== undefined;
+  const action = isControlled ? value : internalAction;
+
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Load draft from localStorage
+  // Load draft from localStorage (only if uncontrolled)
   useEffect(() => {
+    if (isControlled) return;
     const draft = localStorage.getItem(`composer-draft-${roomId}`);
     if (draft) {
-      setAction(draft);
+      setInternalAction(draft);
     }
-  }, [roomId]);
+  }, [roomId, isControlled]);
 
   // Save draft to localStorage
   useEffect(() => {
@@ -48,7 +56,12 @@ export default function GameplayComposer({
 
   // Handle typing indicator
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setAction(e.target.value);
+    const newValue = e.target.value;
+
+    if (!isControlled) {
+      setInternalAction(newValue);
+    }
+    onChange?.(newValue);
 
     // Send typing indicator
     if (!isTyping) {
@@ -86,7 +99,12 @@ export default function GameplayComposer({
     if (!action.trim() || disabled) return;
 
     onSubmit(action.trim());
-    setAction('');
+
+    if (!isControlled) {
+      setInternalAction('');
+    }
+    onChange?.(''); // Clear parent
+
     setIsTyping(false);
     sendTypingIndicator(roomId, userName, false);
 

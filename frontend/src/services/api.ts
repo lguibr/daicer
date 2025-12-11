@@ -64,7 +64,23 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
     headers,
   });
 
-  const data = (await response.json()) as ApiResponse<T>;
+  if (response.status === 401 || response.status === 403) {
+    window.dispatchEvent(
+      new CustomEvent('auth-error', {
+        detail: { status: response.status },
+      })
+    );
+  }
+
+  let data: ApiResponse<T>;
+  try {
+    data = (await response.json()) as ApiResponse<T>;
+  } catch (error) {
+    if (!response.ok) {
+      throw new Error(response.statusText || 'Request failed');
+    }
+    throw error;
+  }
 
   if (!response.ok || !data.success) {
     throw new Error(data.error?.message || 'Request failed');
@@ -78,7 +94,7 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
  * @param options - Optional room creation options
  * @returns Created room
  */
-export async function createRoom(options?: { settings?: WorldSettings; structures?: any[] }): Promise<Room> {
+export async function createRoom(options?: { settings?: WorldSettings; structures?: unknown[] }): Promise<Room> {
   return apiRequest<Room>('/api/rooms', {
     method: 'POST',
     body: options ? JSON.stringify(options) : undefined,
@@ -269,7 +285,7 @@ export async function invokeWorldConfigGraph(input: {
   roomId: string;
   settings: WorldConfigSettings & {
     seed?: string;
-    generationParams?: any;
+    generationParams?: unknown;
   };
 }): Promise<{
   structures: Structure[];

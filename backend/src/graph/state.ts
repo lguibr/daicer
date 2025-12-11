@@ -140,7 +140,9 @@ export const CombatCharacterSchema = z.object({
   tempHp: z.number().int().min(0).default(0),
   armorClass: z.number().int().positive(),
   position: PositionSchema,
-  initiative: z.number(),
+  initiative: z.number().default(0),
+  initiativeBonus: z.number().int().default(0),
+  attackBonus: z.number().int().default(0),
   avatar: z.string(),
   isPlayer: z.boolean(),
 
@@ -482,20 +484,23 @@ export const GameplayStateSchema = z.object({
   players: z.array(PlayerSchema),
   messages: z.array(MessageSchema),
   creatures: z.array(CreatureSchema),
+  worldConditions: z.array(z.any()).default([]),
+  eventsLog: z.array(z.any()).default([]),
+  narrativeSummary: z.string().optional(),
+  currentTurn: z.number().int().min(0).default(0),
   waitingForAction: z.boolean().default(false),
   combat: z.any().nullable().default(null),
   createdAt: z.number(),
   updatedAt: z.number(),
+  // Combat state (optional)
+  combatState: z.any().optional().nullable(),
 });
 
 export type GameplayState = z.infer<typeof GameplayStateSchema>;
 
-/**
- * Type guard to check if state has active combat
- */
-export function hasActiveCombat(state: GameState | GameplayState): boolean {
-  const { combat } = state;
-  return combat !== null && !combat.isCombatOver;
+// Helper to check for active combat (with type guard)
+export function hasActiveCombat(state: GameplayState): boolean {
+  return !!state.combatState && !state.combatState.isCombatOver;
 }
 
 /**

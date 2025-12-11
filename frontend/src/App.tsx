@@ -19,6 +19,8 @@ import ErrorPage from './pages/Error';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AssetsProvider } from './state/assetsStore';
 
+import AuthEventHandler from './components/auth/AuthEventHandler';
+
 export default function App() {
   return (
     <BrowserRouter
@@ -27,6 +29,7 @@ export default function App() {
         v7_relativeSplatPath: true,
       }}
     >
+      <AuthEventHandler />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route

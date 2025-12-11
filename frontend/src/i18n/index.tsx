@@ -35,6 +35,8 @@ export const supportedLanguages = [
 
 interface I18nContextValue {
   t: (key: string, params?: Record<string, string | number>) => string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  localize: (data: any, field: string) => string;
   language: Language;
   setLanguage: (lang: Language) => void;
   availableLanguages: typeof supportedLanguages;
@@ -127,14 +129,33 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [language]
   );
 
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const localize = useCallback(
+    (data: any, field: string): string => {
+      if (!data) return '';
+      const fallback = data[field] || '';
+
+      if (language === 'en') return fallback;
+
+      // Try specific language variant
+      const langSuffix = language === 'es' ? '_es' : '_ptBR';
+      const localizedValue = data[`${field}${langSuffix}`];
+
+      return localizedValue || fallback;
+    },
+    [language]
+  );
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
   const value = useMemo<I18nContextValue>(
     () => ({
       t,
+      localize,
       language,
       setLanguage,
       availableLanguages: supportedLanguages,
     }),
-    [language, setLanguage, t]
+    [language, setLanguage, t, localize]
   );
 
   return (

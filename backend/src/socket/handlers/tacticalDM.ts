@@ -68,8 +68,8 @@ export function registerTacticalDMHandlers(socket: Socket, userId: string): void
       const diceRoller = new DiceRoller({ seed: seed || Date.now() });
 
       // Track updates to emit
-      const updates: any[] = [];
-      const onUpdate = (update: any) => {
+      const updates: unknown[] = [];
+      const onUpdate = (update: unknown) => {
         updates.push(update);
         // Emit update immediately for real-time feedback
         socket.emit('tactical:dm:update', {
@@ -90,6 +90,9 @@ export function registerTacticalDMHandlers(socket: Socket, userId: string): void
         ...c,
         armorClass: c.ac,
         initiative: 0,
+
+        initiativeBonus: Math.floor((10 - 10) / 2), // Default DEX 10 for now since we don't have stats in request
+        attackBonus: c.attackBonus,
         speed: 30,
         proficiencyBonus: 2,
         tempHp: 0,
@@ -110,7 +113,8 @@ export function registerTacticalDMHandlers(socket: Socket, userId: string): void
       }));
 
       // Process command through LLM agent
-      const response = await processDMCommand(command, combatCharacters, diceRoller, onUpdate, streamId);
+      // Process command through LLM agent
+      const response = await processDMCommand(sessionId, command, combatCharacters, diceRoller, onUpdate, streamId);
 
       // End unified stream
       streamManager.endStream(streamId);

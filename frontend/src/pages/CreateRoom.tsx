@@ -47,6 +47,7 @@ export default function CreateRoomPage() {
   // Terrain generation state
   const [seed, setSeed] = useState<string>('daicer-world');
   const [generationParams, setGenerationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [structures, setStructures] = useState<any[]>([]);
 
   const verbosityMarks = useMemo<SliderMark[]>(
@@ -385,7 +386,7 @@ export default function CreateRoomPage() {
       const room = await createRoom({
         settings: {
           ...settings,
-          // @ts-ignore - Adding these properties dynamically if not in type
+
           seed,
           generationParams,
         },

@@ -238,13 +238,13 @@ export const MultiLayer: Story = {
           for (let cx = -1; cx <= 1; cx++) {
             if (z < 0) {
               // Underground - stone/caves
-              allChunks[`${cx}_${cy}_${z}`] = createBiomeChunk(cx, cy, z, 'mountains');
+              allChunks[`${cx}_${cy}_${z}`] = createBiomeChunk(cx, cy, z as any, 'mountains');
             } else if (z === 0) {
               // Surface - varied biomes
-              allChunks[`${cx}_${cy}_${z}`] = createBiomeChunk(cx, cy, z, 'forest');
+              allChunks[`${cx}_${cy}_${z}`] = createBiomeChunk(cx, cy, z as any, 'forest');
             } else {
               // Sky - air
-              allChunks[`${cx}_${cy}_${z}`] = createEmptyChunk(cx, cy, z);
+              allChunks[`${cx}_${cy}_${z}`] = createEmptyChunk(cx, cy, z as any);
             }
           }
         }

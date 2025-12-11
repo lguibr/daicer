@@ -73,12 +73,12 @@ export function VoronoiVisualizer() {
 
           // Color based on nearest point index
           const hue = (nearestIdx * 137.5) % 360;
-          const rgb = hslToRgb(hue / 360, 0.6, 0.4);
+          const [r, g, b] = hslToRgb(hue / 360, 0.6, 0.4);
 
           const idx = (y * width + x) * 4;
-          data[idx] = rgb[0];
-          data[idx + 1] = rgb[1];
-          data[idx + 2] = rgb[2];
+          data[idx] = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
           data[idx + 3] = 255;
         }
       }
@@ -227,9 +227,12 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   let b;
 
   if (s === 0) {
-    r = g = b = l;
+    r = l;
+    g = l;
+    b = l;
   } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
+    const hue2rgb = (p: number, q: number, tInput: number) => {
+      let t = tInput;
       if (t < 0) t += 1;
       if (t > 1) t -= 1;
       if (t < 1 / 6) return p + (q - p) * 6 * t;

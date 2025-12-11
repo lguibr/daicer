@@ -15,6 +15,7 @@ export * from './world/grid-feature-schema';
 export * from './world/grid-chunk-schema';
 export * from './world/biome-schema';
 export * from './world/condition-schema';
+export * from './world/entity-schema';
 
 // Re-export graph-states (section graph schemas)
 export * from './graph-states';

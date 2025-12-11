@@ -36,7 +36,7 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
 
       return {
         ...state,
-        // @ts-ignore - initialGrid might be string[][] from legacy code, we'll fix upstream later
+
         expandedGrid: initialGrid.length > 0 ? initialGrid : [[null]],
         gridWorldOffset: { x: 0, y: 0 },
         config: { ...config, mode },

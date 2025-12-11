@@ -14,7 +14,7 @@ import type { WorldConfigState } from '@daicer/shared/graph-states/world-config-
  */
 export const roadsGenerationNode = async (
   state: WorldConfigState,
-  config?: LangGraphRunnableConfig
+  _config?: LangGraphRunnableConfig
 ): Promise<Partial<WorldConfigState>> => {
   const { roomId, structures } = state;
 

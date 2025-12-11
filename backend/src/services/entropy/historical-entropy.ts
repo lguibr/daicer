@@ -3,7 +3,7 @@
  * Generates entropy events for 50-year historical periods during world generation
  */
 
-import { advanceTurn, generateInitialConditions } from './engine';
+import { advanceTurn, generateInitialConditions } from './simulation';
 import type { WorldCondition, TurnUpdate } from './types';
 
 export interface HistoricalPeriodEntropy {

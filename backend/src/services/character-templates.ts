@@ -210,6 +210,7 @@ interface CharacterArchetype {
     skin: string;
     hair: string;
     description: string;
+    gender: string;
   };
 }
 
@@ -290,6 +291,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Tanned',
       hair: 'Short Brown',
       description: 'Battle-scarred with a military bearing. Wears armor comfortably like a second skin.',
+      gender: 'Male',
     },
   },
 
@@ -322,6 +324,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Pale',
       hair: 'Silver, Long',
       description: 'Slender frame, often has ink stains on fingers. Carries themselves with quiet confidence.',
+      gender: 'Female',
     },
   },
 
@@ -354,6 +357,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Tan',
       hair: 'Curly Brown',
       description: 'Nimble and quick, with a mischievous glint in the eye. Wears dark, practical clothes.',
+      gender: 'Non-binary',
     },
   },
 
@@ -386,6 +390,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Ruddy',
       hair: 'Red Beard, Braided',
       description: 'Stout and strong, with a holy symbol always visible. Kind eyes that have seen much suffering.',
+      gender: 'Male',
     },
   },
 
@@ -418,6 +423,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Tan, Weather-beaten',
       hair: 'Brown with Leaves',
       description: 'Lithe and weathered, moves silently. Often has a small animal companion nearby.',
+      gender: 'Female',
     },
   },
 
@@ -450,6 +456,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Fair',
       hair: 'Blonde, Well-kept',
       description: 'Noble bearing, armor always polished. Radiates confidence and righteousness.',
+      gender: 'Male',
     },
   },
 
@@ -482,6 +489,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Grayish-Green',
       hair: 'Black, Wild',
       description: 'Powerfully built with tusks and tribal tattoos. Scars tell stories of many battles.',
+      gender: 'Male',
     },
   },
 
@@ -514,6 +522,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Olive',
       hair: 'Chestnut, Flowing',
       description: 'Graceful and expressive, with elaborate clothing. Always carries a musical instrument.',
+      gender: 'Female',
     },
   },
 
@@ -546,6 +555,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Bronze',
       hair: 'Shaved',
       description: 'Lean and muscular, moves with fluid grace. Wears simple robes and no armor.',
+      gender: 'Male',
     },
   },
 
@@ -578,6 +588,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Deep Crimson',
       hair: 'Black with Purple Tint',
       description: 'Horns curve back from forehead, tail swishes when agitated. Otherworldly aura surrounds them.',
+      gender: 'Female',
     },
   },
 
@@ -610,6 +621,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Bark-like Tan',
       hair: 'Moss Green',
       description: 'Adorned with natural elements - leaves, flowers, vines. Moves like a wild creature.',
+      gender: 'Androgynous',
     },
   },
 
@@ -642,6 +654,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Brass Scales',
       hair: 'None',
       description: 'Reptilian features with scales that shimmer. Breath sometimes smokes when emotional.',
+      gender: 'Male',
     },
   },
 
@@ -674,6 +687,7 @@ const ARCHETYPES: Record<string, CharacterArchetype> = {
       skin: 'Copper',
       hair: 'Auburn, Braided',
       description: 'Lean and agile, with a longbow always within reach. Moves silently through any terrain.',
+      gender: 'Female',
     },
   },
 };

@@ -29,6 +29,8 @@ export default function PlayerSidebar({ players, creatures, onSelectPlayer }: Pl
         <div className="space-y-3">
           {players.map((player) => {
             const char = player.character;
+            if (!char) return null; // Skip if no character
+
             const hasAction = hasPlayerAction(player.action);
 
             return (
@@ -47,7 +49,7 @@ export default function PlayerSidebar({ players, creatures, onSelectPlayer }: Pl
                     />
                   ) : (
                     <div className="h-10 w-10 flex-shrink-0 rounded-full border border-dashed border-shadow-700 bg-shadow-900/80 text-center text-xs text-shadow-400 flex items-center justify-center">
-                      {char.name
+                      {(char.name || '?')
                         .split(' ')
                         .map((part) => part[0])
                         .join('')

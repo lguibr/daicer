@@ -15,8 +15,6 @@ import MarkdownMessage from '../game/MarkdownMessage';
 import { useAlignments, useRaces, useClasses } from '../../hooks/useGameData';
 import { Button } from '../ui/button';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
-import Input from '../ui/input';
-import Label from '../ui/label';
 import Textarea from '../ui/textarea';
 import { DiceLoader } from '../ui/dice-loader';
 import { useI18n } from '../../i18n';
@@ -64,7 +62,7 @@ export default function CharacterCreation({
   onAssetCreated,
 }: CharacterCreationProps & { onCancel?: () => void }) {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, localize } = useI18n();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -699,11 +697,29 @@ export default function CharacterCreation({
         baseAttackBonus: proficiencyBonus,
         attacks: [],
         // ✨ ADD EQUIPMENT DATA
-        equipment: JSON.stringify({
-          equipped: equippedItems,
-          inventory,
-          gold: equipmentGold,
-        }),
+        equipment: {
+          totalWeight: 0,
+          inventory: inventory.map((i) => ({
+            itemIndex: i.itemIndex,
+            quantity: i.quantity,
+          })),
+          equippedItems: {
+            mainHand: equippedItems.mainHand || null,
+            offHand: equippedItems.offHand || null,
+            armor: equippedItems.armor || null,
+            shield: equippedItems.shield || null,
+            head: equippedItems.head || null,
+            cloak: equippedItems.cloak || null,
+            belt: equippedItems.belt || null,
+            boots: equippedItems.boots || null,
+            gloves: equippedItems.gloves || null,
+            ring1: equippedItems.ring1 || null,
+            ring2: equippedItems.ring2 || null,
+            necklace: equippedItems.necklace || null,
+            accessory1: equippedItems.accessory1 || null,
+            accessory2: equippedItems.accessory2 || null,
+          },
+        },
         currency: { cp: 0, sp: 0, ep: 0, gp: equipmentGold, pp: 0 },
         proficienciesAndLanguages: '',
         features: '',
@@ -793,23 +809,25 @@ export default function CharacterCreation({
 
   const raceOptions: RaceOption[] = (races ?? []).map((race) => ({
     id: race.id,
-    name: race.name,
-    description: race.description,
+    name: localize(race, 'name'),
+    description: localize(race, 'description'),
     size: race.size,
     speed: race.speed,
   }));
 
   const classOptions: ToggleButtonOption<string>[] = (classes ?? []).map((cls) => ({
     value: cls.name,
-    label: cls.name,
-    description: cls.description,
+    label: localize(cls, 'name'),
+    description: localize(cls, 'description'),
   }));
 
-  const alignmentOptions: ToggleButtonOption<string>[] = (alignments ?? []).map((alignment) => ({
-    value: alignment.name,
-    label: alignment.name,
-    description: alignment.description,
-  }));
+  const alignmentOptions: ToggleButtonOption<string>[] = (alignments ?? [])
+    .filter((a) => a.name !== 'Unaligned')
+    .map((alignment) => ({
+      value: alignment.name,
+      label: localize(alignment, 'name'),
+      description: localize(alignment, 'description'),
+    }));
 
   const backgroundValid = formData.background.trim().length >= 50;
   const portraitsValid = Boolean(avatarPreview.portrait && avatarPreview.upperBody && avatarPreview.fullBody);
@@ -957,7 +975,8 @@ export default function CharacterCreation({
               <FormWizardStep step="identity">
                 <StepValidationGate
                   valid={Boolean(
-                    backgroundValid &&
+                    formData.name &&
+                      backgroundValid &&
                       formData.appearance.height &&
                       formData.appearance.weight &&
                       formData.appearance.skin &&
@@ -970,45 +989,47 @@ export default function CharacterCreation({
                 />
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-aurora-200 uppercase tracking-wider">
-                    Character Identity & Story
+                    {t('characterCreation.steps.identity.title')}
                   </h2>
-                  <p className="text-sm text-shadow-400">
-                    Define your character's backstory, appearance, and personality. All fields are required and
-                    pre-filled from your class/race template.
-                  </p>
+                  <p className="text-sm text-shadow-400">Define your character's identity. All fields are required.</p>
 
-                  {/* Backstory */}
-                  <div className="rounded-2xl border border-aurora-500/40 bg-gradient-to-br from-midnight-800/80 via-midnight-800/70 to-midnight-900/60 p-6 space-y-4">
-                    <h3 className="text-xl font-semibold text-aurora-200">
-                      {t('characterCreation.form.backgroundLabel')} *
+                  {/* Row 1 & 2: Name, Vitals, Features (Handled by AppearanceSection) */}
+                  <div className="rounded-2xl border border-aurora-500/40 bg-gradient-to-br from-midnight-800/80 via-midnight-800/70 to-midnight-900/60 p-6">
+                    <h3 className="text-lg font-semibold text-aurora-200 mb-4">
+                      {t('characterCreation.appearance.sectionTitle')} *
                     </h3>
-                    <p className="text-sm text-shadow-400">{t('characterCreation.form.backgroundHint')}</p>
-                    <Textarea
-                      rows={8}
-                      value={formData.background}
-                      onChange={(e) => updateField('background', e.target.value)}
-                      placeholder={t('characterCreation.form.backgroundPlaceholder')}
-                      className="w-full"
+                    <AppearanceSection
+                      name={formData.name}
+                      onNameChange={(val) => updateField('name', val)}
+                      appearance={formData.appearance}
+                      onAppearanceChange={updateAppearance}
                     />
-                    <div className="flex items-center justify-between text-xs text-shadow-500">
-                      <span>
-                        {formData.background.length}/50 {t('characterCreation.form.characters')}
-                      </span>
-                      {backgroundValid ? <span className="text-emerald-200">✓ Ready</span> : null}
-                    </div>
                   </div>
 
-                  {/* Appearance & Personality */}
+                  {/* Row 3: Background | Personality */}
                   <div className="grid gap-6 lg:grid-cols-2">
+                    {/* Background */}
                     <div className="space-y-4 rounded-2xl border border-aurora-500/40 bg-gradient-to-br from-midnight-800/80 via-midnight-800/70 to-midnight-900/60 p-6">
-                      <h3 className="text-lg font-semibold text-aurora-200">
-                        {t('characterCreation.appearance.sectionTitle')} *
+                      <h3 className="text-xl font-semibold text-aurora-200">
+                        {t('characterCreation.form.backgroundLabel')} *
                       </h3>
-                      <p className="text-xs text-shadow-400">
-                        All appearance fields are required. Pre-filled from your class/race.
-                      </p>
-                      <AppearanceSection appearance={formData.appearance} onAppearanceChange={updateAppearance} />
+                      <p className="text-sm text-shadow-400">{t('characterCreation.form.backgroundHint')}</p>
+                      <Textarea
+                        rows={8}
+                        value={formData.background}
+                        onChange={(e) => updateField('background', e.target.value)}
+                        placeholder={t('characterCreation.form.backgroundPlaceholder')}
+                        className="w-full"
+                      />
+                      <div className="flex items-center justify-between text-xs text-shadow-500">
+                        <span>
+                          {formData.background.length}/50 {t('characterCreation.form.characters')}
+                        </span>
+                        {backgroundValid ? <span className="text-emerald-200">✓ Ready</span> : null}
+                      </div>
                     </div>
+
+                    {/* Personality */}
                     <div className="space-y-4 rounded-2xl border border-aurora-500/40 bg-gradient-to-br from-midnight-800/80 via-midnight-800/70 to-midnight-900/60 p-6">
                       <h3 className="text-lg font-semibold text-aurora-200">
                         {t('characterCreation.personality.sectionTitle')} *
@@ -1135,14 +1156,19 @@ export default function CharacterCreation({
                                     <div className="flex items-start justify-between gap-2">
                                       <div>
                                         <p className="text-xs uppercase tracking-wider text-aurora-400">{slot}</p>
-                                        <p className="font-semibold text-shadow-100">{item.name}</p>
+                                        <p className="font-semibold text-shadow-100">{localize(item, 'name')}</p>
                                         {item.damage && (
                                           <p className="text-xs text-shadow-400">
                                             {item.damage.damageDice} {item.damage.damageType}
                                           </p>
                                         )}
                                         {item.armorClass && (
-                                          <p className="text-xs text-shadow-400">AC {item.armorClass.base}</p>
+                                          <p className="text-xs text-shadow-400">
+                                            AC{' '}
+                                            {typeof item.armorClass === 'number'
+                                              ? item.armorClass
+                                              : item.armorClass.base}
+                                          </p>
                                         )}
                                       </div>
                                     </div>
@@ -1182,7 +1208,7 @@ export default function CharacterCreation({
                                     <div className="flex items-start justify-between gap-2">
                                       <div className="flex-1">
                                         <div className="flex items-center justify-between">
-                                          <p className="font-semibold text-shadow-100">{item.name}</p>
+                                          <p className="font-semibold text-shadow-100">{localize(item, 'name')}</p>
                                           <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-200">
                                             x{quantity}
                                           </span>
@@ -1194,7 +1220,12 @@ export default function CharacterCreation({
                                           </p>
                                         )}
                                         {item.armorClass && (
-                                          <p className="text-xs text-shadow-400">AC {item.armorClass.base}</p>
+                                          <p className="text-xs text-shadow-400">
+                                            AC{' '}
+                                            {typeof item.armorClass === 'number'
+                                              ? item.armorClass
+                                              : item.armorClass.base}
+                                          </p>
                                         )}
                                       </div>
                                     </div>
@@ -1270,31 +1301,6 @@ export default function CharacterCreation({
                       </div>
                     </div>
                   )}
-                </div>
-              </FormWizardStep>
-
-              <FormWizardStep step="identity">
-                <StepValidationGate valid={portraitsValid} />
-                <div className="space-y-8">
-                  <div className="grid gap-8 lg:grid-cols-2">
-                    <div className="space-y-6">
-                      <div>
-                        <Label className="mb-2 block">{t('characterCreation.steps.identity.name')}</Label>
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => updateField('name', e.target.value)}
-                          placeholder={t('characterCreation.steps.identity.namePlaceholder')}
-                          className="text-lg font-bold"
-                        />
-                      </div>
-
-                      <AppearanceSection appearance={formData.appearance} onAppearanceChange={updateAppearance} />
-
-                      <PersonalitySection personality={formData.personality} onPersonalityChange={updatePersonality} />
-                    </div>
-
-                    <div className="space-y-6">{/* AvatarSection removed from Identity step */}</div>
-                  </div>
                 </div>
               </FormWizardStep>
 

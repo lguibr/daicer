@@ -132,13 +132,13 @@ export function CharacterSheetModal({ character, isOpen, onClose, onDelete }: Ch
           )}
 
           {/* Equipment */}
-          {character.equipment && character.equipment.trim().length > 0 && (
+          {character.equipmentDescription && character.equipmentDescription.trim().length > 0 && (
             <div>
               <h3 className="text-lg font-serif font-bold text-ink-primary dark:text-parchment-light mb-3">
                 Equipment
               </h3>
               <div className="px-3 py-2 bg-parchment-medium/20 dark:bg-obsidian-light/20 rounded text-sm text-ink-primary dark:text-parchment-light whitespace-pre-wrap">
-                {character.equipment}
+                {character.equipmentDescription}
               </div>
             </div>
           )}

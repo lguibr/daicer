@@ -5,7 +5,7 @@
 
 import { getDb } from '@/config/firebase';
 import { logger } from '@/utils/logger';
-import type { Room, WorldSettings, Player, GamePhase } from '@/types/index';
+import type { Room, GamePhase } from '@/types/index';
 import { getPlayers } from '@/services/firestore/players';
 import { emitRoomPhaseChange, emitGameState, emitRoomUpdate, type GameState } from '@/socket/events/room-events';
 

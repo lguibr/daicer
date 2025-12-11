@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { GridTileSchema } from './grid-tile-schema';
+export * from './grid-tile-schema';
 import { GridFeatureSchema } from './grid-feature-schema';
 
 /**
@@ -12,7 +13,7 @@ export const CHUNK_SIZE = 8; // 8x8 tiles per chunk
 export const GridChunkSchema = z.object({
   chunkX: z.number().int(),
   chunkY: z.number().int(),
-  z: z.number().int().min(-6).max(5), // Z-layer index
+  z: z.union([z.literal(-3), z.literal(-2), z.literal(-1), z.literal(0), z.literal(1), z.literal(2), z.literal(3)]), // Z-layer index (-3 to +3)
   tiles: z.array(GridTileSchema),
   features: z.array(GridFeatureSchema).default([]),
   biomes: z.array(z.string()).default([]), // Unique biomes present in this chunk

@@ -24,10 +24,12 @@ import { generateCharacter } from '@/services/character-generator';
 import { ApiError } from '@/middleware/error';
 import { NEW_CHARACTER_TEMPLATE } from '@/constants';
 import { GamePhase, type Player, type Message, type CharacterSheet } from '@/types/index';
+// import { type CharacterEquipment } from '@daicer/shared/types/character'; // types/index likely exports it
 import { getIO } from '@/socket/instance';
 import { mergeCharacterSheet } from '@/utils/character';
 import { storeCharacterAvatarPreviews } from '@/services/character-assets';
 import { logger } from '@/utils/logger';
+import { getSystemMessage } from '@/i18n/messages';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
@@ -165,13 +167,13 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
     // Fallback to non-streaming for room creation wizard (no connections yet)
     logger.info(`World generation without streaming for room ${roomId} (no connections)`);
 
-    const { invokeSessionInitializationGraph } = await import('@/graph/session-initialization-graph');
+    const { invokeSessionInitializationGraph } = await import('@/graph');
 
     try {
-      result = await invokeSessionInitializationGraph(initialState);
+      result = (await invokeSessionInitializationGraph(initialState as any)) as any;
     } catch (error) {
-      logger.error(`World generation failed for room ${roomId}:`, error);
-      throw new ApiError(500, 'World generation failed', { cause: error });
+      logger.error('Session initialization graph failed', error);
+      throw new ApiError(500, 'Failed to initialize session', { cause: error });
     }
   }
 
@@ -255,26 +257,6 @@ router.post('/:roomId/world', authenticate, async (req: AuthRequest, res: Respon
 /**
  * Helper: Calculate progress from node name
  */
-function calculateProgressFromNode(nodeName: string): number {
-  const nodeProgress: Record<string, number> = {
-    world_generation: 30,
-    character_openings: 70,
-    equipment_management: 90,
-  };
-  return nodeProgress[nodeName] || 10;
-}
-
-/**
- * Helper: Get user-friendly step description
- */
-function getStepDescription(nodeName: string): string {
-  const stepDescriptions: Record<string, string> = {
-    world_generation: 'Generating world lore and history...',
-    character_openings: 'Creating character introductions...',
-    equipment_management: 'Setting up equipment bonuses...',
-  };
-  return stepDescriptions[nodeName] || `Processing ${nodeName}...`;
-}
 
 router.get('/rooms/:roomId/generate-world', authenticate, async (req: AuthRequest, res: Response) => {
   const { roomId } = req.params;
@@ -321,7 +303,7 @@ router.get('/rooms/:roomId/generate-world', authenticate, async (req: AuthReques
     };
 
     // Import graph with streaming
-    const { invokeSessionInitializationGraphWithStreaming } = await import('@/graph/session-initialization-graph');
+    const { invokeSessionInitializationGraphWithStreaming } = await import('@/graph');
 
     // Create SSE writer function
     const sseWriter = (event: any) => {
@@ -337,7 +319,7 @@ router.get('/rooms/:roomId/generate-world', authenticate, async (req: AuthReques
     };
 
     // Invoke graph with streaming
-    const result = await invokeSessionInitializationGraphWithStreaming(initialState, sseWriter);
+    const result = (await invokeSessionInitializationGraphWithStreaming(initialState as any, sseWriter)) as any;
 
     // Extract generated data and save to Firestore
     res.write(`data: ${JSON.stringify({ type: 'progress', progress: 95, step: 'Saving world data...' })}\n\n`);
@@ -521,7 +503,7 @@ router.post('/:roomId/character', authenticate, async (req: AuthRequest, res: Re
   // via the equipmentManagementNode after character openings are generated
 
   if (avatarPreview) {
-    character.avatarAssets = await storeCharacterAvatarPreviews(character, avatarPreview);
+    (character as any).avatarAssets = await storeCharacterAvatarPreviews(character, avatarPreview);
   }
 
   const player: Player = {
@@ -732,7 +714,7 @@ router.post('/:roomId/start', authenticate, async (req: AuthRequest, res: Respon
           try {
             const opening = await generateCharacterOpening(
               room.worldDescription,
-              player.character,
+              player.character || ({} as any),
               mainMessage,
               language,
               streamId
@@ -887,7 +869,7 @@ router.post('/:roomId/creatures', authenticate, async (req: AuthRequest, res: Re
       expertises: [],
       baseAttackBonus: 0,
       attacks: monster.actions.map((a) => ({ name: a.name, bonus: '+0', damageType: 'physical' })),
-      equipment: '',
+      equipment: null as any /* Legacy override */,
       currency: { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
       proficienciesAndLanguages: monster.languages.join(', '),
       features: monster.specialAbilities?.map((a) => `${a.name}: ${a.description}`).join('\n') || '',
@@ -945,7 +927,7 @@ router.post('/:roomId/creatures', authenticate, async (req: AuthRequest, res: Re
   // Broadcast
   const io = getIO();
   if (io) {
-    io.to(roomId).emit('creature:added', { creature });
+    io.to(roomId).emit('creature:added' as any, { creature });
   }
 
   res.status(201).json({ success: true, data: creature });
@@ -963,7 +945,7 @@ async function resolveTurn(roomId: string, room: any) {
     if (player.action) {
       const msg: Message = {
         id: `msg-${Date.now()}-${player.id}`,
-        sender: player.character.name,
+        sender: player.character?.name || 'Unknown',
         text: player.action,
         timestamp: Date.now(),
       };
@@ -1003,7 +985,7 @@ async function resolveTurn(roomId: string, room: any) {
   // 4. Send Private Visions
   for (const perspective of dmResponse.player_perspectives) {
     // Match by character name (as returned by LLM)
-    const player = players.find((p) => p.character.name === perspective.playerName);
+    const player = players.find((p) => p.character?.name === perspective.playerName);
     if (player) {
       const privateMsg: Message = {
         id: `msg-${Date.now()}-${player.id}-private`,

@@ -2,6 +2,8 @@
   {
     "index": "club",
     "name": "Club",
+    "name_es": "Clava",
+    "name_ptBR": "Clava",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 1,
@@ -17,6 +19,8 @@
   {
     "index": "dagger",
     "name": "Dagger",
+    "name_es": "Daga",
+    "name_ptBR": "Adaga",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 2,
@@ -36,6 +40,8 @@
   {
     "index": "greataxe",
     "name": "Greataxe",
+    "name_es": "Gran Hacha",
+    "name_ptBR": "Machado Grande",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 30,
@@ -51,6 +57,8 @@
   {
     "index": "greatsword",
     "name": "Greatsword",
+    "name_es": "Gran Espada",
+    "name_ptBR": "Espada Montante",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 50,
@@ -66,6 +74,8 @@
   {
     "index": "longsword",
     "name": "Longsword",
+    "name_es": "Espada Larga",
+    "name_ptBR": "Espada Longa",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 15,
@@ -81,6 +91,8 @@
   {
     "index": "shortbow",
     "name": "Shortbow",
+    "name_es": "Arco Corto",
+    "name_ptBR": "Arco Curto",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 25,
@@ -100,6 +112,8 @@
   {
     "index": "longbow",
     "name": "Longbow",
+    "name_es": "Arco Largo",
+    "name_ptBR": "Arco Longo",
     "equipmentCategory": "Weapon",
     "cost": {
       "quantity": 50,
@@ -119,6 +133,8 @@
   {
     "index": "padded",
     "name": "Padded",
+    "name_es": "Acolchada",
+    "name_ptBR": "Acolchoada",
     "equipmentCategory": "Armor",
     "cost": {
       "quantity": 5,
@@ -133,6 +149,8 @@
   {
     "index": "leather",
     "name": "Leather",
+    "name_es": "Cuero",
+    "name_ptBR": "Couro",
     "equipmentCategory": "Armor",
     "cost": {
       "quantity": 10,
@@ -147,6 +165,8 @@
   {
     "index": "chain-mail",
     "name": "Chain Mail",
+    "name_es": "Cota de Malla",
+    "name_ptBR": "Cota de Malha",
     "equipmentCategory": "Armor",
     "cost": {
       "quantity": 75,
@@ -161,6 +181,8 @@
   {
     "index": "plate",
     "name": "Plate",
+    "name_es": "Armadura de Placas",
+    "name_ptBR": "Armadura de Placas",
     "equipmentCategory": "Armor",
     "cost": {
       "quantity": 1500,
@@ -175,6 +197,8 @@
   {
     "index": "shield",
     "name": "Shield",
+    "name_es": "Escudo",
+    "name_ptBR": "Escudo",
     "equipmentCategory": "Armor",
     "cost": {
       "quantity": 10,
@@ -182,6 +206,8 @@
     },
     "weight": 6,
     "armorClass": 2,
-    "description": "A shield increases your Armor Class by 2"
+    "description": "A shield increases your Armor Class by 2",
+    "description_es": "Un escudo aumenta tu Clase de Armadura en 2",
+    "description_ptBR": "Um escudo aumenta sua Classe de Armadura em 2"
   }
 ]

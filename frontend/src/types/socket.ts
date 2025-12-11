@@ -3,6 +3,7 @@
  * Mirror of backend types for type-safe client
  */
 
+import type { GridChunk, Entity } from '@daicer/shared';
 import type { Room, Player, Message, Creature } from './shared';
 
 /**
@@ -55,7 +56,7 @@ export interface ServerToClientEvents {
   // Presence
   'presence:update': (data: { roomId: string; presence: any[] }) => void;
 
-  // World chunks
+  // World chunks (Legacy/REST mostly, but typed here)
   'world:chunk:data': (data: {
     worldId: string;
     chunkX: number;
@@ -72,6 +73,15 @@ export interface ServerToClientEvents {
   }) => void;
   'world:chunk:error': (data: { error: string; details?: string }) => void;
   'world:chunks:complete': (data: { worldId: string; count: number; failed?: number }) => void;
+
+  // Map View (Centralized)
+  'map:view:result': (data: {
+    roomId: string;
+    center: { x: number; y: number; z: number };
+    chunks: GridChunk[];
+    entities: Entity[];
+  }) => void;
+  'map:view:error': (data: { error: string }) => void;
 
   // Errors
   error: (data: { message: string }) => void;
@@ -109,7 +119,7 @@ export interface ClientToServerEvents {
   'presence:typing': (data: { roomId: string; userName: string; isTyping: boolean }) => void;
   'presence:heartbeat': (data: { roomId: string; userName: string }) => void;
 
-  // World chunks
+  // World chunks (Legacy)
   'world:chunk:request': (
     data: { worldId: string; chunkX: number; chunkY: number; chunkZ: number },
     callback?: (error: { error: string } | null) => void
@@ -121,4 +131,14 @@ export interface ClientToServerEvents {
     },
     callback?: (error: { error: string } | null) => void
   ) => void;
+
+  // Map View (Centralized)
+  'map:view:query': (data: {
+    roomId: string;
+    x: number;
+    y: number;
+    z: number;
+    radius: number;
+    viewMode?: 'player' | 'dm';
+  }) => void;
 }

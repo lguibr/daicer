@@ -127,6 +127,6 @@ const invokeGameplayGraphInternal = async (input: GameplayState): Promise<Gamepl
 /**
  * Invoke gameplay graph
  */
-export async function invokeGameplayGraph(input: GameplayState, turnNumber?: number): Promise<GameplayState> {
+export async function invokeGameplayGraph(input: GameplayState, _turnNumber?: number): Promise<GameplayState> {
   return invokeGameplayGraphInternal(input);
 }

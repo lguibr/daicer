@@ -88,6 +88,9 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
   if (!player) return null;
 
   const { character } = player;
+
+  if (!character) return null;
+
   const { attributes } = character;
   const skillDetails = character.skillDetails?.length ? character.skillDetails : undefined;
   const { avatarAssets } = character;
@@ -365,7 +368,8 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                   <h3 className={`${sectionTitleClasses} mb-3`}>Equipment & Ledger</h3>
                   <div className="rounded-xl border border-shadow-700 bg-shadow-900/70 p-3 text-sm text-shadow-200 space-y-2">
                     <div>
-                      <span className="font-semibold text-shadow-50">Equipment:</span> {character.equipment || '—'}
+                      <span className="font-semibold text-shadow-50">Equipment:</span>{' '}
+                      {character.equipmentDescription || '—'}
                     </div>
                     <div>
                       <span className="font-semibold text-shadow-50">Proficiencies & Languages:</span>{' '}

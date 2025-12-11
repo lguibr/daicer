@@ -157,7 +157,7 @@ function extractChunk(
           chunkVoxels.push(0); // AIR for out-of-bounds
         } else {
           const index = globalX + globalY * dimensions.width + globalZ * dimensions.width * dimensions.height;
-          chunkVoxels.push(voxels[index]);
+          chunkVoxels.push(voxels[index] || 0);
         }
       }
     }

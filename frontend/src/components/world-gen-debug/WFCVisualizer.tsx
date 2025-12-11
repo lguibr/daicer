@@ -35,6 +35,7 @@ export function WFCVisualizer() {
   const [currentStep, setCurrentStep] = useState(0);
   const [animationSpeed, setAnimationSpeed] = useState(200);
   const [generationTime, setGenerationTime] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tiles, setTiles] = useState<any[]>([]);
 
   // Tile colors
@@ -57,6 +58,7 @@ export function WFCVisualizer() {
     const presetTiles = getPresetTiles(preset);
     setTiles(presetTiles);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allTileIds = presetTiles.map((t: any) => t.id);
     const newGrid: Cell[][] = [];
 

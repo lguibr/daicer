@@ -70,10 +70,17 @@ export const generateWorld = async (settings: WorldSettings, language: Language 
   // Import schema dynamically to avoid circular dependency
   const { WorldDescriptionSchema } = await import('@/schemas/agent-responses');
 
-  const systemPrompt = `You are a world-class Dungeon Master creating immersive RPG campaign backgrounds.
-Create rich, detailed world descriptions with structured metadata.`;
+  const systemPrompts: Record<string, string> = {
+    en: `You are a world-class Dungeon Master creating immersive RPG campaign backgrounds.
+Create rich, detailed world descriptions with structured metadata.`,
+    es: `Eres un Dungeon Master de clase mundial creando trasfondos inmersivos para campañas de RPG.
+Crea descripciones de mundo ricas y detalladas con metadatos estructurados.`,
+    'pt-BR': `Você é um Mestre de Masmorra de classe mundial criando cenários imersivos para campanhas de RPG.
+Crie descrições de mundo ricas e detalhadas com metadados estruturados.`,
+  };
 
-  const userPrompt = `Generate a compelling world description for an RPG campaign.
+  const userPrompts: Record<string, string> = {
+    en: `Generate a compelling world description for an RPG campaign.
 
 **Campaign Details:**
 - Players: ${settings.playerCount}
@@ -92,7 +99,51 @@ Create rich, detailed world descriptions with structured metadata.`;
 - **Call to Adventure**: Explicitly state why the party is together and what their immediate goal is.
 - **Risks & Stakes**: Clearly define what happens if they fail.
 - Provide 2-3 adventure hooks to draw players in
-- Include metadata about difficulty, theme, and setting`;
+- Include metadata about difficulty, theme, and setting`,
+    es: `Genera una descripción de mundo convincente para una campaña de RPG.
+
+**Detalles de la Campaña:**
+- Jugadores: ${settings.playerCount}
+- Duración: ${settings.adventureLength}
+- Dificultad: ${settings.difficulty}
+- Tema: ${settings.theme}
+- Escenario: ${settings.setting}
+- Tono: ${settings.tone}
+
+**Requisitos:**
+- Crea un título de campaña pegadizo
+- Escribe una descripción rica de 2-3 párrafos usando formato markdown
+- Captura la atmósfera en una frase
+- Identifica 2-4 ubicaciones clave con descripciones breves
+- Enumera las amenazas principales o fuerzas antagonistas
+- **Llamada a la Aventura:** Indica explícitamente por qué el grupo está junto y cuál es su objetivo inmediato.
+- **Riesgos y Apuestas:** Define claramente qué sucede si fallan.
+- Proporciona 2-3 ganchos de aventura para atraer a los jugadores
+- Incluye metadatos sobre dificultad, tema y escenario`,
+    'pt-BR': `Gere uma descrição de mundo convincente para uma campanha de RPG.
+
+**Detalhes da Campanha:**
+- Jogadores: ${settings.playerCount}
+- Duração: ${settings.adventureLength}
+- Dificuldade: ${settings.difficulty}
+- Tema: ${settings.theme}
+- Cenário: ${settings.setting}
+- Tom: ${settings.tone}
+
+**Requisitos:**
+- Crie um título de campanha cativante
+- Escreva uma descrição rica de 2-3 parágrafos usando formatação markdown
+- Capture a atmosfera em uma frase
+- Identifique 2-4 locais principais com breves descrições
+- Liste as principais ameaças ou forças antagonistas
+- **Chamado à Aventura:** Declare explicitamente por que o grupo está junto e qual é seu objetivo imediato.
+- **Riscos e Apostas:** Defina claramente o que acontece se eles falharem.
+- Forneça 2-3 ganchos de aventura para atrair os jogadores
+- Inclua metadados sobre dificuldade, tema e cenário`,
+  };
+
+  const systemPrompt = systemPrompts[language] || systemPrompts['en']!;
+  const userPrompt = userPrompts[language] || userPrompts['en']!;
 
   logger.info('Generating world description');
   const worldData = await generateStructured(WorldDescriptionSchema, systemPrompt, userPrompt, language, {
@@ -150,6 +201,7 @@ function buildDMSystemInstruction(
   worldDescription: string,
   players: Player[],
   creatures: Creature[],
+  language: Language = 'en',
   settings?: WorldSettings,
   worldConditions?: WorldCondition[]
 ): string {
@@ -204,16 +256,34 @@ function buildDMSystemInstruction(
     dynamicStyleInstructions = `\nDYNAMIC STYLE ADJUSTMENTS:\n${directives.join('\n')}\n`;
   }
 
-  const basePrelude =
-    settings?.dmSystemPrompt?.trim() ||
-    `You are the Dungeon Master (DM). Your goal is to run a thrilling, immersive, and fair D&D 5e adventure.
+  const prompts: Record<string, string> = {
+    en: `You are the Dungeon Master (DM). Your goal is to run a thrilling, immersive, and fair D&D 5e adventure.
 
 **DM PERSONA & GOALS:**
 1.  **Be the Guide:** Don't just simulate a world; GUIDE the players. Give them clear calls to action if they are lost.
 2.  **Weave Lore:** Every description should reinforce the world's history and current threats. Don't just say "You see a door"; say "You see a door marked with the ancient sigil of the Fallen King."
 3.  **High Stakes:** Constantly remind players of the risks. The world is dangerous. Failure has consequences.
 4.  **Call to Adventure:** Ensure the players know WHY they are here and WHAT they need to do.
-5.  **Fair but Firm:** Apply rules fairly, but prioritize fun and narrative flow.`;
+5.  **Fair but Firm:** Apply rules fairly, but prioritize fun and narrative flow.`,
+    es: `Eres el Dungeon Master (DM). Tu objetivo es dirigir una aventura de D&D 5e emocionante, inmersiva y justa.
+
+**PERSONA Y OBJETIVOS DEL DM:**
+1.  **Sé el Guía:** No solo simules un mundo; GUÍA a los jugadores. Dales llamadas claras a la acción si están perdidos.
+2.  **Entreteje la Historia:** Cada descripción debe reforzar la historia del mundo y las amenazas actuales. No digas solo "Ves una puerta"; di "Ves una puerta marcada con el antiguo sello del Rey Caído".
+3.  **Altos Riesgos:** Recuerda constantemente a los jugadores los riesgos. El mundo es peligroso. El fracaso tiene consecuencias.
+4.  **Llamada a la Aventura:** Asegúrate de que los jugadores sepan POR QUÉ están aquí y QUÉ deben hacer.
+5.  **Justo pero Firme:** Aplica las reglas justamente, pero prioriza la diversión y el flujo narrativo.`,
+    'pt-BR': `Você é o Mestre da Masmorra (DM). Seu objetivo é conduzir uma aventura de D&D 5e emocionante, imersiva e justa.
+
+**PERSONA E OBJETIVOS DO DM:**
+1.  **Seja o Guia:** Não apenas simule um mundo; GUIE os jogadores. Dê a eles chamados claros para ação se estiverem perdidos.
+2.  **Entrelace a Lore:** Cada descrição deve reforçar a história do mundo e as ameaças atuais. Não diga apenas "Você vê uma porta"; diga "Você vê uma porta marcada com o antigo selo do Rei Caído".
+3.  **Altos Riscos:** Lembre constantemente os jogadores dos riscos. O mundo é perigoso. O fracasso tem consequências.
+4.  **Chamado à Aventura:** Certifique-se de que os jogadores saibam POR QUE estão aqui e O QUE precisam fazer.
+5.  **Justo mas Firme:** Aplique as regras de forma justa, mas priorize a diversão e o fluxo narrativo.`,
+  };
+
+  const basePrelude = settings?.dmSystemPrompt?.trim() || prompts[language] || prompts['en']!;
 
   const worldLore = [settings?.worldBackground?.trim(), worldDescription].filter(Boolean).join('\n\n');
 
@@ -355,7 +425,14 @@ export const processTurn = async (
     'pt-BR': 'Brazilian Portuguese',
   };
   const languageName = languageMap[language] || 'English';
-  const systemPrompt = buildDMSystemInstruction(worldDescription, players, creatures, settings, worldConditions);
+  const systemPrompt = buildDMSystemInstruction(
+    worldDescription,
+    players,
+    creatures,
+    language,
+    settings,
+    worldConditions
+  );
 
   // Define the structured output schema
   const TurnResponseSchema = z.object({
@@ -461,7 +538,8 @@ export const generateCharacterOpening = async (
   };
   const languageName = languageMap[language] || 'English';
 
-  const systemPrompt = `You are the Dungeon Master. You provide immersive, personalized perspectives for each character.
+  const systemPrompts: Record<string, string> = {
+    en: `You are the Dungeon Master. You provide immersive, personalized perspectives for each character.
 Your goal is to ground the character in the current moment described in the Main Context.
 
 WORLD CONTEXT:
@@ -471,9 +549,35 @@ MAIN CONTEXT (What is happening publicly):
 ${mainContext}
 
 LANGUAGE REQUIREMENT:
-You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
+You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`,
+    es: `Eres el Dungeon Master. Proporcionas perspectivas inmersivas y personalizadas para cada personaje.
+Tu objetivo es fundamentar al personaje en el momento actual descrito en el Contexto Principal.
 
-  const userMessage = `Generate a personalized opening for this character that aligns PERFECTLY with the Main Context.
+CONTEXTO DEL MUNDO:
+${worldDescription}
+
+CONTEXTO PRINCIPAL (Lo que está sucediendo públicamente):
+${mainContext}
+
+REQUISITO DE IDIOMA:
+DEBES responder completamente en ${languageName}. Cada palabra de la narración debe estar en ${languageName}.`,
+    'pt-BR': `Você é o Mestre da Masmorra. Você fornece perspectivas imersivas e personalizadas para cada personagem.
+Seu objetivo é fundamentar o personagem no momento atual descrito no Contexto Principal.
+
+CONTEXTO DO MUNDO:
+${worldDescription}
+
+CONTEXTO PRINCIPAL (O que está acontecendo publicamente):
+${mainContext}
+
+REQUISITO DE IDIOMA:
+Você DEVE responder inteiramente em ${languageName}. Cada palavra da narrativa deve estar em ${languageName}.`,
+  };
+
+  const systemPrompt = systemPrompts[language] || systemPrompts['en']!;
+
+  const userPrompts: Record<string, string> = {
+    en: `Generate a personalized opening for this character that aligns PERFECTLY with the Main Context.
 
 CHARACTER:
 - Name: **${character.name}**
@@ -503,7 +607,72 @@ CHARACTER:
 
 What do you do?
 
-REMEMBER: NO meta-text. Start directly with ### header.`;
+REMEMBER: NO meta-text. Start directly with ### header.`,
+    es: `Genera una apertura personalizada para este personaje que se alinee PERFECTAMENTE con el Contexto Principal.
+
+PERSONAJE:
+- Nombre: **${character.name}**
+- Raza: ${character.race}
+- Clase: ${character.characterClass}
+- Alineamiento: ${character.alignment}
+- Estadísticas Clave: FUE ${character.attributes.Strength}, DES ${character.attributes.Dexterity}, INT ${character.attributes.Intelligence}, SAB ${character.attributes.Wisdom}
+
+**Instrucciones:**
+1.  **Sincronizar:** Los eventos en el Contexto Principal están sucediendo AHORA MISMO. Tu narración debe ser la *experiencia subjetiva* de esos eventos exactos.
+2.  **Detalles Sensoriales:** Describe cómo ESTE personaje percibe la escena (olores, sonidos, amenazas) en función de su clase y estadísticas.
+3.  **Estado Interno:** ¿Cómo se sienten sobre la situación descrita en el Contexto Principal?
+4.  **Reacción:** Termina con ellos listos para reaccionar al incidente incitante específico mencionado en el Contexto Principal.
+
+**Formato (usa markdown):**
+### A través de los ojos de [Personaje]
+
+[La escena desde su perspectiva, entrelazando detalles específicos del Contexto Principal pero filtrados a través de sus sentidos]
+
+*[Sus pensamientos internos]*
+
+**[Algo que notan con sus habilidades]:**
+- Detalle 1 (específico de su clase/trasfondo)
+- Detalle 2
+
+> "[Diálogo, inscripción o voz interior]"
+
+¿Qué haces?
+
+RECUERDA: NO texto meta. Comienza directamente con el encabezado ###.`,
+    'pt-BR': `Gere uma abertura personalizada para este personagem que se alinhe PERFEITAMENTE com o Contexto Principal.
+
+PERSONAGEM:
+- Nome: **${character.name}**
+- Raça: ${character.race}
+- Classe: ${character.characterClass}
+- Alinhamento: ${character.alignment}
+- Estatísticas Principais: FOR ${character.attributes.Strength}, DES ${character.attributes.Dexterity}, INT ${character.attributes.Intelligence}, SAB ${character.attributes.Wisdom}
+
+**Instruções:**
+1.  **Sincronizar:** Os eventos no Contexto Principal estão acontecendo AGORA MESMO. Sua narração deve ser a *experiência subjetiva* desses eventos exatos.
+2.  **Detalhes Sensoriales:** Descreva como ESTE personagem percebe a cena (cheiros, sons, ameaças) com base em sua classe e estatísticas.
+3.  **Estado Interno:** Como eles se sentem sobre a situação descrita no Contexto Principal?
+4.  **Reação:** Termine com eles preparados para reagir ao incidente incitante específico mencionado no Contexto Principal.
+
+**Formato (use markdown):**
+### Através dos olhos de [Personagem]
+
+[A cena da perspectiva deles, entrelaçando detalhes específicos do Contexto Principal, mas filtrados através de seus sentidos]
+
+*[Seus pensamentos internos]*
+
+**[Algo que eles notam com suas habilidades]:**
+- Detalhe 1 (específico de sua classe/background)
+- Detalhe 2
+
+> "[Diálogo, inscrição ou voz interna]"
+
+O que você faz?
+
+LEMBRE-SE: SEM meta-texto. Comece diretamente com o cabeçalho ###.`,
+  };
+
+  const userMessage = userPrompts[language] || userPrompts['en']!;
 
   const response = await generateText(systemPrompt, userMessage, language, { metadata: { streamId } });
   return response;
@@ -527,12 +696,23 @@ export const generateMainOpening = async (
   };
   const languageName = languageMap[language] || 'English';
 
-  const openingSystemPrompt = `You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.
+  const openingSystemPrompts: Record<string, string> = {
+    en: `You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party to set the scene. This is the first thing they will read.
 
 LANGUAGE REQUIREMENT:
-You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`;
+You MUST respond entirely in ${languageName}. Every word of the narrative must be in ${languageName}.`,
+    es: `Eres un Dungeon Master de clase mundial. Escribe una narración de apertura pública convincente para todo el grupo para establecer la escena. Esto es lo primero que leerán.
 
-  const openingUserPrompt = `Based on the world description below, write a 2-3 paragraph opening narration for the entire party.
+REQUISITO DE IDIOMA:
+DEBES responder completamente en ${languageName}. Cada palabra de la narración debe estar en ${languageName}.`,
+    'pt-BR': `Você é um Mestre de Masmorra de classe mundial. Escreva uma narração de abertura pública convincente para todo o grupo para definir a cena. Esta é a primeira coisa que eles lerão.
+
+REQUISITO DE IDIOMA:
+Você DEVE responder inteiramente em ${languageName}. Cada palavra da narrativa deve estar em ${languageName}.`,
+  };
+
+  const openingUserPrompts: Record<string, string> = {
+    en: `Based on the world description below, write a 2-3 paragraph opening narration for the entire party.
 
 **Requirements:**
 1.  **Grounded Start:** Start in a classic, atmospheric setting (e.g., a bustling tavern, a quiet campfire, a city gate). Establish the mood.
@@ -544,7 +724,37 @@ You MUST respond entirely in ${languageName}. Every word of the narrative must b
 **Tone:** Atmospheric, immersive, then suddenly urgent.
 
 WORLD:
-${worldDescription}`;
+${worldDescription}`,
+    es: `Basado en la descripción del mundo a continuación, escribe una narración de apertura de 2-3 párrafos para todo el grupo.
+
+**Requisitos:**
+1.  **Inicio Fundamentado:** Comienza en un entorno clásico y atmosférico (por ejemplo, una taberna bulliciosa, una fogata tranquila, una puerta de la ciudad). Establece el estado de ánimo.
+2.  **Unidad del Grupo:** Menciona brevemente que están juntos (descansando, planeando o celebrando).
+3.  **Incidente Incitante:** A mitad de camino, introduce un evento REPENTINO que interrumpa la paz (por ejemplo, un mensajero desesperado, una explosión mágica, un ataque de monstruos).
+4.  **Llamada a la Acción:** Termina con las consecuencias inmediatas de este evento.
+5.  **CRÍTICO:** NO preguntes "¿Qué hacéis?" ni plantees una pregunta directa a los jugadores. Esta es una escena cinematográfica.
+
+**Tono:** Atmosférico, inmersivo, luego repentinamente urgente.
+
+MUNDO:
+${worldDescription}`,
+    'pt-BR': `Com base na descrição do mundo abaixo, escreva uma narração de abertura de 2-3 parágrafos para todo o grupo.
+
+**Requisitos:**
+1.  **Início Fundamentado:** Comece em um cenário clássico e atmosférico (por exemplo, uma taverna movimentada, uma fogueira tranquila, um portão da cidade). Estabeleça o clima.
+2.  **Unidade do Grupo:** Mencione brevemente que eles estão juntos (descansando, planejando ou comemorando).
+3.  **Incidente Incitante:** No meio do caminho, introduza um evento REPENTINO que perturbe a paz (por exemplo, um mensageiro desesperado, uma explosão mágica, um ataque de monstros).
+4.  **Chamada à Ação:** Termine com as consequências imediatas deste evento.
+5.  **CRÍTICO:** NÃO pergunte "O que vocês fazem?" ou faça uma pergunta direta aos jogadores. Esta é uma cena cinematográfica.
+
+**Tom:** Atmosférico, imersivo, então repentinamente urgente.
+
+MUNDO:
+${worldDescription}`,
+  };
+
+  const openingSystemPrompt = openingSystemPrompts[language] || openingSystemPrompts['en']!;
+  const openingUserPrompt = openingUserPrompts[language] || openingUserPrompts['en']!;
 
   return generateText(openingSystemPrompt, openingUserPrompt, language, { metadata: { streamId } });
 };
@@ -605,14 +815,29 @@ export const generateStoryDraft = async (
   };
   const languageName = languageMap[language] || 'English';
 
-  const systemPrompt = `You are a world-class Dungeon Master. Draft a compelling opening scene for an RPG adventure.
+  const systemPrompts: Record<string, string> = {
+    en: `You are a world-class Dungeon Master. Draft a compelling opening scene for an RPG adventure.
 This is a DRAFT that will be used to identify NPCs and finalize the scene later.
 Focus on the immediate environment, the atmosphere, and the inciting incident.
 
 LANGUAGE REQUIREMENT:
-You MUST respond entirely in ${languageName}.`;
+You MUST respond entirely in ${languageName}.`,
+    es: `Eres un Dungeon Master de clase mundial. Redacta una escena de apertura convincente para una aventura de RPG.
+Esto es un BORRADOR que se utilizará para identificar NPCs y finalizar la escena más tarde.
+Céntrate en el entorno inmediato, la atmósfera y el incidente incitante.
 
-  const userPrompt = `Draft an opening scene based on the following context:
+REQUISITO DE IDIOMA:
+DEBES responder completamente en ${languageName}.`,
+    'pt-BR': `Você é um Mestre de Masmorra de classe mundial. Faça um rascunho de uma cena de abertura convincente para uma aventura de RPG.
+Este é um RASCUNHO que será usado para identificar NPCs e finalizar a cena mais tarde.
+Concentre-se no ambiente imediato, na atmosfera e no incidente incitante.
+
+REQUISITO DE IDIOMA:
+Você DEVE responder inteiramente em ${languageName}.`,
+  };
+
+  const userPrompts: Record<string, string> = {
+    en: `Draft an opening scene based on the following context:
 
 WORLD:
 ${worldDescription}
@@ -631,7 +856,51 @@ Requirements:
 2. Establish a mood (e.g., tense, festive, ominous).
 3. Introduce an inciting incident involving NPCs (e.g., a messenger, an attacker, a mysterious figure).
 4. Do NOT resolve the incident.
-5. Mention 1-2 specific NPCs by name and description.`;
+5. Mention 1-2 specific NPCs by name and description.`,
+    es: `Redacta una escena de apertura basada en el siguiente contexto:
+
+MUNDO:
+${worldDescription}
+
+CONTEXTO DEL MAPA (Estructuras/terreno cercanos):
+${mapContext}
+
+JUGADORES:
+${players
+  .filter((p) => p.character)
+  .map((p) => `- ${p.character!.name} (${p.character!.race} ${p.character!.characterClass})`)
+  .join('\n')}
+
+Requisitos:
+1. Establece la escena en una ubicación específica mencionada en el Contexto del Mapa (o una genérica si ninguna encaja).
+2. Establece un estado de ánimo (ej: tenso, festivo, ominoso).
+3. Introduce un incidente incitante que involucre NPCs (ej: un mensajero, un atacante, una figura misteriosa).
+4. NO resuelvas el incidente.
+5. Menciona 1-2 NPCs específicos por nombre y descripción.`,
+    'pt-BR': `Faça um rascunho de uma cena de abertura com base no seguinte contexto:
+
+MUNDO:
+${worldDescription}
+
+CONTEXTO DO MAPA (Estruturas/terreno próximos):
+${mapContext}
+
+JOGADORES:
+${players
+  .filter((p) => p.character)
+  .map((p) => `- ${p.character!.name} (${p.character!.race} ${p.character!.characterClass})`)
+  .join('\n')}
+
+Requisitos:
+1. Defina a cena em um local específico mencionado no Contexto do Mapa (ou um genérico, se nenhum se adequar).
+2. Estabeleça um clima (ex: tenso, festivo, sinistro).
+3. Introduza um incidente incitante envolvendo NPCs (ex: um mensageiro, um atacante, uma figura misteriosa).
+4. NÃO resolva o incidente.
+5. Mencione 1-2 NPCs específicos por nome e descrição.`,
+  };
+
+  const systemPrompt = systemPrompts[language] || systemPrompts['en']!;
+  const userPrompt = userPrompts[language] || userPrompts['en']!;
 
   return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
 };
@@ -655,14 +924,38 @@ export const extractNPCsFromDraft = async (
     ),
   });
 
-  const systemPrompt = `You are an expert at analyzing RPG stories. Identify all significant NPCs mentioned in the text.`;
-  const userPrompt = `Extract the NPCs from the following story draft:
+  const systemPrompts: Record<string, string> = {
+    en: `You are an expert at analyzing RPG stories. Identify all significant NPCs mentioned in the text.`,
+    es: `Eres un experto analizando historias de RPG. Identifica todos los NPCs significativos mencionados en el texto.`,
+    'pt-BR': `Você é um especialista em analisar histórias de RPG. Identifique todos os NPCs significativos mencionados no texto.`,
+  };
+
+  const userPrompts: Record<string, string> = {
+    en: `Extract the NPCs from the following story draft:
 
 ${draft}
 
 Return a list of NPCs with their details.
 IMPORTANT: For 'race' and 'class', you MUST use standard D&D 5e SRD options where possible (e.g., 'Human', 'Elf', 'Dwarf', 'Fighter', 'Wizard', 'Rogue'). 
-If an NPC is a monster, use the monster name as 'race' (e.g. 'Goblin') and 'Monster' or their role as 'class'.`;
+If an NPC is a monster, use the monster name as 'race' (e.g. 'Goblin') and 'Monster' or their role as 'class'.`,
+    es: `Extrae los NPCs del siguiente borrador de historia:
+
+${draft}
+
+Devuelve una lista de NPCs con sus detalles.
+IMPORTANTE: Para 'raza' y 'clase', DEBES usar opciones estándar del SRD de D&D 5e donde sea posible (ej: 'Humano', 'Elfo', 'Enano', 'Guerrero', 'Mago', 'Pícaro').
+Si un NPC es un monstruo, usa el nombre del monstruo como 'raza' (ej: 'Goblin') y 'Monstruo' o su rol como 'clase'.`,
+    'pt-BR': `Extraia os NPCs do seguinte rascunho de história:
+
+${draft}
+
+Retorne uma lista de NPCs com seus detalhes.
+IMPORTANTE: Para 'raça' e 'classe', você DEVE usar opções padrão do SRD de D&D 5e sempre que possível (ex: 'Humano', 'Elfo', 'Anão', 'Guerreiro', 'Mago', 'Ladino').
+Se um NPC for um monstro, use o nome do monstro como 'raça' (ex: 'Goblin') e 'Monstro' ou sua função como 'classe'.`,
+  };
+
+  const systemPrompt = systemPrompts[language] || systemPrompts['en']!;
+  const userPrompt = userPrompts[language] || userPrompts['en']!;
 
   const result = await generateStructured(NPCSchema, systemPrompt, userPrompt, language, { metadata: { streamId } });
   return result.npcs;
@@ -684,13 +977,26 @@ export const generateFinalOpening = async (
   };
   const languageName = languageMap[language] || 'English';
 
-  const systemPrompt = `You are a world-class Dungeon Master. Write the final, polished opening narrative for an RPG adventure.
+  const systemPrompts: Record<string, string> = {
+    en: `You are a world-class Dungeon Master. Write the final, polished opening narrative for an RPG adventure.
 Use the provided draft and NPC details to create a cinematic scene.
 
 LANGUAGE REQUIREMENT:
-You MUST respond entirely in ${languageName}.`;
+You MUST respond entirely in ${languageName}.`,
+    es: `Eres un Dungeon Master de clase mundial. Escribe la narrativa de apertura final y pulida para una aventura de RPG.
+Usa el borrador proporcionado y los detalles de los NPCs para crear una escena cinematográfica.
 
-  const userPrompt = `Finalize this opening scene:
+REQUISITO DE IDIOMA:
+DEBES responder completamente en ${languageName}.`,
+    'pt-BR': `Você é um Mestre de Masmorra de classe mundial. Escreva a narrativa de abertura final e polida para uma aventura de RPG.
+Use o rascunho fornecido e os detalhes dos NPCs para criar uma cena cinematográfica.
+
+REQUISITO DE IDIOMA:
+Você DEVE responder inteiramente em ${languageName}.`,
+  };
+
+  const userPrompts: Record<string, string> = {
+    en: `Finalize this opening scene:
 
 DRAFT:
 ${draft}
@@ -702,7 +1008,37 @@ Requirements:
 1. Polish the prose to be immersive and atmospheric.
 2. Clearly describe the NPCs and their actions.
 3. End with a strong Call to Action or immediate threat.
-4. Do NOT ask "What do you do?".`;
+4. Do NOT ask "What do you do?".`,
+    es: `Finaliza esta escena de apertura:
+
+BORRADOR:
+${draft}
+
+NPCs PRESENTES:
+${npcs.map((n) => `- ${n.name}: ${n.description}`).join('\n')}
+
+Requisitos:
+1. Pule la prosa para que sea inmersiva y atmosférica.
+2. Describe claramente a los NPCs y sus acciones.
+3. Termina con una fuerte Llamada a la Acción o amenaza inmediata.
+4. NO preguntes "¿Qué hacéis?".`,
+    'pt-BR': `Finalize esta cena de abertura:
+
+RASCUNHO:
+${draft}
+
+NPCs PRESENTES:
+${npcs.map((n) => `- ${n.name}: ${n.description}`).join('\n')}
+
+Requisitos:
+1. Dê polimento à prosa para ser imersiva e atmosférica.
+2. Descreva claramente os NPCs e suas ações.
+3. Termine com um forte Chamado à Ação ou ameaça imediata.
+4. NÃO pergunte "O que vocês fazem?".`,
+  };
+
+  const systemPrompt = systemPrompts[language] || systemPrompts['en']!;
+  const userPrompt = userPrompts[language] || userPrompts['en']!;
 
   return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
 };

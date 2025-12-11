@@ -10,7 +10,7 @@ import { generateTacticalMap, flattenTacticalMap } from '../services/tacticalMap
 import {
   createEncounter,
   getEncounter,
-  updateEncounter,
+  // updateEncounter,
   deleteEncounter,
   processAction,
   endEncounter,
@@ -32,7 +32,8 @@ const generateMapSchema = z.object({
  * POST /api/tactical/generate-map
  * Generate a tactical combat map
  */
-router.post('/generate-map', authenticate, (req, res) => {
+router.post('/generate-map', authenticate, (req: any, res: Response) => {
+  // const authReq = req as AuthRequest;
   try {
     const validation = generateMapSchema.safeParse(req.body);
     if (!validation.success) {
@@ -56,7 +57,7 @@ router.post('/generate-map', authenticate, (req, res) => {
       seed: map.seed,
     });
 
-    res.json({
+    return res.json({
       id: map.id,
       gridSize: map.gridSize,
       seed: map.seed,
@@ -65,7 +66,7 @@ router.post('/generate-map', authenticate, (req, res) => {
     });
   } catch (error) {
     logger.error('[Tactical] Map generation error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to generate map',
     });
   }
@@ -83,15 +84,11 @@ router.post('/:roomId/encounter', authenticate, async (req: AuthRequest, res: Re
     const validation = encounterSchema.safeParse(req.body);
 
     if (!validation.success) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid encounter data',
-        details: validation.error.issues,
-      });
+      throw new ApiError(400, 'Invalid structure data', validation.error.issues);
     }
 
     // Check if user is room owner
-    const room = await getRoom(roomId);
+    const room = await getRoom(roomId || '');
     if (!room) {
       return res.status(404).json({ success: false, error: 'Room not found' });
     }
@@ -100,7 +97,7 @@ router.post('/:roomId/encounter', authenticate, async (req: AuthRequest, res: Re
       return res.status(403).json({ success: false, error: 'Only room owner can create encounters' });
     }
 
-    const encounter = await createEncounter(roomId, validation.data);
+    const encounter = await createEncounter(roomId || '', validation.data);
 
     logger.info('[Tactical] Created encounter', {
       userId: req.user?.uid,
@@ -108,10 +105,10 @@ router.post('/:roomId/encounter', authenticate, async (req: AuthRequest, res: Re
       encounterId: encounter.id,
     });
 
-    res.status(201).json({ success: true, data: encounter });
+    return res.status(201).json({ success: true, data: encounter });
   } catch (error) {
     logger.error('[Tactical] Create encounter error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create encounter',
     });
@@ -122,19 +119,20 @@ router.post('/:roomId/encounter', authenticate, async (req: AuthRequest, res: Re
  * GET /api/tactical/:roomId/encounter/:encounterId
  * Get encounter details
  */
-router.get('/:roomId/encounter/:encounterId', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/:roomId/encounter/:encounterId', authenticate, async (req: any, res: Response) => {
+  // const authReq = req as AuthRequest;
   try {
     const { roomId, encounterId } = req.params;
 
-    const encounter = await getEncounter(roomId, encounterId);
+    const encounter = await getEncounter(roomId || '', encounterId || '');
 
-    res.json({ success: true, data: encounter });
+    return res.json({ success: true, data: encounter });
   } catch (error) {
     logger.error('[Tactical] Get encounter error:', error);
     if (error instanceof Error && error.message === 'Encounter not found') {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get encounter',
     });
@@ -145,7 +143,8 @@ router.get('/:roomId/encounter/:encounterId', authenticate, async (req: AuthRequ
  * POST /api/tactical/:roomId/encounter/:encounterId/action
  * Submit a combat action
  */
-router.post('/:roomId/encounter/:encounterId/action', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/:roomId/encounter/:encounterId/action', authenticate, async (req: any, res: Response) => {
+  // const authReq = req as AuthRequest;
   try {
     const { roomId, encounterId } = req.params;
     const validation = actionSchema.safeParse(req.body);
@@ -158,9 +157,9 @@ router.post('/:roomId/encounter/:encounterId/action', authenticate, async (req: 
       });
     }
 
-    const encounter = await processAction(roomId, encounterId, validation.data);
+    const encounter = await processAction(roomId || '', encounterId || '', validation.data);
 
-    res.json({ success: true, data: encounter });
+    return res.json({ success: true, data: encounter });
   } catch (error) {
     logger.error('[Tactical] Process action error:', error);
     if (error instanceof Error && (error.message === 'Encounter not found' || error.message.includes('not found'))) {
@@ -168,7 +167,7 @@ router.post('/:roomId/encounter/:encounterId/action', authenticate, async (req: 
         .status(error.message === 'Encounter not found' ? 404 : 400)
         .json({ success: false, error: error.message });
     }
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to process action',
     });
@@ -184,7 +183,7 @@ router.post('/:roomId/encounter/:encounterId/end', authenticate, async (req: Aut
     const { roomId, encounterId } = req.params;
 
     // Check if user is room owner
-    const room = await getRoom(roomId);
+    const room = await getRoom(roomId || '');
     if (!room) {
       return res.status(404).json({ success: false, error: 'Room not found' });
     }
@@ -193,7 +192,7 @@ router.post('/:roomId/encounter/:encounterId/end', authenticate, async (req: Aut
       return res.status(403).json({ success: false, error: 'Only room owner can end encounters' });
     }
 
-    const encounter = await endEncounter(roomId, encounterId);
+    const encounter = await endEncounter(roomId || '', encounterId || '');
 
     logger.info('[Tactical] Ended encounter', {
       userId: req.user?.uid,
@@ -201,13 +200,13 @@ router.post('/:roomId/encounter/:encounterId/end', authenticate, async (req: Aut
       encounterId,
     });
 
-    res.json({ success: true, data: encounter });
+    return res.json({ success: true, data: encounter });
   } catch (error) {
     logger.error('[Tactical] End encounter error:', error);
     if (error instanceof Error && error.message === 'Encounter not found') {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to end encounter',
     });
@@ -223,7 +222,7 @@ router.delete('/:roomId/encounter/:encounterId', authenticate, async (req: AuthR
     const { roomId, encounterId } = req.params;
 
     // Check if user is room owner
-    const room = await getRoom(roomId);
+    const room = await getRoom(roomId || '');
     if (!room) {
       return res.status(404).json({ success: false, error: 'Room not found' });
     }
@@ -232,7 +231,7 @@ router.delete('/:roomId/encounter/:encounterId', authenticate, async (req: AuthR
       return res.status(403).json({ success: false, error: 'Only room owner can delete encounters' });
     }
 
-    await deleteEncounter(roomId, encounterId);
+    await deleteEncounter(roomId || '', encounterId || '');
 
     logger.info('[Tactical] Deleted encounter', {
       userId: req.user?.uid,
@@ -240,13 +239,13 @@ router.delete('/:roomId/encounter/:encounterId', authenticate, async (req: AuthR
       encounterId,
     });
 
-    res.json({ success: true, data: null });
+    return res.json({ success: true, data: null });
   } catch (error) {
     logger.error('[Tactical] Delete encounter error:', error);
     if (error instanceof Error && error.message === 'Encounter not found') {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete encounter',
     });

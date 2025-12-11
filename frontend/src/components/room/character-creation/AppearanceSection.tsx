@@ -1,4 +1,6 @@
 import Textarea from '../../ui/textarea';
+import Input from '../../ui/input';
+import Label from '../../ui/label';
 import { SliderWithMarks } from '../../ui/SliderWithMarks';
 import { useI18n } from '../../../i18n';
 import {
@@ -13,6 +15,8 @@ import { parseAppearanceNumber } from './validation';
 import { OptionPill } from './OptionPill';
 
 interface AppearanceSectionProps {
+  name: string;
+  onNameChange: (value: string) => void;
   appearance: {
     age: string;
     height: string;
@@ -28,7 +32,7 @@ interface AppearanceSectionProps {
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Other'];
 
-export function AppearanceSection({ appearance, onAppearanceChange }: AppearanceSectionProps) {
+export function AppearanceSection({ name, onNameChange, appearance, onAppearanceChange }: AppearanceSectionProps) {
   const { t } = useI18n();
 
   const ageValue = parseAppearanceNumber(appearance.age, DEFAULT_APPEARANCE_AGE);
@@ -40,7 +44,18 @@ export function AppearanceSection({ appearance, onAppearanceChange }: Appearance
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="rounded-lg border border-midnight-600 bg-midnight-800/70 p-4 space-y-2">
+          <Label className="text-xs uppercase tracking-wider text-aurora-300">
+            {t('characterCreation.steps.identity.name')}
+          </Label>
+          <Input
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder={t('characterCreation.steps.identity.namePlaceholder')}
+            className="h-9"
+          />
+        </div>
         <div className="rounded-lg border border-midnight-600 bg-midnight-800/70 p-4">
           <SliderWithMarks
             label={t('characterCreation.appearance.age')}

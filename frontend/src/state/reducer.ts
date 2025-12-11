@@ -48,7 +48,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case ActionType.PROCESS_TURN_START: {
       const playerActionMessages: Message[] = state.players.map((p) => ({
         id: `msg-${Date.now()}-${p.id}`,
-        sender: p.character.name,
+        sender: p.character?.name || 'Unknown',
         text: p.action || 'does nothing.',
         timestamp: Date.now(),
       }));
@@ -80,8 +80,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           const { characterName, attribute, value } = update.payload;
           // Check if it's a player
           newState.players = newState.players.map((p) => {
-            if (p.character.name === characterName) {
-              if (attribute in p.character) {
+            if (p.character?.name === characterName) {
+              if (p.character && attribute in p.character) {
                 const key = attribute as keyof typeof p.character;
                 const newChar = { ...p.character, [key]: value };
                 return { ...p, character: newChar };

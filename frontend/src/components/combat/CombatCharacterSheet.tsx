@@ -596,7 +596,7 @@ export function CombatCharacterSheet({ character, characterSheet, onClose }: Com
               <dl className="space-y-2 text-sm text-shadow-200">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-shadow-400">Equipment</dt>
-                  <dd className="font-semibold text-shadow-50">{characterSheet?.equipment || '—'}</dd>
+                  <dd className="font-semibold text-shadow-50">{characterSheet?.equipmentDescription || '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-shadow-400">Proficiencies & Languages</dt>

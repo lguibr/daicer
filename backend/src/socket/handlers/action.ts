@@ -60,6 +60,9 @@ export async function handlePlayerAction(
           waitingForAction: false,
           createdAt: room.createdAt,
           updatedAt: Date.now(),
+          worldConditions: (room as any).worldConditions || [],
+          eventsLog: (room as any).eventsLog || [],
+          currentTurn: (room as any).currentTurn || 0,
         };
 
         const result = await invokeGameplayGraph(currentState);

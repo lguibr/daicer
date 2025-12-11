@@ -87,7 +87,7 @@ router.put(
       throw new ApiError(400, 'Invalid character data', { cause: error });
     }
 
-    const mergedCharacter = mergeCharacterSheet(player.character, updates);
+    const mergedCharacter = mergeCharacterSheet(player.character || ({} as any), updates);
 
     const updatedPlayer = await updatePlayerCharacter(roomId, playerId, mergedCharacter);
     res.json({ success: true, data: updatedPlayer });
@@ -116,7 +116,7 @@ router.post(
 
     let sheet: CharacterSheet;
     try {
-      sheet = characterSheetSchema.parse(req.body);
+      sheet = characterSheetSchema.parse(req.body) as unknown as CharacterSheet;
     } catch (error) {
       throw new ApiError(400, 'Invalid character data', { cause: error });
     }

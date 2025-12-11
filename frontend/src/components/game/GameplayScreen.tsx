@@ -36,6 +36,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const { t } = useI18n();
   const [submitting, setSubmitting] = useState(false);
   const [showEntityList, setShowEntityList] = useState(false);
+  const [composerValue, setComposerValue] = useState('');
 
   const hasPlayerAction = (playerAction: Player['action']) =>
     typeof playerAction === 'string' && playerAction.trim().length > 0;
@@ -53,11 +54,22 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
     try {
       setSubmitting(true);
       await submitAction(room.id, action);
+      setComposerValue(''); // Clear input on success
     } catch (err) {
       console.error('Failed to submit action:', err);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleTileClick = (tile: { x: number; y: number; z: number }) => {
+    // Append formatted coordinate reference to composer
+    const ref = `[@ ${tile.x},${tile.y},${tile.z}]`;
+    setComposerValue((prev) => {
+      // Add space if needed
+      const prefix = prev.length > 0 && !prev.endsWith(' ') ? ' ' : '';
+      return prev + prefix + ref;
+    });
   };
 
   const handleProcessTurn = () => {
@@ -154,11 +166,13 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
         ) : (
           <GameplayComposer
             roomId={room.id}
-            userName={currentPlayer?.character.name || user?.displayName || 'Player'}
+            userName={currentPlayer?.character?.name || user?.displayName || 'Player'}
             onSubmit={handleSubmitAction}
             disabled={submitting || socket.isProcessing}
             placeholder={t('gameplay.actionPlaceholder')}
             isProcessing={socket.isProcessing}
+            value={composerValue}
+            onChange={setComposerValue}
           />
         )}
       </div>
@@ -185,6 +199,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
             creatures={socket.creatures}
             structures={room.structures}
             onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}
+            onTileClick={handleTileClick}
           />
 
           {/* Overlay Controls */}
@@ -213,6 +228,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
               creatures={socket.creatures}
               structures={room.structures}
               onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}
+              onTileClick={handleTileClick}
             />
           }
           playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}

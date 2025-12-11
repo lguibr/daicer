@@ -21,13 +21,20 @@ export interface EquipmentItemData {
     damageDice: string;
     damageType: string;
   };
-  armorClass?: {
-    base: number;
-    dexBonus?: boolean;
-    maxBonus?: number;
-  };
+  armorClass?:
+    | number
+    | {
+        base: number;
+        dexBonus?: boolean;
+        maxBonus?: number;
+      };
   properties?: string[];
   desc?: string[];
+  description?: string; // Add description string
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 interface EquipmentItemCardProps {
@@ -56,7 +63,7 @@ function convertToGold(quantity: number, unit: string): number {
 }
 
 export function EquipmentItemCard({ item, onBuy, onEquip, currentGold, disabled }: EquipmentItemCardProps) {
-  const { t } = useI18n();
+  const { t, localize } = useI18n();
   const Icon = getItemIcon(item.equipmentCategory);
   const costInGold = convertToGold(item.cost.quantity, item.cost.unit);
   const canAfford = currentGold >= costInGold;
@@ -67,7 +74,7 @@ export function EquipmentItemCard({ item, onBuy, onEquip, currentGold, disabled 
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">{item.name}</CardTitle>
+            <CardTitle className="text-lg">{localize(item, 'name')}</CardTitle>
           </div>
           <div className="flex items-center gap-1 text-sm font-medium text-amber-500">
             <span>{costInGold}</span>
@@ -93,7 +100,9 @@ export function EquipmentItemCard({ item, onBuy, onEquip, currentGold, disabled 
           {item.armorClass && (
             <div>
               <div className="text-xs text-muted-foreground">{t('equipment.shop.armorClass')}</div>
-              <div className="font-medium">{item.armorClass.base} AC</div>
+              <div className="font-medium">
+                {typeof item.armorClass === 'number' ? item.armorClass : item.armorClass.base} AC
+              </div>
             </div>
           )}
         </div>
@@ -111,8 +120,10 @@ export function EquipmentItemCard({ item, onBuy, onEquip, currentGold, disabled 
           </div>
         )}
 
-        {item.desc && item.desc.length > 0 && (
-          <p className="line-clamp-2 text-xs text-muted-foreground">{item.desc[0]}</p>
+        {(item.description || (item.desc && item.desc.length > 0)) && (
+          <p className="line-clamp-2 text-xs text-muted-foreground">
+            {localize(item, 'description') || item.desc?.[0]}
+          </p>
         )}
 
         {onBuy && (

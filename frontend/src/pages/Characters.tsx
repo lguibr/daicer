@@ -32,7 +32,7 @@ export default function CharactersPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
   const sortedCharacters = useMemo(
-    () => [...state.characters].sort((a, b) => b.character.level - a.character.level),
+    () => [...state.characters].sort((a, b) => (b.character?.level || 0) - (a.character?.level || 0)),
     [state.characters]
   );
 
@@ -47,7 +47,7 @@ export default function CharactersPage() {
       for (const membership of memberships) {
         if (membership.player) {
           characters.push({
-            character: membership.player.character,
+            character: membership.player.character!, // Filter ensures this? Actually no, need to be safe
             player: membership.player,
             roomId: membership.room.id,
             roomCode: membership.room.code,
@@ -55,8 +55,8 @@ export default function CharactersPage() {
           });
         }
       }
-
-      setState({ characters, loading: false, error: null });
+      const validCharacters = characters.filter((c) => c.character !== null);
+      setState({ characters: validCharacters, loading: false, error: null });
     } catch (error) {
       setState({
         characters: [],
@@ -138,7 +138,7 @@ export default function CharactersPage() {
                 >
                   <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex gap-4">
-                      {character.avatarAssets?.publicUrl ? (
+                      {character?.avatarAssets?.publicUrl ? (
                         <img
                           src={character.avatarAssets.publicUrl}
                           alt={`${character.name} portrait`}
@@ -152,21 +152,21 @@ export default function CharactersPage() {
 
                       <div className="space-y-3">
                         <div>
-                          <h3 className="text-2xl font-bold text-shadow-50">{character.name}</h3>
+                          <h3 className="text-2xl font-bold text-shadow-50">{character?.name}</h3>
                           <p className="text-base text-shadow-300">
-                            {character.race} • {character.characterClass}
+                            {character?.race} • {character?.characterClass}
                           </p>
                         </div>
 
                         <div className="flex items-center gap-3 text-sm">
                           <span className="rounded-full border border-aurora-400/50 bg-aurora-500/10 px-2.5 py-0.5 font-semibold uppercase tracking-wider text-aurora-100">
-                            {t('characters.labels.level')} {character.level}
+                            {t('characters.labels.level')} {character?.level}
                           </span>
                           <span className="text-shadow-400">
-                            {character.hp}/{character.maxHp} {t('common.hp')}
+                            {character?.hp}/{character?.maxHp} {t('common.hp')}
                           </span>
                           <span className="text-shadow-400">
-                            {t('common.ac')} {character.armorClass}
+                            {t('common.ac')} {character?.armorClass}
                           </span>
                         </div>
 
@@ -194,7 +194,7 @@ export default function CharactersPage() {
                     </div>
                   </div>
 
-                  {character.backstory && (
+                  {character?.backstory && (
                     <div className="mt-4 rounded-2xl border border-shadow-700 bg-shadow-900/60 p-4">
                       <p className="text-xs uppercase tracking-wider text-shadow-500 mb-2">
                         {t('characters.labels.backstory')}

@@ -9,7 +9,7 @@ import type { GridChunk } from '@daicer/shared/world/grid-chunk-schema';
 import { generateGridChunk } from './world-gen/grid-chunk-generator';
 import { collapseGrid } from './world-gen/wfc/wfc-solver';
 import { getPresetTiles } from './world-gen/wfc/wfc-presets';
-import { generateBSPLayout } from './world-gen/bsp-rooms';
+// import { generateBSPLayout } from './world-gen/bsp-rooms';
 
 /**
  * Generate grid chunks for a structure asset using WFC + BSP

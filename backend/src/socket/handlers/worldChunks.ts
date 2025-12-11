@@ -121,6 +121,7 @@ export function registerWorldChunkHandlers(socket: Socket, userId: string): void
         }
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const surfaceTiles = Array.from(tileMap.values()).map((tile: any) => ({
         x: tile.x,
         y: tile.y,
@@ -244,6 +245,7 @@ export function registerWorldChunkHandlers(socket: Socket, userId: string): void
               }
             }
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const surfaceTiles = Array.from(tileMap.values()).map((tile: any) => ({
               x: tile.x,
               y: tile.y,

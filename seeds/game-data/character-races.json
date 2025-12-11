@@ -2,63 +2,99 @@
   {
     "id": "human",
     "name": "Human",
+    "name_es": "Humano",
+    "name_ptBR": "Humano",
     "description": "Versatile and ambitious, humans are the most common race.",
+    "description_es": "Versátiles y ambiciosos, los humanos son la raza más común.",
+    "description_ptBR": "Versáteis e ambiciosos, os humanos são a raça mais comum.",
     "speed": 30,
     "size": "Medium"
   },
   {
     "id": "elf",
     "name": "Elf",
+    "name_es": "Elfo",
+    "name_ptBR": "Elfo",
     "description": "Graceful and long-lived, elves are magical beings with keen senses.",
+    "description_es": "Elegantes y longevos, los elfos son seres mágicos con sentidos agudos.",
+    "description_ptBR": "Graciosos e de longa vida, elfos são seres mágicos com sentidos aguçados.",
     "speed": 30,
     "size": "Medium"
   },
   {
     "id": "dwarf",
     "name": "Dwarf",
+    "name_es": "Enano",
+    "name_ptBR": "Anão",
     "description": "Short and stout, dwarves are renowned craftsmen and warriors.",
+    "description_es": "Bajos y robustos, los enanos son habiles artesanos y guerreros.",
+    "description_ptBR": "Baixos e robustos, anões são renomados artesãos e guerreiros.",
     "speed": 25,
     "size": "Medium"
   },
   {
     "id": "halfling",
     "name": "Halfling",
+    "name_es": "Mediano",
+    "name_ptBR": "Pequenino",
     "description": "Small and nimble, halflings are naturally lucky and brave.",
+    "description_es": "Pequeños y ágiles, los medianos son naturalmente afortunados y valientes.",
+    "description_ptBR": "Pequenos e ágeis, os pequeninos são naturalmente sortudos e corajosos.",
     "speed": 25,
     "size": "Small"
   },
   {
     "id": "dragonborn",
     "name": "Dragonborn",
+    "name_es": "Dracónido",
+    "name_ptBR": "Draconato",
     "description": "Proud dragon-like humanoids with breath weapons.",
+    "description_es": "Humanoides orgullosos con rasgos dragontinos y armas de aliento.",
+    "description_ptBR": "Humanoides orgulhosos com traços de dragão e sopro de dragão.",
     "speed": 30,
     "size": "Medium"
   },
   {
     "id": "gnome",
     "name": "Gnome",
+    "name_es": "Gnomo",
+    "name_ptBR": "Gnomo",
     "description": "Inventive and curious, gnomes are masters of magic and engineering.",
+    "description_es": "Inventivos y curiosos, los gnomos son maestros de la magia y la ingeniería.",
+    "description_ptBR": "Inventivos e curiosos, os gnomos são mestres da magia e engenharia.",
     "speed": 25,
     "size": "Small"
   },
   {
     "id": "half-elf",
     "name": "Half-Elf",
+    "name_es": "Semielfo",
+    "name_ptBR": "Meio-Elfo",
     "description": "Combining human ambition with elven grace.",
+    "description_es": "Combinan la ambición humana con la gracia élfica.",
+    "description_ptBR": "Combinando ambição humana com a graça élfica.",
     "speed": 30,
     "size": "Medium"
   },
   {
     "id": "half-orc",
     "name": "Half-Orc",
+    "name_es": "Semiorco",
+    "name_ptBR": "Meio-Orc",
     "description": "Strong and resilient, combining human and orc heritage.",
+    "description_es": "Fuertes y resistentes, combinan la herencia humana y orca.",
+    "description_ptBR": "Fortes e resilientes, combinando herança humana e orc.",
     "speed": 30,
     "size": "Medium"
   },
   {
     "id": "tiefling",
     "name": "Tiefling",
+    "name_es": "Tiefling",
+    "name_ptBR": "Tiefling",
     "description": "Bearing infernal heritage, tieflings have innate magical abilities.",
+    "description_es": "Con herencia infernal, los tieflings tienen habilidades mágicas innatas.",
+    "description_ptBR": "Carregando herança infernal, tieflings têm habilidades mágicas inatas.",
     "speed": 30,
     "size": "Medium"
   }

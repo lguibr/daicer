@@ -2,7 +2,11 @@
   {
     "id": "barbarian",
     "name": "Barbarian",
+    "name_es": "Bárbaro",
+    "name_ptBR": "Bárbaro",
     "description": "A fierce warrior who can enter a battle rage.",
+    "description_es": "Un guerrero feroz capaz de entrar en una furia de batalla.",
+    "description_ptBR": "Um guerreiro feroz capaz de entrar em fúria de batalha.",
     "hitDie": 12,
     "primaryAbility": "Strength",
     "savingThrows": ["Strength", "Constitution"]
@@ -10,7 +14,11 @@
   {
     "id": "bard",
     "name": "Bard",
+    "name_es": "Bardo",
+    "name_ptBR": "Bardo",
     "description": "An inspiring magician whose power echoes the music of creation.",
+    "description_es": "Un mago inspirador cuyo poder resuena con la música de la creación.",
+    "description_ptBR": "Um mago inspirador cujo poder ecoa a música da criação.",
     "hitDie": 8,
     "primaryAbility": "Charisma",
     "savingThrows": ["Dexterity", "Charisma"]
@@ -18,7 +26,11 @@
   {
     "id": "cleric",
     "name": "Cleric",
+    "name_es": "Clérigo",
+    "name_ptBR": "Clérigo",
     "description": "A priestly champion who wields divine magic.",
+    "description_es": "Un campeón sacerdotal que esgrime magia divina.",
+    "description_ptBR": "Um campeão sacerdotal que empunha magia divina.",
     "hitDie": 8,
     "primaryAbility": "Wisdom",
     "savingThrows": ["Wisdom", "Charisma"]
@@ -26,7 +38,11 @@
   {
     "id": "druid",
     "name": "Druid",
+    "name_es": "Druida",
+    "name_ptBR": "Druida",
     "description": "A priest of nature who wields primal magic.",
+    "description_es": "Un sacerdote de la naturaleza que esgrime magia primigenia.",
+    "description_ptBR": "Um sacerdote da natureza que empunha magia primal.",
     "hitDie": 8,
     "primaryAbility": "Wisdom",
     "savingThrows": ["Intelligence", "Wisdom"]
@@ -34,7 +50,11 @@
   {
     "id": "fighter",
     "name": "Fighter",
+    "name_es": "Guerrero",
+    "name_ptBR": "Guerreiro",
     "description": "A master of martial combat, skilled with a variety of weapons.",
+    "description_es": "Un maestro del combate marcial, hábil con una gran variedad de armas.",
+    "description_ptBR": "Um mestre do combate marcial, habilidoso com uma variedade de armas.",
     "hitDie": 10,
     "primaryAbility": "Strength or Dexterity",
     "savingThrows": ["Strength", "Constitution"]
@@ -42,7 +62,11 @@
   {
     "id": "monk",
     "name": "Monk",
+    "name_es": "Monje",
+    "name_ptBR": "Monge",
     "description": "A master of martial arts, harnessing the power of the body.",
+    "description_es": "Un maestro de las artes marciales que domina el poder del cuerpo.",
+    "description_ptBR": "Um mestre das artes marciais, canalizando o poder do corpo.",
     "hitDie": 8,
     "primaryAbility": "Dexterity & Wisdom",
     "savingThrows": ["Strength", "Dexterity"]
@@ -50,7 +74,11 @@
   {
     "id": "paladin",
     "name": "Paladin",
+    "name_es": "Paladín",
+    "name_ptBR": "Paladino",
     "description": "A holy warrior bound to a sacred oath.",
+    "description_es": "Un guerrero santo atado a un juramento sagrado.",
+    "description_ptBR": "Um guerreiro sagrado ligado a um juramento sagrado.",
     "hitDie": 10,
     "primaryAbility": "Strength & Charisma",
     "savingThrows": ["Wisdom", "Charisma"]
@@ -58,7 +86,11 @@
   {
     "id": "ranger",
     "name": "Ranger",
+    "name_es": "Explorador",
+    "name_ptBR": "Patrulheiro",
     "description": "A warrior who uses martial prowess and nature magic.",
+    "description_es": "Un guerrero que usa destreza marcial y magia de la naturaleza.",
+    "description_ptBR": "Um guerreiro que usa destreza marcial e magia da natureza.",
     "hitDie": 10,
     "primaryAbility": "Dexterity & Wisdom",
     "savingThrows": ["Strength", "Dexterity"]
@@ -66,7 +98,11 @@
   {
     "id": "rogue",
     "name": "Rogue",
+    "name_es": "Pícaro",
+    "name_ptBR": "Ladino",
     "description": "A scoundrel who uses stealth and trickery to overcome obstacles.",
+    "description_es": "Un canalla que usa el sigilo y la astucia para superar obstáculos.",
+    "description_ptBR": "Um fora da lei que usa furtividade e trapaça para superar obstáculos.",
     "hitDie": 8,
     "primaryAbility": "Dexterity",
     "savingThrows": ["Dexterity", "Intelligence"]
@@ -74,7 +110,11 @@
   {
     "id": "sorcerer",
     "name": "Sorcerer",
+    "name_es": "Hechicero",
+    "name_ptBR": "Feiticeiro",
     "description": "A spellcaster who draws on inherent magic.",
+    "description_es": "Un lanzador de conjuros que recurre a una magia inherente.",
+    "description_ptBR": "Um conjurador que extrai magia inerente.",
     "hitDie": 6,
     "primaryAbility": "Charisma",
     "savingThrows": ["Constitution", "Charisma"]
@@ -82,7 +122,11 @@
   {
     "id": "warlock",
     "name": "Warlock",
+    "name_es": "Brujo",
+    "name_ptBR": "Bruxo",
     "description": "A wielder of magic derived from a pact with an otherworldly entity.",
+    "description_es": "Un portador de magia derivada de un pacto con una entidad de otro mundo.",
+    "description_ptBR": "Um portador de magia derivada de um pacto com uma entidade de outro mundo.",
     "hitDie": 8,
     "primaryAbility": "Charisma",
     "savingThrows": ["Wisdom", "Charisma"]
@@ -90,7 +134,11 @@
   {
     "id": "wizard",
     "name": "Wizard",
+    "name_es": "Mago",
+    "name_ptBR": "Mago",
     "description": "A scholarly magic-user capable of manipulating reality.",
+    "description_es": "Un mago erudito capaz de manipular la realidad.",
+    "description_ptBR": "Um usuário de magia estudioso capaz de manipular a realidade.",
     "hitDie": 6,
     "primaryAbility": "Intelligence",
     "savingThrows": ["Intelligence", "Wisdom"]

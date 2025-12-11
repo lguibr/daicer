@@ -30,10 +30,13 @@ const BIOME_BLOCKS: Record<string, { surface: string; subsurface: string; underg
   mushroom_fields: { surface: 'mycelium', subsurface: 'dirt', underground: 'stone' },
 };
 
+// Helper type for Z
+type GridZ = GridChunk['z'];
+
 /**
  * Create empty grid chunk (all air)
  */
-export function createEmptyChunk(chunkX: number, chunkY: number, z: number): GridChunk {
+export function createEmptyChunk(chunkX: number, chunkY: number, z: GridZ): GridChunk {
   const tiles: GridTile[] = [];
 
   for (let y = 0; y < 8; y++) {
@@ -69,7 +72,7 @@ export function createEmptyChunk(chunkX: number, chunkY: number, z: number): Gri
 /**
  * Create biome-specific chunk with proper block types
  */
-export function createBiomeChunk(chunkX: number, chunkY: number, z: number, biomeType: string): GridChunk {
+export function createBiomeChunk(chunkX: number, chunkY: number, z: GridZ, biomeType: string): GridChunk {
   const blocks = BIOME_BLOCKS[biomeType] || { surface: 'grass', subsurface: 'dirt', underground: 'stone' };
   const tiles: GridTile[] = [];
 
@@ -118,7 +121,7 @@ export function createBiomeChunk(chunkX: number, chunkY: number, z: number, biom
 export function createTransitionChunk(
   chunkX: number,
   chunkY: number,
-  z: number,
+  z: GridZ,
   biome1: string,
   biome2: string,
   axis: 'x' | 'y'
@@ -213,9 +216,7 @@ export function createMockFetch(chunks: Record<string, GridChunk>): typeof fetch
 /**
  * Create a 3x3 grid of chunks (viewport coverage)
  */
-export function createChunkGrid(
-  generator: (cx: number, cy: number, z: number) => GridChunk
-): Record<string, GridChunk> {
+export function createChunkGrid(generator: (cx: number, cy: number, z: GridZ) => GridChunk): Record<string, GridChunk> {
   const chunks: Record<string, GridChunk> = {};
 
   for (let cy = -1; cy <= 1; cy++) {

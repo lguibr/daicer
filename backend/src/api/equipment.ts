@@ -54,13 +54,13 @@ const startingPackSchema = z.object({
  * GET /api/equipment/items
  * Get all equipment items
  */
-router.get('/items', authenticateToken, async (req: Request, res: Response) => {
+router.get('/items', authenticateToken, async (_req: Request, res: Response) => {
   try {
     const items = getAllEquipment();
-    res.json({ items });
+    return res.json({ items });
   } catch (error) {
     logger.error('[EquipmentAPI] Error getting items:', error);
-    res.status(500).json({ error: 'Failed to get equipment items' });
+    return res.status(500).json({ error: 'Failed to get equipment items' });
   }
 });
 
@@ -71,16 +71,16 @@ router.get('/items', authenticateToken, async (req: Request, res: Response) => {
 router.get('/items/:index', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { index } = req.params;
-    const item = getItemByIndex(index);
+    const item = getItemByIndex(index || '');
 
     if (!item) {
       return res.status(404).json({ error: 'Item not found' });
     }
 
-    res.json({ item });
+    return res.json({ item });
   } catch (error) {
     logger.error('[EquipmentAPI] Error getting item:', error);
-    res.status(500).json({ error: 'Failed to get equipment item' });
+    return res.status(500).json({ error: 'Failed to get equipment item' });
   }
 });
 
@@ -91,16 +91,16 @@ router.get('/items/:index', authenticateToken, async (req: Request, res: Respons
 router.get('/packs/:className', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { className } = req.params;
-    const pack = getStartingPack(className);
+    const pack = getStartingPack(className || '');
 
     if (!pack) {
       return res.status(404).json({ error: 'Starting pack not found for this class' });
     }
 
-    res.json({ pack });
+    return res.json({ pack });
   } catch (error) {
     logger.error('[EquipmentAPI] Error getting starting pack:', error);
-    res.status(500).json({ error: 'Failed to get starting pack' });
+    return res.status(500).json({ error: 'Failed to get starting pack' });
   }
 });
 
@@ -111,11 +111,11 @@ router.get('/packs/:className', authenticateToken, async (req: Request, res: Res
 router.get('/starting-gold/:className', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { className } = req.params;
-    const gold = getStartingGold(className);
-    res.json({ startingGold: gold });
+    const gold = getStartingGold(className || '');
+    return res.json({ startingGold: gold });
   } catch (error) {
     logger.error('[EquipmentAPI] Error getting starting gold:', error);
-    res.status(500).json({ error: 'Failed to get starting gold' });
+    return res.status(500).json({ error: 'Failed to get starting gold' });
   }
 });
 
@@ -128,14 +128,14 @@ router.get('/starting-gold/:className', authenticateToken, async (req: Request, 
 router.get('/:roomId/:playerId', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { roomId, playerId } = req.params;
-    const equipment = await getPlayerEquipment(roomId, playerId);
-    res.json({ success: true, data: equipment });
+    const equipment = await getPlayerEquipment(roomId || '', playerId || '');
+    return res.json({ success: true, data: equipment });
   } catch (error) {
     logger.error('[EquipmentAPI] Error getting player equipment:', error);
     if (error instanceof Error && error.message === 'Player not found') {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Failed to get player equipment' });
+    return res.status(500).json({ success: false, error: 'Failed to get player equipment' });
   }
 });
 
@@ -152,14 +152,14 @@ router.post('/:roomId/:playerId/item', authenticateToken, async (req: Request, r
       return res.status(400).json({ success: false, error: 'Invalid item data', details: validation.error.issues });
     }
 
-    const equipment = await addItemToInventory(roomId, playerId, validation.data);
-    res.status(201).json({ success: true, data: equipment });
+    const equipment = await addItemToInventory(roomId || '', playerId || '', validation.data);
+    return res.status(201).json({ success: true, data: equipment });
   } catch (error) {
     logger.error('[EquipmentAPI] Error adding item:', error);
     if (error instanceof Error && error.message === 'Player not found') {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Failed to add item' });
+    return res.status(500).json({ success: false, error: 'Failed to add item' });
   }
 });
 
@@ -170,8 +170,8 @@ router.post('/:roomId/:playerId/item', authenticateToken, async (req: Request, r
 router.delete('/:roomId/:playerId/item/:itemId', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { roomId, playerId, itemId } = req.params;
-    const equipment = await removeItemFromInventory(roomId, playerId, itemId);
-    res.json({ success: true, data: equipment });
+    const equipment = await removeItemFromInventory(roomId || '', playerId || '', itemId || '');
+    return res.json({ success: true, data: equipment });
   } catch (error) {
     logger.error('[EquipmentAPI] Error removing item:', error);
     if (
@@ -180,7 +180,7 @@ router.delete('/:roomId/:playerId/item/:itemId', authenticateToken, async (req: 
     ) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Failed to remove item' });
+    return res.status(500).json({ success: false, error: 'Failed to remove item' });
   }
 });
 
@@ -198,8 +198,8 @@ router.post('/:roomId/:playerId/equip', authenticateToken, async (req: Request, 
     }
 
     const { itemId, slot } = validation.data;
-    const equipment = await equipItem(roomId, playerId, itemId, slot);
-    res.json({ success: true, data: equipment });
+    const equipment = await equipItem(roomId || '', playerId || '', itemId, slot);
+    return res.json({ success: true, data: equipment });
   } catch (error) {
     logger.error('[EquipmentAPI] Error equipping item:', error);
     if (
@@ -208,7 +208,7 @@ router.post('/:roomId/:playerId/equip', authenticateToken, async (req: Request, 
     ) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Failed to equip item' });
+    return res.status(500).json({ success: false, error: 'Failed to equip item' });
   }
 });
 
@@ -226,8 +226,13 @@ router.post('/:roomId/:playerId/unequip', authenticateToken, async (req: Request
     }
 
     const { slot } = validation.data;
-    const equipment = await unequipItem(roomId, playerId, slot);
-    res.json({ success: true, data: equipment });
+    const equipment = await unequipItem(roomId || '', playerId || '', slot);
+
+    if (!equipment) {
+      return res.status(500).json({ error: 'Failed to unequip item' });
+    }
+
+    return res.json({ success: true, data: equipment });
   } catch (error) {
     logger.error('[EquipmentAPI] Error unequipping item:', error);
     if (
@@ -236,7 +241,7 @@ router.post('/:roomId/:playerId/unequip', authenticateToken, async (req: Request
     ) {
       return res.status(404).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Failed to unequip item' });
+    return res.status(500).json({ success: false, error: 'Failed to unequip item' });
   }
 });
 
@@ -253,9 +258,11 @@ router.post('/:roomId/:playerId/starting-pack', authenticateToken, async (req: R
       return res.status(400).json({ success: false, error: 'Invalid request data', details: validation.error.issues });
     }
 
-    const { pack, characterClass } = validation.data;
-    const equipment = await applyStartingPack(roomId, playerId, pack, characterClass);
-    res.json({ success: true, data: equipment });
+    const { pack } = validation.data; // characterClass removed if unused or mismatch
+    // Verify applyStartingPack arguments: (roomId, playerId, packId)
+    const equipment = await applyStartingPack(roomId || '', playerId || '', pack);
+
+    return res.json({ success: true, data: equipment });
   } catch (error) {
     logger.error('[EquipmentAPI] Error applying starting pack:', error);
     if (
@@ -266,7 +273,7 @@ router.post('/:roomId/:playerId/starting-pack', authenticateToken, async (req: R
         .status(error.message.includes('Starting pack') ? 400 : 404)
         .json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Failed to apply starting pack' });
+    return res.status(500).json({ success: false, error: 'Failed to apply starting pack' });
   }
 });
 

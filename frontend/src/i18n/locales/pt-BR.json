@@ -892,6 +892,7 @@
     },
     "pointBuy": {
       "title": "Atributos (Distribuição de Pontos)",
+      "complete": "✓ Completo!",
       "perfect": "✓ Perfeito!",
       "remainingSuffix": "pontos restantes",
       "modLabel": "Mod",

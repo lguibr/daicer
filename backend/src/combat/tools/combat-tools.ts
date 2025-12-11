@@ -50,7 +50,11 @@ export const startCombatTool = tool(
           tempHp: char.temporaryHp ?? 0,
           armorClass,
           initiative: dexModifier,
-          position: { x: 0, y: 0 },
+          position: { x: 0, y: 0, z: 0 },
+
+          initiativeBonus: dexModifier,
+          attackBonus: Math.floor((char.level - 1) / 4) + 2 + Math.floor(((char.attributes?.Strength ?? 10) - 10) / 2),
+
           isPlayer: true,
           strength: char.attributes?.Strength ?? 10,
           dexterity: char.attributes?.Dexterity ?? 10,
@@ -91,7 +95,11 @@ export const startCombatTool = tool(
             tempHp: 0,
             armorClass: 12,
             initiative: 0,
-            position: { x: 9, y: index },
+            position: { x: 9, y: index, z: 0 },
+
+            initiativeBonus: 0,
+            attackBonus: 2,
+
             isPlayer: false,
             strength: 10,
             dexterity: 10,
@@ -120,7 +128,11 @@ export const startCombatTool = tool(
           tempHp: 0,
           armorClass: 12, // Default AC
           initiative: 0, // Default initiative
-          position: { x: 9, y: index },
+          position: { x: 9, y: index, z: 0 },
+
+          initiativeBonus: 0,
+          attackBonus: 2,
+
           isPlayer: false,
           strength: 10,
           dexterity: 10,

@@ -29,8 +29,8 @@ export const SCENARIOS: SimulationDefinition[] = [
     seed: 1337,
     turnOrder: ['player-fighter', 'enemy-goblin-1', 'player-wizard', 'enemy-goblin-2'],
     createCharacters: () => [
-      basePlayerFighter({ position: { x: 2, y: 3 } }),
-      basePlayerWizard({ position: { x: 2, y: 5 } }),
+      basePlayerFighter({ position: { x: 2, y: 3, z: 0 } }),
+      basePlayerWizard({ position: { x: 2, y: 5, z: 0 } }),
       baseGoblin('enemy-goblin-1', 'Goblin Skirmisher', { x: 7, y: 4 }),
       baseGoblin('enemy-goblin-2', 'Goblin Sneak', { x: 8, y: 6 }),
     ],
@@ -121,7 +121,7 @@ export const SCENARIOS: SimulationDefinition[] = [
     seed: 2024,
     turnOrder: ['player-fighter', 'player-rogue', 'enemy-hobgoblin', 'enemy-archer'],
     createCharacters: () => [
-      basePlayerFighter({ id: 'player-fighter', position: { x: 2, y: 6 }, name: 'Captain Iria' }),
+      basePlayerFighter({ id: 'player-fighter', position: { x: 2, y: 6, z: 0 }, name: 'Captain Iria' }),
       battleRogue(),
       hobgoblinCaptain(),
       goblinArcher(),
@@ -218,7 +218,7 @@ export const SCENARIOS: SimulationDefinition[] = [
     focus: 'Ranged kiting and support',
     seed: 4096,
     turnOrder: ['player-ranger', 'enemy-ogre', 'player-cleric'],
-    createCharacters: () => [ranger(), ogre(), cleric({ position: { x: 3, y: 8 } })],
+    createCharacters: () => [ranger(), ogre(), cleric({ position: { x: 3, y: 8, z: 0 } })],
     actions: [
       {
         type: 'startTurn',

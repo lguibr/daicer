@@ -52,7 +52,7 @@ export function registerRegistryRoutes(app: Router): void {
    */
   app.get('/mcp/registry/prompts/category/:category', (req, res) => {
     try {
-      const prompts = getPromptsByCategory(req.params.category);
+      const prompts = getPromptsByCategory(req.params.category as any);
       res.json({ prompts });
     } catch (error) {
       logger.error('[Registry] Error getting prompts by category:', error);
@@ -102,7 +102,7 @@ export function registerRegistryRoutes(app: Router): void {
    */
   app.get('/mcp/registry/tools/category/:category', (req, res) => {
     try {
-      const tools = getToolsByCategory(req.params.category);
+      const tools = getToolsByCategory(req.params.category as any);
       res.json({ tools });
     } catch (error) {
       logger.error('[Registry] Error getting tools by category:', error);
@@ -166,7 +166,7 @@ export function registerRegistryRoutes(app: Router): void {
    */
   app.get('/mcp/registry/agents/role/:role', (req, res) => {
     try {
-      const agents = getAgentsByRole(req.params.role);
+      const agents = getAgentsByRole(req.params.role as any);
       res.json({ agents });
     } catch (error) {
       logger.error('[Registry] Error getting agents by role:', error);

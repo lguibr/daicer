@@ -1087,6 +1087,7 @@
     },
     "pointBuy": {
       "title": "Attributes (Point Buy)",
+      "complete": "✓ Complete!",
       "perfect": "✓ Perfect!",
       "remainingSuffix": "points left",
       "modLabel": "Mod",
@@ -1095,7 +1096,7 @@
       "pointsLabel": "points"
     },
     "appearance": {
-      "sectionTitle": "Appearance (Optional) ▼",
+      "sectionTitle": "Appearance ▼",
       "age": "Age",
       "years": "yrs",
       "height": "Height",
@@ -1120,7 +1121,7 @@
       "defaultName": "Character"
     },
     "personality": {
-      "sectionTitle": "Personality (Optional) ▼",
+      "sectionTitle": "Personality ▼",
       "traitsPlaceholder": "Personality Traits",
       "idealsPlaceholder": "Ideals",
       "bondsPlaceholder": "Bonds",

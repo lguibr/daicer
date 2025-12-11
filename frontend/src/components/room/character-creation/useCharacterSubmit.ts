@@ -158,9 +158,29 @@ export function createCharacterSubmitHandler(params: UseCharacterSubmitParams) {
         personality: formData.personality,
         backstory: formData.backstory || '',
         avatarAssets: avatarAssets as any, // Cast if needed
-        equipment: 'See inventory', // Required string field
-        inventory: inventoryWithNames, // explicit field
-        equippedItems: equippedItemsMap, // explicit field
+        equipment: {
+          totalWeight: 0,
+          inventory: inventoryWithNames.map((i) => ({
+            itemIndex: i.index,
+            quantity: i.quantity,
+          })),
+          equippedItems: {
+            mainHand: equippedItemsMap.mainHand || null,
+            offHand: equippedItemsMap.offHand || null,
+            armor: equippedItemsMap.armor || null,
+            shield: equippedItemsMap.shield || null,
+            head: equippedItemsMap.head || null,
+            cloak: equippedItemsMap.cloak || null,
+            belt: equippedItemsMap.belt || null,
+            boots: equippedItemsMap.boots || null,
+            gloves: equippedItemsMap.gloves || null,
+            ring1: equippedItemsMap.ring1 || null,
+            ring2: equippedItemsMap.ring2 || null,
+            necklace: equippedItemsMap.necklace || null,
+            accessory1: equippedItemsMap.accessory1 || null,
+            accessory2: equippedItemsMap.accessory2 || null,
+          },
+        }, // Required object field
       });
 
       setLoading(false);

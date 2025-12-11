@@ -243,7 +243,7 @@ const toAssetResponse = async (
 router.post('/avatar', async (req, res, next) => {
   try {
     const payload = parseBody(avatarPayloadSchema, req.body);
-    const references = normalizeReferences(payload.referenceImages);
+    const references = normalizeReferences(payload.referenceImages as any);
     const requestId = randomUUID();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const folder = `avatars/${timestamp}-${requestId}`;
@@ -257,7 +257,7 @@ router.post('/avatar', async (req, res, next) => {
     const responses: Partial<AvatarAssetResponse> = {};
 
     for (const [view, key] of Object.entries(variants) as Array<[AvatarView, keyof AvatarAssetResponse]>) {
-      const prompt = buildAvatarPrompt(payload, view);
+      const prompt = buildAvatarPrompt({ ...payload, referenceImages: references }, view);
       const result = await generateImage({
         prompt,
         references,
@@ -292,8 +292,8 @@ router.post('/avatar', async (req, res, next) => {
 router.post('/avatar/preview/portrait', async (req, res, next) => {
   try {
     const payload = parseBody(portraitPreviewRequestSchema, req.body);
-    const references = normalizeReferences(payload.referenceImages);
-    const portraitPrompt = buildAvatarPrompt(payload, 'portrait');
+    const references = normalizeReferences(payload.referenceImages as any);
+    const portraitPrompt = buildAvatarPrompt({ ...payload, referenceImages: references }, 'portrait');
     const portraitResult = await generateImage({
       prompt: portraitPrompt,
       references,
@@ -323,14 +323,14 @@ router.post('/avatar/preview/portrait', async (req, res, next) => {
 router.post('/avatar/preview/upper', async (req, res, next) => {
   try {
     const { payload, portrait } = parseBody(upperBodyPreviewRequestSchema, req.body);
-    const references = normalizeReferences(payload.referenceImages);
+    const references = normalizeReferences(payload.referenceImages as any);
     const portraitReference = await toReferenceFromPreview(
       portrait,
       'Frontal face portrait reference',
       TARGET_SPECS.portrait
     );
 
-    const upperBodyPrompt = buildAvatarPrompt(payload, 'upper-body');
+    const upperBodyPrompt = buildAvatarPrompt({ ...payload, referenceImages: references }, 'upper-body');
     const upperBodyResult = await generateImage({
       prompt: upperBodyPrompt,
       references: [...references, portraitReference],
@@ -360,13 +360,13 @@ router.post('/avatar/preview/upper', async (req, res, next) => {
 router.post('/avatar/preview/full', async (req, res, next) => {
   try {
     const { payload, portrait, upperBody } = parseBody(fullBodyPreviewRequestSchema, req.body);
-    const references = normalizeReferences(payload.referenceImages);
+    const references = normalizeReferences(payload.referenceImages as any);
     const [portraitReference, upperBodyReference] = await Promise.all([
       toReferenceFromPreview(portrait, 'Frontal face portrait reference', TARGET_SPECS.portrait),
       toReferenceFromPreview(upperBody, 'Upper-body reference', TARGET_SPECS.upperBody),
     ]);
 
-    const fullBodyPrompt = buildAvatarPrompt(payload, 'full-body');
+    const fullBodyPrompt = buildAvatarPrompt({ ...payload, referenceImages: references }, 'full-body');
     const fullBodyResult = await generateImage({
       prompt: fullBodyPrompt,
       references: [...references, portraitReference, upperBodyReference],
@@ -396,8 +396,8 @@ router.post('/avatar/preview/full', async (req, res, next) => {
 router.post('/grid-background', async (req, res, next) => {
   try {
     const payload = parseBody(gridPayloadSchema, req.body);
-    const references = normalizeReferences(payload.referenceImages);
-    const prompt = buildGridPrompt(payload);
+    const references = normalizeReferences(payload.referenceImages as any);
+    const prompt = buildGridPrompt({ ...payload, referenceImages: references });
 
     const result = await generateImage({
       prompt,
@@ -428,8 +428,8 @@ router.post('/grid-background', async (req, res, next) => {
 router.post('/action-frame', async (req, res, next) => {
   try {
     const payload = parseBody(actionFramePayloadSchema, req.body);
-    const references = normalizeReferences(payload.referenceImages);
-    const prompt = buildActionFramePrompt(payload);
+    const references = normalizeReferences(payload.referenceImages as any);
+    const prompt = buildActionFramePrompt({ ...payload, referenceImages: references });
 
     const result = await generateImage({
       prompt,
@@ -463,7 +463,7 @@ router.post('/action-frame', async (req, res, next) => {
  * Retrieve player avatar assets
  * Requires authentication
  */
-router.get('/:roomId/:playerId/avatar', authenticate, async (req: AuthRequest, res, next) => {
+router.get('/:roomId/:playerId/avatar', authenticate, async (req: AuthRequest, _res, next) => {
   try {
     const { roomId, playerId } = req.params;
 
@@ -484,7 +484,7 @@ router.get('/:roomId/:playerId/avatar', authenticate, async (req: AuthRequest, r
  * Retrieve room background asset
  * Requires authentication
  */
-router.get('/:roomId/background', authenticate, async (req: AuthRequest, res, next) => {
+router.get('/:roomId/background', authenticate, async (req: AuthRequest, _res, next) => {
   try {
     const { roomId } = req.params;
 

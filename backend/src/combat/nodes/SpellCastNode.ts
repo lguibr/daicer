@@ -44,14 +44,14 @@ interface SpellPreviewSnapshot {
   school?: string;
   effectShape: SpellEffectShape;
   range?: string;
-  casterPosition: GridPosition;
-  targetPosition: GridPosition;
-  affectedSquares: GridPosition[];
-  validTargets: GridPosition[];
+  casterPosition: { x: number; y: number; z: number };
+  targetPosition: { x: number; y: number; z: number };
+  affectedSquares: { x: number; y: number; z: number }[];
+  validTargets: { x: number; y: number; z: number }[];
   friendlyFireRisk: boolean;
   requiresLineOfSight: boolean;
   lineOfSightBlocked: boolean;
-  obstacles?: GridPosition[];
+  obstacles?: { x: number; y: number; z: number }[];
 }
 
 interface SpellResolutionSnapshot {
@@ -202,14 +202,14 @@ function buildSpellPreview(
     school: input.spell.school,
     effectShape: input.spell.effectShape as SpellEffectShape,
     range: typeof input.spell.range === 'string' ? input.spell.range : undefined,
-    casterPosition: caster.position,
-    targetPosition,
-    affectedSquares,
-    validTargets,
+    casterPosition: { ...caster.position, z: caster.position.z ?? 0 },
+    targetPosition: { ...targetPosition, z: targetPosition.z ?? 0 },
+    affectedSquares: affectedSquares.map((p) => ({ ...p, z: p.z ?? 0 })),
+    validTargets: validTargets.map((p) => ({ ...p, z: p.z ?? 0 })),
     friendlyFireRisk: canCauseFriendlyFire(input.spell.effectShape as SpellEffectShape),
     requiresLineOfSight: requiresLOS,
     lineOfSightBlocked,
-    obstacles: obstacles.length ? obstacles : undefined,
+    obstacles: obstacles.length ? obstacles.map((p) => ({ ...p, z: p.z ?? 0 })) : undefined,
   };
 
   return { preview, casterName: caster.name };

@@ -9,10 +9,8 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { authenticate, type AuthRequest } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { GridFeatureSchema, type GridFeature } from '@daicer/shared/world/grid-feature-schema';
-import { type GridChunk, CHUNK_SIZE } from '@daicer/shared/world/grid-chunk-schema';
-import { generateGridChunk } from '../services/world-gen/grid-chunk-generator.js';
-import { getStructuresForChunk, stampStructureOnChunk } from '../services/world-gen/structure-stamper.js';
-import { getRoom } from '../services/firestore/rooms.js';
+import { type GridChunk } from '@daicer/shared/world/grid-chunk-schema';
+import { mapService } from '@/services/map-service';
 
 const router = Router();
 
@@ -23,30 +21,15 @@ const router = Router();
  */
 router.get('/chunk/:entityId/:chunkX/:chunkY/:z', authenticate, async (req: AuthRequest, res: Response, next) => {
   try {
-    const { entityId: roomId, chunkX, chunkY, z } = req.params;
+    const { entityId, chunkX, chunkY, z } = req.params;
 
-    logger.info('[API:GridChunk] 📥 Chunk request received', {
-      url: req.url,
-      params: req.params,
-      userId: req.user?.uid,
-    });
-
-    if (!roomId || !chunkX || !chunkY || !z) {
-      logger.error('[API:GridChunk] ❌ Missing parameters', { roomId, chunkX, chunkY, z });
+    if (!entityId || !chunkX || !chunkY || !z) {
       return res.status(400).json({ error: 'Missing parameters' });
     }
 
     const chunkXNum = parseInt(chunkX, 10);
     const chunkYNum = parseInt(chunkY, 10);
     const zNum = parseInt(z, 10);
-
-    logger.info('[API:GridChunk] 🔍 Fetching chunk', {
-      roomId,
-      chunkX: chunkXNum,
-      chunkY: chunkYNum,
-      z: zNum,
-      userId: req.user?.uid,
-    });
 
     // Validate z-layer range
     if (zNum < -6 || zNum > 5) {
@@ -56,159 +39,16 @@ router.get('/chunk/:entityId/:chunkX/:chunkY/:z', authenticate, async (req: Auth
       });
     }
 
-    const db = getFirestore();
-    const chunkId = `${chunkXNum}_${chunkYNum}_${zNum}`;
-
-    // Get room data first (cached) to check for structures
-    const roomData = await getRoom(roomId);
-    if (!roomData) {
-      logger.error('[API:GridChunk] ❌ Room not found!', { roomId });
-      return res.status(404).json({ error: 'Room not found' });
-    }
-
-    // Check if this chunk SHOULD have structures
-    let shouldHaveStructure = false;
-    if (roomData.structures && Array.isArray(roomData.structures) && roomData.structures.length > 0) {
-      const structures = getStructuresForChunk(
-        roomData.structures,
-        chunkXNum * CHUNK_SIZE,
-        chunkYNum * CHUNK_SIZE,
-        CHUNK_SIZE,
-        roomData.settings?.seed || roomId // Use room seed for consistency
-      );
-      shouldHaveStructure = structures.length > 0;
-    }
-
-    // Try to load from Firestore cache
-    let chunkDoc = await db.collection('rooms').doc(roomId).collection('grid_chunks').doc(chunkId).get();
-
-    // If not found in rooms, try assets collection (read-only fallback)
-    if (!chunkDoc.exists) {
-      const assetChunkDoc = await db.collection('assets').doc(roomId).collection('grid_chunks').doc(chunkId).get();
-      if (assetChunkDoc.exists) {
-        chunkDoc = assetChunkDoc;
-      }
-    }
-
-    if (chunkDoc.exists) {
-      const data = chunkDoc.data() as GridChunk;
-
-      // SMART CACHE INVALIDATION:
-      // If the chunk SHOULD have a structure but the cached version doesn't have the flag,
-      // or if we suspect it's stale, we regenerate.
-      // We only trust the cache if:
-      // 1. It doesn't need a structure
-      // 2. OR it needs a structure AND has the hasStructure flag
-
-      const isStale = shouldHaveStructure && !data.hasStructure;
-
-      if (!isStale) {
-        logger.info('[API:GridChunk] ✅ Chunk found in cache (valid)', { chunkId });
-        return res.json({ success: true, data });
-      }
-
-      logger.info('[API:GridChunk] 🔄 Chunk found but STALE (missing structure), regenerating...', { chunkId });
-    } else {
-      logger.info('[API:GridChunk] 🎲 Chunk not in cache, generating on-demand...', { chunkId });
-    }
-
-    // Get seed (already fetched roomData)
-    let seed = roomData.settings?.seed || roomData.code || roomId;
-    if (!seed || seed.length === 0) seed = roomId;
-
-    logger.info('[API:GridChunk] ✅ Room found, seed:', { seed: seed.substring(0, 20) });
-
-    // Generate chunk
-    logger.info('[API:GridChunk] 🎨 Calling generateGridChunk...', {
-      chunkXNum,
-      chunkYNum,
-      zNum,
-      seed: seed.substring(0, 20),
-    });
-
-    let chunk;
+    // Attempt to use MapService
     try {
-      chunk = generateGridChunk(chunkXNum, chunkYNum, zNum, {
-        seed,
-        waterLevel: -0.1,
-        mountainousness: 1.0,
-        caveFrequency: 0.5,
-      });
-      logger.info('[API:GridChunk] ✅ generateGridChunk returned successfully!', {
-        hasTiles: !!chunk.tiles,
-        tileCount: chunk.tiles?.length,
-      });
-    } catch (genError) {
-      logger.error('[API:GridChunk] ❌ Generation failed!', { error: genError });
-      throw genError;
+      const chunk = await mapService.getChunk(entityId, chunkXNum, chunkYNum, zNum);
+      return res.json({ success: true, data: chunk });
+    } catch (error) {
+      // Fallback or rethrow
+      throw error;
     }
-
-    // Apply structures if any
-    if (roomData.structures && Array.isArray(roomData.structures) && roomData.structures.length > 0) {
-      const structures = getStructuresForChunk(
-        roomData.structures,
-        chunkXNum * CHUNK_SIZE,
-        chunkYNum * CHUNK_SIZE,
-        CHUNK_SIZE,
-        seed
-      );
-
-      if (structures.length > 0) {
-        logger.info(`[API:GridChunk] 🏗️ Found ${structures.length} structures overlapping chunk`, {
-          chunkX: chunkXNum,
-          chunkY: chunkYNum,
-          structures: structures.map((s) => s.name),
-        });
-
-        for (const structure of structures) {
-          chunk.tiles = stampStructureOnChunk(
-            chunk.tiles,
-            structure,
-            chunkXNum * CHUNK_SIZE,
-            chunkYNum * CHUNK_SIZE,
-            CHUNK_SIZE
-          );
-        }
-
-        // Update hasStructure flag
-        chunk.hasStructure = true;
-      }
-    }
-
-    logger.info('[API:GridChunk] 🎨 Chunk generated, saving to Firestore...', {
-      chunkId,
-      tiles: chunk.tiles.length,
-      features: chunk.features.length,
-      biomes: chunk.biomes,
-      sampleTiles: chunk.tiles.slice(0, 3).map((t) => ({ x: t.x, y: t.y, type: t.blockType, biome: t.biome })),
-    });
-
-    // Save to Firestore
-    logger.info('[API:GridChunk] 💾 Saving to Firestore...', { chunkId });
-    try {
-      await db.collection('rooms').doc(roomId).collection('grid_chunks').doc(chunkId).set(chunk);
-      logger.info('[API:GridChunk] ✅ Firestore save complete!', { chunkId });
-    } catch (saveError) {
-      logger.error('[API:GridChunk] ❌ Firestore save failed!', { error: saveError });
-      throw saveError;
-    }
-
-    logger.info('[API:GridChunk] 📤 Returning chunk to client...', {
-      chunkId,
-      path: `rooms/${roomId}/grid_chunks/${chunkId}`,
-      dataSize: JSON.stringify(chunk).length,
-      tiles: chunk.tiles.length,
-      features: chunk.features.length,
-    });
-
-    res.json({ success: true, data: chunk });
-    logger.info('[API:GridChunk] ✅ Response sent successfully!', { chunkId });
   } catch (error) {
-    logger.error('[API:GridChunk] ❌❌❌ ERROR IN HANDLER!', {
-      error,
-      roomId: req.params.entityId,
-      chunkId: `${req.params.chunkX}_${req.params.chunkY}_${req.params.z}`,
-    });
+    logger.error('[API:GridChunk] Error:', error);
     next(error);
     return;
   }
@@ -248,18 +88,23 @@ router.post('/chunks/:roomId', authenticate, async (req: AuthRequest, res: Respo
       count: chunkPositions.length,
     });
 
-    const db = getFirestore();
     const chunks: GridChunk[] = [];
 
-    // Fetch all requested chunks
-    for (const pos of chunkPositions) {
-      const chunkId = `${pos.chunkX}_${pos.chunkY}_${pos.z}`;
-      const chunkDoc = await db.collection('rooms').doc(roomId).collection('grid_chunks').doc(chunkId).get();
+    // Fetch all requested chunks using MapService (handles generation too)
+    // Run in parallel
+    const promises = chunkPositions.map((pos) =>
+      mapService.getChunk(roomId, pos.chunkX, pos.chunkY, pos.z).catch((err) => {
+        logger.warn(`Failed to fetch chunk ${pos.chunkX},${pos.chunkY}: ${err.message}`);
+        return null;
+      })
+    );
 
-      if (chunkDoc.exists) {
-        chunks.push(chunkDoc.data() as GridChunk);
-      }
-    }
+    const results = await Promise.all(promises);
+
+    // Filter out failed
+    results.forEach((chunk) => {
+      if (chunk) chunks.push(chunk);
+    });
 
     return res.json({ chunks });
   } catch (error) {

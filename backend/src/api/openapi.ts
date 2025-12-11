@@ -36,8 +36,8 @@ const swaggerUiHandler = swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'DAICE API Documentation',
 });
 
-router.use('/', swaggerUi.serve);
-router.get('/', swaggerUiHandler);
+router.use('/', swaggerUi.serve as any);
+router.get('/', swaggerUiHandler as any);
 
 // Serve raw OpenAPI spec as JSON
 router.get('/spec', (_req: Request, res: Response) => {

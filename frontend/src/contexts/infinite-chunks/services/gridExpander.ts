@@ -64,6 +64,7 @@ export function mergeChunkIntoGrid(
 
   // Stamp chunk tiles onto grid
   if (chunk.tiles && Array.isArray(chunk.tiles)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk.tiles.forEach((tile: any) => {
       // Calculate local coordinates relative to the grid
       // tile.x/y are world coordinates
@@ -83,8 +84,10 @@ export function mergeChunkIntoGrid(
   } else if (chunk.biomes && Array.isArray(chunk.biomes)) {
     // Handle 2D biomes array (standard for new system)
     // Handle 2D biomes array (standard for new system)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chunk.biomes.forEach((row: any, y: number) => {
       if (!Array.isArray(row)) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       row.forEach((tile: any, x: number) => {
         // Calculate world coordinates from chunk offset
         const worldX = chunk.worldOffsetX + x;

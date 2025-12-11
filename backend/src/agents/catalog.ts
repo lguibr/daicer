@@ -26,6 +26,7 @@ export const AgentConfigSchema = z.object({
   tags: z.array(z.string()).default([]),
   version: z.string().default('1.0.0'),
   isActive: z.boolean().default(true),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   middleware: z.any().optional().describe('LangChain middleware configuration'),
 });
 

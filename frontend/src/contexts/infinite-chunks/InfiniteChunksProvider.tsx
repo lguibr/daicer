@@ -70,16 +70,6 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
     );
   }, [roomId, initialGrid, chunkSize, loadRadius, enabled, chunkGenerator, placementMap, layer]);
 
-  // Force initial chunk loading for empty grids
-  useEffect(() => {
-    if (state.initialized && initialGrid.length === 0) {
-      setTimeout(() => {
-        checkChunkLoadingInternal(0, 0);
-      }, 100);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.initialized]);
-
   // Internal chunk loading logic
   const checkChunkLoadingInternal = useCallback(
     async (playerX: number, playerY: number) => {
@@ -143,6 +133,16 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
     },
     [enabled, state.initialized, state.config, state.chunks, state.loading, state.chunkGenerator, state.placementMap]
   );
+
+  // Force initial chunk loading for empty grids
+  useEffect(() => {
+    if (state.initialized && initialGrid.length === 0) {
+      setTimeout(() => {
+        checkChunkLoadingInternal(0, 0);
+      }, 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.initialized]);
 
   // Expose checkChunkLoading to children via ref to avoid re-renders
   const checkChunkLoadingRef = useRef(checkChunkLoadingInternal);

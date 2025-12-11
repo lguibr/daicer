@@ -29,6 +29,10 @@ export interface RaceDocument {
   }>;
   traits?: string[];
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -62,6 +66,10 @@ export interface CharacterClassDocument {
     category: string;
     description?: string;
   }>;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -81,6 +89,10 @@ export interface BackgroundDocument {
     description: string;
   };
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -119,6 +131,10 @@ export interface EquipmentDocument {
   armorCategory?: 'Light' | 'Medium' | 'Heavy' | 'Shield';
   gearCategory?: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -143,6 +159,10 @@ export interface WeaponPropertyDocument {
   name: string;
   description: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -169,6 +189,10 @@ export interface SkillDocument {
   description: string;
   abilityScore: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -181,6 +205,10 @@ export interface ConditionDocument {
   name: string;
   description: string;
   imageUrl?: string | null;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -293,6 +321,10 @@ export interface MonsterDocument {
     school: string;
     range?: string;
   }>;
+  name_es?: string;
+  name_ptBR?: string;
+  description_es?: string;
+  description_ptBR?: string;
 }
 
 // ============================================================================
@@ -376,6 +408,10 @@ export interface SRDRuleDocument {
   tags: string[];
   embedding: number[]; // Will be stored as vector in Firestore
   createdAt: number;
+  title_es?: string;
+  title_ptBR?: string;
+  content_es?: string;
+  content_ptBR?: string;
 }
 
 // ============================================================================

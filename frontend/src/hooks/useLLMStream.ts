@@ -7,6 +7,7 @@ export interface StreamEvent {
   roomId: string;
   type: 'text' | 'tool_start' | 'tool_end' | 'reasoning' | 'error' | 'done';
   content?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: Record<string, any>;
   timestamp: number;
 }
@@ -19,7 +20,9 @@ export interface StreamState {
   status: 'active' | 'completed' | 'error';
   tools: Array<{
     name: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     input?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     output?: any;
     status: 'running' | 'completed';
   }>;
@@ -84,6 +87,8 @@ export function useLLMStream(filterStreamId?: string, socketInstance?: Socket | 
             break;
           case 'done':
             updated.status = 'completed';
+            break;
+          default:
             break;
         }
 

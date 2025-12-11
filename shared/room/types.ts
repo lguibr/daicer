@@ -53,18 +53,32 @@ export interface WorldSettings {
   generationParams?: Record<string, any>;
 }
 
+export interface MapConfig {
+  seed: string;
+  gridEnabled: boolean;
+  biomeBias?: Record<string, number>;
+  globalWaterLevel?: number; // -1 to 1
+  globalTemperature?: number; // -1 to 1
+  renderSettings?: {
+    showGrid: boolean;
+    showCoordinates: boolean;
+    fogOfWar: boolean;
+  };
+}
+
 export interface Room {
   id: string;
   code: string;
   ownerId: string;
   settings: WorldSettings | null;
+  mapConfig?: MapConfig; // Centralized map configuration
   worldDescription: string;
   worldHistory?: any;
   structures?: any[];
   roads?: any[];
   worldConditions?: any[];
   phase: GamePhase;
-  terrainData?: any; // Generated terrain (biomeMap + voxelGrid as ONE unified structure)
+  terrainData?: any; // Deprecated: Moving to grid_chunks collection
   characterCreationLocked?: boolean; // Owner must unlock before players can create characters
   generationEvents?: any[]; // Captured SSE events from world generation for review
   createdAt: number;

@@ -59,6 +59,9 @@ export function useNoiseGenerator(initialSeed: string = 'noise-seed') {
           case 'domainWarp':
             value = noise.domainWarpedNoise(scaledX, scaledY, params.warpStrength, params.octaves);
             break;
+          default:
+            value = noise.noise(scaledX, scaledY);
+            break;
         }
 
         row.push(value);

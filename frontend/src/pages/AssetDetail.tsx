@@ -45,13 +45,6 @@ export default function AssetDetailPage() {
   const [variationsModifier, setVariationsModifier] = useState('');
   const [isCreatingVariations, setIsCreatingVariations] = useState(false);
 
-  useEffect(() => {
-    if (assetId) {
-      loadAsset();
-      loadCollections();
-    }
-  }, [assetId]);
-
   const loadAsset = async () => {
     if (!assetId) return;
 
@@ -78,6 +71,13 @@ export default function AssetDetailPage() {
       console.error('Failed to load collections:', error);
     }
   };
+
+  useEffect(() => {
+    if (assetId) {
+      loadAsset();
+      loadCollections();
+    }
+  }, [assetId]);
 
   const handleSave = async () => {
     if (!asset) return;
@@ -163,6 +163,7 @@ export default function AssetDetailPage() {
   };
 
   const handleDelete = async () => {
+    // eslint-disable-next-line no-alert
     if (!asset || !confirm('Are you sure you want to delete this asset?')) return;
 
     setIsLoading(true);
@@ -202,6 +203,7 @@ export default function AssetDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <button
+            type="button"
             onClick={() => navigate(-1)}
             className="mb-4 inline-flex items-center text-sm text-shadow-300 hover:text-white"
           >
@@ -271,10 +273,14 @@ export default function AssetDetailPage() {
                 <div className="space-y-4">
                   {/* Name */}
                   <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400">
+                    <label
+                      htmlFor="asset-name"
+                      className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400"
+                    >
                       Name
                     </label>
                     <Input
+                      id="asset-name"
                       value={editedName}
                       onChange={(e) => setEditedName(e.target.value)}
                       disabled={!isEditing || isSaving}
@@ -284,10 +290,14 @@ export default function AssetDetailPage() {
 
                   {/* Description */}
                   <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400">
+                    <label
+                      htmlFor="asset-description"
+                      className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400"
+                    >
                       Description
                     </label>
                     <Textarea
+                      id="asset-description"
                       value={editedDescription}
                       onChange={(e) => setEditedDescription(e.target.value)}
                       disabled={!isEditing || isSaving}
@@ -298,10 +308,14 @@ export default function AssetDetailPage() {
 
                   {/* Generation Prompt */}
                   <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400">
+                    <label
+                      htmlFor="asset-prompt"
+                      className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400"
+                    >
                       Generation Prompt
                     </label>
                     <Textarea
+                      id="asset-prompt"
                       value={editedPrompt}
                       onChange={(e) => setEditedPrompt(e.target.value)}
                       disabled={!isEditing || isSaving}
@@ -360,10 +374,14 @@ export default function AssetDetailPage() {
                   <h2 className="mb-4 text-lg font-semibold text-white">Create Variations</h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400">
+                      <label
+                        htmlFor="variations-count"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400"
+                      >
                         Number of Variations
                       </label>
                       <Input
+                        id="variations-count"
                         type="number"
                         min={1}
                         max={8}
@@ -374,10 +392,14 @@ export default function AssetDetailPage() {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400">
+                      <label
+                        htmlFor="variations-modifier"
+                        className="mb-1 block text-xs font-semibold uppercase tracking-wider text-shadow-400"
+                      >
                         Variation Modifier (optional)
                       </label>
                       <Input
+                        id="variations-modifier"
                         value={variationsModifier}
                         onChange={(e) => setVariationsModifier(e.target.value)}
                         placeholder="e.g., 'with blue eyes', 'at sunset'"

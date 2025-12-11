@@ -68,6 +68,7 @@ export function CompleteMapVisualizer() {
                 z: 0,
                 blockType: 'grass',
                 biome: cell,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
               }) as any
           )
         );
@@ -84,6 +85,7 @@ export function CompleteMapVisualizer() {
                   z: floorIndex - 3,
                   blockType: 'grass',
                   biome: cell,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 }) as any
             )
           )
@@ -269,7 +271,9 @@ export function CompleteMapVisualizer() {
         </CardHeader>
         <CardContent>
           <TerrainExplorer
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             biomeGrid={grid.length > 0 ? grid : ([[{ biome: 'plains', x: 0, y: 0, z: 0, blockType: 'grass' }]] as any)}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             biomeGrid3D={grid3D as any}
             structures={structures}
             roomSize={32}

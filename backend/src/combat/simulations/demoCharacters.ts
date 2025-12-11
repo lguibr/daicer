@@ -8,8 +8,11 @@ export function basePlayerFighter(partial?: Partial<CombatCharacter>): CombatCha
     maxHp: 36,
     tempHp: 0,
     armorClass: 18,
-    position: { x: 2, y: 2 },
+    position: { x: 2, y: 2, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 0,
+    attackBonus: 5,
     avatar: 'player-fighter',
     isPlayer: true,
     strength: 18,
@@ -39,8 +42,11 @@ export function basePlayerWizard(partial?: Partial<CombatCharacter>): CombatChar
     maxHp: 22,
     tempHp: 0,
     armorClass: 14,
-    position: { x: 2, y: 4 },
+    position: { x: 2, y: 4, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 2,
+    attackBonus: 2,
     avatar: 'player-wizard',
     isPlayer: true,
     strength: 8,
@@ -62,7 +68,7 @@ export function basePlayerWizard(partial?: Partial<CombatCharacter>): CombatChar
   };
 }
 
-export function baseGoblin(id: string, name: string, position: { x: number; y: number }): CombatCharacter {
+export function baseGoblin(id: string, name: string, position: { x: number; y: number; z?: number }): CombatCharacter {
   return {
     id,
     name,
@@ -70,8 +76,11 @@ export function baseGoblin(id: string, name: string, position: { x: number; y: n
     maxHp: 14,
     tempHp: 0,
     armorClass: 13,
-    position,
+    position: { z: 0, ...position },
     initiative: 0,
+
+    initiativeBonus: 2,
+    attackBonus: 4,
     avatar: id,
     isPlayer: false,
     strength: 8,
@@ -100,8 +109,11 @@ export function hobgoblinCaptain(): CombatCharacter {
     maxHp: 45,
     tempHp: 0,
     armorClass: 17,
-    position: { x: 7, y: 6 },
+    position: { x: 7, y: 6, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 1,
+    attackBonus: 5,
     avatar: 'enemy-hobgoblin',
     isPlayer: false,
     strength: 17,
@@ -130,8 +142,11 @@ export function goblinArcher(): CombatCharacter {
     maxHp: 18,
     tempHp: 0,
     armorClass: 14,
-    position: { x: 9, y: 3 },
+    position: { x: 9, y: 3, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 3,
+    attackBonus: 4,
     avatar: 'enemy-archer',
     isPlayer: false,
     strength: 8,
@@ -160,8 +175,11 @@ export function battleRogue(): CombatCharacter {
     maxHp: 28,
     tempHp: 0,
     armorClass: 15,
-    position: { x: 2, y: 8 },
+    position: { x: 2, y: 8, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 4,
+    attackBonus: 6,
     avatar: 'player-rogue',
     isPlayer: true,
     strength: 10,
@@ -190,8 +208,11 @@ export function ranger(): CombatCharacter {
     maxHp: 30,
     tempHp: 0,
     armorClass: 15,
-    position: { x: 3, y: 10 },
+    position: { x: 3, y: 10, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 4,
+    attackBonus: 6,
     avatar: 'player-ranger',
     isPlayer: true,
     strength: 12,
@@ -220,8 +241,11 @@ export function cleric(partial?: Partial<CombatCharacter>): CombatCharacter {
     maxHp: 32,
     tempHp: 0,
     armorClass: 18,
-    position: { x: 2, y: 9 },
+    position: { x: 2, y: 9, z: 0 },
     initiative: 0,
+
+    initiativeBonus: 0,
+    attackBonus: 4,
     avatar: 'player-cleric',
     isPlayer: true,
     strength: 14,
@@ -251,8 +275,11 @@ export function ogre(): CombatCharacter {
     maxHp: 59,
     tempHp: 0,
     armorClass: 11,
-    position: { x: 9, y: 6 },
+    position: { x: 9, y: 6, z: 0 },
     initiative: 0,
+
+    initiativeBonus: -1,
+    attackBonus: 6,
     avatar: 'enemy-ogre',
     isPlayer: false,
     strength: 19,

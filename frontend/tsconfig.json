@@ -35,7 +35,7 @@
       "daicer/*": ["../*"]
     }
   },
-  "include": ["src", "e2e"],
+  "include": ["src", "e2e", "vite.config.d.ts"],
   "exclude": [
     "node_modules",
     "dist",

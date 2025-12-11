@@ -5,7 +5,7 @@
 
 import type { LangGraphRunnableConfig } from '@langchain/langgraph';
 import { logger } from '@/utils/logger';
-import { generateInitialConditions } from '@/services/entropy/engine';
+import { generateInitialConditions } from '@/services/entropy/simulation';
 import type { DMStoryState } from '@daicer/shared/graph-states/dm-story-state';
 import { emitProgress } from '@/graph/shared-nodes/stream-progress';
 
