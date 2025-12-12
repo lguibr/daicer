@@ -121,6 +121,7 @@ function PeriodCard({
                   {period.structures.map((structure) => (
                     <button
                       key={structure.id}
+                      type="button"
                       onClick={() => onStructureClick?.(structure)}
                       className="text-left p-2 rounded bg-parchment-light/30 dark:bg-obsidian-light/30 hover:bg-accent/20 transition-colors"
                     >

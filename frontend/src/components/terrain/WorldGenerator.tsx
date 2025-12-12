@@ -7,14 +7,19 @@ import Input from '@/components/ui/input';
 import { Play, RefreshCw, Settings2, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 import { TerrainExplorer } from '@/components/terrain/TerrainExplorer';
-import { useWorldGeneration, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@/hooks/useWorldGeneration';
 import { GridTile } from '@daicer/shared';
+import {
+  useWorldGeneration,
+  DEFAULT_GENERATION_PARAMS,
+  type GenerationParams,
+  type GeneratedStructure,
+} from '@/hooks/useWorldGeneration';
 
 interface WorldGeneratorProps {
   initialSeed?: string;
   initialParams?: GenerationParams;
   onParamsChange?: (params: GenerationParams, seed: string) => void;
-  onStructuresGenerated?: (structures: any[]) => void;
+  onStructuresGenerated?: (structures: GeneratedStructure[]) => void;
   onSave?: (seed: string, params: GenerationParams) => void;
   className?: string;
 }

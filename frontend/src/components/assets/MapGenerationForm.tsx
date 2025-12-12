@@ -3,6 +3,7 @@
  * Typed form for procedural map generation (Noise + Biomes)
  */
 
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';

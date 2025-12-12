@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/Landing';
+import GoogleAuthCallback from './pages/GoogleAuthCallback';
 import CreateRoomPage from './pages/CreateRoom';
 import GameRoomPage from './pages/GameRoom';
 import RoomsPage from './pages/Rooms';
@@ -32,6 +33,7 @@ export default function App() {
       <AuthEventHandler />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/connect/google/redirect" element={<GoogleAuthCallback />} />
         <Route
           path="/create"
           element={

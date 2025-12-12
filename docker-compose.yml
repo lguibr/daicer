@@ -25,9 +25,17 @@ services:
     volumes:
       - ./backend:/app/backend
       - /app/backend/node_modules
-    command: sh -c "yarn install && yarn dev"
+    command: sh -c "yarn install && yarn develop"
     environment:
       - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_CLIENT=postgres
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=strapi
+      - DATABASE_USERNAME=strapi
+      - DATABASE_PASSWORD=strapi_password
+      - DATABASE_SSL=false
       - PORT=3001
       - FRONTEND_URL=http://localhost:3000
       - FIRESTORE_EMULATOR_HOST=firebase-emulators:8080
@@ -55,7 +63,24 @@ services:
     depends_on:
       - backend
 
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: strapi
+      POSTGRES_PASSWORD: strapi_password
+      POSTGRES_DB: strapi
+    volumes:
+      - strapi-data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - default
+
 networks:
   default:
     name: daicer-network
+
+volumes:
+  strapi-data:
 

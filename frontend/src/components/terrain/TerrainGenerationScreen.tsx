@@ -5,12 +5,35 @@
 
 import { useState, useEffect } from 'react';
 import { Sparkles, Mountain } from 'lucide-react';
+// eslint-disable-next-line import/no-unresolved
 import { auth } from '../../services/firebase';
 import { DiceLoader } from '../ui/dice-loader';
 import { GenerationTimeline } from '../world/GenerationTimeline';
 import { TerrainExplorer } from './TerrainExplorer';
 import MarkdownMessage from '../game/MarkdownMessage';
-import type { Room } from '../../types/shared';
+import { type GeneratedStructure } from '../../hooks/useWorldGeneration';
+import type { Room, Scalars } from '../../gql/graphql';
+
+// Reuse GQL JSON scalar or define stricter structure
+type GridTile = Scalars['JSON']['output'];
+
+interface BiomeData {
+  biomeMap: {
+    grid: GridTile[][];
+    metadata?: Record<string, unknown>;
+  };
+  placementMap?: Record<string, unknown>;
+}
+
+interface RoomSettings {
+  roads?: unknown[];
+  worldSize?: string;
+}
+
+interface RoomHistory {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  generationEvents?: any[]; // Keep any for events list for now as it's complex
+}
 
 interface TerrainGenerationScreenProps {
   room: Room;
@@ -19,7 +42,7 @@ interface TerrainGenerationScreenProps {
 export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [biomeData, setBiomeData] = useState<any>(null);
+  const [biomeData, setBiomeData] = useState<BiomeData | null>(null);
 
   // Load existing terrain data (one-time only)
   useEffect(() => {
@@ -37,7 +60,7 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ roomId: room.id }),
+            body: JSON.stringify({ roomId: room.documentId }),
           });
 
           if (response.ok) {
@@ -53,7 +76,7 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
 
       regenerateBiomeGrid();
     }
-  }, [room.terrainData, room.id, biomeData]);
+  }, [room.terrainData, room.documentId, biomeData]);
 
   const handleGenerateTerrain = async () => {
     setGenerating(true);
@@ -70,7 +93,7 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ roomId: room.id }),
+        body: JSON.stringify({ roomId: room.documentId }),
       });
 
       if (!response.ok) {
@@ -102,7 +125,7 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ roomId: room.id }),
+        body: JSON.stringify({ roomId: room.documentId }),
       });
 
       if (!response.ok) {
@@ -133,22 +156,26 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
         <div className="grid gap-4 md:grid-cols-3">
           <div className="card p-4 text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-shadow-500 mb-1">Structures</p>
-            <p className="text-2xl font-bold text-aurora-300">{room.structures?.length || 0}</p>
+            <p className="text-2xl font-bold text-aurora-300">
+              {(room.structures as unknown as GeneratedStructure[])?.length || 0}
+            </p>
           </div>
           <div className="card p-4 text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-shadow-500 mb-1">Roads</p>
-            <p className="text-2xl font-bold text-aurora-300">{room.roads?.length || 0}</p>
+            <p className="text-2xl font-bold text-aurora-300">
+              {(room.settings as unknown as RoomSettings)?.roads?.length || 0}
+            </p>
           </div>
           <div className="card p-4 text-center">
             <p className="text-xs uppercase tracking-[0.3em] text-shadow-500 mb-1">Grid Size</p>
             <p className="text-2xl font-bold text-aurora-300">
-              {room.settings?.worldSize === 'intimate'
+              {(room.settings as unknown as RoomSettings)?.worldSize === 'intimate'
                 ? '256×256'
-                : room.settings?.worldSize === 'small'
+                : (room.settings as unknown as RoomSettings)?.worldSize === 'small'
                   ? '256×256'
-                  : room.settings?.worldSize === 'medium'
+                  : (room.settings as unknown as RoomSettings)?.worldSize === 'medium'
                     ? '512×512'
-                    : room.settings?.worldSize === 'large'
+                    : (room.settings as unknown as RoomSettings)?.worldSize === 'large'
                       ? '1024×1024'
                       : '256×256'}
             </p>
@@ -156,7 +183,7 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
         </div>
 
         {/* Generation Timeline - FULL EVENT LOG */}
-        <GenerationTimeline events={room.generationEvents || []} />
+        <GenerationTimeline events={(room.history as unknown as RoomHistory)?.generationEvents || []} />
 
         {/* World Description - FULL TEXT */}
         {room.worldDescription && (
@@ -204,10 +231,10 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
             {biomeData?.biomeMap?.grid && (
               <TerrainExplorer
                 biomeGrid={biomeData.biomeMap.grid}
-                structures={room.structures || []}
+                structures={(room.structures as unknown as GeneratedStructure[]) || []}
                 roomSize={32}
                 initialZoom={2}
-                roomId={room.id}
+                roomId={room.documentId}
                 enableInfinite
               />
             )}

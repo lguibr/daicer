@@ -1,0 +1,42 @@
+{
+    "kind": "collectionType",
+    "collectionName": "equipment_categories",
+    "info": {
+        "singularName": "equipment-category",
+        "pluralName": "equipment-categories",
+        "displayName": "Equipment Category",
+        "description": "Categories for equipment items"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {
+        "i18n": {
+            "localized": true
+        }
+    },
+    "attributes": {
+        "slug": {
+            "type": "uid",
+            "targetField": "name",
+            "required": true
+        },
+        "name": {
+            "type": "string",
+            "pluginOptions": {
+                "i18n": {
+                    "localized": true
+                }
+            },
+            "required": true
+        },
+        "description": {
+            "type": "richtext",
+            "pluginOptions": {
+                "i18n": {
+                    "localized": true
+                }
+            }
+        }
+    }
+}

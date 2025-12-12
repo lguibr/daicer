@@ -13,10 +13,16 @@ const OPTIONS: ComboboxOption[] = [
 ];
 
 // Radix Popover relies on ResizeObserver
+// Radix Popover relies on ResizeObserver
 class ResizeObserverStub {
-  observe = vi.fn();
-  unobserve = vi.fn();
-  disconnect = vi.fn();
+  // eslint-disable-next-line class-methods-use-this
+  observe() {}
+
+  // eslint-disable-next-line class-methods-use-this
+  unobserve() {}
+
+  // eslint-disable-next-line class-methods-use-this
+  disconnect() {}
 }
 
 describe('Combobox', () => {

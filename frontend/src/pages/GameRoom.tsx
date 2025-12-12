@@ -19,11 +19,13 @@ import { DiceLoader } from '../components/ui/dice-loader';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import ToolCallCard from '../components/chat/ToolCallCard';
-import { auth } from '../services/firebase';
+
+// import { auth } from '../services/firebase';
 import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
 import type { Room, Player } from '../types/shared';
+import type { Room as GQLRoom } from '../gql/graphql';
 import { useI18n } from '../i18n';
 
 /**
@@ -108,9 +110,9 @@ export default function GameRoomPage() {
 
     const loadRoom = async () => {
       try {
-        const data = await getRoomState(roomId);
-        setRoom(data.room);
-        setPlayers(data.players);
+        const roomData = (await getRoomState(roomId)) as Room & { players: Player[] };
+        setRoom(roomData);
+        setPlayers(roomData.players || []);
 
         // Give socket time to initialize before joining
         setTimeout(() => {
@@ -165,11 +167,9 @@ export default function GameRoomPage() {
     const connectToSSE = async () => {
       if (isCleanedUp) return;
 
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const { currentUser } = auth;
-      if (!currentUser) return;
-
-      const token = await currentUser.getIdToken();
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+      const token = localStorage.getItem('strapi_jwt');
+      if (!token) return;
 
       // Start with Section 1 (dm-story)
       const endpoint = `${API_URL}/api/graph/dm-story/stream?roomId=${roomId}&token=${encodeURIComponent(token)}`;
@@ -216,8 +216,8 @@ export default function GameRoomPage() {
             // Connect to Section 2 stream
             setTimeout(async () => {
               if (isCleanedUp) return;
-              const token2 = await currentUser.getIdToken();
-              const endpoint2 = `${API_URL}/api/graph/world-config/stream?roomId=${roomId}&token=${encodeURIComponent(token2)}`;
+              const token2 = localStorage.getItem('strapi_jwt');
+              const endpoint2 = `${API_URL}/api/graph/world-config/stream?roomId=${roomId}&token=${encodeURIComponent(token2 || '')}`;
               eventSource = new EventSource(endpoint2, { withCredentials: true });
 
               // Re-register listeners for Section 2
@@ -373,7 +373,7 @@ export default function GameRoomPage() {
   if (room.phase === 'TERRAIN_GENERATION') {
     return (
       <DynamicLayout showNavbar={false} showLanguageSelector>
-        <TerrainGenerationScreen room={room} />
+        <TerrainGenerationScreen room={room as unknown as GQLRoom} />
       </DynamicLayout>
     );
   }
@@ -382,7 +382,7 @@ export default function GameRoomPage() {
   // Also show this for SETUP phase to skip the streaming intro
   // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
   // Also show this for SETUP phase to skip the streaming intro
-  if (room.phase === 'CHARACTER_CREATION' || room.phase === 'SETUP') {
+  if (room.phase === 'CHARACTER_CREATION' || room.phase === 'SETUP' || room.phase === 'lobby') {
     // If user has no character, default to creation mode (optional, can be just lobby)
     // But let's start in Lobby to see everyone
 
@@ -404,7 +404,11 @@ export default function GameRoomPage() {
         setLoading(true);
         const streamId = crypto.randomUUID();
         await startGame(room.id, room.settings?.language || 'en', streamId);
-        // Room update will come via socket
+
+        // Force refresh room state to ensure phase change is reflected immediately
+        // This handles cases where socket event might be delayed or missed
+        const updatedRoom = (await getRoomState(room.id)) as Room & { players: Player[] };
+        setRoom(updatedRoom);
       } catch (err) {
         console.error('Failed to start game:', err);
         // Optional: show error toast
@@ -416,7 +420,7 @@ export default function GameRoomPage() {
     if (isCreatingCharacter) {
       return (
         <DynamicLayout showNavbar={false} showLanguageSelector>
-          <CharacterCreation room={room} players={players} onCancel={() => setIsCreatingCharacter(false)} />
+          <CharacterCreation room={room} players={players} />
         </DynamicLayout>
       );
     }

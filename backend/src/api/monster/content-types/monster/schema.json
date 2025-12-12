@@ -1,0 +1,99 @@
+{
+  "kind": "collectionType",
+  "collectionName": "monsters",
+  "info": {
+    "singularName": "monster",
+    "pluralName": "monsters",
+    "displayName": "Monster",
+    "description": "D&D 5e Monsters"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "required": true
+    },
+    "description": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "size": {
+      "type": "enumeration",
+      "enum": ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]
+    },
+    "type": {
+      "type": "string"
+    },
+    "alignment": {
+      "type": "string"
+    },
+    "ac": {
+      "type": "integer"
+    },
+    "hp": {
+      "type": "integer"
+    },
+    "hit_dice": {
+      "type": "string"
+    },
+    "speed": {
+      "type": "json"
+    },
+    "stats": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.stats"
+    },
+    "proficiencies": {
+      "type": "json"
+    },
+    "senses": {
+      "type": "json"
+    },
+    "languages": {
+      "type": "string"
+    },
+    "challenge_rating": {
+      "type": "decimal"
+    },
+    "xp": {
+      "type": "integer"
+    },
+    "special_abilities": {
+      "type": "json"
+    },
+    "actions": {
+      "type": "json"
+    },
+    "legendary_actions": {
+      "type": "json"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

@@ -3,10 +3,9 @@
  * Handles fetching and caching of terrain chunks
  */
 
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
-import { auth } from './firebase';
+// import { auth } from './firebase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
 export interface TerrainTile {
   x: number;
@@ -38,38 +37,6 @@ function getChunkKey(roomId: string, chunkX: number, chunkY: number, chunkZ: num
 }
 
 /**
- * Fetch chunk from Firestore cache
- */
-async function fetchCachedChunk(
-  roomId: string,
-  chunkX: number,
-  chunkY: number,
-  chunkZ: number
-): Promise<TerrainChunk | null> {
-  try {
-    const db = getFirestore();
-    const chunkId = `${chunkX}_${chunkY}_${chunkZ}`;
-    const chunkRef = doc(db, 'rooms', roomId, 'chunks', chunkId);
-    const chunkDoc = await getDoc(chunkRef);
-
-    if (!chunkDoc.exists()) {
-      return null;
-    }
-
-    const data = chunkDoc.data();
-    return {
-      chunkX: data.chunkX,
-      chunkY: data.chunkY,
-      chunkZ: data.chunkZ,
-      tiles: data.tiles,
-    };
-  } catch (error) {
-    console.error(`Failed to fetch cached chunk (${chunkX}, ${chunkY}, ${chunkZ}):`, error);
-    return null;
-  }
-}
-
-/**
  * Generate chunk on-demand via API
  */
 async function generateChunkViaAPI(
@@ -78,12 +45,7 @@ async function generateChunkViaAPI(
   chunkY: number,
   chunkZ: number
 ): Promise<TerrainChunk> {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  const token = await user.getIdToken();
+  const token = localStorage.getItem('strapi_jwt');
 
   const response = await fetch(`${API_URL}/api/assets-gen/worlds/${roomId}/chunks/${chunkX}/${chunkY}/${chunkZ}`, {
     headers: {
@@ -120,14 +82,7 @@ export async function fetchChunk(
     return chunkCache.get(key)!;
   }
 
-  // 2. Try Firestore cache
-  const cached = await fetchCachedChunk(roomId, chunkX, chunkY, chunkZ);
-  if (cached) {
-    chunkCache.set(key, cached);
-    return cached;
-  }
-
-  // 3. Generate on-demand via API
+  // 2. Generate on-demand via API
   console.log(`Cache miss for chunk (${chunkX}, ${chunkY}, ${chunkZ}), generating...`);
   const generated = await generateChunkViaAPI(roomId, chunkX, chunkY, chunkZ);
   chunkCache.set(key, generated);

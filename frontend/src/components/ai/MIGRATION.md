@@ -112,16 +112,19 @@ import GameplayComposer from './GameplayComposer';
 ### Enhanced UX
 
 1. **Better Auto-Scroll**
+
    - Smoother scroll behavior
    - More reliable "stick to bottom" detection
    - Improved scroll button placement
 
 2. **Message Actions**
+
    - Copy message text
    - Regenerate DM responses
    - Delete messages (DM only)
 
 3. **Better Markdown Rendering**
+
    - Auto-completes incomplete formatting during streaming
    - Syntax-highlighted code blocks
    - Enhanced table and list rendering

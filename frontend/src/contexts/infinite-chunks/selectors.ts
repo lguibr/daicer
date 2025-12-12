@@ -5,7 +5,7 @@
  */
 
 import { useContext, useMemo } from 'react';
-import type { GridTile } from 'daicer/shared/world';
+import type { GridTile } from '@daicer/shared/world';
 import { InfiniteChunksContext } from './InfiniteChunksProvider';
 import type { InfiniteChunksView } from './types';
 

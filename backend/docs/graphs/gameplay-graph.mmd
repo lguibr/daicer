@@ -1,5 +1,0 @@
-graph TD
-    START([START]) --> combat_check
-    combat_check{Combat Check} -->|Yes| turn_processing[Turn Processing]
-    combat_check -->|No| END([END])
-    turn_processing --> combat_check

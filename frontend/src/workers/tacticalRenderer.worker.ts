@@ -3,7 +3,7 @@
  * @description Web worker for 3D tactical arena rendering with Three.js
  */
 
-import '../utils/threeShim';
+import './utils/threeShim.ts';
 import * as THREE from 'three';
 import type { GridCell, TacticalUnit } from '../types/tactical';
 

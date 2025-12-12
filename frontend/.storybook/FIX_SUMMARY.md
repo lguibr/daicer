@@ -15,6 +15,7 @@ Added global decorator to wrap all stories with I18nProvider.
 ### Changes Made
 
 1. **Updated `.storybook/preview.tsx`** (renamed from `.ts`)
+
    - Added `I18nProvider` import
    - Created `withI18n` decorator
    - Applied decorator globally to all stories

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { RoomMembership, Player } from '../types/shared';
+import useAuth from '../hooks/useAuth';
+import type { RoomMembership, Player, Room } from '../types/shared';
 import { listRooms, leaveRoom } from '../services/api';
 import { PrivateLayout } from '../components/layout';
 import { Button } from '../components/ui/button';
@@ -28,6 +29,7 @@ function formatTimestamp(timestamp: number, locale: string): string {
 export default function RoomsPage() {
   const navigate = useNavigate();
   const { t, language } = useI18n();
+  const { user } = useAuth();
   const [state, setState] = useState<MembershipState>({
     items: [],
     loading: true,
@@ -37,16 +39,38 @@ export default function RoomsPage() {
   const [processingRoomId, setProcessingRoomId] = useState<string | null>(null);
 
   const sortedMemberships = useMemo(
-    () => [...state.items].sort((a, b) => b.room.updatedAt - a.room.updatedAt),
+    () =>
+      [...state.items].sort((a, b) => {
+        const dateA = a.room.updatedAt ? new Date(a.room.updatedAt).getTime() : 0;
+        const dateB = b.room.updatedAt ? new Date(b.room.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      }),
     [state.items]
   );
 
   const errorMessage = t('rooms.messages.error');
 
   const fetchMemberships = useCallback(async () => {
+    // If no user yet, don't fetch or just wait
+    if (!user) return;
+
     setState((prev) => ({ ...prev, loading: true, error: null }));
     try {
-      const memberships = await listRooms();
+      const roomsRaw = (await listRooms()) as unknown as (Room & { players: Player[]; documentId: string })[];
+
+      // Map rooms to RoomMembership
+      const memberships: RoomMembership[] = roomsRaw.map((room) => {
+        const isOwner = room.ownerId === String(user.id) || room.ownerId === String(user.uid);
+        const player =
+          room.players?.find((p) => String(p.userId) === String(user.id) || String(p.userId) === String(user.uid)) ||
+          null;
+        return {
+          room,
+          isOwner,
+          player,
+        };
+      });
+
       setState({ items: memberships, loading: false, error: null });
     } catch (error) {
       setState({
@@ -55,13 +79,15 @@ export default function RoomsPage() {
         error: error instanceof Error ? error.message : errorMessage,
       });
     }
-  }, [errorMessage]);
+  }, [errorMessage, user]);
 
   useEffect(() => {
-    fetchMemberships().catch((err: unknown) => {
-      console.error('Failed to fetch memberships:', err);
-    });
-  }, [fetchMemberships]);
+    if (user) {
+      fetchMemberships().catch((err: unknown) => {
+        console.error('Failed to fetch memberships:', err);
+      });
+    }
+  }, [fetchMemberships, user]);
 
   const handleLeaveRoom = useCallback(
     async (membership: RoomMembership) => {
@@ -149,6 +175,8 @@ export default function RoomsPage() {
           <div className="grid gap-6">
             {sortedMemberships.map((membership) => {
               const { room, player, isOwner } = membership;
+              // Cast room to access documentId
+              const roomWithId = room as Room & { documentId: string };
               const isProcessing = processingRoomId === room.id;
               const phaseKey = `rooms.phases.${room.phase}`;
               const phaseLabel = t(phaseKey);
@@ -191,7 +219,11 @@ export default function RoomsPage() {
                     </div>
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <Button type="button" variant="default" onClick={() => navigate(`/room/${room.id}`)}>
+                      <Button
+                        type="button"
+                        variant="default"
+                        onClick={() => navigate(`/room/${roomWithId.documentId}`)}
+                      >
                         {t('rooms.actions.open')}
                       </Button>
                       {player?.character ? (

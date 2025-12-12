@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* eslint-disable no-param-reassign, react/button-has-type */
+import { useState } from 'react';
 import { Upload, Camera, Wand2, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
 import type { AvatarPreviewResponse } from '../../../types/assets';

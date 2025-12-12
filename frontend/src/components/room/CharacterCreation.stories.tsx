@@ -22,8 +22,10 @@ type Story = StoryObj<typeof meta>;
 
 // Mock room data
 const mockRoom = {
-  id: 'story-room-1',
-  code: 'STORY',
+  documentId: 'room-1',
+  roomId: 'TEST',
+  id: 'room-1',
+  code: 'TEST',
   theme: 'High Fantasy',
   dmUserId: 'dm-user-1',
   phase: GamePhase.CHARACTER_CREATION,
@@ -31,9 +33,10 @@ const mockRoom = {
   world: null,
   createdAt: Date.now(),
   updatedAt: Date.now(),
-  ownerId: 'dm-user-1',
+  ownerId: 'user-1',
   settings: null,
-  worldDescription: 'A mock world for testing',
+  worldDescription: 'Test World',
+  isActive: true,
 };
 
 export const Default: Story = {

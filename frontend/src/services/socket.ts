@@ -3,11 +3,11 @@
  */
 
 import { io, Socket } from 'socket.io-client';
-import { auth } from './firebase';
+// import { auth } from './firebase';
 import type { Room, Player, Message, Creature } from '../types/shared';
 import type { ServerToClientEvents, ClientToServerEvents } from '../types/socket';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 let reconnectAttempts = 0;
@@ -97,12 +97,10 @@ export async function initSocket(
     return socket;
   }
 
-  const user = auth.currentUser;
-  if (!user) {
+  const token = localStorage.getItem('strapi_jwt');
+  if (!token) {
     throw new Error('User must be authenticated to connect socket');
   }
-
-  const token = await user.getIdToken();
 
   socket = io(SOCKET_URL, {
     auth: { token },
@@ -112,7 +110,7 @@ export async function initSocket(
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     timeout: 20000,
-    autoConnect: true,
+    autoConnect: false,
     // Retry failed packets
     retries: 3,
     ackTimeout: 10000,

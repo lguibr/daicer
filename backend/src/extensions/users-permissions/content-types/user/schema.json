@@ -1,0 +1,10 @@
+{
+    "attributes": {
+        "characters": {
+            "type": "relation",
+            "relation": "oneToMany",
+            "target": "api::character.character",
+            "mappedBy": "user"
+        }
+    }
+}

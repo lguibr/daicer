@@ -276,11 +276,19 @@ export default function GameplayChatArea({
 
 // --- Helper Components ---
 
+interface RAGRule {
+  id: string;
+  title: string;
+  relevance: string;
+  category: string;
+  content: string;
+}
+
 function RAGContextViewer({ text }: { text: string }) {
   // Parse the RAG text. Assuming format: "**Rule N: Title** (relevance: X%) Category: Y ...content..."
   // If parsing fails, fallback to raw text.
 
-  const rules = useMemo(() => {
+  const rules: RAGRule[] = useMemo(() => {
     try {
       // Split by "**Rule " to find segments
       const parts = text.split(/\*\*Rule /g);
@@ -325,7 +333,7 @@ function RAGContextViewer({ text }: { text: string }) {
             content,
           };
         })
-        .filter(Boolean);
+        .filter((rule): rule is RAGRule => rule !== null);
 
       return parsedRules;
     } catch (e) {
@@ -344,7 +352,7 @@ function RAGContextViewer({ text }: { text: string }) {
 
   return (
     <div className="grid gap-3 sm:grid-cols-1">
-      {rules.map((rule: any) => (
+      {rules.map((rule) => (
         <div
           key={rule.id}
           className="relative overflow-hidden rounded-lg border border-aurora-500/20 bg-midnight-950/50 p-3 shadow-sm transition-all hover:border-aurora-500/40 hover:bg-midnight-950/80"
@@ -366,7 +374,7 @@ function RAGContextViewer({ text }: { text: string }) {
   );
 }
 
-function ToolCallsViewer({ toolCalls }: { toolCalls: any[] }) {
+function ToolCallsViewer({ toolCalls }: { toolCalls: SocketToolCall[] }) {
   if (!toolCalls || toolCalls.length === 0) return null;
 
   return (
@@ -374,11 +382,11 @@ function ToolCallsViewer({ toolCalls }: { toolCalls: any[] }) {
       {toolCalls.map((call, idx) => (
         <div key={idx} className="rounded-md border border-nebula-500/20 bg-midnight-950/50 p-2 font-mono text-[10px]">
           <div className="mb-1 flex items-center justify-between border-b border-nebula-500/10 pb-1">
-            <span className="font-bold text-nebula-300">{call.name || call.function?.name || 'Unknown Tool'}</span>
+            <span className="font-bold text-nebula-300">{call.toolName || 'Unknown Tool'}</span>
             <span className="opacity-50">call_id: {call.id?.slice(0, 8)}...</span>
           </div>
           <div className="overflow-x-auto py-1">
-            <pre className="text-shadow-300">{JSON.stringify(call.arguments || call.function?.arguments, null, 2)}</pre>
+            <pre className="text-shadow-300">{JSON.stringify(call.parameters, null, 2)}</pre>
           </div>
         </div>
       ))}

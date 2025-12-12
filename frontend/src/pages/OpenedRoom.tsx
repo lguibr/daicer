@@ -15,10 +15,12 @@ import { Card } from '../components/ui/card';
 import { DiceLoader } from '../components/ui/dice-loader';
 import { TerrainGenerationScreen } from '../components/terrain/TerrainGenerationScreen';
 import ToolCallCard from '../components/chat/ToolCallCard';
+// eslint-disable-next-line import/no-unresolved
 import { auth } from '../services/firebase';
 // import { useI18n } from '../i18n';
 
 import type { Room, Player } from '../types/shared';
+import type { Room as GQLRoom } from '../gql/graphql';
 import type { ToolCall } from '../services/socket';
 
 /**
@@ -245,7 +247,7 @@ export default function OpenedRoomPage() {
   if (room?.phase === 'TERRAIN_GENERATION') {
     return (
       <PrivateLayout showRoomInfo={false}>
-        <TerrainGenerationScreen room={room} />
+        <TerrainGenerationScreen room={room as unknown as GQLRoom} />
       </PrivateLayout>
     );
   }

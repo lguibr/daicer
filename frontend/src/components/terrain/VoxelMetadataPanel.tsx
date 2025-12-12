@@ -2,7 +2,6 @@
  * Voxel Metadata Panel
  * Displays detailed information about a clicked tile
  */
-
 import { Info, X } from 'lucide-react';
 
 export interface VoxelMetadata {
@@ -13,7 +12,8 @@ export interface VoxelMetadata {
     name: string;
     type: string;
     description?: string;
-    [key: string]: any;
+    population?: number;
+    [key: string]: unknown;
   };
   elevation?: number;
   temperature?: number;

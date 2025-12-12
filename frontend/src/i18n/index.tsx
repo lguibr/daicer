@@ -34,7 +34,11 @@ export const supportedLanguages = [
 ];
 
 interface I18nContextValue {
-  t: (key: string, params?: Record<string, string | number>) => string;
+  t: (
+    key: string,
+    fallbackOrParams?: string | Record<string, string | number>,
+    params?: Record<string, string | number>
+  ) => string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   localize: (data: any, field: string) => string;
   language: Language;
@@ -109,16 +113,30 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string, params?: Record<string, string | number>): string => {
+    (
+      key: string,
+      fallbackOrParams?: string | Record<string, string | number>,
+      params?: Record<string, string | number>
+    ): string => {
+      let defaultValue: string | undefined;
+      let parameters: Record<string, string | number> | undefined;
+
+      if (typeof fallbackOrParams === 'string') {
+        defaultValue = fallbackOrParams;
+        parameters = params;
+      } else {
+        parameters = fallbackOrParams;
+      }
+
       let localized = translations[language][key];
       if (!localized && language !== 'en') {
         localized = translations.en[key];
       }
 
-      const text = localized || key;
+      const text = localized || defaultValue || key;
 
-      if (params) {
-        return Object.entries(params).reduce(
+      if (parameters) {
+        return Object.entries(parameters).reduce(
           (str, [pKey, pValue]) => str.replace(new RegExp(`{{${pKey}}}`, 'g'), String(pValue)),
           text
         );

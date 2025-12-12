@@ -3,6 +3,7 @@
  * Real-time 3D WebGL preview of voxel structures using Three.js
  */
 
+/* eslint-disable react/no-unknown-property */
 import { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';

@@ -4,9 +4,9 @@
  * Client for asset generation API endpoints
  */
 
-import { auth } from './firebase';
+// import { auth } from './firebase';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
 export interface Collection {
   id: string;
@@ -64,9 +64,7 @@ export interface WorldMap {
 }
 
 async function getAuthToken(): Promise<string | null> {
-  const user = auth.currentUser;
-  if (!user) return null;
-  return user.getIdToken();
+  return localStorage.getItem('strapi_jwt');
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {

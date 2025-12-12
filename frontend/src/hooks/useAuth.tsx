@@ -1,22 +1,25 @@
 /**
- * Authentication hook using Firebase Auth
+ * Authentication hook
  */
 
 import { useState, useEffect } from 'react';
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  type User as FirebaseUser,
-} from 'firebase/auth';
-import { auth } from '../services/firebase';
 
-/**
- * User state
- */
+// Use strict Strapi URL or env var
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  provider: string;
+  confirmed: boolean;
+  blocked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AuthState {
-  user: FirebaseUser | null;
+  user: (User & { uid: string; displayName: string }) | null;
   loading: boolean;
   error: string | null;
 }
@@ -33,49 +36,62 @@ export default function useAuth() {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (user) {
-          // Store user ID for message filtering
-          sessionStorage.setItem('currentUserId', user.uid);
-        }
-        setState({ user, loading: false, error: null });
-      },
-      (error) => {
-        setState({ user: null, loading: false, error: error.message });
-      }
-    );
-
-    return () => unsubscribe();
+    // Check for existing token
+    const token = localStorage.getItem('strapi_jwt');
+    if (token) {
+      // Validate token and fetch user
+      fetch(`${API_URL}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error('Invalid token');
+          }
+          const userData = await res.json();
+          // Map to backward compatible format
+          const userWithLegacyFields = {
+            ...userData,
+            uid: userData.id.toString(),
+            displayName: userData.username,
+          };
+          setState({
+            user: userWithLegacyFields,
+            loading: false,
+            error: null,
+          });
+        })
+        .catch(() => {
+          // If token invalid, clear it
+          localStorage.removeItem('strapi_jwt');
+          setState({
+            user: null,
+            loading: false,
+            error: null,
+          });
+        });
+    } else {
+      setState((prev) => ({ ...prev, loading: false }));
+    }
   }, []);
 
   /**
    * Sign in with Google
+   * Redirects to Strapi Google Auth endpoint
    */
-  const signInWithGoogle = async () => {
-    try {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Sign in failed',
-      }));
-    }
+  const signInWithGoogle = () => {
+    window.location.href = `${API_URL}/api/connect/google`;
   };
 
   /**
    * Sign out
    */
-  const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-    } catch (err) {
-      // TODO: Handle sign out error
-    }
+  const signOut = () => {
+    localStorage.removeItem('strapi_jwt');
+    setState({ user: null, loading: false, error: null });
+    // Optional: Redirect to home or reload
+    window.location.href = '/';
   };
 
   return {

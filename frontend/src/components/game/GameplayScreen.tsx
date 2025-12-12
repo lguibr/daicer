@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -197,7 +198,7 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
             enableInfinite
             players={players}
             creatures={socket.creatures}
-            structures={room.structures}
+            structures={room.structures as any}
             onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}
             onTileClick={handleTileClick}
           />

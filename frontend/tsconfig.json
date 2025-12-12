@@ -7,7 +7,7 @@
     "skipLibCheck": true,
 
     /* Bundler mode */
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -32,10 +32,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "daicer/*": ["../*"]
+      "@daicer/shared": ["../shared/src/index.ts"],
+      "@daicer/shared/*": ["../shared/src/*"]
     }
   },
-  "include": ["src", "e2e", "vite.config.d.ts"],
+  "include": ["src", "e2e", "vite.config.d.ts", "codegen.ts"],
   "exclude": [
     "node_modules",
     "dist",

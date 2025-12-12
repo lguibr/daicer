@@ -1,0 +1,47 @@
+{
+    "kind": "collectionType",
+    "collectionName": "character_sheets",
+    "info": {
+        "singularName": "character-sheet",
+        "pluralName": "character-sheets",
+        "displayName": "Character Sheet",
+        "description": "Instance of a character in a game room"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "character": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::character.character"
+        },
+        "room": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::room.room",
+            "inversedBy": "character_sheets"
+        },
+        "currentHp": {
+            "type": "integer"
+        },
+        "maxHp": {
+            "type": "integer"
+        },
+        "level": {
+            "type": "integer",
+            "default": 1
+        },
+        "experience": {
+            "type": "integer",
+            "default": 0
+        },
+        "stats": {
+            "type": "json"
+        },
+        "inventory": {
+            "type": "json"
+        }
+    }
+}

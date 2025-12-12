@@ -3,6 +3,7 @@
  * @note Update accompanying README when adjusting demo configuration.
  */
 
+/* eslint-disable react/no-unstable-nested-components */
 import type { Meta, StoryObj } from '@storybook/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';

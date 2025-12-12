@@ -394,7 +394,7 @@ export default function CreateRoomPage() {
       });
 
       // Redirect immediately to the room
-      navigate(`/room/${room.id}`);
+      navigate(`/room/${room.documentId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('createWizard.errors.createFailed'));
     } finally {

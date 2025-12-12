@@ -1,16 +1,12 @@
 /**
  * Centralized Zod schemas for all LLM structured outputs
- * All agent responses MUST use these schemas with .withStructuredOutput()
- *
- * IMPORTANT: OpenAI Structured Outputs requires ALL fields to be required.
- * Use .nullable() instead of .optional() for fields that can be omitted.
+ * Ported for Strapi
  */
 
 import { z } from 'zod';
 
 /**
  * DM Turn Response Schema
- * Used for turn processing narrative generation
  */
 export const TurnResponseSchema = z.object({
   overall_summary: z.string().describe('The main narrative summary visible to all players'),
@@ -37,7 +33,6 @@ export type TurnResponse = z.infer<typeof TurnResponseSchema>;
 
 /**
  * World Description Schema
- * Used for world generation from settings
  */
 export const WorldDescriptionSchema = z.object({
   title: z.string().describe('Campaign title'),
@@ -64,7 +59,6 @@ export type WorldDescription = z.infer<typeof WorldDescriptionSchema>;
 
 /**
  * Combat Narration Schema
- * Used for narrating combat actions (attacks, spells, etc.)
  */
 export const CombatNarrationSchema = z.object({
   narration: z.string().describe('Dramatic description of the combat action'),
@@ -82,7 +76,6 @@ export type CombatNarration = z.infer<typeof CombatNarrationSchema>;
 
 /**
  * Character Opening Schema
- * Used when DM generates opening scenes for newly created characters
  */
 export const CharacterOpeningSchema = z.object({
   opening: z.string().describe('Personal opening scene for this character'),
@@ -98,7 +91,6 @@ export type CharacterOpening = z.infer<typeof CharacterOpeningSchema>;
 
 /**
  * Historical Period Response Schema
- * Used for generating world history in 50-year periods
  */
 export const HistoricalPeriodResponseSchema = z.object({
   narrative: z.string().describe('Rich markdown narrative of events this period'),
@@ -136,7 +128,6 @@ export type HistoricalPeriodResponse = z.infer<typeof HistoricalPeriodResponseSc
 
 /**
  * Simple Narrative Response
- * Generic structured response for simpler narrative needs
  */
 export const NarrativeResponseSchema = z.object({
   content: z.string().describe('The narrative content'),
@@ -153,7 +144,6 @@ export type NarrativeResponse = z.infer<typeof NarrativeResponseSchema>;
 
 /**
  * Tool Response Schema
- * Generic success/failure response for combat tools
  */
 export const ToolResponseSchema = z.object({
   success: z.boolean(),

@@ -1,12 +1,12 @@
 import { Download } from 'lucide-react';
-import type { GridTile } from '@daicer/shared';
+import type { Scalars } from '../../gql/graphql';
 import { Button } from '../ui/button';
 
 interface DebugMapExportProps {
   context: 'PREVIEW' | 'GAME';
-  grid: (GridTile | string | null)[][];
+  grid: (Scalars['JSON']['output'] | string | null)[][];
   seed?: string | number;
-  params?: any;
+  params?: Scalars['JSON']['output'];
   roomId?: string;
 }
 

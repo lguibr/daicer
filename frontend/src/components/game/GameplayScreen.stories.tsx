@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import GameplayScreen from './GameplayScreen';
-import type { Player, Room, WorldSettings, CharacterSheet } from '../../types/shared';
+import type { Player, Room, CharacterSheet } from '../../types/shared';
 import { GamePhase } from '../../types/shared';
 import { NEW_CHARACTER_TEMPLATE } from '../../constants';
 
@@ -25,39 +25,19 @@ type Story = StoryObj<typeof meta>;
 // These stories demonstrate the component structure but may not be fully functional
 // in isolation. For full functionality, use the actual app with proper context.
 
-const mockWorldSettings: WorldSettings = {
-  worldType: 'terra',
-  worldSize: 'medium',
-  theme: 'Mystical Forest',
-  setting: 'Ancient glades and hidden ruins',
-  tone: 'Hopeful with hints of mystery',
-  worldBackground: 'The Verdant Expanse thrives under ancient druidic wards now fading.',
-  dmStyle: {
-    verbosity: 2,
-    detail: 3,
-    engagement: 3,
-    narrative: 2,
-    specialMode: null,
-    customDirectives: '',
-  },
-  dmSystemPrompt: 'Maintain cooperative storytelling with thoughtful pacing.',
-  playerCount: 4,
-  adventureLength: 'medium',
-  difficulty: 'medium',
-  startingLevel: 1,
-  attributePointBudget: 27,
-  language: 'en',
-};
-
 const mockRoom: Room = {
+  documentId: 'room-1',
+  roomId: 'TEST',
   id: 'room-1',
-  code: 'ABC123',
+  code: 'TEST',
   ownerId: 'user-1',
+  settings: null,
+  worldDescription: 'A test world',
   phase: GamePhase.GAMEPLAY,
   createdAt: Date.now(),
   updatedAt: Date.now(),
-  worldDescription: 'A mystical forest',
-  settings: mockWorldSettings,
+  isActive: true,
+  structures: [],
 };
 
 const mockCharacter: CharacterSheet = {

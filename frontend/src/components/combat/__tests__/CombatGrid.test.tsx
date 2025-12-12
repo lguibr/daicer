@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CombatGrid } from '../CombatGrid';
+import { I18nProvider } from '../../../i18n';
 import type { CombatCharacter, Position } from '../../../types/combat';
+
+const renderWithProviders = (ui: React.ReactNode, options?: any) => {
+  return render(<I18nProvider>{ui}</I18nProvider>, options);
+};
 
 describe('CombatGrid', () => {
   const mockCharacters: CombatCharacter[] = [
@@ -46,7 +51,7 @@ describe('CombatGrid', () => {
   };
 
   it('should render grid with correct dimensions', () => {
-    const { container } = render(<CombatGrid {...mockProps} />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} />);
 
     // Grid should have 10x10 = 100 squares
     const squares = container.querySelectorAll('[class*="aspect-square"]');
@@ -54,7 +59,7 @@ describe('CombatGrid', () => {
   });
 
   it('should display character on grid', () => {
-    render(<CombatGrid {...mockProps} />);
+    renderWithProviders(<CombatGrid {...mockProps} />);
 
     // Should show character initial
     expect(screen.getByText('F')).toBeInTheDocument();
@@ -65,7 +70,7 @@ describe('CombatGrid', () => {
 
   it('should call onSquareClick when empty square clicked', () => {
     const onSquareClick = vi.fn();
-    const { container } = render(<CombatGrid {...mockProps} onSquareClick={onSquareClick} />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} onSquareClick={onSquareClick} />);
 
     // Click an empty square (not 2,2 where character is)
     const squares = container.querySelectorAll('[class*="aspect-square"]');
@@ -77,7 +82,7 @@ describe('CombatGrid', () => {
 
   it('should call onCharacterClick when character clicked', () => {
     const onCharacterClick = vi.fn();
-    render(<CombatGrid {...mockProps} onCharacterClick={onCharacterClick} />);
+    renderWithProviders(<CombatGrid {...mockProps} onCharacterClick={onCharacterClick} />);
 
     const characterElement = screen.getByText('F');
     fireEvent.click(characterElement.closest('[class*="aspect-square"]')!);
@@ -90,7 +95,7 @@ describe('CombatGrid', () => {
       { x: 3, y: 3 },
       { x: 4, y: 4 },
     ];
-    const { container } = render(<CombatGrid {...mockProps} reachableSquares={reachableSquares} />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} reachableSquares={reachableSquares} />);
 
     // Reachable squares should have different styling
     const squares = container.querySelectorAll('[class*="bg-aurora"]');
@@ -98,7 +103,7 @@ describe('CombatGrid', () => {
   });
 
   it('should highlight active character', () => {
-    const { container } = render(<CombatGrid {...mockProps} />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} />);
 
     // Active character should have ring styling
     const activeSquares = container.querySelectorAll('[class*="ring-nebula"]');
@@ -106,7 +111,7 @@ describe('CombatGrid', () => {
   });
 
   it('should highlight selected character', () => {
-    const { container } = render(<CombatGrid {...mockProps} selectedCharacterId="char-1" />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} selectedCharacterId="char-1" />);
 
     // Selected character should have ring styling
     const selectedSquares = container.querySelectorAll('[class*="ring-aurora"]');
@@ -114,7 +119,7 @@ describe('CombatGrid', () => {
   });
 
   it('should display coordinates on squares', () => {
-    const { container } = render(<CombatGrid {...mockProps} />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} />);
 
     // Should show coordinates in top-left of squares
     expect(screen.getByText('0,0')).toBeInTheDocument();
@@ -130,7 +135,9 @@ describe('CombatGrid', () => {
       position: { x: 5, y: 5 },
     };
 
-    const { container } = render(<CombatGrid {...mockProps} characters={[...mockCharacters, enemyChar]} />);
+    const { container } = renderWithProviders(
+      <CombatGrid {...mockProps} characters={[...mockCharacters, enemyChar]} />
+    );
 
     // Player character should have aurora background
     const playerAvatar = container.querySelector('.bg-aurora-500');
@@ -148,7 +155,7 @@ describe('CombatGrid', () => {
       position: { x: 3, y: 3 },
     };
 
-    const { container } = render(<CombatGrid {...mockProps} characters={[deadChar]} />);
+    const { container } = renderWithProviders(<CombatGrid {...mockProps} characters={[deadChar]} />);
 
     // Dead character at 3,3 should not be shown
     const squares = container.querySelectorAll('[class*="aspect-square"]');
@@ -157,12 +164,16 @@ describe('CombatGrid', () => {
   });
 
   it('should render with different grid sizes', () => {
-    const { container, rerender } = render(<CombatGrid {...mockProps} gridWidth={5} gridHeight={5} />);
+    const { container, rerender } = renderWithProviders(<CombatGrid {...mockProps} gridWidth={5} gridHeight={5} />);
 
     let squares = container.querySelectorAll('[class*="aspect-square"]');
     expect(squares.length).toBe(25);
 
-    rerender(<CombatGrid {...mockProps} gridWidth={15} gridHeight={20} />);
+    rerender(
+      <I18nProvider>
+        <CombatGrid {...mockProps} gridWidth={15} gridHeight={20} />
+      </I18nProvider>
+    );
     squares = container.querySelectorAll('[class*="aspect-square"]');
     expect(squares.length).toBe(300);
   });
@@ -174,7 +185,7 @@ describe('CombatGrid', () => {
       { ...mockCharacters[0], id: 'char-3', name: 'Rogue', position: { x: 6, y: 6 } },
     ];
 
-    render(<CombatGrid {...mockProps} characters={characters} />);
+    renderWithProviders(<CombatGrid {...mockProps} characters={characters} />);
 
     expect(screen.getByText('F')).toBeInTheDocument();
     expect(screen.getByText('W')).toBeInTheDocument();
@@ -182,19 +193,21 @@ describe('CombatGrid', () => {
   });
 
   it('should update when reachable squares change', () => {
-    const { container, rerender } = render(<CombatGrid {...mockProps} reachableSquares={[]} />);
+    const { container, rerender } = renderWithProviders(<CombatGrid {...mockProps} reachableSquares={[]} />);
 
     let reachableSquares = container.querySelectorAll('[class*="bg-aurora-9"]');
     expect(reachableSquares.length).toBe(0);
 
     rerender(
-      <CombatGrid
-        {...mockProps}
-        reachableSquares={[
-          { x: 1, y: 1 },
-          { x: 2, y: 1 },
-        ]}
-      />
+      <I18nProvider>
+        <CombatGrid
+          {...mockProps}
+          reachableSquares={[
+            { x: 1, y: 1 },
+            { x: 2, y: 1 },
+          ]}
+        />
+      </I18nProvider>
     );
     reachableSquares = container.querySelectorAll('[class*="bg-aurora-9"]');
     expect(reachableSquares.length).toBeGreaterThan(0);

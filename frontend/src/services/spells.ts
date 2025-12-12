@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-import spellsData from 'daicer/seeds/game-data/spells.json';
+import spellsData from '../data/spells.json';
 import type { SpellData } from '../types/spells';
 
 const spells = spellsData as unknown as SpellData[];

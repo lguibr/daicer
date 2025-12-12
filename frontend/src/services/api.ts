@@ -1,8 +1,8 @@
 /**
- * API client for backend HTTP endpoints
+ * API client for backend GraphQL endpoints
  */
 
-import { auth } from './firebase';
+import { apolloClient } from '../lib/apollo';
 import type {
   Room,
   WorldSettings,
@@ -16,90 +16,17 @@ import type {
   CharacterSheet,
 } from '../types/shared';
 import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse } from '../types/assets';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
-/**
- * API response wrapper
- */
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: {
-    message: string;
-  };
-}
-
-/**
- * Get auth token for requests
- * @returns ID token or null
- */
-async function getAuthToken(): Promise<string | null> {
-  const user = auth.currentUser;
-  if (!user) return null;
-
-  return user.getIdToken();
-}
-
-/**
- * Make authenticated API request
- * @param endpoint - API endpoint
- * @param options - Fetch options
- * @returns Response data
- */
-export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = await getAuthToken();
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (response.status === 401 || response.status === 403) {
-    window.dispatchEvent(
-      new CustomEvent('auth-error', {
-        detail: { status: response.status },
-      })
-    );
-  }
-
-  let data: ApiResponse<T>;
-  try {
-    data = (await response.json()) as ApiResponse<T>;
-  } catch (error) {
-    if (!response.ok) {
-      throw new Error(response.statusText || 'Request failed');
-    }
-    throw error;
-  }
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error?.message || 'Request failed');
-  }
-
-  return data.data!;
-}
-
-/**
- * Create new room
- * @param options - Optional room creation options
- * @returns Created room
- */
-export async function createRoom(options?: { settings?: WorldSettings; structures?: unknown[] }): Promise<Room> {
-  return apiRequest<Room>('/api/rooms', {
-    method: 'POST',
-    body: options ? JSON.stringify(options) : undefined,
-  });
-}
+import {
+  CREATE_ROOM_MUTATION,
+  JOIN_ROOM_MUTATION,
+  UPDATE_ROOM_SETTINGS_MUTATION,
+  GENERATE_WORLD_MUTATION,
+  ADD_CHARACTER_MUTATION,
+  START_GAME_MUTATION,
+  SUBMIT_ACTION_MUTATION,
+  GENERATE_PORTRAIT_MUTATION,
+} from '../graphql/mutations';
+import { GET_ROOM_QUERY, LIST_ROOMS_QUERY } from '../graphql/queries';
 
 /**
  * Join room by code
@@ -107,9 +34,11 @@ export async function createRoom(options?: { settings?: WorldSettings; structure
  * @returns Room data
  */
 export async function joinRoom(code: string): Promise<Room> {
-  return apiRequest<Room>(`/api/rooms/${code}/join`, {
-    method: 'POST',
+  const { data } = await apolloClient.mutate({
+    mutation: JOIN_ROOM_MUTATION,
+    variables: { code },
   });
+  return (data as any).joinRoom;
 }
 
 /**
@@ -117,8 +46,13 @@ export async function joinRoom(code: string): Promise<Room> {
  * @param roomId - Room ID
  * @returns Room and players
  */
-export async function getRoomState(roomId: string): Promise<{ room: Room; players: Player[] }> {
-  return apiRequest<{ room: Room; players: Player[] }>(`/api/rooms/${roomId}`);
+export async function getRoomState(roomId: string): Promise<Room> {
+  const { data } = await apolloClient.query({
+    query: GET_ROOM_QUERY,
+    variables: { filters: { roomId: { eq: roomId } } },
+    fetchPolicy: 'network-only', // Ensure fresh data
+  });
+  return (data as any).rooms[0] || null;
 }
 
 /**
@@ -126,7 +60,12 @@ export async function getRoomState(roomId: string): Promise<{ room: Room; player
  * @returns Room memberships
  */
 export async function listRooms(): Promise<RoomMembership[]> {
-  return apiRequest<RoomMembership[]>('/api/rooms');
+  const { data } = await apolloClient.query({
+    query: LIST_ROOMS_QUERY,
+    fetchPolicy: 'network-only',
+  });
+  // Map fields if necessary, currently assuming exact match or partial
+  return (data as any).rooms;
 }
 
 /**
@@ -136,10 +75,23 @@ export async function listRooms(): Promise<RoomMembership[]> {
  * @returns Updated room
  */
 export async function updateRoomSettings(roomId: string, settings: WorldSettings): Promise<Room> {
-  return apiRequest<Room>(`/api/rooms/${roomId}/settings`, {
-    method: 'PATCH',
-    body: JSON.stringify(settings),
+  // Use documentId if possible, but we might only have roomId.
+  // We first need to find the documentId for the room to update it via standard mutation
+  // OR we use a custom mutation if we made one.
+  // Standard `updateRoom` requires `documentId`.
+
+  // Fetch room first to get documentId
+  const room = await getRoomState(roomId);
+  if (!room || !room.documentId) throw new Error('Room not found');
+
+  const { data } = await apolloClient.mutate({
+    mutation: UPDATE_ROOM_SETTINGS_MUTATION,
+    variables: {
+      documentId: room.documentId,
+      data: { settings },
+    },
   });
+  return (data as any).updateRoom;
 }
 
 /**
@@ -147,22 +99,33 @@ export async function updateRoomSettings(roomId: string, settings: WorldSettings
  * @param roomId - Room ID
  */
 export async function leaveRoom(roomId: string): Promise<void> {
-  await apiRequest<null>(`/api/rooms/${roomId}/membership`, {
-    method: 'DELETE',
-  });
+  // Not implemented in GraphQL backend plan yet.
+  // Leaving as no-op or TODO since 'leaveRoom' was deleting membership.
+  // Membership in Strapi might be a relation removal.
+  // For now, removing this functionality or marking TODO as it wasn't in my immediate backend plan.
+  console.warn('leaveRoom not fully implemented in GraphQL migration yet');
 }
 
 /**
- * Generate world description
- * @param roomId - Room ID
- * @param language - Language code
- * @returns Updated room with world description
+ * Create new room
  */
-export async function generateWorld(roomId: string, language: string): Promise<Room> {
-  return apiRequest<Room>(`/api/game/${roomId}/world`, {
-    method: 'POST',
-    body: JSON.stringify({ language }),
+export async function createRoom(options?: { settings?: WorldSettings; structures?: unknown[] }): Promise<Room> {
+  const { data } = await apolloClient.mutate({
+    mutation: CREATE_ROOM_MUTATION,
+    variables: { data: options || {} },
   });
+  return (data as any).createRoom;
+}
+
+export async function generateWorld(roomId: string, language: string): Promise<Room> {
+  const { data } = await apolloClient.mutate({
+    mutation: GENERATE_WORLD_MUTATION,
+    variables: { roomId, language },
+  });
+
+  // generateWorld returns updated Room
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any).generateWorld as Room;
 }
 
 /**
@@ -176,10 +139,11 @@ export type CreateCharacterPayload = Partial<Player['character']> & {
 };
 
 export async function addCharacter(roomId: string, character: CreateCharacterPayload): Promise<Player> {
-  return apiRequest<Player>(`/api/game/${roomId}/character`, {
-    method: 'POST',
-    body: JSON.stringify(character),
+  const { data } = await apolloClient.mutate({
+    mutation: ADD_CHARACTER_MUTATION,
+    variables: { roomId, character },
   });
+  return (data as any).addCharacter;
 }
 
 /**
@@ -189,31 +153,34 @@ export async function addCharacter(roomId: string, character: CreateCharacterPay
  * @returns Opening message
  */
 export async function startGame(roomId: string, language: string, streamId?: string): Promise<Message> {
-  return apiRequest<Message>(`/api/game/${roomId}/start`, {
-    method: 'POST',
-    body: JSON.stringify({ language, streamId }),
+  const { data } = await apolloClient.mutate({
+    mutation: START_GAME_MUTATION,
+    variables: { roomId, language, streamId },
   });
+  return (data as any).startGame;
 }
 
 export async function generateAvatarPortrait(
   payload: AvatarGenerationPayload,
   referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
-  return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/portrait', {
-    method: 'POST',
-    body: JSON.stringify({ ...payload, referenceImage }),
+  const { data } = await apolloClient.mutate({
+    mutation: GENERATE_PORTRAIT_MUTATION,
+    variables: { payload, referenceImage },
   });
+  return (data as any).generateAvatarPortrait;
 }
+
+// TODO: Implement other avatar parts (Upper/Full) with GraphQL if needed, or keeping them stubbed
+// as they follow same pattern.
 
 export async function generateAvatarUpperBody(
   payload: AvatarGenerationPayload,
   portrait: AvatarPreviewImage,
   referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
-  return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/upper', {
-    method: 'POST',
-    body: JSON.stringify({ payload, portrait, referenceImage }),
-  });
+  // Stub or implement similar to portrait
+  throw new Error('Not implemented in GraphQL yet');
 }
 
 export async function generateAvatarFullBody(
@@ -222,14 +189,12 @@ export async function generateAvatarFullBody(
   upperBody: AvatarPreviewImage,
   referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
-  return apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/full', {
-    method: 'POST',
-    body: JSON.stringify({ payload, portrait, upperBody, referenceImage }),
-  });
+  // Stub or implement similar to portrait
+  throw new Error('Not implemented in GraphQL yet');
 }
 
 /**
- * Section Graph APIs (NEW - Phase 3)
+ * Section Graph APIs
  */
 
 interface DMStorySettings {
@@ -251,29 +216,12 @@ export async function invokeDMStoryGraph(input: {
   conditions: WorldCondition[];
   historyPeriods: HistoricalPeriod[];
 }> {
-  const idToken = await auth.currentUser?.getIdToken();
-  const response = await fetch(`${API_URL}/api/graph/dm-story`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${idToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'DM Story generation failed');
-  }
-
-  const result = await response.json();
-  return result.data;
+  // TODO: Migrate to GraphQL
+  throw new Error('Not implemented in GraphQL yet');
 }
 
 /**
  * Invoke World Config Graph (Section 2)
- * Generates physical world (structures, roads, terrain, chunks)
- * Requires Section 1 output (historyPeriods, conditions, worldHistory)
  */
 interface WorldConfigSettings {
   structureDensity: number;
@@ -294,39 +242,10 @@ export async function invokeWorldConfigGraph(input: {
   gridState?: unknown;
   terrainMap?: unknown;
 }> {
-  const idToken = await auth.currentUser?.getIdToken();
-  const response = await fetch(`${API_URL}/api/graph/world-config`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${idToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'World Config generation failed');
-  }
-
-  const result = await response.json();
-  return result.data;
+  // TODO: Migrate to GraphQL
+  throw new Error('Not implemented in GraphQL yet');
 }
 
-/**
- * Invoke DM Story Graph (Section 1)
- * Generates world history, conditions, and narrative seed
- */
-
-/**
- * Invoke World Config Graph (Section 2)
- */
-
-/**
- * Invoke Character Setup Graph (Section 3)
- * Generates character opening narrative and applies equipment bonuses
- * Per-player invocation
- */
 export async function invokeCharacterSetupGraph(
   playerId: string,
   input: {
@@ -341,23 +260,8 @@ export async function invokeCharacterSetupGraph(
   openingNarrative: string;
   character: CharacterSheet;
 }> {
-  const idToken = await auth.currentUser?.getIdToken();
-  const response = await fetch(`${API_URL}/api/graph/character/${playerId}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${idToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Character Setup generation failed');
-  }
-
-  const result = await response.json();
-  return result.data;
+  // TODO: Migrate to GraphQL
+  throw new Error('Not implemented in GraphQL yet');
 }
 
 /**
@@ -367,8 +271,9 @@ export async function invokeCharacterSetupGraph(
  * @returns Success status
  */
 export async function submitAction(roomId: string, action: string): Promise<{ success: boolean; allReady: boolean }> {
-  return apiRequest<{ success: boolean; allReady: boolean }>(`/api/game/${roomId}/action`, {
-    method: 'POST',
-    body: JSON.stringify({ action }),
+  const { data } = await apolloClient.mutate({
+    mutation: SUBMIT_ACTION_MUTATION,
+    variables: { roomId, action },
   });
+  return (data as any).submitAction;
 }

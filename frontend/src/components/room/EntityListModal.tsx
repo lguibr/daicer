@@ -1,24 +1,54 @@
+/* eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types */
 import { useState } from 'react';
 import { X, Plus, Search, Skull, User } from 'lucide-react';
 import { toast } from 'sonner';
+import type { Player } from '@daicer/shared';
 import { Button } from '../ui/button';
 import Input from '../ui/input';
 import Label from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
-import type { Creature, CharacterSheet } from '../../types/shared';
 import { apiRequest } from '../../services/api';
+
+// Defined locally to match JSON structure from Room.players/creatures
+interface CharacterSheetData {
+  name: string;
+  race: string;
+  characterClass: string;
+  background?: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  armorClass: number;
+  attributes: Record<string, number>;
+  skills: Record<string, number>;
+  attacks?: Array<{ name: string; bonus: string; damageType: string }>;
+  features?: string;
+  personality?: { traits: string };
+  challenge?: number; // For monsters
+}
+
+interface CreatureEntity {
+  id: string;
+  name: string;
+  type: 'npc' | 'monster' | 'player';
+  hp: number;
+  maxHp: number;
+  ac: number;
+  sheet?: CharacterSheetData;
+  character?: CharacterSheetData; // Structure for players matches sheet
+}
 
 interface EntityListModalProps {
   isOpen: boolean;
   onClose: () => void;
-  creatures: Creature[];
-  players?: any[]; // Pass players if we want to show them too
+  creatures: CreatureEntity[];
+  players?: Player[];
   roomId: string;
 }
 
 export function EntityListModal({ isOpen, onClose, creatures, players = [], roomId }: EntityListModalProps) {
-  const [selectedEntity, setSelectedEntity] = useState<Creature | any | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<CreatureEntity | Player | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [newCreature, setNewCreature] = useState({
     type: 'npc', // or 'monster'
@@ -81,7 +111,9 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
                     >
                       <User className="w-4 h-4 text-aurora-400" />
                       <div className="overflow-hidden">
-                        <div className="font-semibold text-sm truncate text-aurora-100">{p.character?.name}</div>
+                        <div className="font-semibold text-sm truncate text-aurora-100">
+                          {p.character?.name || p.name}
+                        </div>
                         <div className="text-xs text-midnight-400 truncate">
                           {p.character?.race} {p.character?.characterClass}
                         </div>
@@ -189,7 +221,7 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
                       <Input
                         type="number"
                         value={newCreature.level}
-                        onChange={(e) => setNewCreature({ ...newCreature, level: parseInt(e.target.value) })}
+                        onChange={(e) => setNewCreature({ ...newCreature, level: parseInt(e.target.value, 10) })}
                       />
                     </div>
                   </>
@@ -231,29 +263,31 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
                 <div className="flex items-start justify-between">
                   <div>
                     <h2 className="text-3xl font-display font-bold text-white mb-1">
-                      {selectedEntity.name || selectedEntity.character?.name}
+                      {selectedEntity.name || ('character' in selectedEntity ? selectedEntity.character?.name : '')}
                     </h2>
                     <div className="flex gap-2 items-center text-midnight-300">
                       <Badge variant="outline" className="border-midnight-500 text-midnight-300">
-                        {selectedEntity.character?.race || selectedEntity.sheet?.race}{' '}
-                        {selectedEntity.character?.characterClass || selectedEntity.sheet?.characterClass}
+                        {'sheet' in selectedEntity
+                          ? selectedEntity.sheet?.race || selectedEntity.sheet?.characterClass
+                          : selectedEntity.character?.race || selectedEntity.character?.characterClass}
                       </Badge>
                       <span>
                         Level{' '}
-                        {selectedEntity.character?.level ||
-                          selectedEntity.sheet?.level ||
-                          selectedEntity.sheet?.challenge ||
-                          1}
+                        {'sheet' in selectedEntity
+                          ? selectedEntity.sheet?.level || selectedEntity.sheet?.challenge || 1
+                          : selectedEntity.character?.level || 1}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-green-400">
-                      HP: {selectedEntity.hp || selectedEntity.character?.hp}/
-                      {selectedEntity.maxHp || selectedEntity.character?.maxHp}
+                      HP:{' '}
+                      {'hp' in selectedEntity
+                        ? `${selectedEntity.hp}/${selectedEntity.maxHp}`
+                        : `${selectedEntity.character?.hp || '?'}/${selectedEntity.character?.maxHp || '?'}`}
                     </div>
                     <div className="text-sm text-midnight-400">
-                      AC: {selectedEntity.ac || selectedEntity.character?.armorClass}
+                      AC: {'ac' in selectedEntity ? selectedEntity.ac : selectedEntity.character?.armorClass || '?'}
                     </div>
                   </div>
                 </div>
@@ -261,7 +295,9 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
 
               {/* Content */}
               <ScrollArea className="flex-1 p-6">
-                <SheetView sheet={selectedEntity.sheet || selectedEntity.character} />
+                <SheetView
+                  sheet={'sheet' in selectedEntity ? selectedEntity.sheet : selectedEntity.character || undefined}
+                />
               </ScrollArea>
             </div>
           ) : (
@@ -276,7 +312,11 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
   );
 }
 
-function SheetView({ sheet }: { sheet: CharacterSheet }) {
+interface SheetViewProps {
+  sheet: CharacterSheetData | undefined;
+}
+
+function SheetView({ sheet }: SheetViewProps) {
   if (!sheet) return <div>No sheet data</div>;
 
   return (
@@ -286,31 +326,33 @@ function SheetView({ sheet }: { sheet: CharacterSheet }) {
         <section>
           <h3 className="text-lg font-bold text-aurora-200 border-b border-aurora-500/20 mb-3 pb-1">Attributes</h3>
           <div className="grid grid-cols-3 gap-2">
-            {Object.entries(sheet.attributes).map(([attr, val]) => (
-              <div key={attr} className="bg-midnight-950 p-2 rounded text-center border border-midnight-800">
-                <div className="text-xs uppercase text-midnight-400 font-bold">{attr.substring(0, 3)}</div>
-                <div className="text-xl font-bold text-white">{val}</div>
-                <div className="text-xs text-midnight-300">
-                  {Math.floor((val - 10) / 2) > 0 ? '+' : ''}
-                  {Math.floor((val - 10) / 2)}
+            {sheet.attributes &&
+              Object.entries(sheet.attributes).map(([attr, val]) => (
+                <div key={attr} className="bg-midnight-950 p-2 rounded text-center border border-midnight-800">
+                  <div className="text-xs uppercase text-midnight-400 font-bold">{attr.substring(0, 3)}</div>
+                  <div className="text-xl font-bold text-white">{val}</div>
+                  <div className="text-xs text-midnight-300">
+                    {Math.floor((val - 10) / 2) > 0 ? '+' : ''}
+                    {Math.floor((val - 10) / 2)}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </section>
 
         <section>
           <h3 className="text-lg font-bold text-aurora-200 border-b border-aurora-500/20 mb-3 pb-1">Skills</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            {Object.entries(sheet.skills).map(([skill, val]) => (
-              <div key={skill} className="flex justify-between items-center text-midnight-200">
-                <span>{skill}</span>
-                <span className={val >= 0 ? 'text-green-400' : 'text-red-400'}>
-                  {val > 0 ? '+' : ''}
-                  {val}
-                </span>
-              </div>
-            ))}
+            {sheet.skills &&
+              Object.entries(sheet.skills).map(([skill, val]) => (
+                <div key={skill} className="flex justify-between items-center text-midnight-200">
+                  <span>{skill}</span>
+                  <span className={val >= 0 ? 'text-green-400' : 'text-red-400'}>
+                    {val > 0 ? '+' : ''}
+                    {val}
+                  </span>
+                </div>
+              ))}
           </div>
         </section>
       </div>

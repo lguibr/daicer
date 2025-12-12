@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => {
   // Load env from parent directory (root)
@@ -43,10 +47,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-        daicer: path.resolve(__dirname, '..'),
-      },
+      alias: [
+        { find: '@', replacement: path.resolve(__dirname, './src') },
+        { find: 'daicer', replacement: path.resolve(__dirname, '..') },
+      ],
     },
     test: {
       globals: true,

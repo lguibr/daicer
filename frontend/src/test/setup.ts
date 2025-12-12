@@ -82,5 +82,43 @@ vi.mock('../components/ui/dice-loader', () => {
 
   return {
     DiceLoader,
+    default: DiceLoader,
   };
 });
+
+// Mock ResizeObserver
+global.ResizeObserver = class ResizeObserver {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private cb: any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(cb: any) {
+    this.cb = cb;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  observe(target: any) {
+    // Trigger callback immediately with a default size
+    this.cb([
+      {
+        target,
+        contentRect: {
+          width: 1000,
+          height: 1000,
+          top: 0,
+          left: 0,
+          bottom: 1000,
+          right: 1000,
+          x: 0,
+          y: 0,
+        },
+      },
+    ]);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  unobserve() {}
+
+  // eslint-disable-next-line class-methods-use-this
+  disconnect() {}
+};

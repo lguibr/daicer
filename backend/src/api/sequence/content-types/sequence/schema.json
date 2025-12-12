@@ -1,0 +1,25 @@
+{
+    "kind": "collectionType",
+    "collectionName": "sequences",
+    "info": {
+        "singularName": "sequence",
+        "pluralName": "sequences",
+        "displayName": "Sequence",
+        "description": "Atomic counters for ID generation"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "key": {
+            "type": "string",
+            "required": true,
+            "unique": true
+        },
+        "value": {
+            "type": "biginteger",
+            "default": "0"
+        }
+    }
+}

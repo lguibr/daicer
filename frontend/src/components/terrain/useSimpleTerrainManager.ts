@@ -183,10 +183,12 @@ export function useSimpleTerrainManager({
           const initialHeight = initialGrid.length || 0;
 
           const overlapsInitial = !(
-            chunkEndX <= 0 || // Chunk entirely to the left
-            chunkStartX >= initialWidth || // Chunk entirely to the right
-            chunkEndY <= 0 || // Chunk entirely above
-            chunkStartY >= initialHeight // Chunk entirely below
+            (
+              chunkEndX <= 0 || // Chunk entirely to the left
+              chunkStartX >= initialWidth || // Chunk entirely to the right
+              chunkEndY <= 0 || // Chunk entirely above
+              chunkStartY >= initialHeight
+            ) // Chunk entirely below
           );
 
           if (overlapsInitial) {

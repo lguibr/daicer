@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_game_stats",
+  "info": {
+    "displayName": "Stats",
+    "icon": "chart-bar",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "strength": {
+      "type": "integer",
+      "default": 10
+    },
+    "dexterity": {
+      "type": "integer",
+      "default": 10
+    },
+    "constitution": {
+      "type": "integer",
+      "default": 10
+    },
+    "intelligence": {
+      "type": "integer",
+      "default": 10
+    },
+    "wisdom": {
+      "type": "integer",
+      "default": 10
+    },
+    "charisma": {
+      "type": "integer",
+      "default": 10
+    }
+  }
+}

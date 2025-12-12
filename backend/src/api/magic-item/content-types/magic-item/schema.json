@@ -1,0 +1,70 @@
+{
+    "kind": "collectionType",
+    "collectionName": "magic_items",
+    "info": {
+        "singularName": "magic-item",
+        "pluralName": "magic-items",
+        "displayName": "Magic Item",
+        "description": "Magical items and artifacts"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {
+        "i18n": {
+            "localized": true
+        }
+    },
+    "attributes": {
+        "slug": {
+            "type": "uid",
+            "targetField": "name",
+            "required": true
+        },
+        "name": {
+            "type": "string",
+            "pluginOptions": {
+                "i18n": {
+                    "localized": true
+                }
+            },
+            "required": true
+        },
+        "equipment_category": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::equipment-category.equipment-category"
+        },
+        "rarity": {
+            "type": "enumeration",
+            "enum": [
+                "Common",
+                "Uncommon",
+                "Rare",
+                "Very Rare",
+                "Legendary",
+                "Artifact",
+                "Varies"
+            ]
+        },
+        "is_variant": {
+            "type": "boolean",
+            "default": false
+        },
+        "attunement_required": {
+            "type": "boolean",
+            "default": false
+        },
+        "description": {
+            "type": "richtext",
+            "pluginOptions": {
+                "i18n": {
+                    "localized": true
+                }
+            }
+        },
+        "image_url": {
+            "type": "string"
+        }
+    }
+}

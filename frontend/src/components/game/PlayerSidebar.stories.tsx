@@ -67,15 +67,30 @@ export const MultiplePlayersNoActions: Story = {
     players: [
       createPlayer({
         id: 'p1',
-        character: { ...createPlayer({}).character, name: 'Elara', race: 'Elf', characterClass: 'Wizard' } as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        character: {
+          ...createPlayer({}).character,
+          name: 'Elara',
+          race: 'Elf',
+          characterClass: 'Wizard',
+          background: 'Sage',
+        } as any,
       }),
       createPlayer({
         id: 'p2',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         character: { ...createPlayer({}).character, name: 'Thrain', race: 'Dwarf', characterClass: 'Fighter' } as any,
       }),
       createPlayer({
         id: 'p3',
-        character: { ...createPlayer({}).character, name: 'Luna', race: 'Half-Elf', characterClass: 'Rogue' } as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        character: {
+          ...createPlayer({}).character,
+          name: 'Luna',
+          race: 'Half-Elf',
+          characterClass: 'Rogue',
+          background: 'Criminal',
+        } as any,
       }),
     ],
     creatures: [],
@@ -128,6 +143,7 @@ export const FullPartyWithEnemies: Story = {
     players: [
       createPlayer({
         id: 'p1',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         character: {
           ...createPlayer({}).character,
           name: 'Elara',
@@ -141,6 +157,7 @@ export const FullPartyWithEnemies: Story = {
       }),
       createPlayer({
         id: 'p2',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         character: {
           ...createPlayer({}).character,
           name: 'Thrain',
@@ -154,6 +171,7 @@ export const FullPartyWithEnemies: Story = {
       }),
       createPlayer({
         id: 'p3',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         character: {
           ...createPlayer({}).character,
           name: 'Luna',
@@ -208,10 +226,12 @@ export const WoundedParty: Story = {
   args: {
     players: [
       createPlayer({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         character: { ...createPlayer({}).character, hp: 5, maxHp: 32 } as any,
       }),
       createPlayer({
         id: 'p2',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         character: { ...createPlayer({}).character, name: 'Wounded Wizard', hp: 2, maxHp: 18 } as any,
       }),
     ],

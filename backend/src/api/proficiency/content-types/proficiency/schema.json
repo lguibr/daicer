@@ -1,0 +1,67 @@
+{
+    "kind": "collectionType",
+    "collectionName": "proficiencies",
+    "info": {
+        "singularName": "proficiency",
+        "pluralName": "proficiencies",
+        "displayName": "Proficiency",
+        "description": "Character proficiencies"
+    },
+    "options": {
+        "draftAndPublish": true
+    },
+    "pluginOptions": {
+        "i18n": {
+            "localized": true
+        }
+    },
+    "attributes": {
+        "slug": {
+            "type": "uid",
+            "targetField": "name",
+            "required": true
+        },
+        "name": {
+            "type": "string",
+            "pluginOptions": {
+                "i18n": {
+                    "localized": true
+                }
+            },
+            "required": true
+        },
+        "type": {
+            "type": "enumeration",
+            "enum": [
+                "Armor",
+                "Weapons",
+                "Tools",
+                "Artisan's Tools",
+                "Gaming Sets",
+                "Musical Instruments",
+                "Vehicles",
+                "Other",
+                "Saving Throws",
+                "Skills"
+            ]
+        },
+        "classes": {
+            "type": "relation",
+            "relation": "manyToMany",
+            "target": "api::class.class",
+            "mappedBy": "proficiencies"
+        },
+        "races": {
+            "type": "relation",
+            "relation": "manyToMany",
+            "target": "api::race.race",
+            "mappedBy": "proficiencies"
+        },
+        "traits": {
+            "type": "relation",
+            "relation": "manyToMany",
+            "target": "api::trait.trait",
+            "mappedBy": "proficiencies"
+        }
+    }
+}

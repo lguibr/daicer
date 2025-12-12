@@ -1,6 +1,14 @@
-import type { CombatDemoSpellScript } from 'daicer/backend/src/shared/spellLoadouts';
+// import type { CombatDemoSpellScript } from 'daicer/backend/src/shared/spellLoadouts';
 import type { CombatCharacter } from '../../types/combat';
 import type { SpellData, SpellPreviewSnapshot, SpellResolutionSnapshot } from '../../types/spells';
+
+export interface CombatDemoSpellScript {
+  spellId: string;
+  casterId: string;
+  description: string;
+  targetId?: string;
+  targetPosition?: { x: number; y: number };
+}
 
 interface SpellLoadoutDetail {
   script: CombatDemoSpellScript;

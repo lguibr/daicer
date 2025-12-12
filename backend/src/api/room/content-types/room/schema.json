@@ -1,0 +1,70 @@
+{
+  "kind": "collectionType",
+  "collectionName": "rooms",
+  "info": {
+    "singularName": "room",
+    "pluralName": "rooms",
+    "displayName": "Room",
+    "description": "Game room state"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "roomId": {
+      "type": "uid",
+      "required": true,
+      "unique": true
+    },
+    "ownerId": {
+      "type": "string",
+      "required": true
+    },
+    "phase": {
+      "type": "enumeration",
+      "enum": [
+        "lobby",
+        "character_creation",
+        "world_generation",
+        "gameplay",
+        "combat",
+        "ending"
+      ],
+      "default": "lobby"
+    },
+    "worldDescription": {
+      "type": "richtext"
+    },
+    "players": {
+      "type": "json"
+    },
+    "history": {
+      "type": "json"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "settings": {
+      "type": "json"
+    },
+    "structures": {
+      "type": "json"
+    },
+    "terrainData": {
+      "type": "json"
+    },
+    "character_sheets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::character-sheet.character-sheet",
+      "mappedBy": "room"
+    }
+  }
+}

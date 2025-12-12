@@ -249,11 +249,64 @@ export interface Proficiency {
   reference?: string;
 }
 
+const MOCK_ALIGNMENTS: Alignment[] = [
+  {
+    id: 'lg',
+    name: 'Lawful Good',
+    abbreviation: 'LG',
+    description: 'Combines a strong sense of honor and compassion.',
+  },
+  { id: 'ng', name: 'Neutral Good', abbreviation: 'NG', description: 'Does the best that a good person can do.' },
+  {
+    id: 'cg',
+    name: 'Chaotic Good',
+    abbreviation: 'CG',
+    description: 'Act as their conscience directs with little regard for expectations.',
+  },
+  {
+    id: 'ln',
+    name: 'Lawful Neutral',
+    abbreviation: 'LN',
+    description: 'Individuals who act in accordance with law, tradition, or personal codes.',
+  },
+  {
+    id: 'n',
+    name: 'True Neutral',
+    abbreviation: 'N',
+    description: "Prefer to steer clear of moral questions and don't take sides.",
+  },
+  {
+    id: 'cn',
+    name: 'Chaotic Neutral',
+    abbreviation: 'CN',
+    description: 'Follow their whims, holding their personal freedom above all else.',
+  },
+  {
+    id: 'le',
+    name: 'Lawful Evil',
+    abbreviation: 'LE',
+    description: 'Methodically take what they want within the limits of a code of tradition.',
+  },
+  {
+    id: 'ne',
+    name: 'Neutral Evil',
+    abbreviation: 'NE',
+    description: 'Those who do whatever they can get away with, without compassion or qualms.',
+  },
+  {
+    id: 'ce',
+    name: 'Chaotic Evil',
+    abbreviation: 'CE',
+    description: 'Act with arbitrary violence, spurred by their greed, hatred, or bloodlust.',
+  },
+];
+
 /**
  * Fetch all alignments
  */
 export async function getAlignments(): Promise<Alignment[]> {
-  return apiRequest<Alignment[]>('/api/game-data/alignments');
+  // Return mock data for now as strictly required by frontend
+  return Promise.resolve(MOCK_ALIGNMENTS);
 }
 
 /**
@@ -274,14 +327,21 @@ export async function getSkills(): Promise<Skill[]> {
  * Fetch all player races
  */
 export async function getRaces(): Promise<Race[]> {
-  return apiRequest<Race[]>('/api/game-data/races');
+  return apiRequest<Race[]>('/api/races?populate=*');
 }
 
 /**
  * Fetch all character classes
  */
 export async function getClasses(): Promise<CharacterClass[]> {
-  return apiRequest<CharacterClass[]>('/api/game-data/classes');
+  const rawClasses = await apiRequest<any[]>('/api/classes?populate=*');
+  return rawClasses.map((c: any) => ({
+    ...c,
+    id: c.documentId || c.id,
+    hitDie: c.hit_die, // Map snake_case to camelCase
+    primaryAbility: c.primary_ability || c.primaryAbility, // Safety check
+    savingThrows: c.saving_throws || c.savingThrows,
+  }));
 }
 
 /**
@@ -323,7 +383,41 @@ export async function getDamageTypes(): Promise<DamageType[]> {
  * Fetch all equipment items
  */
 export async function getEquipment(): Promise<EquipmentItem[]> {
-  return apiRequest<EquipmentItem[]>('/api/game-data/equipment');
+  const rawItems = await apiRequest<any[]>('/api/equipments?populate=*');
+
+  return rawItems.map((item: any) => ({
+    index: item.slug || item.index,
+    name: item.name,
+    equipmentCategory: item.equipment_category?.name || item.equipment_category || 'Unknown',
+    cost: {
+      quantity: item.cost_quantity ?? 0,
+      unit: item.cost_unit || 'gp',
+    },
+    weight: item.weight,
+    description: item.description,
+    damage: item.damage_dice
+      ? {
+          damageDice: item.damage_dice,
+          damageType: item.damage_type?.name || 'bludgeoning',
+        }
+      : undefined,
+    armorClass:
+      typeof item.armor_class_base === 'number'
+        ? {
+            base: item.armor_class_base,
+            dexBonus: item.armor_class_dex_bonus,
+            maxBonus: item.armor_class_max_bonus,
+          }
+        : item.armor_class_base, // Could be null or number if flat
+    range: item.range_normal
+      ? {
+          normal: item.range_normal,
+          long: item.range_long,
+        }
+      : undefined,
+    properties: item.properties?.map((p: any) => p.name) || [],
+    imageUrl: item.image_url || null,
+  }));
 }
 
 /**
@@ -344,7 +438,34 @@ export async function getWeaponProperties(): Promise<WeaponProperty[]> {
  * Fetch all monsters
  */
 export async function getMonsters(): Promise<Monster[]> {
-  return apiRequest<Monster[]>('/api/game-data/monsters');
+  const rawMonsters = await apiRequest<any[]>('/api/monsters?populate=*');
+  return rawMonsters.map((m: any) => ({
+    id: m.documentId || m.id || m.slug,
+    name: m.name,
+    size: m.size,
+    type: m.type,
+    alignment: m.alignment,
+    armorClass: m.ac || m.armor_class || 10,
+    hitPoints: m.hp || m.hit_points || '10',
+    speed: m.speed,
+    abilityScores: m.stats
+      ? {
+          STR: m.stats.strength || 10,
+          DEX: m.stats.dexterity || 10,
+          CON: m.stats.constitution || 10,
+          INT: m.stats.intelligence || 10,
+          WIS: m.stats.wisdom || 10,
+          CHA: m.stats.charisma || 10,
+        }
+      : { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+    challenge: m.challenge_rating || '0',
+    senses: m.senses || [],
+    languages: m.languages || [],
+    actions: m.actions || [],
+    specialAbilities: m.special_abilities || [],
+    legendaryActions: m.legendary_actions || [],
+    imageUrl: m.image_url || null,
+  }));
 }
 
 /**

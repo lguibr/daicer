@@ -13,6 +13,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import MarkdownMessage from '../game/MarkdownMessage';
 import { useAlignments, useRaces, useClasses } from '../../hooks/useGameData';
+import { getEquipment } from '../../services/game-data';
 import { Button } from '../ui/button';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 import Textarea from '../ui/textarea';
@@ -60,7 +61,7 @@ export default function CharacterCreation({
   assetMode = false,
   settings,
   onAssetCreated,
-}: CharacterCreationProps & { onCancel?: () => void }) {
+}: CharacterCreationProps) {
   const { user } = useAuth();
   const { t, localize } = useI18n();
 
@@ -148,11 +149,8 @@ export default function CharacterCreation({
   useEffect(() => {
     const fetchEquipment = async () => {
       try {
-        const response = await fetch('/api/game-data/equipment');
-        if (response.ok) {
-          const { data } = await response.json();
-          setEquipmentItems(data);
-        }
+        const items = await getEquipment();
+        setEquipmentItems(items);
       } catch (err) {
         console.error('Failed to load equipment:', err);
       }
@@ -501,8 +499,10 @@ export default function CharacterCreation({
       const roomForPayload: Room =
         assetMode || !room
           ? {
-              id: 'asset',
-              code: 'ASSET',
+              documentId: 'room-char-creation',
+              roomId: 'CHAR-CREATION',
+              id: 'room-char-creation',
+              code: 'CHAR-CREATION',
               phase: GamePhase.CHARACTER_CREATION,
               worldDescription: 'Character sheet asset creation',
               settings: null,
@@ -595,7 +595,7 @@ export default function CharacterCreation({
 
   const handleAvatarUpdate = (slot: 'portrait' | 'upperBody' | 'fullBody', base64Data: string) => {
     // Parse base64 to get mimeType and data
-    const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    const matches = base64Data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
     if (matches && matches.length === 3) {
       const mimeType = matches[1];
       const data = matches[2];
@@ -778,6 +778,7 @@ export default function CharacterCreation({
 
   useEffect(() => {
     if (activeStepId !== 'review') {
+      // Do nothing
     }
   }, [activeStepId]);
 
@@ -976,15 +977,15 @@ export default function CharacterCreation({
                 <StepValidationGate
                   valid={Boolean(
                     formData.name &&
-                      backgroundValid &&
-                      formData.appearance.height &&
-                      formData.appearance.weight &&
-                      formData.appearance.skin &&
-                      formData.appearance.hair &&
-                      formData.appearance.eyes &&
-                      formData.appearance.gender &&
-                      formData.personality.traits.trim() &&
-                      formData.personality.ideals.trim()
+                    backgroundValid &&
+                    formData.appearance.height &&
+                    formData.appearance.weight &&
+                    formData.appearance.skin &&
+                    formData.appearance.hair &&
+                    formData.appearance.eyes &&
+                    formData.appearance.gender &&
+                    formData.personality.traits.trim() &&
+                    formData.personality.ideals.trim()
                   )}
                 />
                 <div className="space-y-6">

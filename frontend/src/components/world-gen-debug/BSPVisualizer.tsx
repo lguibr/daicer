@@ -7,6 +7,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Label from '@/components/ui/label';
+/* eslint-disable no-param-reassign */
+
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipForward, RotateCcw } from 'lucide-react';
 import { Alea } from '@daicer/shared/world-gen/noise';

@@ -6,11 +6,10 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
-import { CHUNK_SIZE } from '@daicer/shared';
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import type { GridTile, Player, Creature } from 'daicer/shared';
+import { CHUNK_SIZE, type GridTile, type Player, type Creature, type GlobalPlacementMap } from '@daicer/shared';
 import { VoxelMetadataPanel, type VoxelMetadata } from './VoxelMetadataPanel';
 import { useKeyboardMovement } from '../../hooks/useKeyboardMovement';
+import { type GeneratedStructure } from '../../hooks/useWorldGeneration';
 import {
   InfiniteChunksProvider,
   useInfiniteChunksView,
@@ -23,8 +22,7 @@ import { useSimpleTerrainManager } from './useSimpleTerrainManager';
 interface TerrainExplorerProps {
   biomeGrid: GridTile[][]; // 2D grid for backward compatibility (surface layer)
   biomeGrid3D?: GridTile[][][]; // Optional 3D grid [floor][y][x] for multi-floor structures (7 floors: -3 to +3)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  structures?: Array<{ name: string; x: number; y: number; type: string; [key: string]: any }>;
+  structures?: GeneratedStructure[];
   roomSize?: number;
   initialZoom?: number;
   roomId?: string;
@@ -36,11 +34,7 @@ interface TerrainExplorerProps {
     generateChunk3D?: (worldX: number, worldY: number, width: number, height: number) => GridTile[][][];
   };
   placementMap?: GlobalPlacementMap | null; // NEW: Global structure placement map
-  // For internal use by InfiniteChunksBridge
-  expandedGrid?: (GridTile | null)[][];
-  gridWorldOffset?: { x: number; y: number };
-  isLoading?: boolean;
-  checkChunkLoading?: (x: number, y: number) => void;
+  // For internal use by InfiniteChunksBridge OR passed manually in static mode
   onPlayerMove?: (x: number, y: number) => void;
   onTileClick?: (tile: { x: number; y: number; z: number }, type: string) => void;
 }
@@ -217,20 +211,23 @@ export function TerrainExplorer({
 }
 
 // Wrapper for Simple Manager
-function SimpleTerrainExplorerWrapper(
-  props: TerrainExplorerProps & { chunkGenerator: NonNullable<TerrainExplorerProps['chunkGenerator']> }
-) {
+function SimpleTerrainExplorerWrapper({
+  chunkGenerator,
+  biomeGrid,
+  ...props
+}: TerrainExplorerProps & { chunkGenerator: NonNullable<TerrainExplorerProps['chunkGenerator']> }) {
   const { expandedGrid, gridWorldOffset, isLoading, checkChunkLoading } = useSimpleTerrainManager({
-    initialGrid: props.biomeGrid,
+    initialGrid: biomeGrid,
     chunkSize: CHUNK_SIZE,
     loadRadius: 8,
-    chunkGenerator: props.chunkGenerator,
+    chunkGenerator,
   });
 
   return (
     <>
       <TerrainExplorerInternal
         {...props}
+        biomeGrid={biomeGrid}
         enableInfinite
         expandedGrid={expandedGrid}
         gridWorldOffset={gridWorldOffset}
@@ -243,12 +240,20 @@ function SimpleTerrainExplorerWrapper(
         seed="unknown-in-explorer" // We don't have seed prop here unfortunately unless passed
         params={{ offset: gridWorldOffset }}
       />
+      ```
     </>
   );
 }
 
 // Bridge for InfiniteChunksContext
-function InfiniteChunksBridge({ creatures, ...props }: Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'>) {
+function InfiniteChunksBridge({
+  creatures: _creatures,
+  players,
+  onPlayerMove,
+  onTileClick,
+  roomId,
+  ...props
+}: Omit<TerrainExplorerProps, 'chunkGenerator' | 'placementMap'>) {
   const infiniteChunksView = useInfiniteChunksView();
   const infiniteChunksActions = useInfiniteChunksActions();
 
@@ -261,15 +266,15 @@ function InfiniteChunksBridge({ creatures, ...props }: Omit<TerrainExplorerProps
         gridWorldOffset={infiniteChunksView.gridWorldOffset}
         isLoading={infiniteChunksView.isLoading}
         checkChunkLoading={infiniteChunksActions.checkChunkLoading}
-        players={props.players}
-        onPlayerMove={props.onPlayerMove}
-        onTileClick={props.onTileClick}
+        players={players}
+        onPlayerMove={onPlayerMove}
+        onTileClick={onTileClick}
       />
       <DebugMapExport
         context="GAME"
         grid={infiniteChunksView.expandedGrid}
-        seed={props.roomId} // Using props.roomId as proxy for seed
-        roomId={props.roomId}
+        seed={roomId} // Using props.roomId as proxy for seed
+        roomId={roomId}
         params={{ offset: infiniteChunksView.gridWorldOffset }}
       />
     </>
@@ -318,6 +323,9 @@ function TerrainExplorerInternal({
   const [showStructures, setShowStructures] = useState(true);
   const [selectedMetadata, setSelectedMetadata] = useState<VoxelMetadata | null>(null);
 
+  const visionRadius = 40; // tiles (world space)
+  const TILE_SIZE = 16; // Fixed tile size in pixels
+
   // Helper to convert Z-layer to floor index (for 3D grid)
   // const getFloorIndex = (layer: number): number => layer + 3; // Unused
 
@@ -329,8 +337,8 @@ function TerrainExplorerInternal({
 
   // Expose grid for E2E testing
   useEffect(() => {
-    // @ts-ignore
-    window.__TERRAIN_GRID__ = activeGrid;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-underscore-dangle
+    (window as any).__TERRAIN_GRID__ = activeGrid;
   }, [activeGrid]);
 
   const gridWidth = activeGrid[0]?.length || 128;
@@ -375,9 +383,6 @@ function TerrainExplorerInternal({
     }
   }, [gridWorldOffset, zoom]);
 
-  const visionRadius = 40; // tiles (world space)
-  const TILE_SIZE = 16; // Fixed tile size in pixels
-
   // Debug: Log render scale and vision calculations
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -385,23 +390,6 @@ function TerrainExplorerInternal({
     if (canvas && container && activeGrid.length > 0) {
       /*
       // Unused debug variables removed
-      // const containerWidth = container.clientWidth;
-      // const containerHeight = container.clientHeight;
-      // const width = activeGrid[0]?.length || 0;
-      // const height = activeGrid.length;
-      // const renderScale = TILE_SIZE * zoom;
-      */
-      // Vision debug info removed
-      /*
-      console.log('Vision Debug:', {
-        gridSize: `${simpleGrid?.[0]?.length || 0}x${simpleGrid?.length || 0}`,
-        containerSize: `${dimensions.width}x${dimensions.height}`,
-        zoom: zoom.toFixed(2),
-        renderScale: renderScale.toFixed(4),
-        visionRadiusPixels: visionRadiusPixels.toFixed(1),
-        visibleTilesX: visibleTilesX.toFixed(1),
-        visibleTilesY: visibleTilesY.toFixed(1)
-      });
       */
     }
   }, [activeGrid, zoom, visionRadius, pan]);
@@ -443,8 +431,6 @@ function TerrainExplorerInternal({
     ctx.translate(pan.x, pan.y);
 
     // Get the appropriate grid layer based on currentLayer and biomeGrid3D
-    let layerGrid: (GridTile | null)[][];
-
     // Calculate user grid position first for FoW
     const userGridX = userPosition.x - gridWorldOffset.x;
     const userGridY = userPosition.y - gridWorldOffset.y;
@@ -452,7 +438,7 @@ function TerrainExplorerInternal({
 
     // ALWAYS use activeGrid (the expanding grid with new chunks)
     // NOT biomeGrid3D which is static and doesn't include dynamically loaded chunks
-    layerGrid = activeGrid;
+    const layerGrid = activeGrid;
 
     // Layer-specific rendering
     if (currentLayer < 0) {
@@ -968,11 +954,11 @@ function TerrainExplorerInternal({
       });
 
       // Build metadata
+      // Build metadata
       const metadata: VoxelMetadata = {
         worldCoords: { x: worldX, y: worldY, z: currentLayer },
         roomCoords: { x: roomX, y: roomY },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        biome: (biome as any)?.biome || (typeof biome === 'string' ? biome : 'unknown'),
+        biome: typeof biome === 'string' ? biome : biome?.biome || 'unknown',
         temperature: 0.5,
         moisture: 0.5,
         elevation: 0,
@@ -980,7 +966,7 @@ function TerrainExplorerInternal({
           ? {
               name: structure.name,
               type: structure.type,
-              description: structure.description || 'A mysterious structure',
+              description: (structure.description as string) || 'A mysterious structure',
             }
           : undefined,
       };

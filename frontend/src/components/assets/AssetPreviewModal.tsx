@@ -9,7 +9,6 @@ import { Button } from '../ui/button';
 import { VoxelModelViewer } from './VoxelModelViewer';
 import { CharacterSheetViewer } from './CharacterSheetViewer';
 import type { Asset } from '../../services/assetService';
-import type { CharacterSheetAsset } from '../room/character-creation/characterSheetAsset';
 
 interface AssetPreviewModalProps {
   asset: Asset;
@@ -30,12 +29,7 @@ export function AssetPreviewModal({
 }: AssetPreviewModalProps) {
   // Check if this is a character sheet asset
   if (asset.characterSheetData) {
-    return (
-      <CharacterSheetViewer
-        characterData={asset.characterSheetData as unknown as CharacterSheetAsset}
-        onClose={onClose}
-      />
-    );
+    return <CharacterSheetViewer characterData={asset.characterSheetData as any} onClose={onClose} />;
   }
 
   // Otherwise render generic preview

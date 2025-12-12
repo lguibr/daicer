@@ -1,15 +1,18 @@
 import { useState, useCallback, useMemo } from 'react';
-import { SimplexNoise } from '@daicer/shared/world-gen/noise';
-import { generateCaveCA } from '@daicer/shared/world-gen/cellular-automata';
-import { generateBSPLayout } from '@daicer/shared/world-gen/bsp';
-import { poissonDiskSampling2D } from '@daicer/shared/world-gen/voronoi';
+// Import from refined paths where re-exports might be tricky or circular,
+// but favour root import where possible if exported in index.ts
 import {
+  SimplexNoise,
+  generateCaveCA,
+  generateBSPLayout,
+  poissonDiskSampling2D,
   generateStructureFootprints,
   stampDetailedStructures,
-  type Structure,
-} from '@daicer/shared/world-gen/structures';
-
-import { createSimpleChunkGenerator, DEFAULT_GENERATION_PARAMS, type GenerationParams } from '@daicer/shared/world-gen';
+  createSimpleChunkGenerator,
+  DEFAULT_GENERATION_PARAMS,
+  type GridTile,
+  type GenerationParams,
+} from '@daicer/shared';
 
 export { DEFAULT_GENERATION_PARAMS, type GenerationParams };
 
@@ -22,6 +25,14 @@ export interface GenerationStep {
   timeTaken?: number;
 }
 
+export interface GeneratedStructure {
+  name: string;
+  x: number;
+  y: number;
+  type: string;
+  [key: string]: unknown;
+}
+
 export function useWorldGeneration() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -29,8 +40,7 @@ export function useWorldGeneration() {
   // Store both 2D surface grid and 3D multi-floor grid
   const [biomeGrid, setBiomeGrid] = useState<string[][]>([]);
   const [biomeGrid3D, setBiomeGrid3D] = useState<string[][][]>([]); // [floor][y][x], 7 floors
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [structures, setStructures] = useState<any[]>([]);
+  const [structures, setStructures] = useState<GeneratedStructure[]>([]);
 
   const [steps, setSteps] = useState<GenerationStep[]>([
     {
@@ -303,13 +313,14 @@ export function useWorldGeneration() {
       setBiomeGrid3D(finalGrid);
 
       // Convert structures for visualization
+      setBiomeGrid3D(finalGrid);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newStructures: any[] = detailedStructures.map((s: Structure) => ({
+      const newStructures: GeneratedStructure[] = detailedStructures.map((s: any) => ({
         name: s.name,
-        x: s.worldX,
-        y: s.worldY,
+        x: s.x,
+        y: s.y,
         type: s.type,
-        description: `${s.type} at ${s.worldX},${s.worldY}`,
+        // structures are simpler in frontend view
       }));
 
       setStructures(newStructures);
@@ -326,19 +337,17 @@ export function useWorldGeneration() {
   // Convert string grids to GridTile objects for TerrainExplorer
   const grid = useMemo(
     () =>
-      biomeGrid.map(
-        (row, y) =>
-          row.map(
-            (biome, x) =>
-              ({
-                x,
-                y,
-                z: 0,
-                biome,
-                blockType: 'grass',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              }) as any
-          ) // Cast to any to avoid strict GridTile validation issues for now, or import GridTile
+      biomeGrid.map((row, y) =>
+        row.map(
+          (biome, x) =>
+            ({
+              x,
+              y,
+              z: 0,
+              biome,
+              blockType: 'grass',
+            }) as unknown as GridTile
+        )
       ),
     [biomeGrid]
   );
@@ -355,8 +364,7 @@ export function useWorldGeneration() {
                 z: z - 3, // Map 0..6 to -3..3
                 biome,
                 blockType: 'grass',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              }) as any
+              }) as unknown as GridTile
           )
         )
       ),

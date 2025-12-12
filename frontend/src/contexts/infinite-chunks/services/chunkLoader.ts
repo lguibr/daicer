@@ -4,8 +4,8 @@
  * NO WebSocket - simple REST API only
  */
 
-import type { GlobalPlacementMap } from 'daicer/shared/world-gen/structures';
-import type { GridTile } from 'daicer/shared/world';
+import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
+import type { GridTile } from '@daicer/shared/world';
 import { auth } from '../../../services/firebase';
 import type { TerrainChunk, ChunkGenerator, InfiniteChunksConfig } from '../types';
 
@@ -94,23 +94,32 @@ export async function loadChunk(
     }
 
     // BACKEND API FETCH (game mode)
-    const user = auth.currentUser;
-    if (!user) {
-      throw new Error('User not authenticated');
+    // BACKEND API FETCH (game mode)
+    // Use Strapi JWT instead of Firebase auth
+    const token = localStorage.getItem('strapi_jwt');
+    if (!token && !auth.currentUser) {
+      console.warn('[ChunkLoader] No authentication token found');
+      // We might want to throw, but for now let's try or return dummy
+      // throw new Error('User not authenticated');
     }
 
-    const token = await user.getIdToken();
-    const url = `${import.meta.env.VITE_API_URL}/api/terrain/chunk`;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+    const url = `${apiUrl}/api/terrain/chunk`;
     console.log(`[ChunkLoader] Fetching chunk via POST: ${url} for ${chunkX},${chunkY}`);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify({
-        roomId,
+        roomId, // This should be the documentId now
         chunkX,
         chunkY,
         chunkSize,

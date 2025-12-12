@@ -55,18 +55,15 @@ export default function DynamicLayout({
       )}
 
       {/* Navbar - Public or Private based on auth */}
-      {showNavbar && (
-        <>
-          {user ? (
-            <>
-              <Navbar room={room} playerCount={playerCount} showRoomInfo={showRoomInfo} />
-              <AppBreadcrumb />
-            </>
-          ) : (
-            <PublicNavbar />
-          )}
-        </>
-      )}
+      {showNavbar &&
+        (user ? (
+          <>
+            <Navbar room={room} playerCount={playerCount} showRoomInfo={showRoomInfo} />
+            <AppBreadcrumb />
+          </>
+        ) : (
+          <PublicNavbar />
+        ))}
 
       {/* Room info bar (only for authenticated users with room data) */}
       {showRoomInfo && room && players && user && <RoomInfoBar room={room} players={players} />}
