@@ -1,0 +1,43 @@
+{
+    "collectionName": "components_game_players",
+    "info": {
+        "displayName": "Player",
+        "icon": "user",
+        "description": "A player in a room"
+    },
+    "options": {},
+    "attributes": {
+        "user": {
+            "type": "relation",
+            "relation": "oneToOne",
+            "target": "plugin::users-permissions.user"
+        },
+        "character": {
+            "type": "relation",
+            "relation": "oneToOne",
+            "target": "api::character.character"
+        },
+        "characterSheet": {
+            "type": "relation",
+            "relation": "oneToOne",
+            "target": "api::character-sheet.character-sheet"
+        },
+        "isReady": {
+            "type": "boolean",
+            "default": false
+        },
+        "isOnline": {
+            "type": "boolean",
+            "default": true
+        },
+        "name": {
+            "type": "string"
+        },
+        "joinedAt": {
+            "type": "datetime"
+        },
+        "action": {
+            "type": "string"
+        }
+    }
+}

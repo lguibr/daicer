@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ToolCall } from '../../services/socket';
 import cn from '../../lib/utils';
 import { DiceLoader } from '../ui/dice-loader';
+import DiceRollCard from './DiceRollCard';
 
 interface ToolCallCardProps {
   toolCall: ToolCall;
@@ -102,10 +103,41 @@ export default function ToolCallCard({ toolCall, status, className }: ToolCallCa
       </button>
 
       {/* Expanded Details */}
-      {isExpanded ? (
+      {isExpanded || toolCall.toolName === 'roll_dice' ? (
         <div className="border-t border-white/10 px-4 py-3">
+          {/* SPECIAL: Dice Roll Visualization */}
+          {toolCall.toolName === 'roll_dice' && (
+            <div className="mb-4">
+              {(() => {
+                // Parse args: "1d20+5"
+                const expr = String(toolCall.parameters?.expression || toolCall.parameters?.['0'] || '1d20');
+                const result =
+                  typeof toolCall.result === 'object'
+                    ? (toolCall.result as { total: number }).total
+                    : Number(toolCall.result) || 0;
+
+                return (
+                  <div className="transform scale-90 origin-top-left">
+                    <DiceRollCard
+                      roll={{
+                        dice: expr,
+                        result,
+                        breakdown:
+                          typeof toolCall.result === 'object'
+                            ? (toolCall.result as { expression: string }).expression
+                            : expr,
+                        purpose: 'Skill Check',
+                      }}
+                      animate={status === 'running' || status === 'complete'}
+                    />
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Parameters */}
-          {!!Object.keys(toolCall.parameters ?? {}).length && (
+          {!!Object.keys(toolCall.parameters ?? {}).length && toolCall.toolName !== 'roll_dice' && (
             <div className="mb-3">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-shadow-400">Parameters</p>
               <div className="space-y-1">
@@ -122,8 +154,8 @@ export default function ToolCallCard({ toolCall, status, className }: ToolCallCa
             </div>
           )}
 
-          {/* Result */}
-          {toolCall.result ? (
+          {/* Result (Hidden for dice as card shows it) */}
+          {toolCall.result && toolCall.toolName !== 'roll_dice' ? (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-shadow-400">Result</p>
               <div className="rounded-lg bg-midnight-900/50 p-3 font-mono text-xs text-emerald-300">

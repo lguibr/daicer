@@ -24,7 +24,7 @@ import ToolCallCard from '../components/chat/ToolCallCard';
 import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
-import type { Room, Player } from '../types/shared';
+import { Room as SharedRoom, Player, GamePhase } from '../types/shared';
 import type { Room as GQLRoom } from '../gql/graphql';
 import { useI18n } from '../i18n';
 
@@ -37,7 +37,7 @@ export default function GameRoomPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useI18n();
-  const [room, setRoom] = useState<Room | null>(null);
+  const [room, setRoom] = useState<SharedRoom | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +110,7 @@ export default function GameRoomPage() {
 
     const loadRoom = async () => {
       try {
-        const roomData = (await getRoomState(roomId)) as Room & { players: Player[] };
+        const roomData = (await getRoomState(roomId)) as SharedRoom & { players: Player[] };
         setRoom(roomData);
         setPlayers(roomData.players || []);
 
@@ -382,7 +382,11 @@ export default function GameRoomPage() {
   // Also show this for SETUP phase to skip the streaming intro
   // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
   // Also show this for SETUP phase to skip the streaming intro
-  if (room.phase === 'CHARACTER_CREATION' || room.phase === 'SETUP' || room.phase === 'lobby') {
+  if (
+    room.phase === GamePhase.CHARACTER_CREATION ||
+    room.phase === GamePhase.SETUP ||
+    (room.phase as string) === 'lobby'
+  ) {
     // If user has no character, default to creation mode (optional, can be just lobby)
     // But let's start in Lobby to see everyone
 
@@ -392,7 +396,7 @@ export default function GameRoomPage() {
     const handleReadyToggle = async (isReady: boolean) => {
       if (!room?.id) return;
       try {
-        await setReady(room.id, isReady);
+        await setReady(room.documentId || room.roomId, isReady);
       } catch (err) {
         console.error('Failed to toggle ready:', err);
       }
@@ -403,11 +407,11 @@ export default function GameRoomPage() {
       try {
         setLoading(true);
         const streamId = crypto.randomUUID();
-        await startGame(room.id, room.settings?.language || 'en', streamId);
+        await startGame(room.documentId || room.roomId, room.settings?.language || 'en', streamId);
 
         // Force refresh room state to ensure phase change is reflected immediately
         // This handles cases where socket event might be delayed or missed
-        const updatedRoom = (await getRoomState(room.id)) as Room & { players: Player[] };
+        const updatedRoom = (await getRoomState(room.documentId || room.roomId)) as SharedRoom & { players: Player[] };
         setRoom(updatedRoom);
       } catch (err) {
         console.error('Failed to start game:', err);
@@ -432,7 +436,7 @@ export default function GameRoomPage() {
           players={players}
           onCreateCharacter={() => setIsCreatingCharacter(true)}
           onReadyToggle={handleReadyToggle}
-          isOwner={room.ownerId === user?.uid}
+          isOwner={room.owner?.documentId === user?.documentId || room.ownerId === user?.uid}
           onStartGame={handleStartGame}
         />
       </DynamicLayout>

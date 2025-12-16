@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useI18n } from '../../i18n';
 
 export interface EquipmentItemData {
+  id: string; // Document ID
   index: string;
   name: string;
   equipmentCategory: string;

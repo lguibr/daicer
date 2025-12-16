@@ -19,7 +19,7 @@ import type {
 import { z } from 'zod';
 import { generateText } from '../../../utils/llm';
 import { generateStructured } from '../../../utils/llm/structured';
-import { getPrompt } from '../../../utils/prompt';
+import { getPrompt, formatPrompt } from '../../../utils/prompt';
 // import { getRuleContext } from '../../../utils/rag'; // TODO: precise path if implemented
 
 // Stub for RAG
@@ -67,6 +67,31 @@ const NARRATIVE_DESCRIPTORS: Record<ScaleLevel, string> = {
   6: 'Author a sweeping saga with foreshadowed climaxes and mythic structure.',
 };
 
+// Helper to format DM style into a readable summary for the LLM
+function formatDmStyle(style) {
+  if (!style) return 'Standard DM Style';
+
+  // We can duplicate the maps here or just use simple descriptors
+  // For simplicity and decoupling, I'll use direct descriptors here.
+  const verbosityMap = ['Whisper (Minimal)', 'Terse', 'Measured', 'Storied', 'Lyrical', 'Epic', 'Operatic (Grand)'];
+  const detailMap = ['Minimal', 'Lean', 'Focused', 'Balanced', 'Textured', 'Immersive', 'Cinematic'];
+  const engagementMap = ['Observer', 'Facilitator', 'Guide', 'Collaborator', 'Showrunner', 'Auteur', 'Oracle'];
+  const narrativeMap = ['Sandbox', 'Reactive', 'Responsive', 'Structured', 'Plotted', 'Storied', 'Authored'];
+
+  const summary = [
+    `- Verbosity: ${verbosityMap[style.verbosity] || 'Normal'}`,
+    `- Detail: ${detailMap[style.detail] || 'Normal'}`,
+    `- Engagement: ${engagementMap[style.engagement] || 'Normal'}`,
+    `- Narrative Control: ${narrativeMap[style.narrative] || 'Normal'}`,
+    style.specialMode ? `- Performance Mode: ${style.specialMode}` : null,
+    style.customDirectives ? `- Custom Directives: "${style.customDirectives}"` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return summary;
+}
+
 export default ({ strapi }) => ({
   async generateWorld(settings: WorldSettings, language: Language = 'en'): Promise<string> {
     const { WorldDescriptionSchema } = await import('../../../schemas/agent-responses');
@@ -74,15 +99,20 @@ export default ({ strapi }) => ({
     const systemPromptDefault = `You are a world-class Dungeon Master creating immersive RPG campaign backgrounds.
 Create rich, detailed world descriptions with structured metadata.`;
 
-    const userPromptDefault = `Generate a compelling world description for an RPG campaign.
+    const userPromptDefault = `Generate a campaign world description based on these parameters:
 
-**Campaign Details:**
-- Players: ${settings.playerCount}
-- Length: ${settings.adventureLength}
-- Difficulty: ${settings.difficulty}
-- Theme: ${settings.theme}
-- Setting: ${settings.setting}
-- Tone: ${settings.tone}
+**Campaign Scope:**
+- **Players:** ${settings.playerCount}
+- **Adventure Length:** ${settings.adventureLength}
+- **Difficulty:** ${settings.difficulty}
+- **Starting Level:** ${settings.startingLevel || 1}
+
+**World Settings:**
+- **Archetype:** ${settings.worldType || 'Generic'}
+- **Size:** ${settings.worldSize || 'Medium'}
+- **Theme:** ${settings.theme}
+- **Setting:** ${settings.setting}
+- **Tone:** ${settings.tone}
 
 **Requirements:**
 - Create a catchy campaign title
@@ -92,8 +122,7 @@ Create rich, detailed world descriptions with structured metadata.`;
 - List primary threats or antagonistic forces
 - **Call to Adventure**: Explicitly state why the party is together and what their immediate goal is.
 - **Risks & Stakes**: Clearly define what happens if they fail.
-- Provide 2-3 adventure hooks to draw players in
-- Include metadata about difficulty, theme, and setting`;
+- Provide 2-3 adventure hooks to draw players in`;
 
     // Try to fetch prompts from CMS
     // Note: User prompt dynamic injection is tricky if fetched as static string.
@@ -102,13 +131,24 @@ Create rich, detailed world descriptions with structured metadata.`;
     // and only fetch the SYSTEM prompt to avoid template complexity.
 
     const systemPrompt = await getPrompt('world_generation_system', language, systemPromptDefault);
-    // For user prompt, we construct it dynamically here.
-    // To support localization of the dynamic parts, we would need templates.
-    // Assuming 'language' passed to LLM handles the response language,
-    // the input prompt language is less critical as long as LLM understands it.
-    // However, we should ideally use localized user prompt templates.
-    // For this port, I will use the English template for the prompt structure primarily
-    // but instruct the LLM to respond in the target language (which is handled by llm service).
+
+    let userPrompt = await getPrompt('world_generation_user', language, userPromptDefault);
+
+    // Format the User Prompt with Settings
+    if (userPrompt.includes('{{theme}}')) {
+      userPrompt = formatPrompt(userPrompt, {
+        playerCount: String(settings.playerCount),
+        adventureLength: String(settings.adventureLength),
+        difficulty: String(settings.difficulty),
+        startingLevel: String(settings.startingLevel || 1),
+        worldType: String(settings.worldType || 'Generic'),
+        worldSize: String(settings.worldSize || 'Medium'),
+        theme: settings.theme,
+        setting: settings.setting,
+        tone: settings.tone,
+        dmStyleSummary: formatDmStyle(settings.dmStyle),
+      });
+    }
 
     strapi.log.info('Generating world description');
 
@@ -172,46 +212,34 @@ ${worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')}
 
     const playerSummaries = players
       .map((p) => {
-        const char = p.character;
+        const char = p.character as any; // Cast to any to avoid partial type mismatch
         if (!char) return `- ${p.name} (No character sheet)`;
-        return `- ${char.name} (${char.alignment} ${char.race} ${char.characterClass} Lvl ${char.level}) | HP: ${char.hp}/${char.maxHp} | AC: ${char.armorClass}`;
+        return `- ${char.name} (${char.race?.name || 'Unknown Race'} ${char.class?.name || 'Unknown Class'}) | HP: ${char.baseStats?.hp || 10}/${char.baseStats?.maxHp || 10}`;
       })
       .join('\n');
 
     const creatureSummaries = creatures.map((c) => `- ${c.name}, HP: ${c.hp}/${c.maxHp}`).join('\n');
     let worldConditionsText = ''; // stub
 
-    let dynamicStyleInstructions = '';
+    // Style Instructions
+    let dynamicStyleInstructions = 'Standard DM Style';
     if (dmStyle) {
-      // ... (Style descriptors logic - omitting full map for brevity, reusing constants)
-      // Ideally we refactor this to a private helper in this file
-      const directives = [
-        `- Verbosity Level ${dmStyle.verbosity + 1}: ${VERBOSITY_DESCRIPTORS[dmStyle.verbosity] || 'Normal'}`,
-        `- Descriptive Detail Level ${dmStyle.detail + 1}: ${DETAIL_DESCRIPTORS[dmStyle.detail] || 'Normal'}`,
-        `- Player Engagement Level ${dmStyle.engagement + 1}: ${ENGAGEMENT_DESCRIPTORS[dmStyle.engagement] || 'Normal'}`,
-        `- Narrative Guidance Level ${dmStyle.narrative + 1}: ${NARRATIVE_DESCRIPTORS[dmStyle.narrative] || 'Normal'}`,
-      ];
-      if (dmStyle.customDirectives?.trim()) {
-        directives.push(`- Custom Directives: ${dmStyle.customDirectives.trim()}`);
-      }
-      dynamicStyleInstructions = `\nDYNAMIC STYLE ADJUSTMENTS:\n${directives.join('\n')}\n`;
+      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${formatDmStyle(dmStyle)}`;
     }
 
-    const systemPromptDefault = `You are the Dungeon Master (DM). Your goal is to run a thrilling, immersive, and fair D&D 5e adventure.`;
-    const basePrelude = await getPrompt('dm_system_instruction', language, systemPromptDefault);
+    const systemPromptDefault = `You are the Dungeon Master (DM) for a D&D 5e adventure.
+Your goal is to run a thrilling, immersive, and fair game.
 
-    const worldLore = [settings?.worldBackground?.trim(), worldDescription].filter(Boolean).join('\n\n');
-
-    const systemPrompt = `${basePrelude}${dynamicStyleInstructions}
+{{dmStyle}}
 
 WORLD CONTEXT:
-${worldLore}
-${worldConditionsText}
+{{worldContext}}
+
 CURRENT PARTY:
-${playerSummaries}
+{{partyContext}}
 
 ACTIVE CREATURES/NPCs:
-${creatureSummaries || 'None currently active.'}
+{{creaturesContext}}
 
 CRITICAL: TEAMWORK & PARTY COHESION:
 - This is a TEAM adventure - the party works TOGETHER
@@ -219,6 +247,26 @@ CRITICAL: TEAMWORK & PARTY COHESION:
 
 FORMATTING RULES - EXTREMELY IMPORTANT:
 You MUST use rich markdown formatting in your narrative.`;
+
+    const basePrompt = await getPrompt('dm_system_instruction', language, systemPromptDefault);
+
+    // Format the System Prompt
+    const worldLore = [settings?.worldBackground?.trim(), worldDescription, worldConditionsText]
+      .filter(Boolean)
+      .join('\n\n');
+
+    let systemPrompt = basePrompt;
+    if (systemPrompt.includes('{{dmStyle}}')) {
+      systemPrompt = formatPrompt(systemPrompt, {
+        dmStyle: dynamicStyleInstructions,
+        worldContext: worldLore,
+        partyContext: playerSummaries,
+        creaturesContext: creatureSummaries || 'None currently active.',
+      });
+    } else {
+      // Fallback for old prompt structure or if template vars missing (append logic)
+      systemPrompt = `${systemPrompt}\n\n${dynamicStyleInstructions}\n\nWORLD CONTEXT:\n${worldLore}\n\nCURRENT PARTY:\n${playerSummaries}\n\nACTIVE CREATURES:\n${creatureSummaries || 'None'}`;
+    }
 
     // Build conversation
     const conversationHistory = messages.map((msg) => `${msg.sender}: ${msg.text}`).join('\n\n');
@@ -271,23 +319,126 @@ Respond entirely in ${languageName}.`;
     character: CharacterSheet,
     mainContext: string,
     language: Language = 'en',
+    settings?: WorldSettings, // Added settings for DM Style
     streamId?: string
   ): Promise<string> {
-    const systemPrompt = `You are the Dungeon Master. Provide immersive, personalized perspectives.
-World Context: ${worldDescription}
-Main Context: ${mainContext}`;
+    // Format DM Style
+    let dynamicStyleInstructions = 'Standard DM Style';
+    if (settings?.dmStyle) {
+      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${formatDmStyle(settings.dmStyle)}`;
+    }
 
-    const userPrompt = `Generate a personalized opening for ${character.name} (${character.race} ${character.characterClass}).
+    // Format Character Summary
+    // Cast to any to avoid TS errors with complex/dynamic component types
+    const c = character as any;
+    const charSummary = `Name: ${character.name}
+Race: ${c.race?.name || character.race || 'Unknown'}
+Class: ${c.class?.name || (character as any).characterClass || 'Unknown'}
+Background: ${character.background || 'Unknown'}
+Backstory Snippet: ${character.backstory ? character.backstory.substring(0, 300) + '...' : 'None provided'}
+Personality: ${character.personality?.traits || ''} ${character.personality?.ideals || ''}
+Attributes: STR ${c.baseStats?.strength || 10}, DEX ${c.baseStats?.dexterity || 10}, INT ${c.baseStats?.intelligence || 10}, WIS ${c.baseStats?.wisdom || 10}, CHA ${c.baseStats?.charisma || 10}`;
+
+    const defaultSystem = `You are the Dungeon Master (DM) writing a private opening vignette for a specific character.
+
+${dynamicStyleInstructions}
+
+WORLD CONTEXT:
+${worldDescription}
+
+MAIN ADVENTURE HOOK:
+${mainContext}
+
+TARGET CHARACTER:
+${charSummary}
+
+GOAL:
+Write a deeply personal, sensory-rich opening that bridges their backstory to the current moment.
+Focus on their internal state, their unique perception, and their immediate surroundings.`;
+
+    let systemPrompt = await getPrompt('character_opening_system', language, defaultSystem);
+
+    // Inject Variables
+    if (systemPrompt.includes('{{worldContext}}')) {
+      systemPrompt = formatPrompt(systemPrompt, {
+        dmStyle: dynamicStyleInstructions,
+        worldContext: worldDescription,
+        mainContext: mainContext,
+        characterSummary: charSummary,
+      });
+    } else if (systemPrompt.includes('{{worldDescription}}')) {
+      // Legacy Fallback
+      systemPrompt = formatPrompt(systemPrompt, { worldDescription, mainContext });
+    }
+
+    const defaultUser = `Generate a personalized opening for ${character.name} (${character.race} ${character.characterClass || (character as any).class?.name || 'Unknown Class'}).
 Synchronize with the Main Context.
 Describe sensory details, internal state, and prepare for reaction.
 Start with ### Through ${character.name}'s Eyes`;
 
+    let userPrompt = await getPrompt('character_opening_user', language, defaultUser);
+    if (userPrompt.includes('{{characterName}}')) {
+      userPrompt = formatPrompt(userPrompt, {
+        characterName: character.name,
+        characterRace: ((character as any).race as any)?.name || character.race || 'Unknown',
+        characterClass: ((character as any).class as any)?.name || (character.characterClass as string) || 'Unknown',
+      });
+    }
+
     return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
   },
 
-  async generateMainOpening(worldDescription: string, language: Language = 'en', streamId?: string): Promise<string> {
-    const systemPrompt = `You are a world-class Dungeon Master. Write a compelling, public opening narration for the entire party.`;
-    const userPrompt = `Based on: ${worldDescription}
+  async generateMainOpening(
+    worldDescription: string,
+    players: Player[],
+    language: Language = 'en',
+    settings?: WorldSettings,
+    streamId?: string
+  ): Promise<string> {
+    // Format DM Style
+    let dynamicStyleInstructions = 'Standard DM Style';
+    if (settings?.dmStyle) {
+      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${formatDmStyle(settings.dmStyle)}`;
+    }
+
+    // Format Party Context
+    const partyContext =
+      players.length > 0
+        ? players
+            .map((p) => {
+              const c = p.character as any;
+              if (!c) return `- ${p.name}: (No Character)`;
+              return `- ${c.name} (${c.race?.name || c.race} ${c.class?.name || c.characterClass}): ${c.description || 'A brave adventurer'}`;
+            })
+            .join('\n')
+        : 'A group of adventurers form.';
+
+    const defaultSystem = `You are the Dungeon Master (DM) starting a new D&D 5e campaign.
+
+${dynamicStyleInstructions}
+
+WORLD CONTEXT:
+${worldDescription}
+
+THE PARTY:
+${partyContext}
+
+GOAL:
+Write a compelling, public opening narration that welcomes the players to the world.
+Establish the atmosphere, the immediate setting, and why they are here.`;
+
+    let systemPrompt = await getPrompt('main_opening_system', language, defaultSystem);
+
+    // Inject Variables
+    if (systemPrompt.includes('{{worldContext}}')) {
+      systemPrompt = formatPrompt(systemPrompt, {
+        dmStyle: dynamicStyleInstructions,
+        worldContext: worldDescription,
+        partyContext: partyContext,
+      });
+    }
+
+    const defaultUser = `Based on: ${worldDescription}
 Write a 2-3 paragraph opening.
 1. Grounded Start
 2. Party Unity
@@ -295,37 +446,32 @@ Write a 2-3 paragraph opening.
 4. Call to Action
 5. DO NOT ask questions.`;
 
+    let userPrompt = await getPrompt('main_opening_user', language, defaultUser);
+    if (userPrompt.includes('{{worldDescription}}')) {
+      userPrompt = formatPrompt(userPrompt, { worldDescription });
+    }
+
     return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
   },
   async addCharacter(roomId: string, characterData: any, user: any) {
-    // Fetch room with robust lookup (documentId, roomId field, or numeric id)
+    // 1. Fetch Room with populated players
     const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
-
-    // If roomId looks like a number, checks against numeric id
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
     }
 
     const rooms = await strapi.documents('api::room.room').findMany({
-      filters: {
-        $or: filters,
-      },
+      filters: { $or: filters },
+      populate: ['players', 'players.user', 'players.character'], // Populate Component relations
     });
 
     if (!rooms || rooms.length === 0) {
-      console.error('Room not found for identifier: ' + roomId);
       throw new Error('Room not found');
     }
     const room = rooms[0] as any;
     const players = room.players || [];
-    const playerId = user ? String(user.id) : `user-${Date.now()}`; // Ensure string ID to match frontend
-    const playerName = user ? user.username : 'Unknown';
 
-    // Check if player already exists (compare as strings to handle legacy number IDs)
-    const existingIndex = players.findIndex((p: any) => String(p.userId) === String(playerId));
-
-    // Handle Image Uploads
-    // We upload base64 images to Strapi Media Library and replace them with URLs
+    // 2. Process Avatar Uploads (keep existing logic but returns URLs)
     const avatarSlots = ['portrait', 'upperBody', 'fullBody'];
     const processedAvatarPreview = { ...characterData.avatarPreview };
 
@@ -334,55 +480,106 @@ Write a 2-3 paragraph opening.
         if (processedAvatarPreview[slot] && processedAvatarPreview[slot].data) {
           try {
             const base64 = `data:${processedAvatarPreview[slot].mimeType};base64,${processedAvatarPreview[slot].data}`;
-            const filename = `avatar-${playerId}-${slot}-${Date.now()}`;
+            const filename = `avatar-${user.id}-${slot}-${Date.now()}`;
             const uploadResult = await uploadBase64Image(base64, filename);
-
             if (uploadResult) {
-              // Replace with URL and remove heavy data
+              // Update processed data with ID/URL
+              // Note: Schema expects media relations? Or JSON for preview?
+              // Character schema has 'portrait', 'fullBody' as relations.
+              // We need to link the ID.
               processedAvatarPreview[slot] = {
-                ...processedAvatarPreview[slot],
-                data: null, // Clear base64
-                publicUrl: uploadResult.url,
-                mediaId: uploadResult.id,
+                id: uploadResult.id, // Keep ID for relation linking
+                url: uploadResult.url,
               };
             }
           } catch (err) {
             console.error(`Failed to upload ${slot} avatar:`, err);
-            // Fallback: keep base64 if upload fails? Or just log?
-            // Converting to URL failed, so we might keep base64 logic or fail gracefully.
-            // For now, let's keep base64 if upload fails to avoid data loss,
-            // but effectively we want to stop using base64 DB storage.
           }
         }
       }
     }
 
-    const newPlayer = {
-      id: playerId, // or generate a unique player ID
-      userId: playerId,
-      name: playerName,
-      ready: true,
-      action: null,
-      character: {
-        ...characterData,
-        // Ensure critical stats are present if missing from payload
-        hp: characterData.hp || characterData.maxHp || 10,
-        maxHp: characterData.maxHp || 10,
-        level: characterData.level || 1,
-        xp: characterData.xp || 0,
-        conditions: characterData.conditions || [],
-        inventory: characterData.inventory || [],
-        avatarPreview: processedAvatarPreview,
-      },
-    };
+    // 3. Create Character Entity
 
-    let updatedPlayers;
-    if (existingIndex >= 0) {
-      updatedPlayers = [...players];
-      updatedPlayers[existingIndex] = newPlayer;
-    } else {
-      updatedPlayers = [...players, newPlayer];
+    // Lookup Race and Class IDs
+    let raceId = null;
+    if (characterData.race) {
+      const races = await strapi.documents('api::race.race').findMany({
+        filters: { name: characterData.race },
+      });
+      if (races && races.length > 0) {
+        raceId = races[0].documentId;
+      }
     }
+
+    let classId = null;
+    // Frontend sends 'characterClass', backend schema expects 'class' relation
+    const className = characterData.characterClass || characterData.class;
+    if (className) {
+      const classes = await strapi.documents('api::class.class').findMany({
+        filters: { name: className },
+      });
+      if (classes && classes.length > 0) {
+        classId = classes[0].documentId;
+      }
+    }
+
+    // Map attributes (Capitalized) to stats (lowercase)
+    const rawStats = characterData.baseStats || characterData.attributes || {};
+
+    // DEBUG LOGGING
+    console.log('-------------------------------------------');
+    console.log('ADD CHARACTER DEBUG');
+    console.log('Incoming characterData keys:', Object.keys(characterData));
+    console.log('Incoming attributes:', characterData.attributes);
+    console.log('Incoming baseStats:', characterData.baseStats);
+    console.log('Derived rawStats:', rawStats);
+    console.log('-------------------------------------------');
+
+    const baseStats = {
+      strength: Number(rawStats.Strength || rawStats.strength || 10),
+      dexterity: Number(rawStats.Dexterity || rawStats.dexterity || 10),
+      constitution: Number(rawStats.Constitution || rawStats.constitution || 10),
+      intelligence: Number(rawStats.Intelligence || rawStats.intelligence || 10),
+      wisdom: Number(rawStats.Wisdom || rawStats.wisdom || 10),
+      charisma: Number(rawStats.Charisma || rawStats.charisma || 10),
+    };
+    console.log('Final baseStats:', baseStats);
+    console.log('-------------------------------------------');
+
+    const createdCharacter = await strapi.documents('api::character.character').create({
+      data: {
+        name: characterData.name,
+        race: raceId,
+        class: classId,
+        backstory: characterData.backstory || characterData.background, // Frontend sends 'background', schema has 'backstory'
+        appearance: characterData.appearance,
+        equipment: characterData.equipment,
+        user: user.documentId,
+        baseStats: baseStats,
+        // Media relations
+        portrait: processedAvatarPreview?.portrait?.id,
+        upperBody: processedAvatarPreview?.upperBody?.id,
+        fullBody: processedAvatarPreview?.fullBody?.id,
+      },
+      status: 'published',
+    });
+
+    // 4. Update Room Player Component
+    // Find the player entry for this user
+    const playerIndex = players.findIndex((p: any) => p.user?.documentId === user.documentId || p.user?.id === user.id);
+
+    if (playerIndex === -1) {
+      throw new Error('User is not a player in this room');
+    }
+
+    const updatedPlayers = [...players];
+    updatedPlayers[playerIndex] = {
+      ...updatedPlayers[playerIndex],
+      character: createdCharacter.documentId, // Link the new character
+      isReady: true,
+      // name: characterData.name // Optional: update display name?
+    };
 
     // Update room
     await strapi.documents('api::room.room').update({
@@ -392,7 +589,7 @@ Write a 2-3 paragraph opening.
       },
     });
 
-    return newPlayer;
+    return { character: createdCharacter, player: updatedPlayers[playerIndex] };
   },
 
   async startGame(roomId: string, language: Language = 'en') {
@@ -405,6 +602,7 @@ Write a 2-3 paragraph opening.
       filters: {
         $or: filters,
       },
+      populate: ['players', 'players.character', 'players.character.baseStats'],
     });
 
     if (!rooms || rooms.length === 0) {
@@ -414,20 +612,125 @@ Write a 2-3 paragraph opening.
     const room = rooms[0] as any;
 
     // Generate Opening
-    const mainOpening = await this.generateMainOpening(room.worldDescription, language);
+    const mainOpening = await this.generateMainOpening(
+      room.worldDescription,
+      room.players || [],
+      language,
+      room.settings
+    );
 
-    // TODO: Generate individual openings in parallel and store/send them?
-    // For now, we return the main opening to start the chat.
-    // Individual hooks could be DM'd or appended.
+    // Create CharacterSheets for all players
+    const players = room.players || [];
+    const updatedPlayers = [...players]; // Clone to update locally before save (if needed, but we update via side-effect creation?)
+    // Actually we need to update the Room's player component to point to the new Sheet.
+    // This requires updating the Room entity again.
 
-    // Ideally we save this as the first message.
-    // Since we don't have a messages collection yet (stateless turn assumption in controller),
-    // we return it. If we had a message collection, we'd add it there.
+    let playersUpdated = false;
+
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i];
+      if (p.character && p.character.documentId) {
+        // Check if sheet already exists? Assuming new game = new sheets or reset
+        // For now, duplicate character stats to sheet
+        // We need full character details. 'p.character' might be partial if not deep populated?
+        // It was populated in getRoom/findMany call at start of function...
+
+        const char = p.character as any;
+        const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
+          data: {
+            character: char.documentId,
+            room: room.documentId,
+            currentHp: char.baseStats?.hp || 10,
+            maxHp: char.baseStats?.maxHp || 10,
+            level: 1, // Default or derived
+            experience: 0,
+            stats: char.baseStats, // Copy component data
+            // Copy new fields
+            race: char.race?.documentId,
+            class: char.class?.documentId,
+            appearance: char.appearance,
+            backstory: char.backstory,
+            // If character had equipment in recent update, copy it?
+            // Character schema has 'equipment' (json). Sheet has 'inventory' (json).
+            // We can init inventory from character equipment if desired.
+            inventory: char.equipment || [], // Copy component list directly
+          },
+          status: 'published',
+        });
+
+        // Link sheet to player
+        if (updatedPlayers[i]) {
+          updatedPlayers[i] = {
+            ...updatedPlayers[i],
+            characterSheet: newSheet.documentId,
+          };
+          playersUpdated = true;
+        }
+      }
+    }
+
+    // ... (previous logic for character sheets) ...
+    // Note: We need to update history AND phase.
+
+    // Create Message Object
+    const message = {
+      id: `msg-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+      sender: 'DM',
+      text: mainOpening,
+      timestamp: Date.now(),
+      type: 'narration',
+    };
+
+    // Get current history to append
+    // We already fetched room with fields? 'history' might not be populated if it's a JSON field, but JSON fields are usually returned.
+    // 'history' is not in the findMany populate list in startGame!
+    // We must ensure logic handles it.
+
+    const existingHistory = Array.isArray(room.history) ? room.history : [];
+    const newHistory = [...existingHistory, message];
+
+    // Final Update
+    const updatedRoomData = {
+      phase: 'gameplay',
+      history: newHistory,
+    };
+
+    if (playersUpdated) {
+      (updatedRoomData as any).players = updatedPlayers;
+    }
+
+    const updatedRoom = await strapi.documents('api::room.room').update({
+      documentId: room.documentId,
+      data: updatedRoomData,
+      populate: ['players', 'players.character'], // Return populated so frontend gets fresh state if we emitted room
+    });
+
+    // Broadcast Event
+    // We need streamManager. Import it at top if not present?
+    // It is not imported! I need to checking imports.
+    // I will use dynamic import or assume it is available if I added it?
+    // Wait, I cannot add import here easily without replace_file at top.
+    // I will assume `import { streamManager } from '../../../utils/llm/stream-manager';` needs to be added.
+
+    // Emit 'game:start' which frontend listens to.
+    const { streamManager } = await import('../../../utils/llm/stream-manager');
+    streamManager.broadcast(roomId, 'game:start', {
+      room: updatedRoom, // Send updated room with phase 'gameplay'
+      text: mainOpening,
+      sender: 'DM',
+      timestamp: message.timestamp,
+    });
+
+    // Also emit 'gameState' to force full sync?
+    // 'game:start' usually handles the transition text.
+    // But sending 'message:new' ensures it's added to chat if 'game:start' is just a notification?
+    // Frontend onGameStart: (data) => sets state.messages.push(...)
+    // So distinct event is good.
 
     return {
       text: mainOpening,
       sender: 'DM',
-      timestamp: Date.now(),
+      timestamp: message.timestamp,
     };
   },
 
@@ -441,12 +744,55 @@ Write a 2-3 paragraph opening.
       filters: {
         $or: filters,
       },
-      populate: ['players'], // Populate necessary relations
+      // Populate necessary relations including nested character data for Sheet creation
+      populate: [
+        'players',
+        'players.character',
+        'players.character.baseStats',
+        'players.character.race',
+        'players.character.class',
+        'players.characterSheet',
+      ],
     });
 
     if (!rooms || rooms.length === 0) {
       return null;
     }
     return rooms[0];
+  },
+
+  async spawnCreature(roomId: string, creatureData: any) {
+    const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
+    if (!isNaN(Number(roomId))) {
+      filters.push({ id: Number(roomId) });
+    }
+
+    const rooms = await strapi.documents('api::room.room').findMany({
+      filters: {
+        $or: filters,
+      },
+    });
+
+    if (!rooms || rooms.length === 0) {
+      throw new Error('Room not found');
+    }
+    const room = rooms[0] as any;
+    const creatures = room.creatures || [];
+
+    const newCreature = {
+      id: `creature-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      ...creatureData,
+      hp: creatureData.hp || creatureData.maxHp || 10,
+      maxHp: creatureData.maxHp || 10,
+    };
+
+    await strapi.documents('api::room.room').update({
+      documentId: room.documentId,
+      data: {
+        creatures: [...creatures, newCreature],
+      },
+    });
+
+    return newCreature;
   },
 });

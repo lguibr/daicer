@@ -3,6 +3,12 @@ import { sendTypingIndicator } from '../../services/socket';
 import { useI18n } from '../../i18n';
 import { PromptInput, PromptInputTextarea, PromptInputSubmit } from '../ai';
 
+/**
+ * Enhanced composer using AI Elements PromptInput
+ * Preserves draft persistence and typing indicators from StreamingComposer
+ */
+import { ActionBar } from './ActionBar';
+
 interface GameplayComposerProps {
   roomId: string;
   userName: string;
@@ -14,10 +20,6 @@ interface GameplayComposerProps {
   onChange?: (value: string) => void;
 }
 
-/**
- * Enhanced composer using AI Elements PromptInput
- * Preserves draft persistence and typing indicators from StreamingComposer
- */
 export default function GameplayComposer({
   roomId,
   userName,
@@ -55,8 +57,8 @@ export default function GameplayComposer({
   }, [action, roomId]);
 
   // Handle typing indicator
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement> | string) => {
+    const newValue = typeof e === 'string' ? e : e.target.value;
 
     if (!isControlled) {
       setInternalAction(newValue);
@@ -112,10 +114,17 @@ export default function GameplayComposer({
     localStorage.removeItem(`composer-draft-${roomId}`);
   };
 
+  const handleActionSelect = (text: string) => {
+    const newValue = action + (action.length > 0 && !action.endsWith(' ') ? ' ' : '') + text;
+    handleChange(newValue);
+  };
+
   const status = isProcessing ? 'streaming' : disabled ? 'error' : 'ready';
 
   return (
-    <div className="relative">
+    <div className="relative space-y-2">
+      <ActionBar onActionSelect={handleActionSelect} disabled={disabled || isProcessing} />
+
       <PromptInput onSubmit={handleSubmit}>
         <PromptInputTextarea
           value={action}
@@ -128,7 +137,7 @@ export default function GameplayComposer({
               : placeholder || t('gameplay.actionPlaceholder')
           }
           disabled={disabled}
-          minHeight={100}
+          minHeight={80}
           maxHeight={300}
           className="border-midnight-600/60 bg-midnight-800/60 text-shadow-50 placeholder:text-shadow-400 focus:border-aurora-500/60 focus:bg-midnight-800/80 focus:shadow-[0_0_30px_rgba(34,211,238,0.15)]"
         />
@@ -136,7 +145,7 @@ export default function GameplayComposer({
       </PromptInput>
 
       {/* Character Count */}
-      {action.length > 0 && <div className="mt-2 text-xs text-shadow-500">{action.length} characters</div>}
+      {action.length > 0 && <div className="text-right text-xs text-shadow-500">{action.length} characters</div>}
     </div>
   );
 }

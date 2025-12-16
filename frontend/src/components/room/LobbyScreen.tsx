@@ -120,7 +120,9 @@ export function LobbyScreen({
                         <h3 className="font-bold text-aurora-100 truncate">
                           {player.character?.name || 'Unknown Hero'}
                         </h3>
-                        {room.ownerId === player.userId && <Crown className="w-4 h-4 text-yellow-500" />}
+                        {(room.owner?.documentId === player.userId || room.ownerId === player.userId) && (
+                          <Crown className="w-4 h-4 text-yellow-500" />
+                        )}
                       </div>
                       {playerHasChar ? (
                         <p className="text-xs text-shadow-400 truncate">

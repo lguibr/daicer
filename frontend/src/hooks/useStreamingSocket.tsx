@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { initSocket, disconnectSocket, getSocket, type ToolCall, type PresenceData } from '../services/socket';
 import type { Room, Player, Message, Creature } from '../types/shared';
+import { GamePhase } from '../types/shared';
 
 /**
  * Socket state with streaming support
@@ -232,6 +233,24 @@ export default function useStreamingSocket(roomId?: string) {
                 messages: [...prev.messages, message],
               };
             });
+          },
+          onGameStart: (data) => {
+            console.log('[Socket] Game started:', data);
+
+            // Create the initial message object
+            const initialMessage: Message = {
+              id: `game-start-${Date.now()}`,
+              sender: 'DM',
+              text: data.text,
+              timestamp: data.timestamp,
+            };
+
+            setState((prev) => ({
+              ...prev,
+              room: prev.room ? { ...prev.room, phase: GamePhase.GAMEPLAY } : null,
+              messages: [...prev.messages, initialMessage],
+              isProcessing: false,
+            }));
           },
           // Streaming event handlers
           onStreamStart: (data) => {

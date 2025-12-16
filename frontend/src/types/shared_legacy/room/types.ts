@@ -71,7 +71,13 @@ export interface Room {
   roomId: string; // Public Room ID / Code (if distinct) or alias
   id: string;
   code: string;
-  ownerId: string;
+  owner?: {
+    documentId: string;
+    username: string;
+    email: string;
+  };
+  // Legacy support or if not populated
+  ownerId?: string;
   settings: WorldSettings | null;
   mapConfig?: MapConfig; // Centralized map configuration
   worldDescription: string;

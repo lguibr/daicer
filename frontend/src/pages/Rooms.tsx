@@ -60,7 +60,12 @@ export default function RoomsPage() {
 
       // Map rooms to RoomMembership
       const memberships: RoomMembership[] = roomsRaw.map((room) => {
-        const isOwner = room.ownerId === String(user.id) || room.ownerId === String(user.uid);
+        const isOwner =
+          (room.owner?.documentId &&
+            (room.owner.documentId === user.documentId || room.owner.documentId === String(user.id))) ||
+          // Fallback if legacy ownerId exists
+          room.ownerId === String(user.id) ||
+          room.ownerId === String(user.uid);
         const player =
           room.players?.find((p) => String(p.userId) === String(user.id) || String(p.userId) === String(user.uid)) ||
           null;

@@ -65,6 +65,7 @@ interface SocketEvents {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onMessageNew?: (message: Message) => void;
+  onGameStart?: (data: { room: Room; text: string; sender: string; timestamp: number }) => void;
   // Streaming events
   onStreamStart?: (data: { streamId: string; messageId: string; sender: string; timestamp: number }) => void;
   onStreamChunk?: (data: { streamId: string; messageId: string; content: string; accumulated: string }) => void;
@@ -190,6 +191,7 @@ export async function initSocket(
   if (events.onTurnComplete) socket.on('turn:complete', events.onTurnComplete);
   if (events.onToolCalls) socket.on('tool:calls', events.onToolCalls);
   if (events.onMessageNew) socket.on('message:new', events.onMessageNew);
+  if (events.onGameStart) socket.on('game:start', events.onGameStart);
 
   // Streaming events
   if (events.onStreamStart) socket.on('message:stream:start', events.onStreamStart);

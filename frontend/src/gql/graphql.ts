@@ -20,8 +20,34 @@ export type Scalars = {
   I18NLocaleCode: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSON: { input: any; output: any; }
-  /** The `BigInt` scalar type represents non-fractional signed whole numeric values. */
-  Long: { input: any; output: any; }
+};
+
+export type Ability = {
+  __typename?: 'Ability';
+  description?: Maybe<Scalars['String']['output']>;
+  documentId: Scalars['ID']['output'];
+  fullName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  skills?: Maybe<Array<Maybe<Skill>>>;
+};
+
+export type Alignment = {
+  __typename?: 'Alignment';
+  abbreviation?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  documentId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type Background = {
+  __typename?: 'Background';
+  description?: Maybe<Scalars['String']['output']>;
+  documentId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  skillProficiencies?: Maybe<Array<Maybe<Skill>>>;
 };
 
 export type BooleanFilterInput = {
@@ -51,18 +77,28 @@ export type BooleanFilterInput = {
 
 export type Character = {
   __typename?: 'Character';
-  baseStats?: Maybe<Scalars['JSON']['output']>;
+  appearance?: Maybe<Scalars['JSON']['output']>;
+  backstory?: Maybe<Scalars['String']['output']>;
+  baseStats?: Maybe<ComponentGameStats>;
   class?: Maybe<Class>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
   documentId: Scalars['ID']['output'];
+  equipment?: Maybe<Array<Maybe<ComponentGameInventoryItem>>>;
   fullBody?: Maybe<UploadFile>;
   name: Scalars['String']['output'];
   portrait?: Maybe<UploadFile>;
   publishedAt?: Maybe<Scalars['DateTime']['output']>;
   race?: Maybe<Race>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  upperBody?: Maybe<UploadFile>;
   user?: Maybe<UsersPermissionsUser>;
+};
+
+
+export type CharacterEquipmentArgs = {
+  filters?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 export type CharacterEntityResponseCollection = {
@@ -73,11 +109,13 @@ export type CharacterEntityResponseCollection = {
 
 export type CharacterFiltersInput = {
   and?: InputMaybe<Array<InputMaybe<CharacterFiltersInput>>>;
-  baseStats?: InputMaybe<JsonFilterInput>;
+  appearance?: InputMaybe<JsonFilterInput>;
+  backstory?: InputMaybe<StringFilterInput>;
+  baseStats?: InputMaybe<ComponentGameStatsFiltersInput>;
   class?: InputMaybe<ClassFiltersInput>;
   createdAt?: InputMaybe<DateTimeFilterInput>;
-  description?: InputMaybe<StringFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
+  equipment?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
   name?: InputMaybe<StringFilterInput>;
   not?: InputMaybe<CharacterFiltersInput>;
   or?: InputMaybe<Array<InputMaybe<CharacterFiltersInput>>>;
@@ -88,14 +126,17 @@ export type CharacterFiltersInput = {
 };
 
 export type CharacterInput = {
-  baseStats?: InputMaybe<Scalars['JSON']['input']>;
+  appearance?: InputMaybe<Scalars['JSON']['input']>;
+  backstory?: InputMaybe<Scalars['String']['input']>;
+  baseStats?: InputMaybe<ComponentGameStatsInput>;
   class?: InputMaybe<Scalars['ID']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
+  equipment?: InputMaybe<Array<InputMaybe<ComponentGameInventoryItemInput>>>;
   fullBody?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   portrait?: InputMaybe<Scalars['ID']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
   race?: InputMaybe<Scalars['ID']['input']>;
+  upperBody?: InputMaybe<Scalars['ID']['input']>;
   user?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -106,18 +147,29 @@ export type CharacterRelationResponseCollection = {
 
 export type CharacterSheet = {
   __typename?: 'CharacterSheet';
+  appearance?: Maybe<Scalars['JSON']['output']>;
+  backstory?: Maybe<Scalars['String']['output']>;
   character?: Maybe<Character>;
+  class?: Maybe<Class>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   currentHp?: Maybe<Scalars['Int']['output']>;
   documentId: Scalars['ID']['output'];
   experience?: Maybe<Scalars['Int']['output']>;
-  inventory?: Maybe<Scalars['JSON']['output']>;
+  inventory?: Maybe<Array<Maybe<ComponentGameInventoryItem>>>;
   level?: Maybe<Scalars['Int']['output']>;
   maxHp?: Maybe<Scalars['Int']['output']>;
   publishedAt?: Maybe<Scalars['DateTime']['output']>;
+  race?: Maybe<Race>;
   room?: Maybe<Room>;
-  stats?: Maybe<Scalars['JSON']['output']>;
+  stats?: Maybe<ComponentGameStats>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+
+export type CharacterSheetInventoryArgs = {
+  filters?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 export type CharacterSheetEntityResponseCollection = {
@@ -128,32 +180,40 @@ export type CharacterSheetEntityResponseCollection = {
 
 export type CharacterSheetFiltersInput = {
   and?: InputMaybe<Array<InputMaybe<CharacterSheetFiltersInput>>>;
+  appearance?: InputMaybe<JsonFilterInput>;
+  backstory?: InputMaybe<StringFilterInput>;
   character?: InputMaybe<CharacterFiltersInput>;
+  class?: InputMaybe<ClassFiltersInput>;
   createdAt?: InputMaybe<DateTimeFilterInput>;
   currentHp?: InputMaybe<IntFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
   experience?: InputMaybe<IntFilterInput>;
-  inventory?: InputMaybe<JsonFilterInput>;
+  inventory?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
   level?: InputMaybe<IntFilterInput>;
   maxHp?: InputMaybe<IntFilterInput>;
   not?: InputMaybe<CharacterSheetFiltersInput>;
   or?: InputMaybe<Array<InputMaybe<CharacterSheetFiltersInput>>>;
   publishedAt?: InputMaybe<DateTimeFilterInput>;
+  race?: InputMaybe<RaceFiltersInput>;
   room?: InputMaybe<RoomFiltersInput>;
-  stats?: InputMaybe<JsonFilterInput>;
+  stats?: InputMaybe<ComponentGameStatsFiltersInput>;
   updatedAt?: InputMaybe<DateTimeFilterInput>;
 };
 
 export type CharacterSheetInput = {
+  appearance?: InputMaybe<Scalars['JSON']['input']>;
+  backstory?: InputMaybe<Scalars['String']['input']>;
   character?: InputMaybe<Scalars['ID']['input']>;
+  class?: InputMaybe<Scalars['ID']['input']>;
   currentHp?: InputMaybe<Scalars['Int']['input']>;
   experience?: InputMaybe<Scalars['Int']['input']>;
-  inventory?: InputMaybe<Scalars['JSON']['input']>;
+  inventory?: InputMaybe<Array<InputMaybe<ComponentGameInventoryItemInput>>>;
   level?: InputMaybe<Scalars['Int']['input']>;
   maxHp?: InputMaybe<Scalars['Int']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  race?: InputMaybe<Scalars['ID']['input']>;
   room?: InputMaybe<Scalars['ID']['input']>;
-  stats?: InputMaybe<Scalars['JSON']['input']>;
+  stats?: InputMaybe<ComponentGameStatsInput>;
 };
 
 export type CharacterSheetRelationResponseCollection = {
@@ -259,6 +319,174 @@ export type ClassInput = {
 export type ClassRelationResponseCollection = {
   __typename?: 'ClassRelationResponseCollection';
   nodes: Array<Class>;
+};
+
+export type ComponentGameDmStyle = {
+  __typename?: 'ComponentGameDmStyle';
+  customDirectives?: Maybe<Scalars['String']['output']>;
+  detail?: Maybe<Scalars['Int']['output']>;
+  engagement?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['ID']['output'];
+  narrative?: Maybe<Scalars['Int']['output']>;
+  specialMode?: Maybe<Scalars['String']['output']>;
+  verbosity?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ComponentGameDmStyleFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameDmStyleFiltersInput>>>;
+  customDirectives?: InputMaybe<StringFilterInput>;
+  detail?: InputMaybe<IntFilterInput>;
+  engagement?: InputMaybe<IntFilterInput>;
+  narrative?: InputMaybe<IntFilterInput>;
+  not?: InputMaybe<ComponentGameDmStyleFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameDmStyleFiltersInput>>>;
+  specialMode?: InputMaybe<StringFilterInput>;
+  verbosity?: InputMaybe<IntFilterInput>;
+};
+
+export type ComponentGameDmStyleInput = {
+  customDirectives?: InputMaybe<Scalars['String']['input']>;
+  detail?: InputMaybe<Scalars['Int']['input']>;
+  engagement?: InputMaybe<Scalars['Int']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  narrative?: InputMaybe<Scalars['Int']['input']>;
+  specialMode?: InputMaybe<Scalars['String']['input']>;
+  verbosity?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ComponentGameGenerationParams = {
+  __typename?: 'ComponentGameGenerationParams';
+  bspMaxRoomSize?: Maybe<Scalars['Int']['output']>;
+  bspMinRoomSize?: Maybe<Scalars['Int']['output']>;
+  bspSize?: Maybe<Scalars['Int']['output']>;
+  caveBirthLimit?: Maybe<Scalars['Int']['output']>;
+  caveDeathLimit?: Maybe<Scalars['Int']['output']>;
+  caveFillPercentage?: Maybe<Scalars['Float']['output']>;
+  caveIterations?: Maybe<Scalars['Int']['output']>;
+  elevationOctaves?: Maybe<Scalars['Int']['output']>;
+  elevationPersistence?: Maybe<Scalars['Float']['output']>;
+  elevationScale?: Maybe<Scalars['Float']['output']>;
+  featureAttempts?: Maybe<Scalars['Int']['output']>;
+  featureMinDistance?: Maybe<Scalars['Float']['output']>;
+  generateRoads?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['ID']['output'];
+  maxStructures?: Maybe<Scalars['Int']['output']>;
+  moistureOctaves?: Maybe<Scalars['Int']['output']>;
+  moisturePersistence?: Maybe<Scalars['Float']['output']>;
+  moistureScale?: Maybe<Scalars['Float']['output']>;
+  structureMinDistance?: Maybe<Scalars['Float']['output']>;
+};
+
+export type ComponentGameGenerationParamsFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameGenerationParamsFiltersInput>>>;
+  bspMaxRoomSize?: InputMaybe<IntFilterInput>;
+  bspMinRoomSize?: InputMaybe<IntFilterInput>;
+  bspSize?: InputMaybe<IntFilterInput>;
+  caveBirthLimit?: InputMaybe<IntFilterInput>;
+  caveDeathLimit?: InputMaybe<IntFilterInput>;
+  caveFillPercentage?: InputMaybe<FloatFilterInput>;
+  caveIterations?: InputMaybe<IntFilterInput>;
+  elevationOctaves?: InputMaybe<IntFilterInput>;
+  elevationPersistence?: InputMaybe<FloatFilterInput>;
+  elevationScale?: InputMaybe<FloatFilterInput>;
+  featureAttempts?: InputMaybe<IntFilterInput>;
+  featureMinDistance?: InputMaybe<FloatFilterInput>;
+  generateRoads?: InputMaybe<BooleanFilterInput>;
+  maxStructures?: InputMaybe<IntFilterInput>;
+  moistureOctaves?: InputMaybe<IntFilterInput>;
+  moisturePersistence?: InputMaybe<FloatFilterInput>;
+  moistureScale?: InputMaybe<FloatFilterInput>;
+  not?: InputMaybe<ComponentGameGenerationParamsFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameGenerationParamsFiltersInput>>>;
+  structureMinDistance?: InputMaybe<FloatFilterInput>;
+};
+
+export type ComponentGameGenerationParamsInput = {
+  bspMaxRoomSize?: InputMaybe<Scalars['Int']['input']>;
+  bspMinRoomSize?: InputMaybe<Scalars['Int']['input']>;
+  bspSize?: InputMaybe<Scalars['Int']['input']>;
+  caveBirthLimit?: InputMaybe<Scalars['Int']['input']>;
+  caveDeathLimit?: InputMaybe<Scalars['Int']['input']>;
+  caveFillPercentage?: InputMaybe<Scalars['Float']['input']>;
+  caveIterations?: InputMaybe<Scalars['Int']['input']>;
+  elevationOctaves?: InputMaybe<Scalars['Int']['input']>;
+  elevationPersistence?: InputMaybe<Scalars['Float']['input']>;
+  elevationScale?: InputMaybe<Scalars['Float']['input']>;
+  featureAttempts?: InputMaybe<Scalars['Int']['input']>;
+  featureMinDistance?: InputMaybe<Scalars['Float']['input']>;
+  generateRoads?: InputMaybe<Scalars['Boolean']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  maxStructures?: InputMaybe<Scalars['Int']['input']>;
+  moistureOctaves?: InputMaybe<Scalars['Int']['input']>;
+  moisturePersistence?: InputMaybe<Scalars['Float']['input']>;
+  moistureScale?: InputMaybe<Scalars['Float']['input']>;
+  structureMinDistance?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type ComponentGameInventoryItem = {
+  __typename?: 'ComponentGameInventoryItem';
+  id: Scalars['ID']['output'];
+  isEquipped?: Maybe<Scalars['Boolean']['output']>;
+  item?: Maybe<Equipment>;
+  quantity?: Maybe<Scalars['Int']['output']>;
+  slot?: Maybe<Enum_Componentgameinventoryitem_Slot>;
+};
+
+export type ComponentGameInventoryItemFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameInventoryItemFiltersInput>>>;
+  isEquipped?: InputMaybe<BooleanFilterInput>;
+  item?: InputMaybe<EquipmentFiltersInput>;
+  not?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameInventoryItemFiltersInput>>>;
+  quantity?: InputMaybe<IntFilterInput>;
+  slot?: InputMaybe<StringFilterInput>;
+};
+
+export type ComponentGameInventoryItemInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isEquipped?: InputMaybe<Scalars['Boolean']['input']>;
+  item?: InputMaybe<Scalars['ID']['input']>;
+  quantity?: InputMaybe<Scalars['Int']['input']>;
+  slot?: InputMaybe<Enum_Componentgameinventoryitem_Slot>;
+};
+
+export type ComponentGamePlayer = {
+  __typename?: 'ComponentGamePlayer';
+  action?: Maybe<Scalars['String']['output']>;
+  character?: Maybe<Character>;
+  characterSheet?: Maybe<CharacterSheet>;
+  id: Scalars['ID']['output'];
+  isOnline?: Maybe<Scalars['Boolean']['output']>;
+  isReady?: Maybe<Scalars['Boolean']['output']>;
+  joinedAt?: Maybe<Scalars['DateTime']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+  user?: Maybe<UsersPermissionsUser>;
+};
+
+export type ComponentGamePlayerFiltersInput = {
+  action?: InputMaybe<StringFilterInput>;
+  and?: InputMaybe<Array<InputMaybe<ComponentGamePlayerFiltersInput>>>;
+  character?: InputMaybe<CharacterFiltersInput>;
+  characterSheet?: InputMaybe<CharacterSheetFiltersInput>;
+  isOnline?: InputMaybe<BooleanFilterInput>;
+  isReady?: InputMaybe<BooleanFilterInput>;
+  joinedAt?: InputMaybe<DateTimeFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
+  not?: InputMaybe<ComponentGamePlayerFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGamePlayerFiltersInput>>>;
+  user?: InputMaybe<UsersPermissionsUserFiltersInput>;
+};
+
+export type ComponentGamePlayerInput = {
+  action?: InputMaybe<Scalars['String']['input']>;
+  character?: InputMaybe<Scalars['ID']['input']>;
+  characterSheet?: InputMaybe<Scalars['ID']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  isOnline?: InputMaybe<Scalars['Boolean']['input']>;
+  isReady?: InputMaybe<Scalars['Boolean']['input']>;
+  joinedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  user?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ComponentGameStats = {
@@ -385,6 +613,21 @@ export type DeleteMutationResponse = {
   documentId: Scalars['ID']['output'];
 };
 
+export enum Enum_Componentgameinventoryitem_Slot {
+  Accessory = 'accessory',
+  Armor = 'armor',
+  Backpack = 'backpack',
+  Cloak = 'cloak',
+  Feet = 'feet',
+  Hands = 'hands',
+  Head = 'head',
+  MainHand = 'main_hand',
+  Neck = 'neck',
+  OffHand = 'off_hand',
+  Ring_1 = 'ring_1',
+  Ring_2 = 'ring_2'
+}
+
 export enum Enum_Magicitem_Rarity {
   Artifact = 'Artifact',
   Common = 'Common',
@@ -430,6 +673,24 @@ export enum Enum_Race_Size {
   Tiny = 'Tiny'
 }
 
+export enum Enum_Room_Adventurelength {
+  Epic = 'epic',
+  Flash = 'flash',
+  Legendary = 'legendary',
+  Long = 'long',
+  Medium = 'medium',
+  Short = 'short'
+}
+
+export enum Enum_Room_Difficulty {
+  Challenging = 'challenging',
+  Deadly = 'deadly',
+  Easy = 'easy',
+  Gritty = 'gritty',
+  Medium = 'medium',
+  Storyteller = 'storyteller'
+}
+
 export enum Enum_Room_Phase {
   CharacterCreation = 'character_creation',
   Combat = 'combat',
@@ -437,6 +698,27 @@ export enum Enum_Room_Phase {
   Gameplay = 'gameplay',
   Lobby = 'lobby',
   WorldGeneration = 'world_generation'
+}
+
+export enum Enum_Room_Worldsize {
+  Epic = 'epic',
+  Intimate = 'intimate',
+  Large = 'large',
+  Medium = 'medium',
+  Small = 'small',
+  Vast = 'vast'
+}
+
+export enum Enum_Room_Worldtype {
+  Custom = 'custom',
+  Desert = 'desert',
+  Forest = 'forest',
+  Ice = 'ice',
+  Sky = 'sky',
+  Terra = 'terra',
+  Underground = 'underground',
+  Volcanic = 'volcanic',
+  Water = 'water'
 }
 
 export type Equipment = {
@@ -710,7 +992,15 @@ export type FloatFilterInput = {
   startsWith?: InputMaybe<Scalars['Float']['input']>;
 };
 
-export type GenericMorph = Character | CharacterSheet | Class | ComponentGameStats | DamageType | Equipment | EquipmentCategory | Feature | I18NLocale | Language | MagicItem | MagicSchool | Monster | Proficiency | Prompt | Race | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Room | Sequence | Spell | Subclass | Trait | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser | WeaponProperty;
+export type GameCondition = {
+  __typename?: 'GameCondition';
+  description?: Maybe<Scalars['String']['output']>;
+  documentId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type GenericMorph = Character | CharacterSheet | Class | ComponentGameDmStyle | ComponentGameGenerationParams | ComponentGameInventoryItem | ComponentGamePlayer | ComponentGameStats | DamageType | Equipment | EquipmentCategory | Feature | I18NLocale | Language | MagicItem | MagicSchool | Monster | Proficiency | Prompt | Race | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Room | Spell | Subclass | Trait | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser | WeaponProperty;
 
 export type I18NLocale = {
   __typename?: 'I18NLocale';
@@ -877,31 +1167,6 @@ export type LanguageInput = {
 export type LanguageRelationResponseCollection = {
   __typename?: 'LanguageRelationResponseCollection';
   nodes: Array<Language>;
-};
-
-export type LongFilterInput = {
-  and?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
-  between?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
-  contains?: InputMaybe<Scalars['Long']['input']>;
-  containsi?: InputMaybe<Scalars['Long']['input']>;
-  endsWith?: InputMaybe<Scalars['Long']['input']>;
-  eq?: InputMaybe<Scalars['Long']['input']>;
-  eqi?: InputMaybe<Scalars['Long']['input']>;
-  gt?: InputMaybe<Scalars['Long']['input']>;
-  gte?: InputMaybe<Scalars['Long']['input']>;
-  in?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
-  lt?: InputMaybe<Scalars['Long']['input']>;
-  lte?: InputMaybe<Scalars['Long']['input']>;
-  ne?: InputMaybe<Scalars['Long']['input']>;
-  nei?: InputMaybe<Scalars['Long']['input']>;
-  not?: InputMaybe<LongFilterInput>;
-  notContains?: InputMaybe<Scalars['Long']['input']>;
-  notContainsi?: InputMaybe<Scalars['Long']['input']>;
-  notIn?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
-  notNull?: InputMaybe<Scalars['Boolean']['input']>;
-  null?: InputMaybe<Scalars['Boolean']['input']>;
-  or?: InputMaybe<Array<InputMaybe<Scalars['Long']['input']>>>;
-  startsWith?: InputMaybe<Scalars['Long']['input']>;
 };
 
 export type MagicItem = {
@@ -1174,7 +1439,6 @@ export type Mutation = {
   createReviewWorkflowsWorkflow?: Maybe<ReviewWorkflowsWorkflow>;
   createReviewWorkflowsWorkflowStage?: Maybe<ReviewWorkflowsWorkflowStage>;
   createRoom?: Maybe<Room>;
-  createSequence?: Maybe<Sequence>;
   createSpell?: Maybe<Spell>;
   createSubclass?: Maybe<Subclass>;
   createTrait?: Maybe<Trait>;
@@ -1200,7 +1464,6 @@ export type Mutation = {
   deleteReviewWorkflowsWorkflow?: Maybe<DeleteMutationResponse>;
   deleteReviewWorkflowsWorkflowStage?: Maybe<DeleteMutationResponse>;
   deleteRoom?: Maybe<DeleteMutationResponse>;
-  deleteSequence?: Maybe<DeleteMutationResponse>;
   deleteSpell?: Maybe<DeleteMutationResponse>;
   deleteSubclass?: Maybe<DeleteMutationResponse>;
   deleteTrait?: Maybe<DeleteMutationResponse>;
@@ -1214,7 +1477,9 @@ export type Mutation = {
   emailConfirmation?: Maybe<UsersPermissionsLoginPayload>;
   /** Request a reset password token */
   forgotPassword?: Maybe<UsersPermissionsPasswordPayload>;
+  generateAvatarFullBody?: Maybe<Scalars['JSON']['output']>;
   generateAvatarPortrait?: Maybe<Scalars['JSON']['output']>;
+  generateAvatarUpperBody?: Maybe<Scalars['JSON']['output']>;
   generateWorld?: Maybe<Scalars['JSON']['output']>;
   joinRoom?: Maybe<Room>;
   login: UsersPermissionsLoginPayload;
@@ -1223,6 +1488,7 @@ export type Mutation = {
   register: UsersPermissionsLoginPayload;
   /** Reset user password. Confirm with a code (resetToken from forgotPassword) */
   resetPassword?: Maybe<UsersPermissionsLoginPayload>;
+  spawnCreature?: Maybe<Scalars['JSON']['output']>;
   startGame?: Maybe<Scalars['JSON']['output']>;
   submitAction?: Maybe<Scalars['JSON']['output']>;
   updateCharacter?: Maybe<Character>;
@@ -1242,7 +1508,6 @@ export type Mutation = {
   updateReviewWorkflowsWorkflow?: Maybe<ReviewWorkflowsWorkflow>;
   updateReviewWorkflowsWorkflowStage?: Maybe<ReviewWorkflowsWorkflowStage>;
   updateRoom?: Maybe<Room>;
-  updateSequence?: Maybe<Sequence>;
   updateSpell?: Maybe<Spell>;
   updateSubclass?: Maybe<Subclass>;
   updateTrait?: Maybe<Trait>;
@@ -1382,12 +1647,6 @@ export type MutationCreateRoomArgs = {
 };
 
 
-export type MutationCreateSequenceArgs = {
-  data: SequenceInput;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
 export type MutationCreateSpellArgs = {
   data: SpellInput;
   locale?: InputMaybe<Scalars['I18NLocaleCode']['input']>;
@@ -1523,11 +1782,6 @@ export type MutationDeleteRoomArgs = {
 };
 
 
-export type MutationDeleteSequenceArgs = {
-  documentId: Scalars['ID']['input'];
-};
-
-
 export type MutationDeleteSpellArgs = {
   documentId: Scalars['ID']['input'];
   locale?: InputMaybe<Scalars['I18NLocaleCode']['input']>;
@@ -1577,8 +1831,23 @@ export type MutationForgotPasswordArgs = {
 };
 
 
+export type MutationGenerateAvatarFullBodyArgs = {
+  payload: Scalars['JSON']['input'];
+  portrait: Scalars['JSON']['input'];
+  referenceImage?: InputMaybe<Scalars['String']['input']>;
+  upperBody: Scalars['JSON']['input'];
+};
+
+
 export type MutationGenerateAvatarPortraitArgs = {
   payload: Scalars['JSON']['input'];
+  referenceImage?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationGenerateAvatarUpperBodyArgs = {
+  payload: Scalars['JSON']['input'];
+  portrait: Scalars['JSON']['input'];
   referenceImage?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1615,6 +1884,12 @@ export type MutationResetPasswordArgs = {
   code: Scalars['String']['input'];
   password: Scalars['String']['input'];
   passwordConfirmation: Scalars['String']['input'];
+};
+
+
+export type MutationSpawnCreatureArgs = {
+  creature?: InputMaybe<Scalars['JSON']['input']>;
+  roomId: Scalars['ID']['input'];
 };
 
 
@@ -1757,13 +2032,6 @@ export type MutationUpdateReviewWorkflowsWorkflowStageArgs = {
 
 export type MutationUpdateRoomArgs = {
   data: RoomInput;
-  documentId: Scalars['ID']['input'];
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type MutationUpdateSequenceArgs = {
-  data: SequenceInput;
   documentId: Scalars['ID']['input'];
   status?: InputMaybe<PublicationStatus>;
 };
@@ -2016,6 +2284,9 @@ export enum PublicationStatus {
 
 export type Query = {
   __typename?: 'Query';
+  abilities?: Maybe<Array<Maybe<Ability>>>;
+  alignments?: Maybe<Array<Maybe<Alignment>>>;
+  backgrounds?: Maybe<Array<Maybe<Background>>>;
   character?: Maybe<Character>;
   characterSheet?: Maybe<CharacterSheet>;
   characterSheets: Array<Maybe<CharacterSheet>>;
@@ -2025,6 +2296,7 @@ export type Query = {
   class?: Maybe<Class>;
   classes: Array<Maybe<Class>>;
   classes_connection?: Maybe<ClassEntityResponseCollection>;
+  conditions?: Maybe<Array<Maybe<GameCondition>>>;
   damageType?: Maybe<DamageType>;
   damageTypes: Array<Maybe<DamageType>>;
   damageTypes_connection?: Maybe<DamageTypeEntityResponseCollection>;
@@ -2071,9 +2343,7 @@ export type Query = {
   room?: Maybe<Room>;
   rooms: Array<Maybe<Room>>;
   rooms_connection?: Maybe<RoomEntityResponseCollection>;
-  sequence?: Maybe<Sequence>;
-  sequences: Array<Maybe<Sequence>>;
-  sequences_connection?: Maybe<SequenceEntityResponseCollection>;
+  skills?: Maybe<Array<Maybe<Skill>>>;
   spell?: Maybe<Spell>;
   spells: Array<Maybe<Spell>>;
   spells_connection?: Maybe<SpellEntityResponseCollection>;
@@ -2530,28 +2800,6 @@ export type QueryRooms_ConnectionArgs = {
 };
 
 
-export type QuerySequenceArgs = {
-  documentId: Scalars['ID']['input'];
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QuerySequencesArgs = {
-  filters?: InputMaybe<SequenceFiltersInput>;
-  pagination?: InputMaybe<PaginationArg>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QuerySequences_ConnectionArgs = {
-  filters?: InputMaybe<SequenceFiltersInput>;
-  pagination?: InputMaybe<PaginationArg>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
 export type QuerySpellArgs = {
   documentId: Scalars['ID']['input'];
   locale?: InputMaybe<Scalars['I18NLocaleCode']['input']>;
@@ -2919,23 +3167,34 @@ export type ReviewWorkflowsWorkflowStageRelationResponseCollection = {
 
 export type Room = {
   __typename?: 'Room';
+  adventureLength?: Maybe<Enum_Room_Adventurelength>;
   character_sheets: Array<Maybe<CharacterSheet>>;
   character_sheets_connection?: Maybe<CharacterSheetRelationResponseCollection>;
-  code: Scalars['String']['output'];
+  code?: Maybe<Scalars['String']['output']>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
+  difficulty?: Maybe<Enum_Room_Difficulty>;
+  dmStyle?: Maybe<ComponentGameDmStyle>;
   documentId: Scalars['ID']['output'];
+  generationParams?: Maybe<ComponentGameGenerationParams>;
   history?: Maybe<Scalars['JSON']['output']>;
   isActive?: Maybe<Scalars['Boolean']['output']>;
-  ownerId: Scalars['String']['output'];
+  owner?: Maybe<UsersPermissionsUser>;
   phase?: Maybe<Enum_Room_Phase>;
-  players?: Maybe<Scalars['JSON']['output']>;
+  playerCount?: Maybe<Scalars['Int']['output']>;
+  players?: Maybe<Array<Maybe<ComponentGamePlayer>>>;
   publishedAt?: Maybe<Scalars['DateTime']['output']>;
-  roomId: Scalars['String']['output'];
+  roomId?: Maybe<Scalars['String']['output']>;
+  setting?: Maybe<Scalars['String']['output']>;
   settings?: Maybe<Scalars['JSON']['output']>;
+  startingLevel?: Maybe<Scalars['Int']['output']>;
   structures?: Maybe<Scalars['JSON']['output']>;
   terrainData?: Maybe<Scalars['JSON']['output']>;
+  theme?: Maybe<Scalars['String']['output']>;
+  tone?: Maybe<Scalars['String']['output']>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
   worldDescription?: Maybe<Scalars['String']['output']>;
+  worldSize?: Maybe<Enum_Room_Worldsize>;
+  worldType?: Maybe<Enum_Room_Worldtype>;
 };
 
 
@@ -2952,6 +3211,13 @@ export type RoomCharacter_Sheets_ConnectionArgs = {
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
+
+export type RoomPlayersArgs = {
+  filters?: InputMaybe<ComponentGamePlayerFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 export type RoomEntityResponseCollection = {
   __typename?: 'RoomEntityResponseCollection';
   nodes: Array<Room>;
@@ -2959,75 +3225,77 @@ export type RoomEntityResponseCollection = {
 };
 
 export type RoomFiltersInput = {
+  adventureLength?: InputMaybe<StringFilterInput>;
   and?: InputMaybe<Array<InputMaybe<RoomFiltersInput>>>;
   character_sheets?: InputMaybe<CharacterSheetFiltersInput>;
   code?: InputMaybe<StringFilterInput>;
   createdAt?: InputMaybe<DateTimeFilterInput>;
+  difficulty?: InputMaybe<StringFilterInput>;
+  dmStyle?: InputMaybe<ComponentGameDmStyleFiltersInput>;
   documentId?: InputMaybe<IdFilterInput>;
+  generationParams?: InputMaybe<ComponentGameGenerationParamsFiltersInput>;
   history?: InputMaybe<JsonFilterInput>;
   isActive?: InputMaybe<BooleanFilterInput>;
   not?: InputMaybe<RoomFiltersInput>;
   or?: InputMaybe<Array<InputMaybe<RoomFiltersInput>>>;
-  ownerId?: InputMaybe<StringFilterInput>;
+  owner?: InputMaybe<UsersPermissionsUserFiltersInput>;
   phase?: InputMaybe<StringFilterInput>;
-  players?: InputMaybe<JsonFilterInput>;
+  playerCount?: InputMaybe<IntFilterInput>;
+  players?: InputMaybe<ComponentGamePlayerFiltersInput>;
   publishedAt?: InputMaybe<DateTimeFilterInput>;
   roomId?: InputMaybe<StringFilterInput>;
+  setting?: InputMaybe<StringFilterInput>;
   settings?: InputMaybe<JsonFilterInput>;
+  startingLevel?: InputMaybe<IntFilterInput>;
   structures?: InputMaybe<JsonFilterInput>;
   terrainData?: InputMaybe<JsonFilterInput>;
+  theme?: InputMaybe<StringFilterInput>;
+  tone?: InputMaybe<StringFilterInput>;
   updatedAt?: InputMaybe<DateTimeFilterInput>;
   worldDescription?: InputMaybe<StringFilterInput>;
+  worldSize?: InputMaybe<StringFilterInput>;
+  worldType?: InputMaybe<StringFilterInput>;
 };
 
 export type RoomInput = {
+  adventureLength?: InputMaybe<Enum_Room_Adventurelength>;
   character_sheets?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
   code?: InputMaybe<Scalars['String']['input']>;
+  difficulty?: InputMaybe<Enum_Room_Difficulty>;
+  dmStyle?: InputMaybe<ComponentGameDmStyleInput>;
+  generationParams?: InputMaybe<ComponentGameGenerationParamsInput>;
   history?: InputMaybe<Scalars['JSON']['input']>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  ownerId?: InputMaybe<Scalars['String']['input']>;
+  owner?: InputMaybe<Scalars['ID']['input']>;
   phase?: InputMaybe<Enum_Room_Phase>;
-  players?: InputMaybe<Scalars['JSON']['input']>;
+  playerCount?: InputMaybe<Scalars['Int']['input']>;
+  players?: InputMaybe<Array<InputMaybe<ComponentGamePlayerInput>>>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
   roomId?: InputMaybe<Scalars['String']['input']>;
+  setting?: InputMaybe<Scalars['String']['input']>;
   settings?: InputMaybe<Scalars['JSON']['input']>;
+  startingLevel?: InputMaybe<Scalars['Int']['input']>;
   structures?: InputMaybe<Scalars['JSON']['input']>;
   terrainData?: InputMaybe<Scalars['JSON']['input']>;
+  theme?: InputMaybe<Scalars['String']['input']>;
+  tone?: InputMaybe<Scalars['String']['input']>;
   worldDescription?: InputMaybe<Scalars['String']['input']>;
+  worldSize?: InputMaybe<Enum_Room_Worldsize>;
+  worldType?: InputMaybe<Enum_Room_Worldtype>;
 };
 
-export type Sequence = {
-  __typename?: 'Sequence';
-  createdAt?: Maybe<Scalars['DateTime']['output']>;
+export type RoomRelationResponseCollection = {
+  __typename?: 'RoomRelationResponseCollection';
+  nodes: Array<Room>;
+};
+
+export type Skill = {
+  __typename?: 'Skill';
+  abilityScore?: Maybe<Ability>;
+  description?: Maybe<Scalars['String']['output']>;
   documentId: Scalars['ID']['output'];
-  key: Scalars['String']['output'];
-  publishedAt?: Maybe<Scalars['DateTime']['output']>;
-  updatedAt?: Maybe<Scalars['DateTime']['output']>;
-  value?: Maybe<Scalars['Long']['output']>;
-};
-
-export type SequenceEntityResponseCollection = {
-  __typename?: 'SequenceEntityResponseCollection';
-  nodes: Array<Sequence>;
-  pageInfo: Pagination;
-};
-
-export type SequenceFiltersInput = {
-  and?: InputMaybe<Array<InputMaybe<SequenceFiltersInput>>>;
-  createdAt?: InputMaybe<DateTimeFilterInput>;
-  documentId?: InputMaybe<IdFilterInput>;
-  key?: InputMaybe<StringFilterInput>;
-  not?: InputMaybe<SequenceFiltersInput>;
-  or?: InputMaybe<Array<InputMaybe<SequenceFiltersInput>>>;
-  publishedAt?: InputMaybe<DateTimeFilterInput>;
-  updatedAt?: InputMaybe<DateTimeFilterInput>;
-  value?: InputMaybe<LongFilterInput>;
-};
-
-export type SequenceInput = {
-  key?: InputMaybe<Scalars['String']['input']>;
-  publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  value?: InputMaybe<Scalars['Long']['input']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type Spell = {
@@ -3513,12 +3781,20 @@ export type UsersPermissionsUpdateRolePayload = {
 
 export type UsersPermissionsUser = {
   __typename?: 'UsersPermissionsUser';
+  blocked?: Maybe<Scalars['Boolean']['output']>;
   characters: Array<Maybe<Character>>;
   characters_connection?: Maybe<CharacterRelationResponseCollection>;
+  confirmed?: Maybe<Scalars['Boolean']['output']>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   documentId: Scalars['ID']['output'];
+  email: Scalars['String']['output'];
+  provider?: Maybe<Scalars['String']['output']>;
   publishedAt?: Maybe<Scalars['DateTime']['output']>;
+  role?: Maybe<UsersPermissionsRole>;
+  rooms: Array<Maybe<Room>>;
+  rooms_connection?: Maybe<RoomRelationResponseCollection>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  username: Scalars['String']['output'];
 };
 
 
@@ -3531,6 +3807,20 @@ export type UsersPermissionsUserCharactersArgs = {
 
 export type UsersPermissionsUserCharacters_ConnectionArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type UsersPermissionsUserRoomsArgs = {
+  filters?: InputMaybe<RoomFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type UsersPermissionsUserRooms_ConnectionArgs = {
+  filters?: InputMaybe<RoomFiltersInput>;
   pagination?: InputMaybe<PaginationArg>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -3548,19 +3838,33 @@ export type UsersPermissionsUserEntityResponseCollection = {
 
 export type UsersPermissionsUserFiltersInput = {
   and?: InputMaybe<Array<InputMaybe<UsersPermissionsUserFiltersInput>>>;
+  blocked?: InputMaybe<BooleanFilterInput>;
   characters?: InputMaybe<CharacterFiltersInput>;
+  confirmed?: InputMaybe<BooleanFilterInput>;
   createdAt?: InputMaybe<DateTimeFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
+  email?: InputMaybe<StringFilterInput>;
   not?: InputMaybe<UsersPermissionsUserFiltersInput>;
   or?: InputMaybe<Array<InputMaybe<UsersPermissionsUserFiltersInput>>>;
+  provider?: InputMaybe<StringFilterInput>;
   publishedAt?: InputMaybe<DateTimeFilterInput>;
+  role?: InputMaybe<UsersPermissionsRoleFiltersInput>;
+  rooms?: InputMaybe<RoomFiltersInput>;
   updatedAt?: InputMaybe<DateTimeFilterInput>;
+  username?: InputMaybe<StringFilterInput>;
 };
 
 export type UsersPermissionsUserInput = {
+  blocked?: InputMaybe<Scalars['Boolean']['input']>;
   characters?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  confirmed?: InputMaybe<Scalars['Boolean']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   password?: InputMaybe<Scalars['String']['input']>;
+  provider?: InputMaybe<Scalars['String']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  role?: InputMaybe<Scalars['ID']['input']>;
+  rooms?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  username?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UsersPermissionsUserRelationResponseCollection = {
@@ -3629,19 +3933,104 @@ export type WeaponPropertyRelationResponseCollection = {
   nodes: Array<WeaponProperty>;
 };
 
+export type GetAbilitiesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAbilitiesQuery = { __typename?: 'Query', abilities?: Array<{ __typename?: 'Ability', documentId: string, name: string, fullName: string, description?: string | null, skills?: Array<{ __typename?: 'Skill', name: string } | null> | null } | null> | null };
+
+export type GetSkillsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSkillsQuery = { __typename?: 'Query', skills?: Array<{ __typename?: 'Skill', documentId: string, name: string, description?: string | null, abilityScore?: { __typename?: 'Ability', name: string } | null } | null> | null };
+
+export type GetRacesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetRacesQuery = { __typename?: 'Query', races: Array<{ __typename?: 'Race', documentId: string, name: string, description?: string | null, speed?: number | null, size?: Enum_Race_Size | null } | null> };
+
+export type GetClassesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetClassesQuery = { __typename?: 'Query', classes: Array<{ __typename?: 'Class', documentId: string, name: string, description?: string | null, hit_die?: string | null } | null> };
+
+export type GetAlignmentsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAlignmentsQuery = { __typename?: 'Query', alignments?: Array<{ __typename?: 'Alignment', documentId: string, name: string, abbreviation?: string | null, description?: string | null } | null> | null };
+
+export type GetBackgroundsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetBackgroundsQuery = { __typename?: 'Query', backgrounds?: Array<{ __typename?: 'Background', documentId: string, name: string, description?: string | null, skillProficiencies?: Array<{ __typename?: 'Skill', name: string } | null> | null } | null> | null };
+
+export type GetLanguagesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetLanguagesQuery = { __typename?: 'Query', languages: Array<{ __typename?: 'Language', documentId: string, name: string, note?: string | null } | null> };
+
+export type GetMagicSchoolsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMagicSchoolsQuery = { __typename?: 'Query', magicSchools: Array<{ __typename?: 'MagicSchool', documentId: string, name: string, description?: string | null } | null> };
+
+export type GetConditionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetConditionsQuery = { __typename?: 'Query', conditions?: Array<{ __typename?: 'GameCondition', documentId: string, name: string, description?: string | null } | null> | null };
+
+export type GetDamageTypesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetDamageTypesQuery = { __typename?: 'Query', damageTypes: Array<{ __typename?: 'DamageType', documentId: string, name: string, description?: string | null } | null> };
+
+export type GetEquipmentQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetEquipmentQuery = { __typename?: 'Query', equipments: Array<{ __typename?: 'Equipment', documentId: string, name: string, cost_quantity?: number | null, cost_unit?: string | null, weight?: number | null, description?: string | null, damage_dice?: string | null, range_normal?: number | null, range_long?: number | null, armor_class_base?: number | null, armor_class_dex_bonus?: boolean | null, damage_type?: { __typename?: 'DamageType', name: string } | null, equipment_category?: { __typename?: 'EquipmentCategory', name: string } | null, properties: Array<{ __typename?: 'WeaponProperty', name: string } | null> } | null> };
+
+export type GetMonstersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetMonstersQuery = { __typename?: 'Query', monsters: Array<{ __typename?: 'Monster', documentId: string, name: string, size?: Enum_Monster_Size | null, type?: string | null, alignment?: string | null, hp?: number | null, ac?: number | null, speed?: any | null, challenge_rating?: number | null } | null> };
+
+export type GetSpellsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSpellsQuery = { __typename?: 'Query', spells: Array<{ __typename?: 'Spell', documentId: string, name: string, level?: number | null, school?: string | null, casting_time?: string | null, range?: string | null, components?: any | null, duration?: string | null, is_ritual?: boolean | null, description?: string | null } | null> };
+
+export type GetFeaturesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetFeaturesQuery = { __typename?: 'Query', features: Array<{ __typename?: 'Feature', documentId: string, name: string, level?: number | null, description?: string | null } | null> };
+
+export type GetTraitsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetTraitsQuery = { __typename?: 'Query', traits: Array<{ __typename?: 'Trait', documentId: string, name: string, description?: string | null, races: Array<{ __typename?: 'Race', name: string } | null> } | null> };
+
+export type GetSubclassesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSubclassesQuery = { __typename?: 'Query', subclasses: Array<{ __typename?: 'Subclass', documentId: string, name: string, description?: string | null, class?: { __typename?: 'Class', name: string } | null } | null> };
+
+export type GetProficienciesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetProficienciesQuery = { __typename?: 'Query', proficiencies: Array<{ __typename?: 'Proficiency', documentId: string, name: string, type?: Enum_Proficiency_Type | null, classes: Array<{ __typename?: 'Class', name: string } | null>, races: Array<{ __typename?: 'Race', name: string } | null> } | null> };
+
 export type CreateRoomMutationVariables = Exact<{
   data: RoomInput;
 }>;
 
 
-export type CreateRoomMutation = { __typename?: 'Mutation', createRoom?: { __typename?: 'Room', documentId: string, roomId: string, code: string } | null };
+export type CreateRoomMutation = { __typename?: 'Mutation', createRoom?: { __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, worldType?: Enum_Room_Worldtype | null, worldSize?: Enum_Room_Worldsize | null, adventureLength?: Enum_Room_Adventurelength | null, difficulty?: Enum_Room_Difficulty | null, startingLevel?: number | null, playerCount?: number | null, theme?: string | null, setting?: string | null, tone?: string | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null, generationParams?: { __typename?: 'ComponentGameGenerationParams', structureMinDistance?: number | null, maxStructures?: number | null, generateRoads?: boolean | null, elevationScale?: number | null, elevationOctaves?: number | null, elevationPersistence?: number | null, moistureScale?: number | null, moistureOctaves?: number | null, moisturePersistence?: number | null, caveFillPercentage?: number | null, caveIterations?: number | null, caveBirthLimit?: number | null, caveDeathLimit?: number | null, bspSize?: number | null, bspMinRoomSize?: number | null, bspMaxRoomSize?: number | null, featureMinDistance?: number | null, featureAttempts?: number | null } | null } | null };
 
 export type JoinRoomMutationVariables = Exact<{
   code: Scalars['String']['input'];
 }>;
 
 
-export type JoinRoomMutation = { __typename?: 'Mutation', joinRoom?: { __typename?: 'Room', documentId: string, roomId: string, code: string, players?: any | null, phase?: Enum_Room_Phase | null, settings?: any | null, structures?: any | null, worldDescription?: string | null, history?: any | null } | null };
+export type JoinRoomMutation = { __typename?: 'Mutation', joinRoom?: { __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, settings?: any | null, worldType?: Enum_Room_Worldtype | null, worldSize?: Enum_Room_Worldsize | null, adventureLength?: Enum_Room_Adventurelength | null, difficulty?: Enum_Room_Difficulty | null, startingLevel?: number | null, theme?: string | null, setting?: string | null, tone?: string | null, structures?: any | null, worldDescription?: string | null, history?: any | null, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, action?: string | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, portrait?: { __typename?: 'UploadFile', url: string } | null, upperBody?: { __typename?: 'UploadFile', url: string } | null, fullBody?: { __typename?: 'UploadFile', url: string } | null, baseStats?: { __typename?: 'ComponentGameStats', strength?: number | null, dexterity?: number | null, constitution?: number | null, intelligence?: number | null, wisdom?: number | null, charisma?: number | null } | null } | null } | null> | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null, generationParams?: { __typename?: 'ComponentGameGenerationParams', structureMinDistance?: number | null, maxStructures?: number | null, generateRoads?: boolean | null, elevationScale?: number | null, elevationOctaves?: number | null, elevationPersistence?: number | null, moistureScale?: number | null, moistureOctaves?: number | null, moisturePersistence?: number | null, caveFillPercentage?: number | null, caveIterations?: number | null, caveBirthLimit?: number | null, caveDeathLimit?: number | null, bspSize?: number | null, bspMinRoomSize?: number | null, bspMaxRoomSize?: number | null, featureMinDistance?: number | null, featureAttempts?: number | null } | null } | null };
 
 export type UpdateRoomMutationVariables = Exact<{
   documentId: Scalars['ID']['input'];
@@ -3692,28 +4081,75 @@ export type GenerateAvatarPortraitMutationVariables = Exact<{
 
 export type GenerateAvatarPortraitMutation = { __typename?: 'Mutation', generateAvatarPortrait?: any | null };
 
+export type GenerateAvatarUpperBodyMutationVariables = Exact<{
+  payload: Scalars['JSON']['input'];
+  portrait: Scalars['JSON']['input'];
+  referenceImage?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateAvatarUpperBodyMutation = { __typename?: 'Mutation', generateAvatarUpperBody?: any | null };
+
+export type GenerateAvatarFullBodyMutationVariables = Exact<{
+  payload: Scalars['JSON']['input'];
+  portrait: Scalars['JSON']['input'];
+  upperBody: Scalars['JSON']['input'];
+  referenceImage?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GenerateAvatarFullBodyMutation = { __typename?: 'Mutation', generateAvatarFullBody?: any | null };
+
+export type SpawnCreatureMutationVariables = Exact<{
+  roomId: Scalars['ID']['input'];
+  creature: Scalars['JSON']['input'];
+}>;
+
+
+export type SpawnCreatureMutation = { __typename?: 'Mutation', spawnCreature?: any | null };
+
 export type GetRoomQueryVariables = Exact<{
   filters?: InputMaybe<RoomFiltersInput>;
 }>;
 
 
-export type GetRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId: string, code: string, phase?: Enum_Room_Phase | null, players?: any | null, settings?: any | null, structures?: any | null, worldDescription?: string | null, history?: any | null } | null> };
+export type GetRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, settings?: any | null, worldType?: Enum_Room_Worldtype | null, worldSize?: Enum_Room_Worldsize | null, adventureLength?: Enum_Room_Adventurelength | null, difficulty?: Enum_Room_Difficulty | null, startingLevel?: number | null, playerCount?: number | null, theme?: string | null, setting?: string | null, tone?: string | null, structures?: any | null, worldDescription?: string | null, history?: any | null, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, action?: string | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, backstory?: string | null, portrait?: { __typename?: 'UploadFile', url: string } | null, upperBody?: { __typename?: 'UploadFile', url: string } | null, fullBody?: { __typename?: 'UploadFile', url: string } | null, baseStats?: { __typename?: 'ComponentGameStats', strength?: number | null, dexterity?: number | null, constitution?: number | null, intelligence?: number | null, wisdom?: number | null, charisma?: number | null } | null } | null } | null> | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null, generationParams?: { __typename?: 'ComponentGameGenerationParams', structureMinDistance?: number | null, maxStructures?: number | null, generateRoads?: boolean | null, elevationScale?: number | null, elevationOctaves?: number | null, elevationPersistence?: number | null, moistureScale?: number | null, moistureOctaves?: number | null, moisturePersistence?: number | null, caveFillPercentage?: number | null, caveIterations?: number | null, caveBirthLimit?: number | null, caveDeathLimit?: number | null, bspSize?: number | null, bspMinRoomSize?: number | null, bspMaxRoomSize?: number | null, featureMinDistance?: number | null, featureAttempts?: number | null } | null, owner?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null } | null> };
 
 export type ListRoomsQueryVariables = Exact<{
   filters?: InputMaybe<RoomFiltersInput>;
 }>;
 
 
-export type ListRoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId: string, code: string, phase?: Enum_Room_Phase | null, players?: any | null } | null> };
+export type ListRoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, owner?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, portrait?: { __typename?: 'UploadFile', url: string } | null } | null } | null> | null } | null> };
 
 
-export const CreateRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createRoom"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}}]}}]}}]} as unknown as DocumentNode<CreateRoomMutation, CreateRoomMutationVariables>;
-export const JoinRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"JoinRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"code"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"joinRoom"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"code"},"value":{"kind":"Variable","name":{"kind":"Name","value":"code"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"players"}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"settings"}},{"kind":"Field","name":{"kind":"Name","value":"structures"}},{"kind":"Field","name":{"kind":"Name","value":"worldDescription"}},{"kind":"Field","name":{"kind":"Name","value":"history"}}]}}]}}]} as unknown as DocumentNode<JoinRoomMutation, JoinRoomMutationVariables>;
+export const GetAbilitiesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAbilities"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"abilities"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"skills"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetAbilitiesQuery, GetAbilitiesQueryVariables>;
+export const GetSkillsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSkills"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"skills"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"abilityScore"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetSkillsQuery, GetSkillsQueryVariables>;
+export const GetRacesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRaces"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"races"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"speed"}},{"kind":"Field","name":{"kind":"Name","value":"size"}}]}}]}}]} as unknown as DocumentNode<GetRacesQuery, GetRacesQueryVariables>;
+export const GetClassesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetClasses"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"classes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"hit_die"}}]}}]}}]} as unknown as DocumentNode<GetClassesQuery, GetClassesQueryVariables>;
+export const GetAlignmentsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAlignments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"alignments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"abbreviation"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<GetAlignmentsQuery, GetAlignmentsQueryVariables>;
+export const GetBackgroundsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetBackgrounds"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"backgrounds"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"skillProficiencies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetBackgroundsQuery, GetBackgroundsQueryVariables>;
+export const GetLanguagesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLanguages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"languages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"note"}}]}}]}}]} as unknown as DocumentNode<GetLanguagesQuery, GetLanguagesQueryVariables>;
+export const GetMagicSchoolsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMagicSchools"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"magicSchools"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<GetMagicSchoolsQuery, GetMagicSchoolsQueryVariables>;
+export const GetConditionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetConditions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"conditions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<GetConditionsQuery, GetConditionsQueryVariables>;
+export const GetDamageTypesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetDamageTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"damageTypes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<GetDamageTypesQuery, GetDamageTypesQueryVariables>;
+export const GetEquipmentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetEquipment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"equipments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"cost_quantity"}},{"kind":"Field","name":{"kind":"Name","value":"cost_unit"}},{"kind":"Field","name":{"kind":"Name","value":"weight"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"damage_dice"}},{"kind":"Field","name":{"kind":"Name","value":"damage_type"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"equipment_category"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"properties"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"range_normal"}},{"kind":"Field","name":{"kind":"Name","value":"range_long"}},{"kind":"Field","name":{"kind":"Name","value":"armor_class_base"}},{"kind":"Field","name":{"kind":"Name","value":"armor_class_dex_bonus"}}]}}]}}]} as unknown as DocumentNode<GetEquipmentQuery, GetEquipmentQueryVariables>;
+export const GetMonstersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetMonsters"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"monsters"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"size"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"alignment"}},{"kind":"Field","name":{"kind":"Name","value":"hp"}},{"kind":"Field","name":{"kind":"Name","value":"ac"}},{"kind":"Field","name":{"kind":"Name","value":"speed"}},{"kind":"Field","name":{"kind":"Name","value":"challenge_rating"}}]}}]}}]} as unknown as DocumentNode<GetMonstersQuery, GetMonstersQueryVariables>;
+export const GetSpellsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSpells"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"spells"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"level"}},{"kind":"Field","name":{"kind":"Name","value":"school"}},{"kind":"Field","name":{"kind":"Name","value":"casting_time"}},{"kind":"Field","name":{"kind":"Name","value":"range"}},{"kind":"Field","name":{"kind":"Name","value":"components"}},{"kind":"Field","name":{"kind":"Name","value":"duration"}},{"kind":"Field","name":{"kind":"Name","value":"is_ritual"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<GetSpellsQuery, GetSpellsQueryVariables>;
+export const GetFeaturesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetFeatures"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"features"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"level"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<GetFeaturesQuery, GetFeaturesQueryVariables>;
+export const GetTraitsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetTraits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"traits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"races"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetTraitsQuery, GetTraitsQueryVariables>;
+export const GetSubclassesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSubclasses"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"subclasses"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"class"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetSubclassesQuery, GetSubclassesQueryVariables>;
+export const GetProficienciesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetProficiencies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"proficiencies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"classes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"races"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetProficienciesQuery, GetProficienciesQueryVariables>;
+export const CreateRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createRoom"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"worldType"}},{"kind":"Field","name":{"kind":"Name","value":"worldSize"}},{"kind":"Field","name":{"kind":"Name","value":"adventureLength"}},{"kind":"Field","name":{"kind":"Name","value":"difficulty"}},{"kind":"Field","name":{"kind":"Name","value":"startingLevel"}},{"kind":"Field","name":{"kind":"Name","value":"playerCount"}},{"kind":"Field","name":{"kind":"Name","value":"theme"}},{"kind":"Field","name":{"kind":"Name","value":"setting"}},{"kind":"Field","name":{"kind":"Name","value":"tone"}},{"kind":"Field","name":{"kind":"Name","value":"dmStyle"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"verbosity"}},{"kind":"Field","name":{"kind":"Name","value":"detail"}},{"kind":"Field","name":{"kind":"Name","value":"engagement"}},{"kind":"Field","name":{"kind":"Name","value":"narrative"}},{"kind":"Field","name":{"kind":"Name","value":"specialMode"}},{"kind":"Field","name":{"kind":"Name","value":"customDirectives"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generationParams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"structureMinDistance"}},{"kind":"Field","name":{"kind":"Name","value":"maxStructures"}},{"kind":"Field","name":{"kind":"Name","value":"generateRoads"}},{"kind":"Field","name":{"kind":"Name","value":"elevationScale"}},{"kind":"Field","name":{"kind":"Name","value":"elevationOctaves"}},{"kind":"Field","name":{"kind":"Name","value":"elevationPersistence"}},{"kind":"Field","name":{"kind":"Name","value":"moistureScale"}},{"kind":"Field","name":{"kind":"Name","value":"moistureOctaves"}},{"kind":"Field","name":{"kind":"Name","value":"moisturePersistence"}},{"kind":"Field","name":{"kind":"Name","value":"caveFillPercentage"}},{"kind":"Field","name":{"kind":"Name","value":"caveIterations"}},{"kind":"Field","name":{"kind":"Name","value":"caveBirthLimit"}},{"kind":"Field","name":{"kind":"Name","value":"caveDeathLimit"}},{"kind":"Field","name":{"kind":"Name","value":"bspSize"}},{"kind":"Field","name":{"kind":"Name","value":"bspMinRoomSize"}},{"kind":"Field","name":{"kind":"Name","value":"bspMaxRoomSize"}},{"kind":"Field","name":{"kind":"Name","value":"featureMinDistance"}},{"kind":"Field","name":{"kind":"Name","value":"featureAttempts"}}]}}]}}]}}]} as unknown as DocumentNode<CreateRoomMutation, CreateRoomMutationVariables>;
+export const JoinRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"JoinRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"code"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"joinRoom"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"code"},"value":{"kind":"Variable","name":{"kind":"Name","value":"code"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"players"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isReady"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}},{"kind":"Field","name":{"kind":"Name","value":"joinedAt"}},{"kind":"Field","name":{"kind":"Name","value":"action"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"character"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"portrait"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"Field","name":{"kind":"Name","value":"upperBody"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"Field","name":{"kind":"Name","value":"fullBody"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"Field","name":{"kind":"Name","value":"baseStats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"strength"}},{"kind":"Field","name":{"kind":"Name","value":"dexterity"}},{"kind":"Field","name":{"kind":"Name","value":"constitution"}},{"kind":"Field","name":{"kind":"Name","value":"intelligence"}},{"kind":"Field","name":{"kind":"Name","value":"wisdom"}},{"kind":"Field","name":{"kind":"Name","value":"charisma"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"settings"}},{"kind":"Field","name":{"kind":"Name","value":"worldType"}},{"kind":"Field","name":{"kind":"Name","value":"worldSize"}},{"kind":"Field","name":{"kind":"Name","value":"adventureLength"}},{"kind":"Field","name":{"kind":"Name","value":"difficulty"}},{"kind":"Field","name":{"kind":"Name","value":"startingLevel"}},{"kind":"Field","name":{"kind":"Name","value":"theme"}},{"kind":"Field","name":{"kind":"Name","value":"setting"}},{"kind":"Field","name":{"kind":"Name","value":"tone"}},{"kind":"Field","name":{"kind":"Name","value":"dmStyle"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"verbosity"}},{"kind":"Field","name":{"kind":"Name","value":"detail"}},{"kind":"Field","name":{"kind":"Name","value":"engagement"}},{"kind":"Field","name":{"kind":"Name","value":"narrative"}},{"kind":"Field","name":{"kind":"Name","value":"specialMode"}},{"kind":"Field","name":{"kind":"Name","value":"customDirectives"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generationParams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"structureMinDistance"}},{"kind":"Field","name":{"kind":"Name","value":"maxStructures"}},{"kind":"Field","name":{"kind":"Name","value":"generateRoads"}},{"kind":"Field","name":{"kind":"Name","value":"elevationScale"}},{"kind":"Field","name":{"kind":"Name","value":"elevationOctaves"}},{"kind":"Field","name":{"kind":"Name","value":"elevationPersistence"}},{"kind":"Field","name":{"kind":"Name","value":"moistureScale"}},{"kind":"Field","name":{"kind":"Name","value":"moistureOctaves"}},{"kind":"Field","name":{"kind":"Name","value":"moisturePersistence"}},{"kind":"Field","name":{"kind":"Name","value":"caveFillPercentage"}},{"kind":"Field","name":{"kind":"Name","value":"caveIterations"}},{"kind":"Field","name":{"kind":"Name","value":"caveBirthLimit"}},{"kind":"Field","name":{"kind":"Name","value":"caveDeathLimit"}},{"kind":"Field","name":{"kind":"Name","value":"bspSize"}},{"kind":"Field","name":{"kind":"Name","value":"bspMinRoomSize"}},{"kind":"Field","name":{"kind":"Name","value":"bspMaxRoomSize"}},{"kind":"Field","name":{"kind":"Name","value":"featureMinDistance"}},{"kind":"Field","name":{"kind":"Name","value":"featureAttempts"}}]}},{"kind":"Field","name":{"kind":"Name","value":"structures"}},{"kind":"Field","name":{"kind":"Name","value":"worldDescription"}},{"kind":"Field","name":{"kind":"Name","value":"history"}}]}}]}}]} as unknown as DocumentNode<JoinRoomMutation, JoinRoomMutationVariables>;
 export const UpdateRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"documentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateRoom"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"documentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"documentId"}}},{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"settings"}}]}}]}}]} as unknown as DocumentNode<UpdateRoomMutation, UpdateRoomMutationVariables>;
 export const GenerateWorldDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateWorld"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"language"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateWorld"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"roomId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}}},{"kind":"Argument","name":{"kind":"Name","value":"language"},"value":{"kind":"Variable","name":{"kind":"Name","value":"language"}}}]}]}}]} as unknown as DocumentNode<GenerateWorldMutation, GenerateWorldMutationVariables>;
 export const AddCharacterDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AddCharacter"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"character"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"addCharacter"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"roomId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}}},{"kind":"Argument","name":{"kind":"Name","value":"character"},"value":{"kind":"Variable","name":{"kind":"Name","value":"character"}}}]}]}}]} as unknown as DocumentNode<AddCharacterMutation, AddCharacterMutationVariables>;
 export const StartGameDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"StartGame"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"language"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"startGame"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"roomId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}}},{"kind":"Argument","name":{"kind":"Name","value":"language"},"value":{"kind":"Variable","name":{"kind":"Name","value":"language"}}},{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}]}]}}]} as unknown as DocumentNode<StartGameMutation, StartGameMutationVariables>;
 export const SubmitActionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SubmitAction"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"action"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"submitAction"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"roomId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}}},{"kind":"Argument","name":{"kind":"Name","value":"action"},"value":{"kind":"Variable","name":{"kind":"Name","value":"action"}}}]}]}}]} as unknown as DocumentNode<SubmitActionMutation, SubmitActionMutationVariables>;
 export const GenerateAvatarPortraitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateAvatarPortrait"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"payload"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"referenceImage"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateAvatarPortrait"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"payload"},"value":{"kind":"Variable","name":{"kind":"Name","value":"payload"}}},{"kind":"Argument","name":{"kind":"Name","value":"referenceImage"},"value":{"kind":"Variable","name":{"kind":"Name","value":"referenceImage"}}}]}]}}]} as unknown as DocumentNode<GenerateAvatarPortraitMutation, GenerateAvatarPortraitMutationVariables>;
-export const GetRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomFiltersInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rooms"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"players"}},{"kind":"Field","name":{"kind":"Name","value":"settings"}},{"kind":"Field","name":{"kind":"Name","value":"structures"}},{"kind":"Field","name":{"kind":"Name","value":"worldDescription"}},{"kind":"Field","name":{"kind":"Name","value":"history"}}]}}]}}]} as unknown as DocumentNode<GetRoomQuery, GetRoomQueryVariables>;
-export const ListRoomsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListRooms"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomFiltersInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rooms"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"players"}}]}}]}}]} as unknown as DocumentNode<ListRoomsQuery, ListRoomsQueryVariables>;
+export const GenerateAvatarUpperBodyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateAvatarUpperBody"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"payload"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"portrait"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"referenceImage"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateAvatarUpperBody"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"payload"},"value":{"kind":"Variable","name":{"kind":"Name","value":"payload"}}},{"kind":"Argument","name":{"kind":"Name","value":"portrait"},"value":{"kind":"Variable","name":{"kind":"Name","value":"portrait"}}},{"kind":"Argument","name":{"kind":"Name","value":"referenceImage"},"value":{"kind":"Variable","name":{"kind":"Name","value":"referenceImage"}}}]}]}}]} as unknown as DocumentNode<GenerateAvatarUpperBodyMutation, GenerateAvatarUpperBodyMutationVariables>;
+export const GenerateAvatarFullBodyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateAvatarFullBody"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"payload"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"portrait"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"upperBody"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"referenceImage"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateAvatarFullBody"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"payload"},"value":{"kind":"Variable","name":{"kind":"Name","value":"payload"}}},{"kind":"Argument","name":{"kind":"Name","value":"portrait"},"value":{"kind":"Variable","name":{"kind":"Name","value":"portrait"}}},{"kind":"Argument","name":{"kind":"Name","value":"upperBody"},"value":{"kind":"Variable","name":{"kind":"Name","value":"upperBody"}}},{"kind":"Argument","name":{"kind":"Name","value":"referenceImage"},"value":{"kind":"Variable","name":{"kind":"Name","value":"referenceImage"}}}]}]}}]} as unknown as DocumentNode<GenerateAvatarFullBodyMutation, GenerateAvatarFullBodyMutationVariables>;
+export const SpawnCreatureDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SpawnCreature"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"creature"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"JSON"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"spawnCreature"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"roomId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"roomId"}}},{"kind":"Argument","name":{"kind":"Name","value":"creature"},"value":{"kind":"Variable","name":{"kind":"Name","value":"creature"}}}]}]}}]} as unknown as DocumentNode<SpawnCreatureMutation, SpawnCreatureMutationVariables>;
+export const GetRoomDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRoom"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomFiltersInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rooms"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"players"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isReady"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}},{"kind":"Field","name":{"kind":"Name","value":"joinedAt"}},{"kind":"Field","name":{"kind":"Name","value":"action"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"character"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"backstory"}},{"kind":"Field","name":{"kind":"Name","value":"portrait"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"Field","name":{"kind":"Name","value":"upperBody"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"Field","name":{"kind":"Name","value":"fullBody"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"Field","name":{"kind":"Name","value":"baseStats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"strength"}},{"kind":"Field","name":{"kind":"Name","value":"dexterity"}},{"kind":"Field","name":{"kind":"Name","value":"constitution"}},{"kind":"Field","name":{"kind":"Name","value":"intelligence"}},{"kind":"Field","name":{"kind":"Name","value":"wisdom"}},{"kind":"Field","name":{"kind":"Name","value":"charisma"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"settings"}},{"kind":"Field","name":{"kind":"Name","value":"worldType"}},{"kind":"Field","name":{"kind":"Name","value":"worldSize"}},{"kind":"Field","name":{"kind":"Name","value":"adventureLength"}},{"kind":"Field","name":{"kind":"Name","value":"difficulty"}},{"kind":"Field","name":{"kind":"Name","value":"startingLevel"}},{"kind":"Field","name":{"kind":"Name","value":"playerCount"}},{"kind":"Field","name":{"kind":"Name","value":"theme"}},{"kind":"Field","name":{"kind":"Name","value":"setting"}},{"kind":"Field","name":{"kind":"Name","value":"tone"}},{"kind":"Field","name":{"kind":"Name","value":"dmStyle"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"verbosity"}},{"kind":"Field","name":{"kind":"Name","value":"detail"}},{"kind":"Field","name":{"kind":"Name","value":"engagement"}},{"kind":"Field","name":{"kind":"Name","value":"narrative"}},{"kind":"Field","name":{"kind":"Name","value":"specialMode"}},{"kind":"Field","name":{"kind":"Name","value":"customDirectives"}}]}},{"kind":"Field","name":{"kind":"Name","value":"generationParams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"structureMinDistance"}},{"kind":"Field","name":{"kind":"Name","value":"maxStructures"}},{"kind":"Field","name":{"kind":"Name","value":"generateRoads"}},{"kind":"Field","name":{"kind":"Name","value":"elevationScale"}},{"kind":"Field","name":{"kind":"Name","value":"elevationOctaves"}},{"kind":"Field","name":{"kind":"Name","value":"elevationPersistence"}},{"kind":"Field","name":{"kind":"Name","value":"moistureScale"}},{"kind":"Field","name":{"kind":"Name","value":"moistureOctaves"}},{"kind":"Field","name":{"kind":"Name","value":"moisturePersistence"}},{"kind":"Field","name":{"kind":"Name","value":"caveFillPercentage"}},{"kind":"Field","name":{"kind":"Name","value":"caveIterations"}},{"kind":"Field","name":{"kind":"Name","value":"caveBirthLimit"}},{"kind":"Field","name":{"kind":"Name","value":"caveDeathLimit"}},{"kind":"Field","name":{"kind":"Name","value":"bspSize"}},{"kind":"Field","name":{"kind":"Name","value":"bspMinRoomSize"}},{"kind":"Field","name":{"kind":"Name","value":"bspMaxRoomSize"}},{"kind":"Field","name":{"kind":"Name","value":"featureMinDistance"}},{"kind":"Field","name":{"kind":"Name","value":"featureAttempts"}}]}},{"kind":"Field","name":{"kind":"Name","value":"structures"}},{"kind":"Field","name":{"kind":"Name","value":"worldDescription"}},{"kind":"Field","name":{"kind":"Name","value":"history"}},{"kind":"Field","name":{"kind":"Name","value":"owner"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}}]}}]}}]} as unknown as DocumentNode<GetRoomQuery, GetRoomQueryVariables>;
+export const ListRoomsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ListRooms"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"RoomFiltersInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"rooms"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"roomId"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"phase"}},{"kind":"Field","name":{"kind":"Name","value":"owner"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"players"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isReady"}},{"kind":"Field","name":{"kind":"Name","value":"isOnline"}},{"kind":"Field","name":{"kind":"Name","value":"joinedAt"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}},{"kind":"Field","name":{"kind":"Name","value":"character"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"documentId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"portrait"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<ListRoomsQuery, ListRoomsQueryVariables>;

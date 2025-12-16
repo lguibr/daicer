@@ -27,6 +27,7 @@
     "@langchain/core": "^1.1.4",
     "@langchain/google-genai": "^2.0.4",
     "@langchain/openai": "^1.1.3",
+    "@strapi-community/strapi-provider-upload-google-cloud-storage": "^5.0.5",
     "@strapi/plugin-cloud": "5.31.3",
     "@strapi/plugin-graphql": "^5.31.3",
     "@strapi/plugin-users-permissions": "5.31.3",

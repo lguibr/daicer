@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { X, Plus, Search, Skull, User } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Player } from '@daicer/shared';
+import { useMutation } from '@apollo/client/react';
 import { Button } from '../ui/button';
 import Input from '../ui/input';
 import Label from '../ui/label';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
-import { apiRequest } from '../../services/api';
+import { SPAWN_CREATURE_MUTATION } from '../../graphql/mutations';
 
 // Defined locally to match JSON structure from Room.players/creatures
 interface CharacterSheetData {
@@ -61,14 +62,18 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
   });
   const [loading, setLoading] = useState(false);
 
+  const [spawnCreature] = useMutation(SPAWN_CREATURE_MUTATION);
+
   if (!isOpen) return null;
 
   const handleAddCreature = async () => {
     try {
       setLoading(true);
-      await apiRequest(`/api/game/${roomId}/creatures`, {
-        method: 'POST',
-        body: JSON.stringify(newCreature),
+      await spawnCreature({
+        variables: {
+          roomId,
+          creature: newCreature,
+        },
       });
       toast.success('Creature spawned!');
       setIsAdding(false);

@@ -209,7 +209,7 @@ export function TacticalCombat() {
               validation: preview.validation,
               preview: {
                 movementPath: preview.preview.movementPath,
-                affectedUnits: preview.preview.affectedUnits.map((u) => ({
+                affectedUnits: preview.preview.affectedUnits.map((u: any) => ({
                   unitId: u.id,
                   effect: u.effect,
                   predictedDamage: u.predictedDamage,

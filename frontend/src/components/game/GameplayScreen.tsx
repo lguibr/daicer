@@ -9,6 +9,8 @@ import { processTurn, movePlayer } from '../../services/socket';
 import { submitAction } from '../../services/api';
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
+// eslint-disable-next-line import/no-unresolved
+import { auth } from '../../services/firebase';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 import GameplayChatArea from './GameplayChatArea';
 import GameplayComposer from './GameplayComposer';
@@ -38,16 +40,82 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showEntityList, setShowEntityList] = useState(false);
   const [composerValue, setComposerValue] = useState('');
+  const [terrainGrid, setTerrainGrid] = useState<any[]>(EMPTY_GRID);
+
+  // Load terrain grid from backend (same as TerrainGenerationScreen)
+  useEffect(() => {
+    const loadTerrain = async () => {
+      // Only load if we have metadata but no grid yet
+      const { terrainData } = room;
+
+      if (terrainData?.biomeMapMetadata && terrainGrid === EMPTY_GRID) {
+        try {
+          const user = auth.currentUser;
+          if (!user) return;
+
+          const token = await user.getIdToken();
+          // Use documentId if available, fallback to id (which might be documentId or roomId)
+          const roomIdToUse = room.documentId || room.id;
+
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/api/terrain/generate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ roomId: roomIdToUse }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data?.biomeMap?.grid) {
+              console.log('[GameplayScreen] Loaded terrain grid:', result.data.biomeMap.grid.length, 'rows');
+              setTerrainGrid(result.data.biomeMap.grid);
+            }
+          }
+        } catch (err) {
+          console.warn('[GameplayScreen] Failed to load terrain grid:', err);
+        }
+      }
+    };
+
+    loadTerrain();
+  }, [room, terrainGrid]);
 
   const hasPlayerAction = (playerAction: Player['action']) =>
     typeof playerAction === 'string' && playerAction.trim().length > 0;
+
+  // Merge positions from character sheets (Entity/Engine Authority) into Player objects
+  const playersWithPositions = players.map((p) => {
+    // Find the character sheet for this player
+    // Strategy: Match by character ID if linked, or owner ID if available
+    // room.character_sheets is populated via strapi
+    const sheets = room.character_sheets;
+    if (!sheets) return p;
+
+    const sheet = sheets.find(
+      (s: any) => (p.character && s.id === p.character.id) || (s.character && s.character.id === p.character?.id)
+    );
+
+    if (sheet && sheet.position) {
+      return {
+        ...p,
+        position: sheet.position,
+      };
+    }
+    return p;
+  });
 
   const currentPlayer = players.find((p) => p.userId === user?.uid);
   const hasSubmitted = currentPlayer ? hasPlayerAction(currentPlayer.action) : false;
   const allSubmitted = players.length > 0 && players.every((p) => hasPlayerAction(p.action));
   const submittedCount = players.filter((p) => hasPlayerAction(p.action)).length;
   const roomLanguage = room.settings?.language || 'en';
-  const isDM = room.ownerId === user?.uid;
+  const isDM = (!!room.owner?.documentId && room.owner.documentId === user?.documentId) || room.ownerId === user?.uid;
+
+  // Turn Data
+  const { turnData } = room;
+  const turnPhase = turnData?.phase || 'idle';
 
   const handleSubmitAction = async (action: string) => {
     if (!action.trim() || !room.id) return;
@@ -161,7 +229,13 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
           <div className="rounded-xl border border-midnight-600/60 bg-midnight-900/50 p-4 text-center">
             <p className="text-shadow-300">✓ {t('gameplay.actionSubmitted')}</p>
             <p className="mt-1 text-xs text-shadow-500">
-              {allSubmitted ? 'Waiting for DM to process turn...' : 'Waiting for other players...'}
+              {turnPhase === 'processing'
+                ? 'DM Brain is thinking...'
+                : turnPhase === 'waiting_for_actions'
+                  ? 'Phase: Waiting for Actions'
+                  : allSubmitted
+                    ? 'Waiting for DM to process turn...'
+                    : 'Waiting for other players...'}
             </p>
           </div>
         ) : (
@@ -193,10 +267,10 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
         <div className="relative flex-1 bg-black">
           <TerrainExplorer
             roomId={room.id}
-            biomeGrid={EMPTY_GRID}
+            biomeGrid={terrainGrid}
             roomSize={32}
             enableInfinite
-            players={players}
+            players={playersWithPositions}
             creatures={socket.creatures}
             structures={room.structures as any}
             onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}
@@ -222,10 +296,10 @@ export default function GameplayScreen({ room, players }: GameplayScreenProps) {
           mapContent={
             <TerrainExplorer
               roomId={room.id}
-              biomeGrid={EMPTY_GRID}
+              biomeGrid={terrainGrid}
               roomSize={32}
               enableInfinite
-              players={players}
+              players={playersWithPositions}
               creatures={socket.creatures}
               structures={room.structures}
               onPlayerMove={isDM ? (x, y) => movePlayer(room.id, { x, y, z: 0 }) : undefined}

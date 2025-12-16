@@ -30,6 +30,10 @@
     "charisma": {
       "type": "integer",
       "default": 10
+    },
+    "speed": {
+      "type": "integer",
+      "default": 30
     }
   }
 }

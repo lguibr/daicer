@@ -51,6 +51,7 @@
     "storybook": "echo '📚 Starting Storybook component library...' && echo '  📍 http://localhost:6006' && cd frontend && yarn storybook",
     "storybook:build": "echo '📦 Building Storybook...' && cd frontend && yarn storybook:build",
     "storybook:preview": "echo '👀 Serving built Storybook...' && cd frontend && yarn storybook:preview",
+    "kill": "lsof -ti:3000,3001,1337 | xargs kill -9 || true",
     "prepare": "husky"
   },
   "dependencies": {

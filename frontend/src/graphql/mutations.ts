@@ -6,6 +6,43 @@ export const CREATE_ROOM_MUTATION = gql`
       documentId
       roomId
       code
+      worldType
+      worldSize
+      adventureLength
+      difficulty
+      startingLevel
+      playerCount
+      theme
+      setting
+      tone
+      dmStyle {
+        verbosity
+        detail
+        engagement
+        narrative
+        specialMode
+        customDirectives
+      }
+      generationParams {
+        structureMinDistance
+        maxStructures
+        generateRoads
+        elevationScale
+        elevationOctaves
+        elevationPersistence
+        moistureScale
+        moistureOctaves
+        moisturePersistence
+        caveFillPercentage
+        caveIterations
+        caveBirthLimit
+        caveDeathLimit
+        bspSize
+        bspMinRoomSize
+        bspMaxRoomSize
+        featureMinDistance
+        featureAttempts
+      }
     }
   }
 `;
@@ -16,9 +53,77 @@ export const JOIN_ROOM_MUTATION = gql`
       documentId
       roomId
       code
-      players
+      players {
+        id
+        name
+        isReady
+        isOnline
+        joinedAt
+        action
+        user {
+          documentId
+          username
+        }
+        character {
+          documentId
+          name
+          portrait {
+            url
+          }
+          upperBody {
+            url
+          }
+          fullBody {
+            url
+          }
+          baseStats {
+            strength
+            dexterity
+            constitution
+            intelligence
+            wisdom
+            charisma
+          }
+        }
+      }
       phase
       settings
+      worldType
+      worldSize
+      adventureLength
+      difficulty
+      startingLevel
+      theme
+      setting
+      tone
+      dmStyle {
+        verbosity
+        detail
+        engagement
+        narrative
+        specialMode
+        customDirectives
+      }
+      generationParams {
+        structureMinDistance
+        maxStructures
+        generateRoads
+        elevationScale
+        elevationOctaves
+        elevationPersistence
+        moistureScale
+        moistureOctaves
+        moisturePersistence
+        caveFillPercentage
+        caveIterations
+        caveBirthLimit
+        caveDeathLimit
+        bspSize
+        bspMinRoomSize
+        bspMaxRoomSize
+        featureMinDistance
+        featureAttempts
+      }
       structures
       worldDescription
       history
@@ -64,11 +169,27 @@ export const GENERATE_PORTRAIT_MUTATION = gql`
   mutation GenerateAvatarPortrait($payload: JSON!, $referenceImage: String) {
     generateAvatarPortrait(payload: $payload, referenceImage: $referenceImage)
   }
-`; // WARNING: This custom mutation might not exist in backend yet.
-// The implementation plan missed verifying `api/assets` endpoints conversion to GraphQL.
-// `apiRequest<AvatarPreviewImage>('/api/assets/avatar/preview/portrait'` in api.ts
-// I need to check if I can keep these as REST or if I must migrate them too.
-// User said "EXCLUSIVELLY".
-// So I MUST migrate assets too or stub them.
-// I will add them to schema in backend in next step if I missed them.
-// For now define them here.
+`;
+
+export const GENERATE_UPPER_BODY_MUTATION = gql`
+  mutation GenerateAvatarUpperBody($payload: JSON!, $portrait: JSON!, $referenceImage: String) {
+    generateAvatarUpperBody(payload: $payload, portrait: $portrait, referenceImage: $referenceImage)
+  }
+`;
+
+export const GENERATE_FULL_BODY_MUTATION = gql`
+  mutation GenerateAvatarFullBody($payload: JSON!, $portrait: JSON!, $upperBody: JSON!, $referenceImage: String) {
+    generateAvatarFullBody(
+      payload: $payload
+      portrait: $portrait
+      upperBody: $upperBody
+      referenceImage: $referenceImage
+    )
+  }
+`;
+
+export const SPAWN_CREATURE_MUTATION = gql`
+  mutation SpawnCreature($roomId: ID!, $creature: JSON!) {
+    spawnCreature(roomId: $roomId, creature: $creature)
+  }
+`;

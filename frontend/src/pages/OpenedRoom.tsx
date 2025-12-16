@@ -70,8 +70,8 @@ export default function OpenedRoomPage() {
     const loadRoom = async () => {
       try {
         const data = await getRoomState(roomId);
-        setRoom(data.room);
-        setPlayers(data.players);
+        setRoom(data);
+        setPlayers((data as any).players || []);
 
         // Join socket room
         setTimeout(() => {

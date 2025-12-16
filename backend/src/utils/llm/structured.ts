@@ -10,6 +10,7 @@ import { extractErrorDetails } from './gemini';
 import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
 import { OpenAIModel, type TextGenConfig } from './types';
 import { streamManager } from './stream-manager';
+import { getPrompt, formatPrompt } from '../prompt';
 
 /**
  * Language name mappings
@@ -23,9 +24,10 @@ const languageMap: Record<Language, string> = {
 /**
  * Build system prompt with language instructions
  */
-function buildSystemPrompt(language: Language, basePrompt: string): string {
+async function buildSystemPrompt(language: Language, basePrompt: string): Promise<string> {
   const languageName = languageMap[language] || 'English';
-  return `${basePrompt}
+
+  const defaultRules = `
 
 CRITICAL RULES:
 - You are THE DUNGEON MASTER, not an AI assistant
@@ -43,6 +45,32 @@ FORBIDDEN phrases:
 
 CORRECT approach:
 ✅ Start directly with ### Header or narrative text`;
+
+  const rulesTemplate = await getPrompt('structured_output_rules', language, defaultRules);
+  // Check if template (fetched or default) needs formatting
+  // The default one above is already interpolated via template literal variables,
+  // but if we get it from DB it will have {{languageName}}.
+  // If we fall back to defaultRules, it's already a string with languageName.
+  // We can just try formatting it. formatPrompt handles missing keys gracefully (leaves them or replaces).
+  // Actually, my formatPrompt leaves {{key}} if missing.
+  // The logic:
+  // 1. Fetch prompt.
+  // 2. Format it with variables.
+
+  if (rulesTemplate.includes('{{languageName}}')) {
+    const rules = formatPrompt(rulesTemplate, { languageName });
+    return `${basePrompt}${rules}`;
+  }
+
+  // If it's the fallback defaultRules (which doesn't have {{}} but is constructed), or a DB string without {{}} for some reason.
+  // Note: My seed has {{languageName}}.
+  // The Default Fallback has to be carefully managed.
+  // If getPrompt returns defaultRules, it is already formatted.
+  // If getPrompt returns DB string, it has {{languageName}}.
+
+  // To be safe: I will make the seed default also use {{languageName}} and format it.
+
+  return `${basePrompt}${rulesTemplate}`;
 }
 
 /**
@@ -56,7 +84,7 @@ export async function generateStructured<T extends z.ZodType>(
   language: Language = 'en',
   config: TextGenConfig = {}
 ): Promise<z.infer<T>> {
-  const fullSystemPrompt = buildSystemPrompt(language, systemPrompt);
+  const fullSystemPrompt = await buildSystemPrompt(language, systemPrompt);
   const messages = [new SystemMessage(fullSystemPrompt), new HumanMessage(userPrompt)];
 
   // Build RunnableConfig for LangChain with metadata and tags

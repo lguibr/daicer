@@ -54,3 +54,14 @@ export async function getPrompts(
 
   return results;
 }
+
+/**
+ * Substitute variables in a prompt template
+ * @param template - The prompt text containing {{variable}} placeholders
+ * @param variables - Map of variable names to values
+ */
+export function formatPrompt(template: string, variables: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => {
+    return variables[key] || `{{${key}}}`;
+  });
+}

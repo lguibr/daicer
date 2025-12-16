@@ -16,10 +16,15 @@
             "type": "string",
             "required": true
         },
-        "description": {
-            "type": "richtext"
-        },
         "portrait": {
+            "type": "media",
+            "multiple": false,
+            "required": false,
+            "allowedTypes": [
+                "images"
+            ]
+        },
+        "upperBody": {
             "type": "media",
             "multiple": false,
             "required": false,
@@ -46,13 +51,26 @@
             "target": "api::class.class"
         },
         "baseStats": {
-            "type": "json"
+            "type": "component",
+            "repeatable": false,
+            "component": "game.stats"
         },
         "user": {
             "type": "relation",
             "relation": "manyToOne",
             "target": "plugin::users-permissions.user",
             "inversedBy": "characters"
+        },
+        "appearance": {
+            "type": "json"
+        },
+        "backstory": {
+            "type": "text"
+        },
+        "equipment": {
+            "type": "component",
+            "repeatable": true,
+            "component": "game.inventory-item"
         }
     }
 }

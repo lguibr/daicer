@@ -61,34 +61,22 @@ export interface AdvancementPoints {
   talent: number;
 }
 
-export interface CharacterEquipment {
-  equippedItems: {
-    mainHand: string | null;
-    offHand: string | null;
-    armor: string | null;
-    shield: string | null;
-    head: string | null;
-    cloak: string | null;
-    belt: string | null;
-    boots: string | null;
-    gloves: string | null;
-    ring1: string | null;
-    ring2: string | null;
-    necklace: string | null;
-    accessory1: string | null;
-    accessory2: string | null;
-  };
-  inventory: Array<{
-    itemIndex: string;
-    quantity: number;
-  }>;
-  totalWeight: number;
+export interface InventoryItem {
+  id?: string;
+  item: string; // ID or relation
+  quantity: number;
+  slot: string;
+  isEquipped: boolean;
 }
+
+export type CharacterEquipment = InventoryItem[];
 
 /**
  * Complete character sheet
  */
 export interface CharacterSheet {
+  id?: string | number;
+  documentId?: string;
   // Basic info
   name: string;
   race: string;
@@ -126,6 +114,7 @@ export interface CharacterSheet {
   speed: number;
   proficiencyBonus: number;
   inspiration: boolean;
+  position?: { x: number; y: number; z?: number; mapId?: string };
 
   // Attributes & skills
   attributes: Record<Attribute, number>;

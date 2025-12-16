@@ -1,4 +1,7 @@
 import type { Core } from '@strapi/strapi';
+import { v4 as uuidv4 } from 'uuid';
+import { Server } from 'socket.io';
+import { streamManager } from './utils/llm/stream-manager';
 
 // Force reload for new API
 
@@ -14,6 +17,50 @@ export default {
 
     extensionService.use({
       typeDefs: `
+        type Ability {
+          id: ID!
+          documentId: ID!
+          name: String!
+          fullName: String!
+          description: String
+          skills: [Skill]
+        }
+        type Skill {
+          id: ID!
+          documentId: ID!
+          name: String!
+          description: String
+          abilityScore: Ability
+        }
+        type Alignment {
+          id: ID!
+          documentId: ID!
+          name: String!
+          abbreviation: String
+          description: String
+        }
+        type Background {
+          id: ID!
+          documentId: ID!
+          name: String!
+          description: String
+          skillProficiencies: [Skill]
+        }
+        type GameCondition {
+          id: ID!
+          documentId: ID!
+          name: String!
+          description: String
+        }
+
+        extend type Query {
+          abilities: [Ability]
+          skills: [Skill]
+          alignments: [Alignment]
+          backgrounds: [Background]
+          conditions: [GameCondition]
+        }
+
         extend type Mutation {
           generateWorld(roomId: ID!, language: String): JSON
           processTurn(roomId: ID!, messages: JSON, language: String): JSON
@@ -22,10 +69,134 @@ export default {
           startGame(roomId: ID!, language: String, streamId: String): JSON
           submitAction(roomId: ID!, action: String): JSON
           generateAvatarPortrait(payload: JSON!, referenceImage: String): JSON
+          generateAvatarUpperBody(payload: JSON!, portrait: JSON!, referenceImage: String): JSON
+          generateAvatarFullBody(payload: JSON!, portrait: JSON!, upperBody: JSON!, referenceImage: String): JSON
+          spawnCreature(roomId: ID!, creature: JSON): JSON
         }
       `,
       resolvers: {
+        Query: {
+          abilities: () => [
+            {
+              id: 'str',
+              documentId: 'str',
+              name: 'STR',
+              fullName: 'Strength',
+              description: 'Physical power',
+              skills: [],
+            },
+            { id: 'dex', documentId: 'dex', name: 'DEX', fullName: 'Dexterity', description: 'Agility', skills: [] },
+            {
+              id: 'con',
+              documentId: 'con',
+              name: 'CON',
+              fullName: 'Constitution',
+              description: 'Endurance',
+              skills: [],
+            },
+            {
+              id: 'int',
+              documentId: 'int',
+              name: 'INT',
+              fullName: 'Intelligence',
+              description: 'Reasoning',
+              skills: [],
+            },
+            { id: 'wis', documentId: 'wis', name: 'WIS', fullName: 'Wisdom', description: 'Perception', skills: [] },
+            { id: 'cha', documentId: 'cha', name: 'CHA', fullName: 'Charisma', description: 'Personality', skills: [] },
+          ],
+          skills: () => [
+            {
+              id: 'ath',
+              documentId: 'ath',
+              name: 'Athletics',
+              description: 'Physical feats',
+              abilityScore: { name: 'STR' },
+            },
+            {
+              id: 'acr',
+              documentId: 'acr',
+              name: 'Acrobatics',
+              description: 'Balancing and tumbling',
+              abilityScore: { name: 'DEX' },
+            },
+            // Add more as needed or keep minimal for now
+          ],
+          alignments: () => [
+            { id: 'lg', documentId: 'lg', name: 'Lawful Good', abbreviation: 'LG', description: 'Crusader' },
+            { id: 'ng', documentId: 'ng', name: 'Neutral Good', abbreviation: 'NG', description: 'Benefactor' },
+            { id: 'cg', documentId: 'cg', name: 'Chaotic Good', abbreviation: 'CG', description: 'Rebel' },
+            { id: 'ln', documentId: 'ln', name: 'Lawful Neutral', abbreviation: 'LN', description: 'Judge' },
+            { id: 'n', documentId: 'n', name: 'True Neutral', abbreviation: 'N', description: 'Undecided' },
+            { id: 'cn', documentId: 'cn', name: 'Chaotic Neutral', abbreviation: 'CN', description: 'Free Spirit' },
+            { id: 'le', documentId: 'le', name: 'Lawful Evil', abbreviation: 'LE', description: 'Dominator' },
+            { id: 'ne', documentId: 'ne', name: 'Neutral Evil', abbreviation: 'NE', description: 'Malefactor' },
+            { id: 'ce', documentId: 'ce', name: 'Chaotic Evil', abbreviation: 'CE', description: 'Destroyer' },
+          ],
+          backgrounds: () => [
+            { id: 'acolyte', documentId: 'acolyte', name: 'Acolyte', description: 'Religious devotee' },
+            { id: 'soldier', documentId: 'soldier', name: 'Soldier', description: 'Military veteran' },
+          ],
+          conditions: () => [
+            { id: 'blinded', documentId: 'blinded', name: 'Blinded', description: 'Cannot see' },
+            { id: 'charmed', documentId: 'charmed', name: 'Charmed', description: 'Friendly to charmer' },
+          ],
+        },
         Mutation: {
+          createRoom: {
+            resolve: async (_parent, args, context) => {
+              const { data } = args;
+              const { state } = context;
+              const { user } = state;
+
+              if (!user) {
+                throw new Error('You must be logged in to create a room');
+              }
+
+              const tempCode = uuidv4();
+
+              // Initial Owner Player
+              const ownerPlayer = {
+                id: user.id || user.documentId,
+                userId: user.id || user.documentId,
+                name: user.username || 'Room Owner',
+                character: null,
+                action: null,
+                isReady: false,
+                isOnline: true,
+                joinedAt: Date.now(),
+              };
+
+              // Prepare Room Data
+              const roomData = {
+                ...data, // spread input data (settings, structures, etc)
+                roomId: tempCode,
+                code: tempCode,
+                owner: user.documentId, // Use relation
+                phase: 'lobby',
+                isActive: true,
+                players: [
+                  {
+                    user: user.documentId,
+                    name: user.username || 'Room Owner',
+                    character: null,
+                    action: null,
+                    isReady: false,
+                    isOnline: true,
+                    joinedAt: new Date().toISOString(), // Component expects datetime/string
+                  },
+                ],
+              };
+
+              // Create Room
+              const newRoom = await strapi.documents('api::room.room').create({
+                data: roomData,
+                status: 'published',
+              });
+
+              return newRoom;
+            },
+          },
           generateWorld: {
             resolve: async (_parent, args, _context) => {
               const { roomId, language } = args;
@@ -60,7 +231,13 @@ export default {
               // Fetch room to get context
               const rooms = await strapi.documents('api::room.room').findMany({
                 filters: { roomId },
-                // populate: ['players'] // Populate if relationships exist, currently JSON
+                populate: [
+                  'players',
+                  'players.character',
+                  'players.character.race',
+                  'players.character.class',
+                  'players.character.baseStats',
+                ],
               });
 
               if (!rooms || rooms.length === 0) {
@@ -92,37 +269,41 @@ export default {
 
               // Reuse the logic from the controller or re-implement
               // Using query directly for better granular control here
-              const room = await strapi.db.query('api::room.room').findOne({
-                where: {
+              // Using query directly for better granular control here
+              const room = await strapi.documents('api::room.room').findMany({
+                filters: {
                   $or: [{ roomId: code }, { code: code }],
                 },
+                populate: ['players', 'players.user'],
               });
 
-              if (!room) {
+              if (!room || room.length === 0) {
                 throw new Error('Room not found');
               }
+              const targetRoom = room[0];
 
-              const players = room.players || [];
-              const isAlreadyJoined = players.some((p: any) => p.userId === user.id || p.userId === user.documentId);
+              const players = targetRoom.players || [];
+              const isAlreadyJoined = players.some(
+                (p: any) => p.user?.documentId === user.documentId || p.user?.id === user.id
+              );
 
               if (isAlreadyJoined) {
-                return room;
+                return targetRoom;
               }
 
               const newPlayer = {
-                id: user.id || user.documentId,
-                userId: user.id || user.documentId,
+                user: user.documentId,
                 name: user.username || 'Player',
                 character: null,
                 action: null,
                 isReady: false,
                 isOnline: true,
-                joinedAt: Date.now(),
+                joinedAt: new Date().toISOString(),
               };
 
               // Update room with new player
               const updatedRoom = await strapi.documents('api::room.room').update({
-                documentId: room.documentId,
+                documentId: targetRoom.documentId,
                 data: {
                   players: [...players, newPlayer],
                 } as any,
@@ -165,6 +346,7 @@ export default {
 
               const rooms = await strapi.documents('api::room.room').findMany({
                 filters: { roomId },
+                populate: ['players', 'players.user'],
               });
               if (!rooms || rooms.length === 0) throw new Error('Room not found');
               const room = rooms[0] as any;
@@ -177,7 +359,7 @@ export default {
               if (!user) throw new Error('Unauthorized');
 
               const players = room.players || [];
-              const playerIndex = players.findIndex((p: any) => p.userId === user.id || p.userId === user.documentId);
+              const playerIndex = players.findIndex((p: any) => p.user?.documentId === user.documentId);
 
               if (playerIndex === -1) throw new Error('Player not in room');
 
@@ -199,24 +381,45 @@ export default {
           generateAvatarPortrait: {
             resolve: async (_parent, args, _context) => {
               const { payload, referenceImage } = args;
-              // Call asset service/controller
-              // We need to find where the logic is.
-              // It's likely in api::assets.assets controller or service.
-              // Checking list_dir earlier, 'assets' api exists.
-              // Assuming service 'api::assets.assets' has 'generateAvatarPortrait' or similar.
-              // If logic is in controller, we should move to service or call controller (messy).
-              // I'll assume service or use the logic directly.
-
-              // Temporary: simple pass through to service if exists, else stub or try to import
-              // Since I can't easily see service content without reading, I will try to call 'api::assets.assets'.generateAvatarPortrait
-
               try {
-                return strapi.service('api::assets.assets').generatePortrait({ ...payload, referenceImage });
+                return await strapi.service('api::assets.assets').generatePortrait({ ...payload, referenceImage });
               } catch (e) {
-                // Fallback if service method doesn't exist (if logic is in controller only)
                 strapi.log.error('generateAvatarPortrait service call failed', e);
-                throw new Error('Failed to generate avatar');
+                // Return descriptive error if possible
+                throw new Error('Failed to generate avatar: ' + (e instanceof Error ? e.message : String(e)));
               }
+            },
+          },
+          generateAvatarUpperBody: {
+            resolve: async (_parent, args, _context) => {
+              const { payload, portrait, referenceImage } = args;
+              try {
+                return await strapi
+                  .service('api::assets.assets')
+                  .generateUpperBody({ payload, portrait, referenceImage });
+              } catch (e) {
+                strapi.log.error('generateAvatarUpperBody service call failed', e);
+                throw new Error('Failed to generate upper body: ' + (e instanceof Error ? e.message : String(e)));
+              }
+            },
+          },
+          generateAvatarFullBody: {
+            resolve: async (_parent, args, _context) => {
+              const { payload, portrait, upperBody, referenceImage } = args;
+              try {
+                return await strapi
+                  .service('api::assets.assets')
+                  .generateFullBody({ payload, portrait, upperBody, referenceImage });
+              } catch (e) {
+                strapi.log.error('generateAvatarFullBody service call failed', e);
+                throw new Error('Failed to generate full body: ' + (e instanceof Error ? e.message : String(e)));
+              }
+            },
+          },
+          spawnCreature: {
+            resolve: async (_parent, args, _context) => {
+              const { roomId, creature } = args;
+              return strapi.service('api::game.game').spawnCreature(roomId, creature);
             },
           },
         },
@@ -233,23 +436,148 @@ export default {
    */
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     try {
+      // 1. Initialize Socket.IO
+      // @ts-ignore - Strapi 5 server access might differ slightly but this is standard for accessing underlying HTTP server
+      const httpServer = strapi.server.httpServer;
+
+      const io = new Server(httpServer, {
+        cors: {
+          origin: process.env.PUBLIC_CLIENT_URL || 'http://localhost:3000', // Update with your frontend URL
+          methods: ['GET', 'POST'],
+          credentials: true,
+        },
+      });
+
+      // 2. Set IO in StreamManager
+      streamManager.setSocketServer(io);
+
+      // 3. Socket Logic
+      io.on('connection', (socket) => {
+        strapi.log.info(`Socket connected: ${socket.id}`);
+
+        socket.on('room:join', async ({ roomId, userId }) => {
+          try {
+            strapi.log.info(`Socket ${socket.id} joining room ${roomId} as user ${userId}`);
+
+            // Join the socket room
+            socket.join(roomId);
+            strapi.log.info(`[Socket Debug] Joining room id: "${roomId}"`);
+
+            const debugQuery = {
+              filters: {
+                $or: [{ roomId: roomId }, { code: roomId }, { documentId: roomId }],
+              },
+            };
+            strapi.log.info(`[Socket Debug] Query: ${JSON.stringify(debugQuery)}`);
+
+            // Fetch Room Data (using Strapi Entity Service or Documents API)
+            const rooms = await strapi.documents('api::room.room').findMany({
+              filters: {
+                $or: [{ roomId: roomId }, { code: roomId }, { documentId: roomId }],
+              },
+              populate: [
+                'players',
+                'players.character',
+                'players.character.baseStats',
+                'players.character.race',
+                'players.character.class',
+                // 'creatures' // Removed to fix TS error, likely a JSON field or missing from schema
+              ],
+            });
+
+            if (!rooms || rooms.length === 0) {
+              socket.emit('error', { message: 'Room not found' });
+              return;
+            }
+
+            const room = rooms[0] as any;
+
+            // Construct Game State
+            // Note: History is JSON, Messages used to be separate but now often aggregated.
+            // If message aggregation is in 'history' or separate.
+            // Based on schemas, 'history' is likely the message log.
+            // We need to ensure we send 'messages' in the format frontend expects.
+
+            const messages = Array.isArray(room.history) ? room.history : [];
+
+            const gameState = {
+              room: {
+                id: room.documentId,
+                roomId: room.roomId,
+                name: room.settings?.name || 'Adventure',
+                phase: room.phase,
+                worldDescription: room.worldDescription,
+                terrain: room.terrainData, // Send terrain data if available
+              },
+              players: room.players,
+              messages: messages, // Send history as messages
+              creatures: room.creatures || [],
+              isProcessing: false,
+            };
+
+            // Emit initial game state to this socket
+            socket.emit('gameState', gameState);
+
+            strapi.log.info(`Sent initial gameState to ${socket.id} for room ${roomId}`);
+          } catch (error) {
+            strapi.log.error('Error in room:join socket handler:', error);
+            socket.emit('error', { message: 'Failed to join room' });
+          }
+        });
+
+        socket.on('disconnect', () => {
+          // strapi.log.info(`Socket disconnected: ${socket.id}`);
+        });
+      });
+
+      strapi.log.info('Socket.IO server initialized successfully');
+
       const authenticatedRole = await strapi.db.query('plugin::users-permissions.role').findOne({
         where: { type: 'authenticated' },
         populate: ['permissions'],
       });
 
-      if (authenticatedRole) {
-        const action = 'api::room.room.join';
-        const hasPermission = authenticatedRole.permissions.some((p: any) => p.action === action);
+      // Grant permissions for all Game Data types
+      const gameContentTypes = [
+        'api::room.room',
+        'api::race.race',
+        'api::class.class',
+        'api::magic-school.magic-school',
+        'api::damage-type.damage-type',
+        'api::equipment.equipment',
+        'api::monster.monster',
+        'api::feature.feature',
+        'api::trait.trait',
+        'api::subclass.subclass',
+        'api::proficiency.proficiency',
+        'api::language.language',
+        'api::magic-item.magic-item',
+        'api::spell.spell',
+        'api::character.character',
+        'api::character-sheet.character-sheet',
+      ];
 
-        if (!hasPermission) {
-          await strapi.db.query('plugin::users-permissions.permission').create({
-            data: {
-              action,
-              role: authenticatedRole.id,
-            },
-          });
-          strapi.log.info('Granted api::room.room.join permission to Authenticated role');
+      if (authenticatedRole) {
+        for (const type of gameContentTypes) {
+          const actions = [`${type}.find`, `${type}.findOne`];
+          if (type === 'api::room.room') actions.push(`${type}.join`); // custom action logic if exists, otherwise assume controller actions
+
+          for (const action of actions) {
+            const hasPermission = authenticatedRole.permissions.some((p: any) => p.action === action);
+            if (!hasPermission) {
+              try {
+                await strapi.db.query('plugin::users-permissions.permission').create({
+                  data: {
+                    action,
+                    role: authenticatedRole.id,
+                  },
+                });
+                strapi.log.info(`Granted ${action} permission to Authenticated role`);
+              } catch (e) {
+                strapi.log.warn(`Failed to grant ${action} (might not exist as controller action)`);
+              }
+            }
+          }
         }
       }
     } catch (error) {

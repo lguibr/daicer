@@ -14,12 +14,13 @@
   "attributes": {
     "roomId": {
       "type": "uid",
-      "required": true,
       "unique": true
     },
-    "ownerId": {
-      "type": "string",
-      "required": true
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "rooms"
     },
     "phase": {
       "type": "enumeration",
@@ -37,9 +38,14 @@
       "type": "richtext"
     },
     "players": {
-      "type": "json"
+      "type": "component",
+      "repeatable": true,
+      "component": "game.player"
     },
     "history": {
+      "type": "json"
+    },
+    "turnData": {
       "type": "json"
     },
     "isActive": {
@@ -48,7 +54,6 @@
     },
     "code": {
       "type": "string",
-      "required": true,
       "unique": true
     },
     "settings": {
@@ -65,6 +70,84 @@
       "relation": "oneToMany",
       "target": "api::character-sheet.character-sheet",
       "mappedBy": "room"
+    },
+    "worldType": {
+      "type": "enumeration",
+      "enum": [
+        "terra",
+        "water",
+        "desert",
+        "ice",
+        "volcanic",
+        "forest",
+        "sky",
+        "underground",
+        "custom"
+      ],
+      "default": "terra"
+    },
+    "worldSize": {
+      "type": "enumeration",
+      "enum": [
+        "intimate",
+        "small",
+        "medium",
+        "large",
+        "vast",
+        "epic"
+      ],
+      "default": "small"
+    },
+    "adventureLength": {
+      "type": "enumeration",
+      "enum": [
+        "flash",
+        "short",
+        "medium",
+        "long",
+        "epic",
+        "legendary"
+      ],
+      "default": "short"
+    },
+    "difficulty": {
+      "type": "enumeration",
+      "enum": [
+        "storyteller",
+        "easy",
+        "medium",
+        "challenging",
+        "gritty",
+        "deadly"
+      ],
+      "default": "easy"
+    },
+    "startingLevel": {
+      "type": "integer",
+      "default": 1
+    },
+    "playerCount": {
+      "type": "integer",
+      "default": 4
+    },
+    "theme": {
+      "type": "string"
+    },
+    "setting": {
+      "type": "string"
+    },
+    "tone": {
+      "type": "string"
+    },
+    "dmStyle": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.dm-style"
+    },
+    "generationParams": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.generation-params"
     }
   }
 }

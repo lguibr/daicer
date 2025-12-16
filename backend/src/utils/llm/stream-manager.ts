@@ -32,6 +32,12 @@ class StreamManager {
     this.io = io;
   }
 
+  public broadcast(roomId: string, event: string, payload: any) {
+    if (this.io) {
+      this.io.to(roomId).emit(event, payload);
+    }
+  }
+
   public startStream(streamId: string, roomId: string, userId: string) {
     this.activeStreams.set(streamId, { roomId, userId });
     this.emitEvent({

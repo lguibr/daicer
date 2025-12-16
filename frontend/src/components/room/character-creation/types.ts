@@ -9,6 +9,7 @@ export interface CharacterCreationProps {
     attributeBudget: number;
   };
   onAssetCreated?: (asset: any) => void;
+  onCharacterCreated?: () => void;
 }
 
 export type CharacterFormState = {

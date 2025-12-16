@@ -36,13 +36,18 @@ export default function GoogleAuthCallback() {
     } else {
       // Check for Google access_token to exchange for Strapi JWT
       const accessToken = params.get('access_token');
-      const idToken = params.get('id_token'); // Sometimes Strapi puts the access token here?
 
       if (accessToken) {
         console.log('[GoogleAuthCallback] Found access_token, attempting to exchange for Strapi JWT...');
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
-        fetch(`${API_URL}/api/auth/google/callback?access_token=${accessToken}`)
+        // Clean params, only send access_token to avoid parameter pollution or backend confusion
+        fetch(`${API_URL}/api/auth/google/callback?access_token=${accessToken}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
           .then((res) => res.json())
           .then((data) => {
             console.log('[GoogleAuthCallback] Exchange response:', data);
@@ -50,7 +55,10 @@ export default function GoogleAuthCallback() {
               localStorage.setItem('strapi_jwt', data.jwt);
               navigate('/');
             } else {
-              console.error('[GoogleAuthCallback] Failed to exchange token:', data);
+              console.error(
+                '[GoogleAuthCallback] Failed to exchange token. Full error:',
+                JSON.stringify(data, null, 2)
+              );
               // Try with id_token if access_token failed?
               // Or navigate to error
             }

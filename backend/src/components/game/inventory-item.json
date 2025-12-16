@@ -1,0 +1,42 @@
+{
+    "collectionName": "components_game_inventory_items",
+    "info": {
+        "displayName": "Inventory Item",
+        "description": "An item in an inventory or slot"
+    },
+    "options": {},
+    "attributes": {
+        "item": {
+            "type": "relation",
+            "relation": "oneToOne",
+            "target": "api::equipment.equipment"
+        },
+        "quantity": {
+            "type": "integer",
+            "default": 1,
+            "min": 1
+        },
+        "slot": {
+            "type": "enumeration",
+            "enum": [
+                "backpack",
+                "main_hand",
+                "off_hand",
+                "armor",
+                "head",
+                "feet",
+                "neck",
+                "hands",
+                "cloak",
+                "ring_1",
+                "ring_2",
+                "accessory"
+            ],
+            "default": "backpack"
+        },
+        "isEquipped": {
+            "type": "boolean",
+            "default": false
+        }
+    }
+}

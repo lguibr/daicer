@@ -38,10 +38,35 @@
             "default": 0
         },
         "stats": {
+            "type": "component",
+            "repeatable": false,
+            "component": "game.stats"
+        },
+        "race": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::race.race"
+        },
+        "class": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::class.class"
+        },
+        "appearance": {
             "type": "json"
         },
+        "backstory": {
+            "type": "text"
+        },
         "inventory": {
-            "type": "json"
+            "type": "component",
+            "repeatable": true,
+            "component": "game.inventory-item"
+        },
+        "position": {
+            "type": "component",
+            "repeatable": false,
+            "component": "game.position"
         }
     }
 }

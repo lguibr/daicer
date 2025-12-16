@@ -37,6 +37,7 @@ export interface ServerToClientEvents {
 
   // Messages - actual structure from backend
   'message:new': (message: Message) => void;
+  'game:start': (data: { room: Room; text: string; sender: string; timestamp: number }) => void;
   'message:stream:start': (data: { streamId: string; messageId: string; sender: string; timestamp: number }) => void;
   'message:stream:chunk': (data: { streamId: string; messageId: string; content: string; accumulated: string }) => void;
   'message:stream:end': (data: { streamId: string; messageId: string; fullText: string; timestamp: number }) => void;

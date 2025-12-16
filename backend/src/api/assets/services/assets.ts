@@ -4,6 +4,7 @@
 
 import { Core } from '@strapi/strapi';
 import { generateImageGemini, describeImageGemini } from '../../../utils/llm/image';
+import { getPrompt, formatPrompt } from '../../../utils/prompt';
 import { getFlashLiteLatestModel } from '../../../utils/llm/gemini';
 import { HumanMessage } from '@langchain/core/messages';
 
@@ -19,8 +20,14 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         referenceImages, // [{ mimeType, data }]
         referenceImage, // Legacy field, might be string or null
         aspectRatio = '1:1', // Default to square
-        framingContext = 'Close-up portrait', // Default framing instruction
+        framingContext: overrideFraming, // Optional override
       } = payload;
+
+      let framingContext = overrideFraming;
+      // Default framing if not provided
+      if (!framingContext) {
+        framingContext = await getPrompt('image_framing_portrait', 'en', 'Close-up portrait');
+      }
 
       // 1. Analyze Reference Image if provided
       let refDescription = '';
@@ -29,11 +36,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
           const imgData = referenceImages[0].data;
           const mimeType = referenceImages[0].mimeType;
           console.log('Analyzing Reference Image with Gemini...');
+          const analysisPrompt = await getPrompt(
+            'image_reference_analysis',
+            'en',
+            "Describe this character's visual style, face, and key features to help generate a CONSISTENT variation. detailed."
+          );
+
           refDescription = await describeImageGemini({
             imageBase64: imgData,
             mimeType: mimeType,
-            prompt:
-              "Describe this character's visual style, face, and key features to help generate a CONSISTENT variation. detailed.",
+            prompt: analysisPrompt,
           });
         } catch (err) {
           console.warn('Reference image analysis failed, proceeding without it:', err);
@@ -42,7 +54,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
       // 2. Construct Master Prompt using Gemini Flash Lite (Nano replacement)
       const model = getFlashLiteLatestModel();
-      const constructionPrompt = `
+      const defaultConstruction = `
       Create a highly detailed image generation prompt for a fantasy RPG character portrait.
       Target Model: Imagen 3 / Gemini Image Generation.
       
@@ -66,20 +78,39 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       Output ONLY the final prompt string.
       `;
 
-      const response = await model.invoke([new HumanMessage(constructionPrompt)]);
-      const finalPrompt =
-        referenceImages && referenceImages.length === 1
-          ? response.content.toString() +
-            "The current reference image is just a placeholder of the pose expected not the real thing. So don't be too strict to it."
-          : response.content.toString();
+      let constructionPrompt = await getPrompt('image_generation_master_prompt', 'en', defaultConstruction);
 
+      // Format the prompt
+      const referenceAnalysisSection = refDescription
+        ? `Reference Image Analysis (Incorporate this VIBE/STYLE but keep character details from above): ${refDescription}`
+        : '';
+
+      if (constructionPrompt.includes('{{name}}')) {
+        constructionPrompt = formatPrompt(constructionPrompt, {
+          name: name || '',
+          race: appearance?.race || '',
+          classRole: appearance?.classRole || '',
+          hair: appearance?.hair || '',
+          eyes: appearance?.eyes || '',
+          attire: appearance?.attire || '',
+          features: appearance?.notableFeatures || '',
+          basePrompt: basePrompt || '',
+          artStyle: artStyle || 'Fantasy Digital Painting',
+          tone: tone || '',
+          referenceAnalysisSection,
+          framingContext: framingContext || '',
+        });
+      }
+
+      const response = await model.invoke([new HumanMessage(constructionPrompt)]);
+      const finalPrompt = response.content.toString();
       console.log('Generated Prompt:', finalPrompt);
 
       // 3. Generate Image using Gemini (2.5 Flash Image / Imagen)
       const result = await generateImageGemini({
         prompt: finalPrompt,
         aspectRatio: aspectRatio as any,
-        referenceImages: referenceImages,
+        // referenceImages: referenceImages,
       });
 
       // Expect url to be "data:mime;base64,data"
@@ -127,6 +158,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       refImages = [{ mimeType: 'image/png', data: input.referenceImage }, ...refImages];
     }
 
+    const framingContext = await getPrompt(
+      'image_framing_upper_body',
+      'en',
+      'Upper body shot, from waist up. Focus on costume details and upper body posture.'
+    );
+
     return this.generatePortrait({
       ...effectivePayload,
       basePrompt:
@@ -134,7 +171,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         ' Upper body framing. Maintain character visual consistency from reference.',
       referenceImages: refImages,
       aspectRatio: '3:4',
-      framingContext: 'Upper body shot, from waist up. Focus on costume details and upper body posture.',
+      framingContext,
     });
   },
 
@@ -150,6 +187,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       refImages = [{ mimeType: upperBody.mimeType || 'image/png', data: upperBody.data }, ...refImages];
     }
 
+    const framingContext = await getPrompt(
+      'image_framing_full_body',
+      'en',
+      'Full body shot, head to toe. Show legs and footwear. Vertical cinematic composition.'
+    );
+
     return this.generatePortrait({
       ...effectivePayload,
       basePrompt:
@@ -157,7 +200,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         ' Full body cinematic framing. Maintain visual consistency from reference.',
       referenceImages: refImages,
       aspectRatio: '9:16',
-      framingContext: 'Full body shot, head to toe. Show legs and footwear. Vertical cinematic composition.',
+      framingContext,
     });
   },
 });

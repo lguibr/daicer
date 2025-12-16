@@ -53,6 +53,21 @@ export interface WorldSettings {
   generationParams?: Record<string, any>;
 }
 
+export interface TurnAction {
+  playerId: string | number;
+  characterId: string | number;
+  type: 'action' | 'movement' | 'bonus' | 'free';
+  intent: string;
+  metadata?: any;
+  timestamp: number;
+}
+
+export interface TurnData {
+  phase: 'idle' | 'waiting_for_actions' | 'processing';
+  startTime: number;
+  actions: TurnAction[];
+}
+
 export interface MapConfig {
   seed: string;
   gridEnabled: boolean;
@@ -71,7 +86,12 @@ export interface Room {
   roomId: string; // Public Room ID / Code (if distinct) or alias
   id: string;
   code: string;
-  ownerId: string;
+  owner?: {
+    documentId: string;
+    username: string;
+    email: string;
+  };
+  ownerId?: string;
   settings: WorldSettings | null;
   mapConfig?: MapConfig; // Centralized map configuration
   worldDescription: string;
@@ -80,6 +100,8 @@ export interface Room {
   roads?: any[];
   worldConditions?: any[];
   phase: GamePhase;
+  turnData?: TurnData;
+  character_sheets?: any[]; // Populated from Strapi
   terrainData?: any; // Deprecated: Moving to grid_chunks collection
   characterCreationLocked?: boolean; // Owner must unlock before players can create characters
   generationEvents?: any[]; // Captured SSE events from world generation for review

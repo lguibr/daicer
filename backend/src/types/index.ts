@@ -81,6 +81,7 @@ export interface CharacterSheet {
   name: string;
   race: string;
   characterClass: string;
+  class?: any; // strapi relation
   background: string;
   alignment: string;
   level: number;

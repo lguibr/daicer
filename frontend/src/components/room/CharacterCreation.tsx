@@ -10,6 +10,7 @@ import {
   generateAvatarUpperBody,
   generateAvatarFullBody,
 } from '../../services/api';
+import { generateRandomCharacter } from '../../services/characterGenerator';
 import useAuth from '../../hooks/useAuth';
 import MarkdownMessage from '../game/MarkdownMessage';
 import { useAlignments, useRaces, useClasses } from '../../hooks/useGameData';
@@ -61,6 +62,7 @@ export default function CharacterCreation({
   assetMode = false,
   settings,
   onAssetCreated,
+  onCharacterCreated,
 }: CharacterCreationProps) {
   const { user } = useAuth();
   const { t, localize } = useI18n();
@@ -176,8 +178,9 @@ export default function CharacterCreation({
       const existingIndex = inventory.findIndex((i) => i.itemIndex === itemIndex);
       if (existingIndex !== -1) {
         const newInventory = [...inventory];
-        if (newInventory[existingIndex]) {
-          newInventory[existingIndex].quantity += 1;
+        const existingItem = newInventory[existingIndex];
+        if (existingItem) {
+          existingItem.quantity += 1;
           setInventory(newInventory);
         }
       } else {
@@ -191,8 +194,9 @@ export default function CharacterCreation({
         const existingIndex = inventory.findIndex((i) => i.itemIndex === itemIndex);
         if (existingIndex !== -1) {
           const newInventory = [...inventory];
-          if (newInventory[existingIndex]) {
-            newInventory[existingIndex].quantity += 1;
+          const existingItem = newInventory[existingIndex];
+          if (existingItem) {
+            existingItem.quantity += 1;
             setInventory(newInventory);
           }
         } else {
@@ -219,8 +223,9 @@ export default function CharacterCreation({
       // Return to inventory
       const existingIndex = inventory.findIndex((i) => i.itemIndex === currentItem);
       const newInv = [...inventory];
-      if (existingIndex !== -1 && newInv[existingIndex]) {
-        newInv[existingIndex].quantity += 1;
+      const existingItem = newInv[existingIndex];
+      if (existingIndex !== -1 && existingItem) {
+        existingItem.quantity += 1;
       } else {
         newInv.push({ itemIndex: currentItem, quantity: 1 });
       }
@@ -244,8 +249,9 @@ export default function CharacterCreation({
     // Add back to inventory
     const existingIndex = inventory.findIndex((i) => i.itemIndex === itemIndex);
     const newInv = [...inventory];
-    if (existingIndex !== -1 && newInv[existingIndex]) {
-      newInv[existingIndex].quantity += 1;
+    const existingItem = newInv[existingIndex];
+    if (existingIndex !== -1 && existingItem) {
+      existingItem.quantity += 1;
     } else {
       newInv.push({ itemIndex, quantity: 1 });
     }
@@ -345,8 +351,9 @@ export default function CharacterCreation({
         // Add remaining quantity to inventory if > 1
         if (quantity > 1) {
           const existingIndex = newInventory.findIndex((i) => i.itemIndex === itemIndex);
-          if (existingIndex !== -1 && newInventory[existingIndex]) {
-            newInventory[existingIndex].quantity += quantity - 1;
+          const existingItem = newInventory[existingIndex];
+          if (existingIndex !== -1 && existingItem) {
+            existingItem.quantity += quantity - 1;
           } else {
             newInventory.push({ itemIndex, quantity: quantity - 1 });
           }
@@ -354,8 +361,9 @@ export default function CharacterCreation({
       } else {
         // Add to inventory only
         const existingIndex = newInventory.findIndex((i) => i.itemIndex === itemIndex);
-        if (existingIndex !== -1 && newInventory[existingIndex]) {
-          newInventory[existingIndex].quantity += quantity;
+        const existingItem = newInventory[existingIndex];
+        if (existingIndex !== -1 && existingItem) {
+          existingItem.quantity += quantity;
         } else {
           newInventory.push({ itemIndex, quantity });
         }
@@ -430,59 +438,31 @@ export default function CharacterCreation({
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/game-data/character-templates/${archetype}`);
-      const result = await response.json();
 
-      if (!result.success) throw new Error('Failed to load template');
+      // Simulate network delay for better UX
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      const template = result.data;
-      if (!template?.attributes?.Strength) throw new Error('Template missing required attributes');
+      const generated = generateRandomCharacter(archetype, formData.race);
 
-      setFormData({
-        name: template.name,
-        race: template.race,
-        characterClass: template.characterClass,
-        background: template.backstory,
-        alignment: template.alignment,
-        attributes: {
-          Strength: template.attributes?.Strength ?? 8,
-          Dexterity: template.attributes?.Dexterity ?? 8,
-          Constitution: template.attributes?.Constitution ?? 8,
-          Intelligence: template.attributes?.Intelligence ?? 8,
-          Wisdom: template.attributes?.Wisdom ?? 8,
-          Charisma: template.attributes?.Charisma ?? 8,
-        },
-        skills: template.skills ?? {},
-        equipment: template.equipment ?? '',
-        proficienciesAndLanguages: template.proficienciesAndLanguages ?? '',
-        features: template.features ?? '',
-        treasure: template.treasure ?? '',
-        currency: template.currency ?? { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 },
-        resourcePools: template.resourcePools ?? [],
-        talents: template.talents ?? [],
-        expertises: template.expertises ?? [],
+      setFormData((prev) => ({
+        ...prev,
+        ...generated,
+        attributes: generated.attributes as any, // TS coercion for loose typing
         appearance: {
-          age: template.appearance?.age ?? '',
-          height: template.appearance?.height ?? '',
-          weight: template.appearance?.weight ?? '',
-          eyes: template.appearance?.eyes ?? '',
-          skin: template.appearance?.skin ?? '',
-          hair: template.appearance?.hair ?? '',
-          description: template.appearance?.description ?? '',
-          gender: template.appearance?.gender ?? '',
+          ...prev.appearance,
+          ...generated.appearance,
         },
         personality: {
-          traits: template.personality?.traits ?? '',
-          ideals: template.personality?.ideals ?? '',
-          bonds: template.personality?.bonds ?? '',
-          flaws: template.personality?.flaws ?? '',
+          ...prev.personality,
+          ...generated.personality,
         },
-      });
+      }));
+
       setAvatarPreview({});
-      // setPreviewLoading(false);
       setPreviewLoadState({ portrait: false, upperBody: false, fullBody: false });
       setError(null);
     } catch (err) {
+      console.error(err);
       setError(t('characterCreation.errors.templateFailed'));
     } finally {
       setLoading(false);
@@ -674,7 +654,7 @@ export default function CharacterCreation({
       const armorClass = 10 + dexModifier;
       const proficiencyBonus = 2;
 
-      await addCharacter(room.id, {
+      await addCharacter(room.documentId, {
         ...formData,
         level: startingLevel,
         xp: 0,
@@ -697,29 +677,87 @@ export default function CharacterCreation({
         baseAttackBonus: proficiencyBonus,
         attacks: [],
         // ✨ ADD EQUIPMENT DATA
-        equipment: {
-          totalWeight: 0,
-          inventory: inventory.map((i) => ({
-            itemIndex: i.itemIndex,
-            quantity: i.quantity,
-          })),
-          equippedItems: {
-            mainHand: equippedItems.mainHand || null,
-            offHand: equippedItems.offHand || null,
-            armor: equippedItems.armor || null,
-            shield: equippedItems.shield || null,
-            head: equippedItems.head || null,
-            cloak: equippedItems.cloak || null,
-            belt: equippedItems.belt || null,
-            boots: equippedItems.boots || null,
-            gloves: equippedItems.gloves || null,
-            ring1: equippedItems.ring1 || null,
-            ring2: equippedItems.ring2 || null,
-            necklace: equippedItems.necklace || null,
-            accessory1: equippedItems.accessory1 || null,
-            accessory2: equippedItems.accessory2 || null,
-          },
-        },
+        // ✨ ADD EQUIPMENT DATA
+        equipment: [
+          // Inventory items (in backpack)
+          ...inventory
+            .map((i) => {
+              const item = equipmentItems.find((e) => e.index === i.itemIndex);
+              return item
+                ? {
+                    item: item.id,
+                    quantity: i.quantity,
+                    slot: 'backpack',
+                    isEquipped: false,
+                  }
+                : null;
+            })
+            .filter((i): i is NonNullable<typeof i> => i !== null),
+
+          // Equipped items
+          ...Object.entries(equippedItems)
+            .map(([uiSlot, itemIndex]) => {
+              if (!itemIndex) return null;
+              const item = equipmentItems.find((e) => e.index === itemIndex);
+              if (!item) return null;
+
+              // Map UI slots to Backend Enum
+              let backendSlot = 'backpack';
+              let isEquipped = true;
+
+              switch (uiSlot) {
+                case 'mainHand':
+                  backendSlot = 'main_hand';
+                  break;
+                case 'offHand':
+                case 'shield':
+                  backendSlot = 'off_hand'; // Both map to off_hand
+                  break;
+                case 'armor':
+                  backendSlot = 'armor';
+                  break;
+                case 'head':
+                  backendSlot = 'head';
+                  break;
+                case 'boots':
+                  backendSlot = 'feet';
+                  break;
+                case 'necklace':
+                  backendSlot = 'neck';
+                  break;
+                case 'gloves':
+                  backendSlot = 'hands';
+                  break;
+                case 'cloak':
+                  backendSlot = 'cloak';
+                  break;
+                case 'ring1':
+                  backendSlot = 'ring_1';
+                  break;
+                case 'ring2':
+                  backendSlot = 'ring_2';
+                  break;
+                case 'accessory1':
+                  backendSlot = 'accessory';
+                  break;
+                case 'belt':
+                case 'accessory2':
+                default:
+                  // Unsupported slots go to backpack as unequipped or just backpack
+                  backendSlot = 'backpack';
+                  isEquipped = false;
+                  break;
+              }
+
+              return {
+                item: item.id,
+                quantity: 1,
+                slot: backendSlot,
+                isEquipped,
+              };
+            })
+            .filter((i): i is NonNullable<typeof i> => i !== null),
+        ],
         currency: { cp: 0, sp: 0, ep: 0, gp: equipmentGold, pp: 0 },
         proficienciesAndLanguages: '',
         features: '',
@@ -737,6 +775,7 @@ export default function CharacterCreation({
         },
         avatarPreview: { portrait, upperBody, fullBody },
       });
+      onCharacterCreated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('characterCreation.errors.createFailed'));
     } finally {
@@ -797,6 +836,7 @@ export default function CharacterCreation({
         onAssetCreated?.(asset);
       } else {
         await handleCreateCharacter();
+        onCharacterCreated?.();
       }
     }
   };
@@ -883,7 +923,7 @@ export default function CharacterCreation({
                     onSelect={(value) => {
                       updateField('characterClass', value);
                       // Auto-load template when class is selected
-                      loadTemplate(value.toLowerCase());
+                      loadTemplate(value);
                     }}
                     loading={classesLoading}
                   />

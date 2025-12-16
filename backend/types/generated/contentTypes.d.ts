@@ -387,20 +387,25 @@ export interface ApiCharacterSheetCharacterSheet extends Struct.CollectionTypeSc
     draftAndPublish: true;
   };
   attributes: {
+    appearance: Schema.Attribute.JSON;
+    backstory: Schema.Attribute.Text;
     character: Schema.Attribute.Relation<'manyToOne', 'api::character.character'>;
+    class: Schema.Attribute.Relation<'manyToOne', 'api::class.class'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     currentHp: Schema.Attribute.Integer;
     experience: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    inventory: Schema.Attribute.JSON;
+    inventory: Schema.Attribute.Component<'game.inventory-item', true>;
     level: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::character-sheet.character-sheet'> &
       Schema.Attribute.Private;
     maxHp: Schema.Attribute.Integer;
+    position: Schema.Attribute.Component<'game.position', false>;
     publishedAt: Schema.Attribute.DateTime;
+    race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
     room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
-    stats: Schema.Attribute.JSON;
+    stats: Schema.Attribute.Component<'game.stats', false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
   };
@@ -418,11 +423,13 @@ export interface ApiCharacterCharacter extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    baseStats: Schema.Attribute.JSON;
+    appearance: Schema.Attribute.JSON;
+    backstory: Schema.Attribute.Text;
+    baseStats: Schema.Attribute.Component<'game.stats', false>;
     class: Schema.Attribute.Relation<'manyToOne', 'api::class.class'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    description: Schema.Attribute.RichText;
+    equipment: Schema.Attribute.Component<'game.inventory-item', true>;
     fullBody: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::character.character'> & Schema.Attribute.Private;
@@ -432,6 +439,7 @@ export interface ApiCharacterCharacter extends Struct.CollectionTypeSchema {
     race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    upperBody: Schema.Attribute.Media<'images'>;
     user: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
   };
 }
@@ -991,52 +999,46 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    adventureLength: Schema.Attribute.Enumeration<['flash', 'short', 'medium', 'long', 'epic', 'legendary']> &
+      Schema.Attribute.DefaultTo<'short'>;
     character_sheets: Schema.Attribute.Relation<'oneToMany', 'api::character-sheet.character-sheet'>;
-    code: Schema.Attribute.String & Schema.Attribute.Required & Schema.Attribute.Unique;
+    code: Schema.Attribute.String & Schema.Attribute.Unique;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
+      Schema.Attribute.DefaultTo<'easy'>;
+    dmStyle: Schema.Attribute.Component<'game.dm-style', false>;
+    generationParams: Schema.Attribute.Component<'game.generation-params', false>;
     history: Schema.Attribute.JSON;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::room.room'> & Schema.Attribute.Private;
-    ownerId: Schema.Attribute.String & Schema.Attribute.Required;
+    owner: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
     phase: Schema.Attribute.Enumeration<
       ['lobby', 'character_creation', 'world_generation', 'gameplay', 'combat', 'ending']
     > &
       Schema.Attribute.DefaultTo<'lobby'>;
-    players: Schema.Attribute.JSON;
+    playerCount: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<4>;
+    players: Schema.Attribute.Component<'game.player', true>;
     publishedAt: Schema.Attribute.DateTime;
-    roomId: Schema.Attribute.UID & Schema.Attribute.Required & Schema.Attribute.Unique;
+    roomId: Schema.Attribute.UID & Schema.Attribute.Unique;
+    setting: Schema.Attribute.String;
     settings: Schema.Attribute.JSON;
+    startingLevel: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     structures: Schema.Attribute.JSON;
     terrainData: Schema.Attribute.JSON;
+    theme: Schema.Attribute.String;
+    tone: Schema.Attribute.String;
+    turnData: Schema.Attribute.JSON;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     worldDescription: Schema.Attribute.RichText;
-  };
-}
-
-export interface ApiSequenceSequence extends Struct.CollectionTypeSchema {
-  collectionName: 'sequences';
-  info: {
-    description: 'Atomic counters for ID generation';
-    displayName: 'Sequence';
-    pluralName: 'sequences';
-    singularName: 'sequence';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    key: Schema.Attribute.String & Schema.Attribute.Required & Schema.Attribute.Unique;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::sequence.sequence'> & Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    value: Schema.Attribute.BigInteger & Schema.Attribute.DefaultTo<'0'>;
+    worldSize: Schema.Attribute.Enumeration<['intimate', 'small', 'medium', 'large', 'vast', 'epic']> &
+      Schema.Attribute.DefaultTo<'small'>;
+    worldType: Schema.Attribute.Enumeration<
+      ['terra', 'water', 'desert', 'ice', 'volcanic', 'forest', 'sky', 'underground', 'custom']
+    > &
+      Schema.Attribute.DefaultTo<'terra'>;
   };
 }
 
@@ -1587,14 +1589,37 @@ export interface PluginUsersPermissionsUser extends Struct.CollectionTypeSchema 
     timestamps: true;
   };
   attributes: {
+    blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     characters: Schema.Attribute.Relation<'oneToMany', 'api::character.character'>;
+    confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
+    confirmed: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    email: Schema.Attribute.Email &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 6;
+      }>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'plugin::users-permissions.user'> & Schema.Attribute.Private;
+    password: Schema.Attribute.Password &
+      Schema.Attribute.Private &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 6;
+      }>;
+    provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
+    role: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.role'>;
+    rooms: Schema.Attribute.Relation<'oneToMany', 'api::room.room'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    username: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 3;
+      }>;
   };
 }
 
@@ -1624,7 +1649,6 @@ declare module '@strapi/strapi' {
       'api::prompt.prompt': ApiPromptPrompt;
       'api::race.race': ApiRaceRace;
       'api::room.room': ApiRoomRoom;
-      'api::sequence.sequence': ApiSequenceSequence;
       'api::spell.spell': ApiSpellSpell;
       'api::subclass.subclass': ApiSubclassSubclass;
       'api::trait.trait': ApiTraitTrait;

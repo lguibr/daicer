@@ -9,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
 export interface User {
   id: number;
+  documentId: string; // Strapi v5
   username: string;
   email: string;
   provider: string;
@@ -19,7 +20,7 @@ export interface User {
 }
 
 interface AuthState {
-  user: (User & { uid: string; displayName: string }) | null;
+  user: (User & { uid: string; displayName: string; getIdToken: () => Promise<string> }) | null;
   loading: boolean;
   error: string | null;
 }
@@ -55,6 +56,7 @@ export default function useAuth() {
             ...userData,
             uid: userData.id.toString(),
             displayName: userData.username,
+            getIdToken: async () => token,
           };
           setState({
             user: userWithLegacyFields,

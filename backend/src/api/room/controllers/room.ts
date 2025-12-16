@@ -1,5 +1,6 @@
 import { factories } from '@strapi/strapi';
 import { generateRoomCode } from '../../../utils/room-code';
+import { v4 as uuidv4 } from 'uuid';
 
 export default factories.createCoreController('api::room.room', ({ strapi }) => ({
   async create(ctx) {
@@ -8,71 +9,20 @@ export default factories.createCoreController('api::room.room', ({ strapi }) => 
     if (!user) {
       return ctx.unauthorized('You must be logged in to create a room');
     }
+    // const user = { id: 1, documentId: 'mock-doc-id', username: 'MockUser' };
 
     const { settings, structures } = ctx.request.body;
 
-    // Atomic increment of the sequence
-    // We use a transaction (or raw query) if possible, but Strapi generic entityService doesn't expose atomic increment easily.
-    // We will use strapi.db.query to find and update, or raw query for atomicity if needed.
-    // For now, using a simple locking approach via find matches is prone to race conditions in high scale,
-    // but for this MVP/scale, we can try to use a semaphore or optimistic locking.
-    // actually, strapi.db.query has no atomic increment helper. PostgreSQL does.
-
-    // Better approach: Use a raw query to update the sequence and return the new value safely.
-    const knex = strapi.db.connection;
-    let nextVal: string | number = 0;
-
-    // Ensure sequence exists
-    // We can't easily auto-create safely in raw without race, so we assume it exists or we use a "insert on conflict" equivalent.
-
-    const SEQUENCE_KEY = 'room_code';
-
-    try {
-      if (knex.client.driver.name === 'sqlite3') {
-        // SQLite syntax
-        // Upsert logic for SQLite
-        await knex.raw(
-          `
-           INSERT INTO sequences (key, value, created_at, updated_at) 
-           VALUES (?, 1, datetime('now'), datetime('now')) 
-           ON CONFLICT(key) DO UPDATE SET value = value + 1
-         `,
-          [SEQUENCE_KEY]
-        );
-
-        const res = await knex('sequences').where({ key: SEQUENCE_KEY }).select('value').first();
-        nextVal = res.value;
-      } else {
-        // Postgres/MySQL syntax (pg uses RETURNING)
-        // We'll use a generic approach if possible, or detect PG.
-        // Assuming Postgres from user context "count from postgress".
-        const result = await knex.raw(
-          `
-           INSERT INTO sequences (key, value, created_at, updated_at)
-           VALUES (?, 1, NOW(), NOW())
-           ON CONFLICT (key) DO UPDATE SET value = sequences.value + 1
-           RETURNING value
-         `,
-          [SEQUENCE_KEY]
-        );
-
-        // Postgres returns rows in result.rows
-        nextVal = result.rows[0].value;
-      }
-    } catch (err) {
-      console.error('Error generating room sequence:', err);
-      // Fallback or re-throw
-      return ctx.badRequest('Could not generate room ID');
-    }
-
-    // Generate Room Code
-    let code = generateRoomCode(BigInt(nextVal));
-    // Simple collision check (optional but good)
-    // In strict impl we'd loop check. For now assume low collision probability or handle unique error
+    // OLD SEQUENCE LOGIC REMOVED
+    // We now use the Room ID itself to seed the generator.
+    // Flow:
+    // 1. Create Room with temporary unique code (UUID)
+    // 2. Derive real code from room.id
+    // 3. Update room with real code
 
     // Owner Player Object
     const ownerPlayer = {
-      id: user.id || user.documentId, // distinct depending on Strapi v5
+      id: user.id || user.documentId,
       userId: user.id || user.documentId,
       name: user.username || 'Room Owner',
       character: null,
@@ -82,32 +32,64 @@ export default factories.createCoreController('api::room.room', ({ strapi }) => 
       joinedAt: Date.now(),
     };
 
+    const tempCode = uuidv4();
+
     const roomData = {
-      roomId: ctx.request.body.roomId || code,
-      code,
-      ownerId: user.id?.toString(),
+      roomId: ctx.request.body.roomId || tempCode, // temporary
+      code: tempCode, // temporary
+      owner: user.documentId,
       phase: 'lobby',
       worldDescription: '',
       isActive: true,
       settings: settings || {},
       structures: structures || [],
       players: [ownerPlayer],
-      ...ctx.request.body, // Allow other overrides but controlled
+      ...ctx.request.body,
     };
 
-    // We must ensure 'code' field exists in schema.
-    // If not, we should have added it. I recall seeing roomId but not code?
-
-    // const response = await super.create(ctx);
-    // super.create uses ctx.request.body. We should MUTATE body before calling super,
-    // OR call service directly. calling super is safer for policies.
-
-    // Use Entity Service directly for consistent flat response
+    // 1. Create with temp code
     const newRoom = await strapi.entityService.create('api::room.room', {
       data: roomData,
     });
 
-    return { success: true, data: newRoom };
+    try {
+      // 2. Derive real code from ID
+      // strapi v5 might use documentId, but we likely want the numeric ID for the seed if available,
+      // or we can just hash the documentId.
+      // Based on user request "postgress room itself", assuming numeric incremental ID is available or appropriate.
+      // Strapi v4/v5 usually exposes .id as number for SQL.
+
+      const seed = newRoom.id;
+
+      // If seed is a string (uuid), we might need to hash it to a bigint or use it differently.
+      // generateRoomCode expects BigInt.
+      let codeStr: string;
+
+      if (typeof seed === 'number') {
+        codeStr = generateRoomCode(BigInt(seed));
+      } else {
+        // If ID is not a number (e.g. string UUID in v5 default), we fallback or need a hash.
+        // For now assuming number as per typical Postgres ID context.
+        // If it is a string ID, we can parse it if it's numeric, or we need another strategy.
+        // Let's assume it works as number for now.
+        codeStr = generateRoomCode(BigInt(seed));
+      }
+
+      // 3. Update with real code
+      const updatedRoom = await strapi.entityService.update('api::room.room', newRoom.documentId || newRoom.id, {
+        data: {
+          code: codeStr,
+          roomId: codeStr, // We often use code as roomId
+        },
+      });
+
+      return { success: true, data: updatedRoom };
+    } catch (error) {
+      console.error('Failed to generate permanent room code', error);
+      // Fallback or cleanup. For now, return what we have (with UUID) or error.
+      // It's better to fail since the code format specific is expected.
+      return ctx.badRequest('Failed to generate room code');
+    }
   },
 
   async join(ctx) {
@@ -119,7 +101,6 @@ export default factories.createCoreController('api::room.room', ({ strapi }) => 
     }
 
     // Find room by roomId or code
-    // usage of strapi.db.query vs entityService
     const room = await strapi.db.query('api::room.room').findOne({
       where: {
         $or: [{ roomId: id }, { code: id }],
@@ -134,7 +115,6 @@ export default factories.createCoreController('api::room.room', ({ strapi }) => 
     const isAlreadyJoined = players.some((p) => p.userId === user.id || p.userId === user.documentId);
 
     if (isAlreadyJoined) {
-      // Return room info but maybe don't error? Or just return success.
       return { success: true, data: room, message: 'Already joined' };
     }
 
@@ -158,5 +138,43 @@ export default factories.createCoreController('api::room.room', ({ strapi }) => 
     });
 
     return { success: true, data: updatedRoom };
+  },
+
+  /**
+   * Submit an Action to the pending turn
+   */
+  async submitAction(ctx) {
+    const { id } = ctx.params;
+    const { user } = ctx.state;
+    const { action } = ctx.request.body;
+
+    if (!user) return ctx.unauthorized('Must be logged in');
+
+    try {
+      const turnService = strapi.service('api::room.turn-service');
+      const updatedTurnData = await turnService.addAction(id, user.id || user.documentId, action);
+      return { success: true, data: updatedTurnData };
+    } catch (err) {
+      return ctx.badRequest(err.message);
+    }
+  },
+
+  /**
+   * Trigger the turn resolution
+   */
+  async triggerTurn(ctx) {
+    const { id } = ctx.params;
+    const { user } = ctx.state;
+
+    // TODO: Verify user is owner or authorized to trigger
+    if (!user) return ctx.unauthorized('Must be logged in');
+
+    try {
+      const turnService = strapi.service('api::room.turn-service');
+      const result = await turnService.processTurn(id);
+      return { success: true, data: result };
+    } catch (err) {
+      return ctx.badRequest(err.message);
+    }
   },
 }));

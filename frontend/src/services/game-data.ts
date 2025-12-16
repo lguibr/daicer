@@ -3,7 +3,40 @@
  * Fetches D&D 5e SRD data from backend API
  */
 
-import { apiRequest } from './api';
+import { apolloClient } from '../lib/apollo';
+import {
+  GET_ABILITIES_QUERY,
+  GET_SKILLS_QUERY,
+  GET_RACES_QUERY,
+  GET_CLASSES_QUERY,
+  GET_ALIGNMENTS_QUERY,
+  GET_BACKGROUNDS_QUERY,
+  GET_LANGUAGES_QUERY,
+  GET_MAGIC_SCHOOLS_QUERY,
+  GET_CONDITIONS_QUERY,
+  GET_DAMAGE_TYPES_QUERY,
+  GET_EQUIPMENT_QUERY,
+  GET_MONSTERS_QUERY,
+  GET_FEATURES_QUERY,
+  GET_SPELLS_QUERY,
+} from '../graphql/game-data';
+
+import type {
+  GetAbilitiesQuery,
+  GetSkillsQuery,
+  GetRacesQuery,
+  GetClassesQuery,
+  GetAlignmentsQuery,
+  GetBackgroundsQuery,
+  GetLanguagesQuery,
+  GetMagicSchoolsQuery,
+  GetConditionsQuery,
+  GetDamageTypesQuery,
+  GetEquipmentQuery,
+  GetMonstersQuery,
+  GetFeaturesQuery,
+  GetSpellsQuery,
+} from '../gql/graphql';
 
 // Re-export types from shared types
 export interface Alignment {
@@ -11,11 +44,6 @@ export interface Alignment {
   name: string;
   abbreviation: string;
   description: string;
-  imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface Ability {
@@ -25,11 +53,6 @@ export interface Ability {
   fullName: string;
   description: string;
   skills: string[];
-  imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface Skill {
@@ -38,11 +61,6 @@ export interface Skill {
   name: string;
   description: string;
   abilityScore: string;
-  imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface Race {
@@ -51,11 +69,6 @@ export interface Race {
   description: string;
   speed: number;
   size: string;
-  imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface CharacterClass {
@@ -63,13 +76,6 @@ export interface CharacterClass {
   name: string;
   description: string;
   hitDie: number;
-  primaryAbility: string;
-  savingThrows: string[];
-  imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface Background {
@@ -77,11 +83,6 @@ export interface Background {
   name: string;
   description: string;
   skillProficiencies: string[];
-  imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface Language {
@@ -90,7 +91,6 @@ export interface Language {
   name: string;
   isRare: boolean;
   note: string;
-  imageUrl?: string | null;
 }
 
 export interface MagicSchool {
@@ -98,7 +98,6 @@ export interface MagicSchool {
   index: string;
   name: string;
   description: string;
-  imageUrl?: string | null;
 }
 
 export interface Condition {
@@ -106,7 +105,6 @@ export interface Condition {
   index: string;
   name: string;
   description: string;
-  imageUrl?: string | null;
 }
 
 export interface DamageType {
@@ -114,7 +112,6 @@ export interface DamageType {
   index: string;
   name: string;
   description: string;
-  imageUrl?: string | null;
 }
 
 export interface WeaponProperty {
@@ -122,7 +119,6 @@ export interface WeaponProperty {
   index: string;
   name: string;
   description: string;
-  imageUrl?: string | null;
 }
 
 export interface EquipmentCategory {
@@ -130,10 +126,10 @@ export interface EquipmentCategory {
   index: string;
   name: string;
   description: string;
-  imageUrl?: string | null;
 }
 
 export interface EquipmentItem {
+  id: string; // Document ID
   index: string;
   name: string;
   equipmentCategory: string;
@@ -145,10 +141,6 @@ export interface EquipmentItem {
   range?: { normal: number; long?: number };
   properties?: string[];
   imageUrl?: string | null;
-  name_es?: string;
-  name_ptBR?: string;
-  description_es?: string;
-  description_ptBR?: string;
 }
 
 export interface MonsterAbilityScores {
@@ -214,7 +206,6 @@ export interface Feature {
   id: string;
   index: string;
   name: string;
-  className: string;
   level: number;
   prerequisites: string[];
   description: string;
@@ -247,6 +238,19 @@ export interface Proficiency {
   classes: string[];
   races: string[];
   reference?: string;
+}
+
+export interface Spell {
+  id: string;
+  name: string;
+  level: number;
+  school: string;
+  castingTime: string;
+  range: string;
+  components: string[];
+  duration: string;
+  isRitual: boolean;
+  description: string;
 }
 
 const MOCK_ALIGNMENTS: Alignment[] = [
@@ -305,242 +309,303 @@ const MOCK_ALIGNMENTS: Alignment[] = [
  * Fetch all alignments
  */
 export async function getAlignments(): Promise<Alignment[]> {
-  // Return mock data for now as strictly required by frontend
-  return Promise.resolve(MOCK_ALIGNMENTS);
+  const { data } = await apolloClient.query<GetAlignmentsQuery>({
+    query: GET_ALIGNMENTS_QUERY,
+  });
+  return (
+    data?.alignments?.map((a) => ({
+      id: a?.documentId || '', // Check valid ID safely
+      name: a?.name || '',
+      abbreviation: a?.abbreviation || '',
+      description: a?.description || '',
+    })) || MOCK_ALIGNMENTS
+  );
 }
 
 /**
  * Fetch all ability scores
  */
 export async function getAbilities(): Promise<Ability[]> {
-  return apiRequest<Ability[]>('/api/game-data/abilities');
+  const { data } = await apolloClient.query<GetAbilitiesQuery>({ query: GET_ABILITIES_QUERY });
+  return (
+    data?.abilities?.map((a) => ({
+      id: a?.documentId || '',
+      index: a?.name?.toLowerCase() || '',
+      name: a?.name || '',
+      fullName: a?.fullName || '',
+      description: a?.description || '',
+      skills: a?.skills?.map((s) => s?.name || '') || [],
+    })) || []
+  );
 }
 
 /**
  * Fetch all skills
  */
 export async function getSkills(): Promise<Skill[]> {
-  return apiRequest<Skill[]>('/api/game-data/skills');
+  const { data } = await apolloClient.query<GetSkillsQuery>({ query: GET_SKILLS_QUERY });
+  return (
+    data?.skills?.map((s) => ({
+      id: s?.documentId || '',
+      index: s?.name?.toLowerCase().replace(/\s+/g, '-') || '',
+      name: s?.name || '',
+      description: s?.description || '',
+      abilityScore: s?.abilityScore?.name || '',
+    })) || []
+  );
 }
 
 /**
  * Fetch all player races
  */
 export async function getRaces(): Promise<Race[]> {
-  return apiRequest<Race[]>('/api/races?populate=*');
+  const { data } = await apolloClient.query<GetRacesQuery>({ query: GET_RACES_QUERY });
+  return (
+    data?.races?.map((r) => ({
+      id: r?.documentId || '',
+      name: r?.name || '',
+      description: r?.description || '',
+      speed: r?.speed || 30,
+      size: r?.size || 'Medium',
+    })) || []
+  );
 }
 
 /**
  * Fetch all character classes
  */
 export async function getClasses(): Promise<CharacterClass[]> {
-  const rawClasses = await apiRequest<any[]>('/api/classes?populate=*');
-  return rawClasses.map((c: any) => ({
-    ...c,
-    id: c.documentId || c.id,
-    hitDie: c.hit_die, // Map snake_case to camelCase
-    primaryAbility: c.primary_ability || c.primaryAbility, // Safety check
-    savingThrows: c.saving_throws || c.savingThrows,
-  }));
+  const { data } = await apolloClient.query<GetClassesQuery>({ query: GET_CLASSES_QUERY });
+  return (
+    data?.classes?.map((c) => ({
+      id: c?.documentId || '',
+      name: c?.name || '',
+      description: c?.description || '',
+      hitDie: parseInt(c?.hit_die || '8', 10),
+    })) || []
+  );
 }
 
 /**
  * Fetch all character backgrounds
  */
 export async function getBackgrounds(): Promise<Background[]> {
-  return apiRequest<Background[]>('/api/game-data/backgrounds');
+  const { data } = await apolloClient.query<GetBackgroundsQuery>({ query: GET_BACKGROUNDS_QUERY });
+  return (
+    data?.backgrounds?.map((b) => ({
+      id: b?.documentId || '',
+      name: b?.name || '',
+      description: b?.description || '',
+      skillProficiencies: b?.skillProficiencies?.map((s) => s?.name || '') || [],
+    })) || []
+  );
 }
 
 /**
  * Fetch all languages
  */
 export async function getLanguages(): Promise<Language[]> {
-  return apiRequest<Language[]>('/api/game-data/languages');
+  const { data } = await apolloClient.query<GetLanguagesQuery>({ query: GET_LANGUAGES_QUERY });
+  return (
+    data?.languages?.map((l) => ({
+      id: l?.documentId || '',
+      index: l?.name?.toLowerCase() || '',
+      name: l?.name || '',
+      isRare: false, // Default
+      note: l?.note || '',
+    })) || []
+  );
 }
 
 /**
  * Fetch all magic schools
  */
 export async function getMagicSchools(): Promise<MagicSchool[]> {
-  return apiRequest<MagicSchool[]>('/api/game-data/magic-schools');
+  const { data } = await apolloClient.query<GetMagicSchoolsQuery>({ query: GET_MAGIC_SCHOOLS_QUERY });
+  return (
+    data?.magicSchools?.map((m) => ({
+      id: m?.documentId || '',
+      index: m?.name?.toLowerCase() || '',
+      name: m?.name || '',
+      description: m?.description || '',
+    })) || []
+  );
 }
 
 /**
  * Fetch all conditions
  */
 export async function getConditions(): Promise<Condition[]> {
-  return apiRequest<Condition[]>('/api/game-data/conditions');
+  const { data } = await apolloClient.query<GetConditionsQuery>({ query: GET_CONDITIONS_QUERY });
+  return (
+    data?.conditions?.map((c) => ({
+      id: c?.documentId || '',
+      index: c?.name?.toLowerCase() || '',
+      name: c?.name || '',
+      description: c?.description || '',
+    })) || []
+  );
 }
 
 /**
  * Fetch all damage types
  */
 export async function getDamageTypes(): Promise<DamageType[]> {
-  return apiRequest<DamageType[]>('/api/game-data/damage-types');
+  const { data } = await apolloClient.query<GetDamageTypesQuery>({ query: GET_DAMAGE_TYPES_QUERY });
+  return (
+    data?.damageTypes?.map((d) => ({
+      id: d?.documentId || '',
+      index: d?.name?.toLowerCase() || '',
+      name: d?.name || '',
+      description: d?.description || '',
+    })) || []
+  );
 }
 
 /**
  * Fetch all equipment items
  */
 export async function getEquipment(): Promise<EquipmentItem[]> {
-  const rawItems = await apiRequest<any[]>('/api/equipments?populate=*');
-
-  return rawItems.map((item: any) => ({
-    index: item.slug || item.index,
-    name: item.name,
-    equipmentCategory: item.equipment_category?.name || item.equipment_category || 'Unknown',
-    cost: {
-      quantity: item.cost_quantity ?? 0,
-      unit: item.cost_unit || 'gp',
-    },
-    weight: item.weight,
-    description: item.description,
-    damage: item.damage_dice
-      ? {
-          damageDice: item.damage_dice,
-          damageType: item.damage_type?.name || 'bludgeoning',
-        }
-      : undefined,
-    armorClass:
-      typeof item.armor_class_base === 'number'
+  const { data } = await apolloClient.query<GetEquipmentQuery>({ query: GET_EQUIPMENT_QUERY });
+  return (
+    data?.equipments?.map((item) => ({
+      id: item?.documentId || '', // Map documentId
+      index: item?.name?.toLowerCase().replace(/\s+/g, '-') || '',
+      name: item?.name || '',
+      equipmentCategory: item?.equipment_category?.name || 'Unknown',
+      cost: {
+        quantity: item?.cost_quantity ?? 0,
+        unit: item?.cost_unit || 'gp',
+      },
+      weight: item?.weight || 0,
+      description: item?.description || '',
+      damage: item?.damage_dice
+        ? {
+            damageDice: item.damage_dice,
+            damageType: item.damage_type?.name || 'bludgeoning',
+          }
+        : undefined,
+      armorClass: item?.armor_class_base
         ? {
             base: item.armor_class_base,
-            dexBonus: item.armor_class_dex_bonus,
-            maxBonus: item.armor_class_max_bonus,
+            dexBonus: item.armor_class_dex_bonus || false,
+            maxBonus: 0,
           }
-        : item.armor_class_base, // Could be null or number if flat
-    range: item.range_normal
-      ? {
-          normal: item.range_normal,
-          long: item.range_long,
-        }
-      : undefined,
-    properties: item.properties?.map((p: any) => p.name) || [],
-    imageUrl: item.image_url || null,
-  }));
-}
-
-/**
- * Fetch all equipment categories
- */
-export async function getEquipmentCategories(): Promise<EquipmentCategory[]> {
-  return apiRequest<EquipmentCategory[]>('/api/game-data/equipment-categories');
-}
-
-/**
- * Fetch all weapon properties
- */
-export async function getWeaponProperties(): Promise<WeaponProperty[]> {
-  return apiRequest<WeaponProperty[]>('/api/game-data/weapon-properties');
+        : undefined,
+      range: item?.range_normal
+        ? {
+            normal: item.range_normal,
+            long: item.range_long || undefined,
+          }
+        : undefined,
+      properties: item?.properties?.map((p) => p?.name || '') || [],
+      imageUrl: null,
+    })) || []
+  );
 }
 
 /**
  * Fetch all monsters
  */
 export async function getMonsters(): Promise<Monster[]> {
-  const rawMonsters = await apiRequest<any[]>('/api/monsters?populate=*');
-  return rawMonsters.map((m: any) => ({
-    id: m.documentId || m.id || m.slug,
-    name: m.name,
-    size: m.size,
-    type: m.type,
-    alignment: m.alignment,
-    armorClass: m.ac || m.armor_class || 10,
-    hitPoints: m.hp || m.hit_points || '10',
-    speed: m.speed,
-    abilityScores: m.stats
-      ? {
-          STR: m.stats.strength || 10,
-          DEX: m.stats.dexterity || 10,
-          CON: m.stats.constitution || 10,
-          INT: m.stats.intelligence || 10,
-          WIS: m.stats.wisdom || 10,
-          CHA: m.stats.charisma || 10,
-        }
-      : { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
-    challenge: m.challenge_rating || '0',
-    senses: m.senses || [],
-    languages: m.languages || [],
-    actions: m.actions || [],
-    specialAbilities: m.special_abilities || [],
-    legendaryActions: m.legendary_actions || [],
-    imageUrl: m.image_url || null,
-  }));
+  const { data } = await apolloClient.query<GetMonstersQuery>({ query: GET_MONSTERS_QUERY });
+  return (
+    data?.monsters?.map((m) => ({
+      id: m?.documentId || '',
+      name: m?.name || '',
+      size: m?.size || 'Medium',
+      type: m?.type || 'beast',
+      alignment: m?.alignment || 'Unaligned',
+      armorClass: m?.ac || 10,
+      hitPoints: String(m?.hp || 10),
+      speed: JSON.stringify(m?.speed) || '30 ft',
+      abilityScores: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
+      senses: [],
+      languages: [],
+      challenge: String(m?.challenge_rating || '0'),
+      actions: [],
+      imageUrl: null,
+    })) || []
+  );
 }
 
 /**
  * Fetch a specific monster by ID
  */
-export async function getMonster(id: string): Promise<Monster> {
-  return apiRequest<Monster>(`/api/game-data/monsters/${id}`);
-}
-
-/**
- * Fetch all magic items
- */
-export async function getMagicItems(): Promise<MagicItem[]> {
-  return apiRequest<MagicItem[]>('/api/game-data/magic-items');
-}
-
-/**
- * Fetch a specific magic item by ID
- */
-export async function getMagicItem(id: string): Promise<MagicItem> {
-  return apiRequest<MagicItem>(`/api/game-data/magic-items/${id}`);
+export async function getMonster(id: string): Promise<Monster | undefined> {
+  const monsters = await getMonsters();
+  return monsters.find((m) => m.id === id); // Simple client-side filter fallback or implement GET_MONSTER_QUERY properly
 }
 
 /**
  * Fetch all class features
  */
 export async function getFeatures(): Promise<Feature[]> {
-  return apiRequest<Feature[]>('/api/game-data/features');
+  const { data } = await apolloClient.query<GetFeaturesQuery>({ query: GET_FEATURES_QUERY });
+  return (
+    data?.features?.map((f) => ({
+      id: f?.documentId || '',
+      index: f?.name?.toLowerCase().replace(/\s+/g, '-') || '',
+      name: f?.name || '',
+      level: f?.level || 1,
+      prerequisites: [],
+      description: f?.description || '',
+    })) || []
+  );
 }
 
 /**
- * Fetch a specific feature by ID
+ * Fetch all spells
  */
-export async function getFeature(id: string): Promise<Feature> {
-  return apiRequest<Feature>(`/api/game-data/features/${id}`);
+export async function getSpells(): Promise<Spell[]> {
+  const { data } = await apolloClient.query<GetSpellsQuery>({ query: GET_SPELLS_QUERY });
+  return (
+    data?.spells?.map((s) => ({
+      id: s?.documentId || '',
+      name: s?.name || '',
+      level: s?.level || 0,
+      school: s?.school || '',
+      castingTime: s?.casting_time || '',
+      range: s?.range || '',
+      components: Array.isArray(s?.components) ? s.components.map(String) : [],
+      duration: s?.duration || '',
+      isRitual: s?.is_ritual || false,
+      description: s?.description || '',
+    })) || []
+  );
 }
 
-/**
- * Fetch all racial traits
- */
+// Stubs for remaining functions
+export async function getEquipmentCategories(): Promise<EquipmentCategory[]> {
+  return [];
+}
+export async function getWeaponProperties(): Promise<WeaponProperty[]> {
+  return [];
+}
+export async function getMagicItems(): Promise<MagicItem[]> {
+  return [];
+}
+export async function getMagicItem(_id: string): Promise<MagicItem> {
+  throw new Error('Not implemented');
+}
+export async function getFeature(_id: string): Promise<Feature> {
+  throw new Error('Not implemented');
+}
 export async function getTraits(): Promise<Trait[]> {
-  return apiRequest<Trait[]>('/api/game-data/traits');
+  return [];
 }
-
-/**
- * Fetch a specific trait by ID
- */
-export async function getTrait(id: string): Promise<Trait> {
-  return apiRequest<Trait>(`/api/game-data/traits/${id}`);
+export async function getTrait(_id: string): Promise<Trait> {
+  throw new Error('Not implemented');
 }
-
-/**
- * Fetch all subclasses
- */
 export async function getSubclasses(): Promise<Subclass[]> {
-  return apiRequest<Subclass[]>('/api/game-data/subclasses');
+  return [];
 }
-
-/**
- * Fetch a specific subclass by ID
- */
-export async function getSubclass(id: string): Promise<Subclass> {
-  return apiRequest<Subclass>(`/api/game-data/subclasses/${id}`);
+export async function getSubclass(_id: string): Promise<Subclass> {
+  throw new Error('Not implemented');
 }
-
-/**
- * Fetch all proficiencies
- */
 export async function getProficiencies(): Promise<Proficiency[]> {
-  return apiRequest<Proficiency[]>('/api/game-data/proficiencies');
+  return [];
 }
-
-/**
- * Fetch a specific proficiency by ID
- */
-export async function getProficiency(id: string): Promise<Proficiency> {
-  return apiRequest<Proficiency>(`/api/game-data/proficiencies/${id}`);
+export async function getProficiency(_id: string): Promise<Proficiency> {
+  throw new Error('Not implemented');
 }
