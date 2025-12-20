@@ -21,6 +21,27 @@ import { generateText } from '../../../utils/llm';
 import { generateStructured } from '../../../utils/llm/structured';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
 // import { getRuleContext } from '../../../utils/rag'; // TODO: precise path if implemented
+import { streamManager } from '../../../utils/llm/stream-manager';
+
+// Helper to create character snapshots
+const createSnapshot = (characterSheets: any[]) => {
+  const snapshot: Record<string, any> = {};
+  for (const sheet of characterSheets) {
+    if (sheet && sheet.documentId) {
+      snapshot[sheet.documentId] = {
+        hp: sheet.currentHp,
+        maxHp: sheet.maxHp,
+        stats: sheet.stats,
+        inventory: sheet.inventory,
+        level: sheet.level,
+        experience: sheet.experience,
+        position: sheet.position,
+        // Add other volatile fields
+      };
+    }
+  }
+  return snapshot;
+};
 
 // Stub for RAG
 async function getRuleContext(query: string, limit: number): Promise<string> {
@@ -188,6 +209,7 @@ ${worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')}
   },
 
   async processTurn(
+    roomId: string,
     worldDescription: string,
     messages: Message[],
     players: Player[],
@@ -206,6 +228,12 @@ ${worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')}
       'pt-BR': 'Brazilian Portuguese',
     };
     const languageName = languageMap[language] || 'English';
+
+    // Broadcast Processing Start
+    const { streamManager } = await import('../../../utils/llm/stream-manager');
+    // Using roomId (typically Code in Strapi 5 fallback logic, but let's be safe and try to conform to room doc/code)
+    // We passed roomId. The service assumes it's valid.
+    streamManager.broadcast(roomId, 'turn:processing', { roomId });
 
     // Build DM instruction
     const dmStyle = settings?.dmStyle;
@@ -305,6 +333,114 @@ Respond entirely in ${languageName}.`;
     const response = await generateStructured(TurnResponseSchema, systemPrompt, fullPrompt, language, {
       metadata: { streamId },
     });
+
+    // --- PERSISTENCE & BROADCASTING ---
+
+    // 1. Fetch Room with Character Sheets for Snapshot
+    const roomWithSheets = await strapi.documents('api::room.room').findOne({
+      documentId: roomId, // Assuming roomId passed to function IS the documentId, based on usage
+      populate: ['character_sheets'],
+    });
+
+    if (!roomWithSheets) throw new Error('Room not found for persistence');
+
+    // 2. Determine Turn Number
+    // Count existing turns
+    const turnCount = await strapi.documents('api::turn.turn').count({
+      filters: { room: { documentId: roomWithSheets.documentId } },
+    });
+    const newTurnNumber = turnCount; // 0-indexed or 1-indexed? If count is 1 (Start), next is 1. Start is 0.
+
+    // 3. Create Turn Entity (Processing -> Complete)
+    // We do it in one go for now, or we could create 'processing' at start of func.
+    // Let's create it as Complete since generation is done.
+
+    const snapshot = createSnapshot(roomWithSheets.character_sheets || []);
+
+    const newTurn = await strapi.documents('api::turn.turn').create({
+      data: {
+        turnNumber: newTurnNumber,
+        room: roomWithSheets.documentId,
+        narrative: response.overall_summary,
+        status: 'complete',
+        type: 'group', // Default to group for now, can be passed in args later
+        actions: players.filter((p) => p.action).map((p) => ({ user: p.userId, action: p.action })), // Persist actions
+        characterSnapshots: snapshot,
+        metadata: {
+          model: 'llm',
+          ragUsed: !!relevantRules,
+        },
+      },
+      status: 'published',
+    });
+
+    // 4. Create Response Message
+    const newMessage = await strapi.documents('api::message.message').create({
+      data: {
+        content: response.overall_summary,
+        senderName: 'DM',
+        senderType: 'dm',
+        room: roomWithSheets.documentId,
+        turn: newTurn.documentId,
+        timestamp: Date.now(), // Store as BigInt compatible? Schema said BigInt.
+      },
+      status: 'published',
+    });
+
+    // 5. Clear Player Actions in Room
+    const updatedPlayers = players.map((p) => ({
+      ...p,
+      action: null,
+      isReady: false,
+    }));
+
+    await strapi.documents('api::room.room').update({
+      documentId: roomWithSheets.documentId,
+      data: {
+        players: updatedPlayers,
+      } as any,
+    });
+
+    // 6. Broadcast
+    // Emit message (frontend expects Message object structure)
+    // We map backend entity to frontend interface if needed, or send raw
+    const socketMessage = {
+      id: newMessage.documentId,
+      sender: 'DM',
+      text: newMessage.content,
+      timestamp: Number(newMessage.timestamp), // Convert BigInt to number for JSON
+      type: 'narration',
+      metadata: {
+        perspectives: response.player_perspectives,
+        turnId: newTurn.documentId,
+      },
+    };
+
+    streamManager.broadcast(roomWithSheets.roomId, 'message:new', socketMessage);
+    if (roomWithSheets.documentId !== roomWithSheets.roomId) {
+      streamManager.broadcast(roomWithSheets.documentId, 'message:new', socketMessage);
+    }
+
+    // Emit Game Update
+    streamManager.broadcast(roomWithSheets.roomId, 'game:update', { players: updatedPlayers });
+    if (roomWithSheets.documentId !== roomWithSheets.roomId) {
+      streamManager.broadcast(roomWithSheets.documentId, 'game:update', { players: updatedPlayers });
+    }
+
+    // Emit Turn Complete
+    const turnPayload = {
+      roomId: roomWithSheets.roomId,
+      turn: {
+        id: newTurn.documentId,
+        number: newTurn.turnNumber,
+        narrative: newTurn.narrative,
+        snapshots: snapshot,
+      },
+    };
+    streamManager.broadcast(roomWithSheets.roomId, 'turn:complete', turnPayload);
+    if (roomWithSheets.documentId !== roomWithSheets.roomId) {
+      streamManager.broadcast(roomWithSheets.documentId, 'turn:complete', turnPayload);
+    }
 
     return {
       ...response,
@@ -479,6 +615,7 @@ Write a 2-3 paragraph opening.
       for (const slot of avatarSlots) {
         if (processedAvatarPreview[slot] && processedAvatarPreview[slot].data) {
           try {
+            console.log(`Processing avatar upload for slot: ${slot}`);
             const base64 = `data:${processedAvatarPreview[slot].mimeType};base64,${processedAvatarPreview[slot].data}`;
             const filename = `avatar-${user.id}-${slot}-${Date.now()}`;
             const uploadResult = await uploadBase64Image(base64, filename);
@@ -491,10 +628,16 @@ Write a 2-3 paragraph opening.
                 id: uploadResult.id, // Keep ID for relation linking
                 url: uploadResult.url,
               };
+              console.log(`Avatar ${slot} uploaded successfully: ${uploadResult.id}`);
             }
           } catch (err) {
             console.error(`Failed to upload ${slot} avatar:`, err);
           }
+        } else if (processedAvatarPreview[slot]) {
+          console.warn(
+            `Avatar slot ${slot} present but missing 'data' field. content:`,
+            Object.keys(processedAvatarPreview[slot])
+          );
         }
       }
     }
@@ -578,7 +721,7 @@ Write a 2-3 paragraph opening.
       ...updatedPlayers[playerIndex],
       character: createdCharacter.documentId, // Link the new character
       isReady: true,
-      // name: characterData.name // Optional: update display name?
+      name: characterData.name, // Sync player display name with character name
     };
 
     // Update room
@@ -672,27 +815,85 @@ Write a 2-3 paragraph opening.
     // ... (previous logic for character sheets) ...
     // Note: We need to update history AND phase.
 
-    // Create Message Object
-    const message = {
-      id: `msg-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-      sender: 'DM',
-      text: mainOpening,
-      timestamp: Date.now(),
-      type: 'narration',
-    };
+    // Create initial Turn (0)
+    // We need to fetch the room with character sheets to snapshot them
+    // The previous populate didn't include 'character_sheets'
+    const roomWithSheets = await strapi.documents('api::room.room').findOne({
+      documentId: room.documentId,
+      populate: ['character_sheets'],
+    });
 
-    // Get current history to append
-    // We already fetched room with fields? 'history' might not be populated if it's a JSON field, but JSON fields are usually returned.
-    // 'history' is not in the findMany populate list in startGame!
-    // We must ensure logic handles it.
+    const snapshot = createSnapshot(roomWithSheets?.character_sheets || []);
 
-    const existingHistory = Array.isArray(room.history) ? room.history : [];
-    const newHistory = [...existingHistory, message];
+    const turn0 = await strapi.documents('api::turn.turn').create({
+      data: {
+        turnNumber: 0,
+        room: room.documentId,
+        narrative: 'Game Start',
+        status: 'complete',
+        type: 'group',
+        characterSnapshots: snapshot,
+      },
+      status: 'published',
+    });
 
-    // Final Update
+    // Create Message Object (MAIN)
+    const message = await strapi.documents('api::message.message').create({
+      data: {
+        content: mainOpening,
+        senderName: 'DM',
+        senderType: 'dm',
+        room: room.documentId,
+        turn: turn0.documentId,
+        timestamp: Date.now(),
+        // No recipient = Public
+      },
+      status: 'published',
+    });
+
+    // Generate Private Openings for each player
+    const privateMessages = [];
+    if (players && players.length > 0) {
+      for (const p of players) {
+        if (!p.character) continue;
+        const charSheet = p.character; // It's populated above as Character (from Room->Players->Character relation, not Sheet yet?)
+        // Wait, room populates players.character.
+        // generateCharacterOpening expects CharacterSheet interface but works with Character data mostly.
+
+        try {
+          const privateOpening = await this.generateCharacterOpening(
+            room.worldDescription,
+            charSheet as any, // Cast to any/CharacterSheet
+            mainOpening, // Main Context
+            language,
+            room.settings
+          );
+
+          if (privateOpening) {
+            const privMsg = await strapi.documents('api::message.message').create({
+              data: {
+                content: privateOpening,
+                senderName: 'DM (Private)',
+                senderType: 'dm',
+                room: room.documentId,
+                turn: turn0.documentId,
+                recipient: p.user?.documentId, // Target the user
+                timestamp: Date.now() + 100, // Slightly after main
+              },
+              status: 'published',
+            });
+            privateMessages.push(privMsg);
+          }
+        } catch (e) {
+          strapi.log.error(`Failed to generate private opening for ${p.name}`, e);
+        }
+      }
+    }
+
+    // Final Update (Phase)
     const updatedRoomData = {
       phase: 'gameplay',
-      history: newHistory,
+      // history: ... legacy support? Maybe nice to keep a small buffer? nah.
     };
 
     if (playersUpdated) {
@@ -707,19 +908,70 @@ Write a 2-3 paragraph opening.
 
     // Broadcast Event
     // We need streamManager. Import it at top if not present?
-    // It is not imported! I need to checking imports.
-    // I will use dynamic import or assume it is available if I added it?
-    // Wait, I cannot add import here easily without replace_file at top.
-    // I will assume `import { streamManager } from '../../../utils/llm/stream-manager';` needs to be added.
+    // It is imported at top now.
 
-    // Emit 'game:start' which frontend listens to.
-    const { streamManager } = await import('../../../utils/llm/stream-manager');
-    streamManager.broadcast(roomId, 'game:start', {
-      room: updatedRoom, // Send updated room with phase 'gameplay'
+    const socketMessage = {
+      id: message.documentId,
+      sender: 'DM',
+      text: mainOpening,
+      timestamp: Number(message.timestamp),
+      type: 'narration',
+    };
+
+    // Broadcast to both Code and Document ID to ensure frontend receives it regardless of connection method
+    streamManager.broadcast(room.roomId, 'game:start', {
+      room: updatedRoom,
       text: mainOpening,
       sender: 'DM',
-      timestamp: message.timestamp,
+      timestamp: socketMessage.timestamp,
+      message: socketMessage,
     });
+    if (room.documentId && room.documentId !== room.roomId) {
+      streamManager.broadcast(room.documentId, 'game:start', {
+        room: updatedRoom,
+        text: mainOpening,
+        sender: 'DM',
+        timestamp: socketMessage.timestamp, // Use message TS
+        message: socketMessage,
+      });
+    }
+
+    // Broadcast Private Messages
+    for (const pm of privateMessages) {
+      // We iterate our locally created array. 'pm.recipient' (User ID from creation data) should be accessible
+      // if we trust the object we passed to create matches the input, or we can trust the return value structure.
+      // Strapi create returns { documentId, ...attributes }. Relation fields like 'recipient' might just be the ID or object if populated.
+      // Since we passed `recipient: ID`, let's assume `pm.recipient` might be null in the return object if not populated.
+      // However, we know the recipient from the loop context if we really needed it, but we are outside that loop now.
+      // Let's assume for now we can persist it or just use a generic user room broadcast if we had the ID.
+
+      // CRITICAL: We need the recipient ID to broadcast to `user:ID`.
+      // If `pm.recipient` is missing in the return, we faill to broadcast privately.
+      // Let's rely on `pm.recipient` being present or populated.
+      // To be safe, let's just log if it's missing.
+
+      // Wait, `privateMessages` contains the RESULT of `strapi.documents(...).create`.
+      // In Strapi 5, this result contains the document data.
+
+      const recipientId = pm.recipient;
+
+      if (recipientId) {
+        const pmSocketMsg = {
+          id: pm.documentId,
+          sender: pm.senderName,
+          text: pm.content,
+          timestamp: Number(pm.timestamp),
+          type: 'narration',
+          recipient: recipientId, // Pass ID to frontend so it can confirm ownership?
+          // Frontend receiving on `user:ID` channel knows it's private.
+        };
+
+        strapi.log.info(`Broadcasting private message to user:${recipientId}`);
+        streamManager.broadcast(`user:${recipientId}`, 'message:new', pmSocketMsg);
+      } else {
+        strapi.log.warn(`Private message ${pm.documentId} has no recipient ID to broadcast to.`);
+      }
+    }
 
     // Also emit 'gameState' to force full sync?
     // 'game:start' usually handles the transition text.
@@ -794,5 +1046,79 @@ Write a 2-3 paragraph opening.
     });
 
     return newCreature;
+  },
+
+  async submitAction(roomId: string, action: string, user: any) {
+    const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
+    if (!isNaN(Number(roomId))) {
+      filters.push({ id: Number(roomId) });
+    }
+
+    const rooms = await strapi.documents('api::room.room').findMany({
+      filters: { $or: filters },
+      populate: ['players', 'players.user'],
+    });
+
+    if (!rooms || rooms.length === 0) {
+      throw new Error('Room not found');
+    }
+    const room = rooms[0] as any;
+    const players = room.players || [];
+
+    const userIdStr = String(user.documentId || user.id);
+    let playerIndex = players.findIndex((p: any) => String(p.user?.documentId || p.user?.id) === userIdStr);
+
+    // Fallback: Check against user.uid if available
+    if (playerIndex === -1 && user.uid) {
+      playerIndex = players.findIndex((p: any) => String(p.user?.uid || p.userId) === String(user.uid));
+    }
+
+    // Fallback 2: Check by mapped userId (if stored as string in component, though schema suggests otherwise)
+    if (playerIndex === -1) {
+      playerIndex = players.findIndex((p: any) => String(p.userId) === userIdStr);
+    }
+
+    if (playerIndex === -1) {
+      console.error(
+        `[submitAction] Player not found. RoomId: ${roomId}, User: ${userIdStr}, Candidates:`,
+        players.map((p) => ({ u: p.user?.documentId, uid: p.user?.uid, s: p.userId }))
+      );
+      throw new Error(`Player not found in room. User: ${userIdStr}`);
+    }
+
+    console.log(`[submitAction] Found player at index ${playerIndex}. Updating action to: "${action}"`);
+
+    // We must provide the full list of players to update the component
+    // We should flatten relations to IDs to ensure clean update
+    const updatedPlayers = players.map((p, index) => {
+      // Extract IDs for relations
+      const userId = p.user?.documentId || p.user?.id;
+      const charId = p.character?.documentId || p.character?.id;
+      const sheetId = p.characterSheet?.documentId || p.characterSheet?.id;
+
+      const playerUpdate = {
+        ...p,
+        user: userId,
+        character: charId,
+        characterSheet: sheetId,
+      };
+
+      if (index === playerIndex) {
+        return {
+          ...playerUpdate,
+          action: action,
+        };
+      }
+      return playerUpdate;
+    });
+
+    await strapi.documents('api::room.room').update({
+      documentId: room.documentId,
+      data: {
+        players: updatedPlayers,
+      },
+    });
+
+    return { success: true, players: updatedPlayers };
   },
 });

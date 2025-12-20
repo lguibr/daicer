@@ -132,15 +132,19 @@ function FormWizardSteps({ className }: FormWizardStepsProps) {
                   <div className="hidden flex-col items-start md:flex">
                     <span
                       className={cn(
-                        'text-sm font-semibold transition-colors',
+                        'font-display text-sm font-bold uppercase tracking-wider transition-colors',
                         isComplete && 'text-shadow-200 group-hover:text-aurora-200',
-                        isCurrent && 'text-aurora-100',
+                        isCurrent && 'text-aurora-100 text-shadow-glow',
                         isFuture && 'text-shadow-500'
                       )}
                     >
                       {step.title}
                     </span>
-                    {step.description && <span className="text-xs text-shadow-500">{step.description}</span>}
+                    {step.description && (
+                      <span className="text-xs text-shadow-400 opacity-60 mix-blend-plus-lighter">
+                        {step.description}
+                      </span>
+                    )}
                   </div>
                 </button>
                 {index < steps.length - 1 && (
@@ -253,7 +257,7 @@ function FormWizardActions({
           variant="outline"
           onClick={handlePrevious}
           disabled={isFirstStep || isProcessing}
-          className="w-full min-w-[140px] border-2 font-semibold sm:w-auto"
+          className="w-full min-w-[140px] border-midnight-600 bg-midnight-900/50 text-shadow-300 hover:bg-midnight-800 hover:text-white font-semibold sm:w-auto hover:border-aurora-500/30"
           size="lg"
           data-testid="wizard-back-btn"
         >
@@ -266,7 +270,7 @@ function FormWizardActions({
           type="button"
           onClick={handleNext}
           disabled={!canGoNext || isProcessing}
-          className="w-full min-w-[140px] border-2 border-aurora-400/40 font-semibold shadow-[0_8px_24px_rgba(29,143,242,0.25)] hover:shadow-[0_12px_32px_rgba(29,143,242,0.35)] sm:w-auto"
+          className="w-full min-w-[140px] border border-aurora-400/50 bg-gradient-to-br from-aurora-600 to-aurora-700 font-bold uppercase tracking-wider text-white shadow-[0_0_20px_rgba(211,143,31,0.3)] hover:from-aurora-500 hover:to-aurora-600 hover:shadow-[0_0_30px_rgba(211,143,31,0.5)] sm:w-auto transition-all transform hover:-translate-y-0.5"
           size="lg"
           data-testid={isLastStep ? 'wizard-complete-btn' : 'wizard-next-btn'}
         >

@@ -10,7 +10,6 @@ import type { ServerToClientEvents, ClientToServerEvents } from '../types/socket
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
-let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
 export interface ToolCall {
@@ -94,91 +93,53 @@ interface SocketEvents {
 export async function initSocket(
   events: SocketEvents = {}
 ): Promise<Socket<ServerToClientEvents, ClientToServerEvents>> {
-  if (socket?.connected) {
-    return socket;
+  if (!socket) {
+    const token = localStorage.getItem('strapi_jwt');
+    if (!token) {
+      throw new Error('User must be authenticated to connect socket');
+    }
+
+    socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling'], // Try WebSocket first
+      reconnection: true,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+      autoConnect: false,
+      // Retry failed packets
+      retries: 3,
+      ackTimeout: 10000,
+    });
   }
 
-  const token = localStorage.getItem('strapi_jwt');
-  if (!token) {
-    throw new Error('User must be authenticated to connect socket');
-  }
+  // Register all provided event listeners (even if socket existed)
+  registerSocketEvents(socket, events);
 
-  socket = io(SOCKET_URL, {
-    auth: { token },
-    transports: ['websocket', 'polling'], // Try WebSocket first
-    reconnection: true,
-    reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    timeout: 20000,
-    autoConnect: false,
-    // Retry failed packets
-    retries: 3,
-    ackTimeout: 10000,
-  });
-
-  // Connection success
-  socket.on('connect', () => {
-    reconnectAttempts = 0;
-    console.log('[Socket] Connected:', socket?.id);
+  // If already connected, trigger check
+  if (socket.connected) {
+    // We don't manually fire onConnect here because listeners might be duplicates if we aren't careful,
+    // but the caller usually expects to be able to emit immediately if connected.
+    // However, useStreamingSocket relies on onConnect to join room.
+    // We should let the caller handle 'already connected' logic, or fire it.
+    // Let's fire it for consistency with the 'new connection' path from the caller's perspective.
     events.onConnect?.();
-  });
+  } else if (socket.disconnected) {
+    socket.connect();
+  }
 
-  // Connection error
-  socket.on('connect_error', (error) => {
-    console.error('[Socket] Connection error:', error.message);
+  return socket;
+}
 
-    if (socket?.active) {
-      // Temporary failure, will auto-reconnect
-      reconnectAttempts++;
-      console.log(`[Socket] Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
-    } else {
-      // Permanent failure (e.g., auth denied)
-      console.error('[Socket] Connection denied:', error.message);
-      events.onError?.({ message: error.message });
-    }
+/**
+ * Helper to register events
+ */
+function registerSocketEvents(socket: Socket<ServerToClientEvents, ClientToServerEvents>, events: SocketEvents) {
+  if (events.onConnect) socket.on('connect', events.onConnect);
+  if (events.onError) socket.on('connect_error', (err) => events.onError?.({ message: err.message }));
+  if (events.onDisconnect) socket.on('disconnect', events.onDisconnect);
 
-    events.onError?.({ message: error.message });
-  });
-
-  // Disconnection
-  socket.on('disconnect', (reason, details) => {
-    console.warn('[Socket] Disconnected:', reason, details);
-
-    if (socket?.active) {
-      // Will auto-reconnect
-      console.log('[Socket] Will attempt to reconnect');
-    } else {
-      // Manual reconnect needed
-      console.warn('[Socket] Manual reconnect required');
-    }
-
-    events.onDisconnect?.();
-  });
-
-  // Reconnection success
-  socket.io.on('reconnect', (attempt) => {
-    reconnectAttempts = 0;
-    console.log(`[Socket] Reconnected after ${attempt} attempts`);
-  });
-
-  // Reconnection attempt
-  socket.io.on('reconnect_attempt', (attempt) => {
-    console.log(`[Socket] Reconnection attempt ${attempt}`);
-  });
-
-  // Reconnection failed
-  socket.io.on('reconnect_failed', () => {
-    console.error('[Socket] Reconnection failed after max attempts');
-    events.onError?.({ message: 'Failed to reconnect to server' });
-  });
-
-  // Ping/Pong for monitoring
-  socket.io.on('ping', () => {
-    console.debug('[Socket] Ping');
-  });
-
-  // Register event listeners
   if (events.onGameState) socket.on('game:state', events.onGameState);
   if (events.onRoomUpdated) socket.on('room:updated', events.onRoomUpdated);
   if (events.onPlayerJoined) socket.on('player:joined', events.onPlayerJoined);
@@ -221,11 +182,12 @@ export function getSocket(): Socket | null {
  * Join a room
  * @param roomId - Room ID
  */
-export function joinRoom(roomId: string): void {
+export function joinRoom(roomId: string, userId?: string): void {
   if (!socket || !socket.connected) {
     return;
   }
-  socket.emit('room:join', { roomId });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  socket.emit('room:join', { roomId, userId } as any);
 }
 
 /**
@@ -269,7 +231,15 @@ export function submitAction(roomId: string, action: string): void {
  * @param language - Language code
  */
 export function processTurn(roomId: string, language = 'en'): void {
+  console.log('[Socket Service] processTurn called', {
+    roomId,
+    language,
+    socketExists: !!socket,
+    connected: socket?.connected,
+    socketId: socket?.id,
+  });
   if (!socket) {
+    console.warn('[Socket Service] Socket is null, aborting processTurn');
     return;
   }
   socket.emit('turn:process', { roomId, language });

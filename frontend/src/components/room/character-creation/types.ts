@@ -9,7 +9,7 @@ export interface CharacterCreationProps {
     attributeBudget: number;
   };
   onAssetCreated?: (asset: any) => void;
-  onCharacterCreated?: () => void;
+  onCharacterCreated?: (player?: import('../../../types/shared').Player) => void;
 }
 
 export type CharacterFormState = {

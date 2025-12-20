@@ -71,6 +71,18 @@
       "target": "api::character-sheet.character-sheet",
       "mappedBy": "room"
     },
+    "turns": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::turn.turn",
+      "mappedBy": "room"
+    },
+    "messages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::message.message",
+      "mappedBy": "room"
+    },
     "worldType": {
       "type": "enumeration",
       "enum": [

@@ -82,7 +82,28 @@ export const GET_ROOM_QUERY = gql`
       }
       structures
       worldDescription
-      history
+      history # Keeping for legacy support
+      messages(sort: "timestamp:asc", pagination: { limit: 100 }) {
+        documentId
+        content
+        senderName
+        senderType
+        timestamp
+        turn {
+          documentId
+          turnNumber
+        }
+      }
+      turns(sort: "turnNumber:desc", pagination: { limit: 5 }) {
+        documentId
+        turnNumber
+        narrative
+        status
+        type
+        characterSnapshots
+        actions
+        createdAt
+      }
       owner {
         documentId
         username

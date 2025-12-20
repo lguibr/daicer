@@ -73,6 +73,7 @@ export default function StreamingChatArea({
           id: messageId,
           sender: 'DM',
           text: '',
+          content: content,
           timestamp: Date.now(),
           isStreaming: true,
           streamContent: content,

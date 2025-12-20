@@ -49,6 +49,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       const playerActionMessages: Message[] = state.players.map((p) => ({
         id: `msg-${Date.now()}-${p.id}`,
         sender: p.character?.name || 'Unknown',
+        content: p.action || 'does nothing.',
         text: p.action || 'does nothing.',
         timestamp: Date.now(),
       }));

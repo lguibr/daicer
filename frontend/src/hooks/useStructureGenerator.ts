@@ -4,8 +4,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { StructurePlacementParams, Structure } from '@daicer/shared/world-gen/structures';
-import { generateStructuresAsBiomes } from '@daicer/shared/world-gen/structures';
+import type { StructurePlacementParams, Structure } from '@daicer/shared';
+import { generateStructuresAsBiomes } from '@daicer/shared';
 
 export function useStructureGenerator(initialSeed: string = 'structures') {
   const [seed, setSeed] = useState(initialSeed);

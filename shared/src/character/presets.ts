@@ -46,31 +46,12 @@ export const FIGHTER_THORIN: CharacterSheet = {
 
   baseAttackBonus: 6,
   attacks: [{ name: 'Battleaxe', bonus: '+6', damageType: '1d8+3 slashing' }],
-  equipment: {
-    equippedItems: {
-      mainHand: 'Battleaxe',
-      offHand: 'Shield',
-      armor: 'Plate armor',
-      shield: 'Shield',
-      head: null,
-      cloak: null,
-      belt: null,
-      boots: null,
-      gloves: null,
-      ring1: null,
-      ring2: null,
-      necklace: null,
-      accessory1: null,
-      accessory2: null,
-    },
-    inventory: [
-      { itemIndex: 'Battleaxe', quantity: 1 },
-      { itemIndex: 'Shield', quantity: 1 },
-      { itemIndex: 'Plate armor', quantity: 1 },
-      { itemIndex: 'Crossbow', quantity: 1 },
-    ],
-    totalWeight: 65,
-  },
+  equipment: [
+    { item: 'Battleaxe', quantity: 1, slot: 'mainHand', isEquipped: true },
+    { item: 'Shield', quantity: 1, slot: 'offHand', isEquipped: true },
+    { item: 'Plate armor', quantity: 1, slot: 'armor', isEquipped: true },
+    { item: 'Crossbow', quantity: 1, slot: 'inventory', isEquipped: false },
+  ],
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 50, pp: 0 },
 
@@ -161,31 +142,12 @@ export const FIGHTER_ARIA: CharacterSheet = {
 
   baseAttackBonus: 5,
   attacks: [{ name: 'Rapier', bonus: '+5', damageType: '1d8+2 piercing' }],
-  equipment: {
-    equippedItems: {
-      mainHand: 'Rapier',
-      offHand: null,
-      armor: 'Chain mail',
-      shield: null,
-      head: null,
-      cloak: null,
-      belt: null,
-      boots: null,
-      gloves: null,
-      ring1: null,
-      ring2: null,
-      necklace: null,
-      accessory1: null,
-      accessory2: null,
-    },
-    inventory: [
-      { itemIndex: 'Rapier', quantity: 1 },
-      { itemIndex: 'Chain mail', quantity: 1 },
-      { itemIndex: 'Longbow', quantity: 1 },
-      { itemIndex: 'Arrows', quantity: 20 },
-    ],
-    totalWeight: 55,
-  },
+  equipment: [
+    { item: 'Rapier', quantity: 1, slot: 'mainHand', isEquipped: true },
+    { item: 'Chain mail', quantity: 1, slot: 'armor', isEquipped: true },
+    { item: 'Longbow', quantity: 1, slot: 'inventory', isEquipped: false },
+    { item: 'Arrows', quantity: 20, slot: 'inventory', isEquipped: false },
+  ],
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 150, pp: 5 },
 
@@ -276,31 +238,12 @@ export const WIZARD_ELARA: CharacterSheet = {
 
   baseAttackBonus: 2,
   attacks: [{ name: 'Quarterstaff', bonus: '+2', damageType: '1d6-1 bludgeoning' }],
-  equipment: {
-    equippedItems: {
-      mainHand: 'Quarterstaff',
-      offHand: null,
-      armor: 'Robes',
-      shield: null,
-      head: null,
-      cloak: null,
-      belt: null,
-      boots: null,
-      gloves: null,
-      ring1: null,
-      ring2: null,
-      necklace: null,
-      accessory1: null,
-      accessory2: null,
-    },
-    inventory: [
-      { itemIndex: 'Quarterstaff', quantity: 1 },
-      { itemIndex: 'Robes', quantity: 1 },
-      { itemIndex: 'Spellbook', quantity: 1 },
-      { itemIndex: 'Component pouch', quantity: 1 },
-    ],
-    totalWeight: 15,
-  },
+  equipment: [
+    { item: 'Quarterstaff', quantity: 1, slot: 'mainHand', isEquipped: true },
+    { item: 'Robes', quantity: 1, slot: 'armor', isEquipped: true },
+    { item: 'Spellbook', quantity: 1, slot: 'inventory', isEquipped: false },
+    { item: 'Component pouch', quantity: 1, slot: 'inventory', isEquipped: false },
+  ],
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 75, pp: 0 },
 
@@ -394,31 +337,12 @@ export const WIZARD_GANDOR: CharacterSheet = {
 
   baseAttackBonus: 3,
   attacks: [{ name: 'Staff', bonus: '+3', damageType: '1d6 bludgeoning' }],
-  equipment: {
-    equippedItems: {
-      mainHand: 'Gnarled staff',
-      offHand: null,
-      armor: 'Grey robes',
-      shield: null,
-      head: null,
-      cloak: null,
-      belt: null,
-      boots: null,
-      gloves: null,
-      ring1: null,
-      ring2: null,
-      necklace: null,
-      accessory1: 'Holy symbol',
-      accessory2: null,
-    },
-    inventory: [
-      { itemIndex: 'Gnarled staff', quantity: 1 },
-      { itemIndex: 'Grey robes', quantity: 1 },
-      { itemIndex: 'Spellbook', quantity: 1 },
-      { itemIndex: 'Holy symbol', quantity: 1 },
-    ],
-    totalWeight: 12,
-  },
+  equipment: [
+    { item: 'Gnarled staff', quantity: 1, slot: 'mainHand', isEquipped: true },
+    { item: 'Grey robes', quantity: 1, slot: 'armor', isEquipped: true },
+    { item: 'Holy symbol', quantity: 1, slot: 'accessory1', isEquipped: true },
+    { item: 'Spellbook', quantity: 1, slot: 'inventory', isEquipped: false },
+  ],
 
   currency: { cp: 0, sp: 0, ep: 0, gp: 100, pp: 2 },
 

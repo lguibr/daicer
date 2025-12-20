@@ -45,6 +45,7 @@ interface GameplayChatAreaProps {
   worldDescription: string;
   isProcessing: boolean;
   presence: PresenceData[];
+  currentUserId?: string; // Strapi Document ID of the current user
 }
 
 /**
@@ -60,6 +61,7 @@ export default function GameplayChatArea({
   worldDescription,
   isProcessing,
   presence,
+  currentUserId,
 }: GameplayChatAreaProps) {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -67,6 +69,10 @@ export default function GameplayChatArea({
   // Combine messages with streaming content
   const displayMessages = useMemo(() => {
     const combined: StreamingMessage[] = messages.map((msg) => {
+      // Logic moved: filter logic is later, but map logic needs ID.
+      // Message ID should exist.
+      if (!msg.id) return msg;
+
       const streamContent = streamingMessages.get(msg.id);
       if (streamContent) {
         return {
@@ -85,6 +91,7 @@ export default function GameplayChatArea({
         combined.push({
           id: messageId,
           sender: 'DM',
+          content: content, // Map content to satisfy StreamingMessage type
           text: '',
           timestamp: Date.now(),
           isStreaming: true,
@@ -101,9 +108,11 @@ export default function GameplayChatArea({
     () =>
       displayMessages.filter((msg) => {
         const recipient = msg.recipientId || msg.targetPlayer;
-        return !recipient || recipient === user?.uid;
+        // Check either provided ID (Strapi Document ID) or Auth UID (Firebase)
+        // Backend usually sends Document ID in recipient field.
+        return !recipient || recipient === currentUserId || recipient === user?.uid;
       }),
-    [displayMessages, user?.uid]
+    [displayMessages, user?.uid, currentUserId]
   );
 
   const showLoader = visibleMessages.length === 0 || isProcessing;
@@ -128,7 +137,7 @@ export default function GameplayChatArea({
         {visibleMessages.map((msg) => {
           const isDM = msg.sender === 'DM';
           const isPrivate = !!(msg.recipientId || msg.targetPlayer);
-          const content = msg.isStreaming && msg.streamContent ? msg.streamContent : msg.text;
+          const content = msg.isStreaming && msg.streamContent ? msg.streamContent : msg.content || msg.text;
 
           return (
             <div key={msg.id} className={cn('group flex w-full', isDM ? 'justify-start' : 'justify-end')}>
@@ -154,8 +163,8 @@ export default function GameplayChatArea({
                   <div className="flex items-center gap-3">
                     <MessageTime timestamp={msg.timestamp} />
                     <Actions>
-                      <ActionCopy text={content} />
-                      {isDM && (
+                      {content && <ActionCopy text={content} />}
+                      {isDM && msg.id && (
                         <>
                           <ActionRegenerate messageId={msg.id} />
                           <ActionDelete messageId={msg.id} />

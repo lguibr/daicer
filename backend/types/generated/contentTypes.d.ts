@@ -470,6 +470,7 @@ export interface ApiClassClass extends Struct.CollectionTypeSchema {
         };
       }>;
     hit_die: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::class.class'>;
     name: Schema.Attribute.String &
@@ -513,6 +514,7 @@ export interface ApiDamageTypeDamageType extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::damage-type.damage-type'>;
     name: Schema.Attribute.String &
@@ -554,6 +556,7 @@ export interface ApiEquipmentCategoryEquipmentCategory extends Struct.Collection
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::equipment-category.equipment-category'>;
     name: Schema.Attribute.String &
@@ -602,6 +605,7 @@ export interface ApiEquipmentEquipment extends Struct.CollectionTypeSchema {
         };
       }>;
     equipment_category: Schema.Attribute.Relation<'manyToOne', 'api::equipment-category.equipment-category'>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::equipment.equipment'>;
     name: Schema.Attribute.String &
@@ -649,6 +653,7 @@ export interface ApiFeatureFeature extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     level: Schema.Attribute.Integer;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::feature.feature'>;
@@ -685,6 +690,7 @@ export interface ApiLanguageLanguage extends Struct.CollectionTypeSchema {
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    image: Schema.Attribute.Media<'images'>;
     is_rare: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::language.language'>;
@@ -735,6 +741,7 @@ export interface ApiMagicItemMagicItem extends Struct.CollectionTypeSchema {
         };
       }>;
     equipment_category: Schema.Attribute.Relation<'manyToOne', 'api::equipment-category.equipment-category'>;
+    image: Schema.Attribute.Media<'images'>;
     image_url: Schema.Attribute.String;
     is_variant: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String;
@@ -781,6 +788,7 @@ export interface ApiMagicSchoolMagicSchool extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::magic-school.magic-school'>;
     name: Schema.Attribute.String &
@@ -792,6 +800,35 @@ export interface ApiMagicSchoolMagicSchool extends Struct.CollectionTypeSchema {
       }>;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
+  collectionName: 'messages';
+  info: {
+    description: 'Individual communication unit';
+    displayName: 'Message';
+    pluralName: 'messages';
+    singularName: 'message';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::message.message'> & Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    recipient: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
+    room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    senderName: Schema.Attribute.String;
+    senderType: Schema.Attribute.Enumeration<['dm', 'player', 'system']> & Schema.Attribute.DefaultTo<'system'>;
+    timestamp: Schema.Attribute.BigInteger;
+    turn: Schema.Attribute.Relation<'manyToOne', 'api::turn.turn'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
   };
@@ -875,6 +912,7 @@ export interface ApiProficiencyProficiency extends Struct.CollectionTypeSchema {
     classes: Schema.Attribute.Relation<'manyToMany', 'api::class.class'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::proficiency.proficiency'>;
     name: Schema.Attribute.String &
@@ -967,6 +1005,7 @@ export interface ApiRaceRace extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::race.race'>;
     name: Schema.Attribute.String &
@@ -1013,6 +1052,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::room.room'> & Schema.Attribute.Private;
+    messages: Schema.Attribute.Relation<'oneToMany', 'api::message.message'>;
     owner: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
     phase: Schema.Attribute.Enumeration<
       ['lobby', 'character_creation', 'world_generation', 'gameplay', 'combat', 'ending']
@@ -1030,6 +1070,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     theme: Schema.Attribute.String;
     tone: Schema.Attribute.String;
     turnData: Schema.Attribute.JSON;
+    turns: Schema.Attribute.Relation<'oneToMany', 'api::turn.turn'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     worldDescription: Schema.Attribute.RichText;
@@ -1070,6 +1111,7 @@ export interface ApiSpellSpell extends Struct.CollectionTypeSchema {
         };
       }>;
     duration: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images'>;
     is_ritual: Schema.Attribute.Boolean;
     level: Schema.Attribute.Integer;
     locale: Schema.Attribute.String;
@@ -1116,6 +1158,7 @@ export interface ApiSubclassSubclass extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::subclass.subclass'>;
     name: Schema.Attribute.String &
@@ -1163,6 +1206,7 @@ export interface ApiTraitTrait extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::trait.trait'>;
     name: Schema.Attribute.String &
@@ -1176,6 +1220,37 @@ export interface ApiTraitTrait extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     races: Schema.Attribute.Relation<'manyToMany', 'api::race.race'>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTurnTurn extends Struct.CollectionTypeSchema {
+  collectionName: 'turns';
+  info: {
+    description: 'A discrete cycle of gameplay history';
+    displayName: 'Turn';
+    pluralName: 'turns';
+    singularName: 'turn';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    actions: Schema.Attribute.JSON;
+    characterSnapshots: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::turn.turn'> & Schema.Attribute.Private;
+    messages: Schema.Attribute.Relation<'oneToMany', 'api::message.message'>;
+    metadata: Schema.Attribute.JSON;
+    narrative: Schema.Attribute.RichText;
+    publishedAt: Schema.Attribute.DateTime;
+    room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    status: Schema.Attribute.Enumeration<['waiting', 'processing', 'complete']> & Schema.Attribute.DefaultTo<'waiting'>;
+    turnNumber: Schema.Attribute.Integer & Schema.Attribute.Required & Schema.Attribute.DefaultTo<0>;
+    type: Schema.Attribute.Enumeration<['group', 'combat', 'exploration']> & Schema.Attribute.DefaultTo<'group'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
   };
@@ -1206,6 +1281,7 @@ export interface ApiWeaponPropertyWeaponProperty extends Struct.CollectionTypeSc
           localized: true;
         };
       }>;
+    image: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::weapon-property.weapon-property'>;
     name: Schema.Attribute.String &
@@ -1426,8 +1502,8 @@ export interface PluginUploadFile extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    alternativeText: Schema.Attribute.String;
-    caption: Schema.Attribute.String;
+    alternativeText: Schema.Attribute.Text;
+    caption: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     ext: Schema.Attribute.String;
@@ -1445,7 +1521,7 @@ export interface PluginUploadFile extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'plugin::upload.file'> & Schema.Attribute.Private;
     mime: Schema.Attribute.String & Schema.Attribute.Required;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    previewUrl: Schema.Attribute.String;
+    previewUrl: Schema.Attribute.Text;
     provider: Schema.Attribute.String & Schema.Attribute.Required;
     provider_metadata: Schema.Attribute.JSON;
     publishedAt: Schema.Attribute.DateTime;
@@ -1453,7 +1529,7 @@ export interface PluginUploadFile extends Struct.CollectionTypeSchema {
     size: Schema.Attribute.Decimal & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    url: Schema.Attribute.String & Schema.Attribute.Required;
+    url: Schema.Attribute.Text & Schema.Attribute.Required;
     width: Schema.Attribute.Integer;
   };
 }
@@ -1644,6 +1720,7 @@ declare module '@strapi/strapi' {
       'api::language.language': ApiLanguageLanguage;
       'api::magic-item.magic-item': ApiMagicItemMagicItem;
       'api::magic-school.magic-school': ApiMagicSchoolMagicSchool;
+      'api::message.message': ApiMessageMessage;
       'api::monster.monster': ApiMonsterMonster;
       'api::proficiency.proficiency': ApiProficiencyProficiency;
       'api::prompt.prompt': ApiPromptPrompt;
@@ -1652,6 +1729,7 @@ declare module '@strapi/strapi' {
       'api::spell.spell': ApiSpellSpell;
       'api::subclass.subclass': ApiSubclassSubclass;
       'api::trait.trait': ApiTraitTrait;
+      'api::turn.turn': ApiTurnTurn;
       'api::weapon-property.weapon-property': ApiWeaponPropertyWeaponProperty;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

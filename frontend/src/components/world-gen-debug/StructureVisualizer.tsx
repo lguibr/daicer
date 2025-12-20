@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Play } from 'lucide-react';
 import { useStructureGenerator } from '@/hooks/useStructureGenerator';
 import { useState, useMemo } from 'react';
-import { getMaterialColor } from '@daicer/shared/world-gen/structures';
-import type { StructureMaterial } from '@daicer/shared/world-gen/structures';
+import { getMaterialColor } from '@daicer/shared';
+import type { StructureMaterial } from '@daicer/shared';
 import { MaterialLegend } from './MaterialLegend';
 import { DebugStats } from './DebugStats';
 import { SeedControl } from './SeedControl';

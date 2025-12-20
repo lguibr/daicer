@@ -24,7 +24,8 @@ export function LobbyScreen({
   onStartGame,
 }: LobbyScreenProps) {
   const { user } = useAuth();
-  const currentPlayer = players.find((p) => p.userId === user?.uid);
+  // Use loose comparison as IDs might be string vs number, or documentId
+  const currentPlayer = players.find((p) => p.userId == user?.uid || p.userId == user?.documentId);
   const hasCharacter = !!currentPlayer?.character;
 
   // Optimistic UI for ready state

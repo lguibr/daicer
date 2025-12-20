@@ -3,7 +3,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import useAuth from '@/hooks/useAuth';
-import type { CharacterSheet } from '@daicer/shared/character';
+import type { CharacterSheet } from '@daicer/shared';
 import { CharacterSheetCard } from './CharacterSheetCard';
 import { CharacterSheetModal } from './CharacterSheetModal';
 

@@ -34,6 +34,10 @@ export const BlockTypeEnum = z.enum([
   'emerald_ore',
   'lapis_ore',
   'redstone_ore',
+  'wall',
+  'floor',
+  'wood',
+  'leaves',
 ]);
 
 export type BlockType = z.infer<typeof BlockTypeEnum>;

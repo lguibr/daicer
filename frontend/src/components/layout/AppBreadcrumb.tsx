@@ -1,13 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
-import { Home } from 'lucide-react';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+import { Home, ChevronRight } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { useI18n } from '@/i18n';
 
 interface BreadcrumbSegment {
@@ -16,7 +9,8 @@ interface BreadcrumbSegment {
 }
 
 /**
- * AppBreadcrumb component - automatically generates breadcrumbs based on current route
+ * AppBreadcrumb component - Premium "Gilded" Edition
+ * Transparent background with blur, Cinzel font for locations
  */
 export default function AppBreadcrumb() {
   const location = useLocation();
@@ -28,61 +22,79 @@ export default function AppBreadcrumb() {
     rooms: t('navbar.links.rooms'),
     game: t('navbar.links.game'),
     explore: t('navbar.links.explore'),
+    rules: t('navbar.links.explore'),
     assets: t('navbar.links.assets'),
-    '2d': '2D',
-    '3d': '3D',
+    '2d': '2D Assets',
+    '3d': '3D Assets',
     maps: 'Maps',
-    'character-sheet': 'Character Sheet',
-    create: 'Create',
+    'character-sheet': 'Character Sheets',
+    create: 'New Campaign',
     tactical: 'Tactical Combat',
-    'test-setup': 'Test Setup',
+    'test-setup': 'Debug Setup',
   };
 
-  // Parse path into segments
   const pathSegments = location.pathname.split('/').filter(Boolean);
 
-  // Don't show breadcrumbs on root/landing
   if (pathSegments.length === 0 || location.pathname === '/') {
     return null;
   }
 
-  // Build breadcrumb segments
   const breadcrumbs: BreadcrumbSegment[] = pathSegments.map((segment, index) => {
     const path = `/${pathSegments.slice(0, index + 1).join('/')}`;
-    const label = routeLabels[segment] || segment;
+    // Try to format nicely if not in map (e.g. "magic-items" -> "Magic Items")
+    const fallbackLabel = segment
+      .split('-')
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+      .join(' ');
+
+    const label = routeLabels[segment] || fallbackLabel;
     return { label, path };
   });
 
   return (
-    <Breadcrumb className="px-4 py-3 sm:px-6 lg:px-8 bg-midnight-500/30 border-b border-midnight-500/50">
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/" className="text-aurora-200 hover:text-aurora-100">
-              <Home className="h-4 w-4" />
-            </Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        {breadcrumbs.map((crumb, index) => {
-          const isLast = index === breadcrumbs.length - 1;
-          return (
-            <span key={crumb.path} className="flex items-center gap-1.5">
-              <BreadcrumbSeparator className="text-shadow-400" />
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage className="text-shadow-100">{crumb.label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={crumb.path} className="text-shadow-300 hover:text-shadow-100">
-                      {crumb.label}
-                    </Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-            </span>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+    <div className="sticky top-0 z-40 border-b border-midnight-500/20 bg-midnight-950/60 backdrop-blur-md">
+      <div className="mx-auto max-w-[1400px] px-6 py-2 sm:px-8 lg:px-10">
+        <Breadcrumb>
+          <BreadcrumbList className="text-[11px] uppercase tracking-[0.15em] sm:text-xs">
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link
+                  to="/"
+                  className="flex items-center gap-2 text-shadow-400 transition-colors hover:text-aurora-300"
+                >
+                  <Home className="h-3.5 w-3.5" />
+                  <span className="sr-only">Home</span>
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+
+            {breadcrumbs.map((crumb, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <li key={crumb.path} className="flex items-center gap-2">
+                  <ChevronRight className="h-3 w-3 text-midnight-500" />
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage className="font-display font-semibold text-aurora-200 drop-shadow-[0_0_8px_rgba(211,143,31,0.2)]">
+                        {crumb.label}
+                      </BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link
+                          to={crumb.path}
+                          className="font-medium text-shadow-400 transition-colors hover:text-aurora-300"
+                        >
+                          {crumb.label}
+                        </Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </li>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+    </div>
   );
 }

@@ -37,6 +37,7 @@ interface TerrainExplorerProps {
   // For internal use by InfiniteChunksBridge OR passed manually in static mode
   onPlayerMove?: (x: number, y: number) => void;
   onTileClick?: (tile: { x: number; y: number; z: number }, type: string) => void;
+  currentUserId?: string;
 }
 
 const BIOME_COLORS: Record<string, string> = {
@@ -137,6 +138,7 @@ export function TerrainExplorer({
   creatures,
   onPlayerMove,
   onTileClick,
+  currentUserId,
 }: TerrainExplorerProps) {
   // Case 1: Client-side generation (Preview Mode)
   // If we have a chunkGenerator, we use the simple manager directly.
@@ -153,6 +155,7 @@ export function TerrainExplorer({
         chunkGenerator={chunkGenerator}
         placementMap={placementMap}
         onPlayerMove={onPlayerMove}
+        currentUserId={currentUserId}
       />
     );
   }
@@ -183,6 +186,7 @@ export function TerrainExplorer({
           creatures={structures.length > 0 ? [] : creatures} // Pass creatures if not static mode
           onPlayerMove={onPlayerMove}
           onTileClick={onTileClick}
+          currentUserId={currentUserId}
         />
       </InfiniteChunksProvider>
     );
@@ -206,6 +210,7 @@ export function TerrainExplorer({
       checkChunkLoading={() => {}}
       onPlayerMove={onPlayerMove}
       onTileClick={onTileClick}
+      currentUserId={currentUserId}
     />
   );
 }
@@ -269,6 +274,7 @@ function InfiniteChunksBridge({
         players={players}
         onPlayerMove={onPlayerMove}
         onTileClick={onTileClick}
+        currentUserId={props.currentUserId}
       />
       <DebugMapExport
         context="GAME"
@@ -406,7 +412,20 @@ function TerrainExplorerInternal({
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container || !activeGrid || activeGrid.length === 0 || !activeGrid[0]) return;
+
+    // Debug logging for rendering issues
+    if (!canvas || !container) return;
+
+    if (!activeGrid || activeGrid.length === 0 || !activeGrid[0]) {
+      console.warn('[TerrainExplorer Debug] Active grid is empty or invalid!', {
+        hasActiveGrid: !!activeGrid,
+        length: activeGrid?.length,
+        firstRow: activeGrid?.[0],
+      });
+      return;
+    }
+
+    console.log('[TerrainExplorer Debug] Rendering frame. Grid size:', activeGrid[0].length, 'x', activeGrid.length);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -533,8 +552,20 @@ function TerrainExplorerInternal({
           }
 
           // Check if it's a structure biome first
-          const structureColor = getStructureColor(biome);
-          const isStructure = biome.startsWith('structure_final_') || biome.startsWith('structure_road_');
+          // Also check blockType (t) for Unified Backend compatibility
+          const blockType = tile ? tile.blockType : '';
+          const isStructureBlock =
+            blockType && blockType !== 'grass' && blockType !== 'dirt' && blockType !== 'air' && blockType !== 'water';
+
+          let structureColor: string | null = getStructureColor(biome);
+
+          // If no biome-based structure color, check blockType
+          if (!structureColor && isStructureBlock) {
+            structureColor = MATERIAL_COLORS[blockType] || '#666666';
+          }
+
+          const isStructure =
+            biome.startsWith('structure_final_') || biome.startsWith('structure_road_') || isStructureBlock;
           const color = structureColor || BIOME_COLORS[biome] || '#666666';
 
           ctx.fillStyle = color;
@@ -542,6 +573,11 @@ function TerrainExplorerInternal({
 
           // AGGRESSIVE borders around structure tiles
           if (isStructure) {
+            // Treat all structure blocks as needing borders
+            // Use yellow/brown for roads if inferred from blockType?
+            // Currently difficult to distinguish road vs floor without metadata.
+            // But valid structure blocks should have borders.
+
             // THICK white outer border for ALL structure tiles
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = Math.max(2, renderScale * 0.2); // Much thicker!

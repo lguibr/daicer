@@ -67,7 +67,12 @@ export default function useSocket(roomId?: string) {
             updateState({
               room: data.room,
               players: data.players,
-              messages: data.messages,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              messages: (data.messages || []).map((msg: any) => ({
+                ...msg,
+                content: msg.content || msg.text || '',
+                text: msg.text || msg.content || '',
+              })) as Message[],
               creatures: data.creatures,
               isProcessing: false,
             });
@@ -101,6 +106,7 @@ export default function useSocket(roomId?: string) {
                       id: `player-action-${data.userId}-${Date.now()}`,
                       sender: senderName,
                       text: data.action,
+                      content: data.action,
                       timestamp: Date.now(),
                     },
                   ],

@@ -82,6 +82,14 @@
         },
         "stealth_disadvantage": {
             "type": "boolean"
+        },
+        "image": {
+            "type": "media",
+            "multiple": false,
+            "required": false,
+            "allowedTypes": [
+                "images"
+            ]
         }
     }
 }

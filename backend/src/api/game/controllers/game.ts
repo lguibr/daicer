@@ -28,10 +28,16 @@ export default ({ strapi }) => ({
 
       if (!roomId) return ctx.badRequest('Room ID required');
 
-      // Fetch Room
+      // Robust Room Lookup
+      const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
+      if (!isNaN(Number(roomId))) {
+        filters.push({ id: Number(roomId) });
+      }
+
+      // Fetch Room with necessary data
       const rooms = await strapi.documents('api::room.room').findMany({
-        filters: { roomId: roomId },
-        // populate: ['players', 'creatures'] // TODO: Verify relations if we store them in SQL or JSON
+        filters: { $or: filters },
+        populate: ['players', 'players.character'], // Populate essential data
       });
 
       if (!rooms || rooms.length === 0) return ctx.notFound('Room not found');
@@ -61,17 +67,16 @@ export default ({ strapi }) => ({
       const players = room.players || []; // JSON field
       const creatures = []; // TODO: fetching creatures
 
-      const result = await strapi
-        .service('api::game.game')
-        .processTurn(
-          room.worldDescription,
-          messages || [],
-          players,
-          creatures,
-          room.settings?.language || 'en',
-          room.settings,
-          room.worldConditions
-        );
+      const result = await strapi.service('api::game.game').processTurn(
+        roomId, // Pass roomId first
+        room.worldDescription,
+        messages || [],
+        players,
+        creatures,
+        room.settings?.language || 'en',
+        room.settings,
+        room.worldConditions
+      );
 
       return ctx.send(result);
     } catch (error) {
@@ -126,6 +131,24 @@ export default ({ strapi }) => ({
     } catch (error) {
       strapi.log.error('getRoom error:', error);
       return ctx.internalServerError('Failed to fetch room');
+    }
+  },
+
+  async submitAction(ctx) {
+    try {
+      // route: /game/:roomId/action creates params.roomId
+      const { roomId } = ctx.params;
+      const { action } = ctx.request.body;
+
+      if (!roomId) return ctx.badRequest('Room ID required');
+      if (!action) return ctx.badRequest('Action required');
+
+      const result = await strapi.service('api::game.game').submitAction(roomId, action, ctx.state.user);
+
+      return ctx.send(result);
+    } catch (error) {
+      strapi.log.error('submitAction error:', error);
+      return ctx.internalServerError('Failed to submit action');
     }
   },
 });

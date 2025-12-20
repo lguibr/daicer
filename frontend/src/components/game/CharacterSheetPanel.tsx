@@ -16,20 +16,20 @@ const proficiencyLabelMap: Record<SkillDetail['proficiency'], string> = {
 };
 
 const proficiencyStyleMap: Record<SkillDetail['proficiency'], string> = {
-  none: 'bg-shadow-800 text-shadow-300 border border-shadow-700',
-  trained: 'bg-midnight-500/30 text-shadow-50 border border-midnight-400/40',
-  proficient: 'bg-aurora-500/20 text-aurora-200 border border-aurora-400/40',
-  expertise: 'bg-nebula-500/20 text-nebula-200 border border-nebula-400/40',
+  none: 'bg-midnight-800/40 text-shadow-400 border border-midnight-700',
+  trained: 'bg-midnight-600/40 text-shadow-200 border border-midnight-500/40',
+  proficient: 'bg-aurora-500/10 text-aurora-200 border border-aurora-500/30 shadow-[0_0_10px_rgba(211,143,31,0.1)]',
+  expertise: 'bg-nebula-500/10 text-nebula-200 border border-nebula-500/30 shadow-[0_0_10px_rgba(122,73,217,0.1)]',
 };
 
 const sectionTitleClasses = 'text-sm uppercase tracking-wide text-shadow-400 font-semibold';
 
 function StatCard({ label, value, subtext }: { label: string; value: string | number; subtext?: string }) {
   return (
-    <div className="rounded-xl border border-shadow-800 bg-shadow-900/70 px-4 py-3">
-      <div className="text-xs uppercase tracking-wide text-shadow-400">{label}</div>
-      <div className="text-xl font-bold text-shadow-50">{value}</div>
-      {subtext && <div className="text-xs text-shadow-300 mt-1">{subtext}</div>}
+    <div className="rounded-xl border border-midnight-700 bg-midnight-900/60 px-4 py-3 backdrop-blur-sm transition-all hover:border-aurora-500/30 hover:bg-midnight-800/60">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-shadow-400 font-bold">{label}</div>
+      <div className="text-2xl font-bold text-shadow-50 font-display">{value}</div>
+      {subtext && <div className="text-xs text-aurora-400/80 mt-1">{subtext}</div>}
     </div>
   );
 }
@@ -53,10 +53,12 @@ function ResourceBadge({ pool }: { pool: ResourcePool }) {
 
 function TalentCard({ talent }: { talent: Talent }) {
   return (
-    <div className="rounded-lg border border-shadow-700 bg-shadow-900/70 p-3">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-sm font-semibold text-shadow-50">{talent.name}</span>
-        <span className="text-xs uppercase tracking-wide text-aurora-300">{talent.category}</span>
+    <div className="rounded-lg border border-midnight-700 bg-midnight-900/60 p-4 transition-all hover:border-aurora-500/20 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-base font-semibold text-shadow-50 font-display">{talent.name}</span>
+        <span className="rounded-full bg-midnight-800 px-2 py-0.5 text-[10px] uppercase tracking-wider text-aurora-300 border border-midnight-600/50">
+          {talent.category}
+        </span>
       </div>
       <p className="text-sm text-shadow-300 leading-relaxed">{talent.description}</p>
     </div>
@@ -104,10 +106,10 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
         className="absolute inset-0 bg-midnight-950/80 backdrop-blur-sm focus:outline-none"
       />
       <div className="relative z-10 h-full w-full max-w-5xl">
-        <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-shadow-700 bg-midnight-300/95 shadow-2xl">
-          <header className="flex flex-col gap-2 border-b border-shadow-700 bg-midnight-500/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-midnight-600 bg-midnight-950/95 shadow-2xl backdrop-blur-xl">
+          <header className="flex flex-col gap-2 border-b border-midnight-700 bg-midnight-900/50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sticky top-0 z-20 backdrop-blur-md">
             <div>
-              <h2 className="text-2xl font-bold text-shadow-50">{character.name}</h2>
+              <h2 className="text-3xl font-bold text-shadow-50 font-display tracking-wide">{character.name}</h2>
               <p className="text-sm text-shadow-300">
                 {character.alignment} • {character.race} {character.characterClass} • Level {character.level}
               </p>

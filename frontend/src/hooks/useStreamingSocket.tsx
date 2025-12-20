@@ -26,13 +26,13 @@ interface SocketState {
  * @param roomId - Room ID to join
  * @returns Socket state and utilities
  */
-export default function useStreamingSocket(roomId?: string) {
+export default function useStreamingSocket(roomId?: string, initialMessages?: Message[]) {
   const [state, setState] = useState<SocketState>({
     connected: false,
     error: null,
     room: null,
     players: [],
-    messages: [],
+    messages: initialMessages || [],
     creatures: [],
     toolCalls: [],
     isProcessing: false,
@@ -45,6 +45,8 @@ export default function useStreamingSocket(roomId?: string) {
   const updateState = useCallback((updates: Partial<SocketState>) => {
     setState((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  // ... (keep stream callbacks) ...
 
   const updateStreamingMessage = useCallback((messageId: string, content: string) => {
     setState((prev) => {
@@ -98,6 +100,15 @@ export default function useStreamingSocket(roomId?: string) {
 
   useEffect(() => {
     const connect = async () => {
+      const socket = getSocket();
+      // Force room join if already connected (e.g. reused socket from Lobby)
+      if (socket?.connected && roomId) {
+        console.log('[useStreamingSocket] Socket already connected, joining room:', roomId);
+        socket.emit('room:join', { roomId });
+        // Also ensure state is synced
+        updateState({ connected: true, error: null });
+      }
+
       try {
         await initSocket({
           onConnect: () => {
@@ -116,10 +127,17 @@ export default function useStreamingSocket(roomId?: string) {
           },
           onGameState: (data) => {
             recordSSEEvent();
+            // Map incoming messages to ensure content/text compat
+            const mappedMessages = (data.messages || []).map((msg: any) => ({
+              ...msg,
+              content: msg.content || msg.text || '', // Ensure content is set
+              sender: msg.sender || msg.senderName, // Ensure sender
+            }));
+
             updateState({
               room: data.room,
               players: data.players,
-              messages: data.messages,
+              messages: mappedMessages,
               creatures: data.creatures,
               isProcessing: false,
             });
@@ -153,6 +171,7 @@ export default function useStreamingSocket(roomId?: string) {
                     {
                       id: `player-action-${data.userId}-${Date.now()}`,
                       sender: senderName,
+                      content: data.action, // Use content
                       text: data.action,
                       timestamp: Date.now(),
                     },
@@ -230,7 +249,7 @@ export default function useStreamingSocket(roomId?: string) {
 
               return {
                 ...prev,
-                messages: [...prev.messages, message],
+                messages: [...prev.messages, { ...message, content: message.content || message.text || '' }],
               };
             });
           },
@@ -241,6 +260,7 @@ export default function useStreamingSocket(roomId?: string) {
             const initialMessage: Message = {
               id: `game-start-${Date.now()}`,
               sender: 'DM',
+              content: data.text,
               text: data.text,
               timestamp: data.timestamp,
             };
@@ -274,7 +294,7 @@ export default function useStreamingSocket(roomId?: string) {
                 return {
                   ...prev,
                   messages: prev.messages.map((msg) =>
-                    msg.id === data.messageId ? { ...msg, text: data.fullText } : msg
+                    msg.id === data.messageId ? { ...msg, content: data.fullText, text: data.fullText } : msg
                   ),
                 };
               }
@@ -287,6 +307,7 @@ export default function useStreamingSocket(roomId?: string) {
                   {
                     id: data.messageId,
                     sender: 'DM',
+                    content: data.fullText,
                     text: data.fullText,
                     timestamp: data.timestamp,
                   },

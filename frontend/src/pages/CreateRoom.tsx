@@ -46,8 +46,8 @@ export default function CreateRoomPage() {
 
   // Terrain generation state
   const [seed, setSeed] = useState<string>('daicer-world');
-  const [generationParams, setGenerationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // const [generationParams, setGenerationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS); // Removed unused
+  const [generationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS);
   const [structures, setStructures] = useState<any[]>([]);
 
   const verbosityMarks = useMemo<SliderMark[]>(
@@ -665,14 +665,12 @@ export default function CreateRoomPage() {
                 </div>
 
                 <WorldGenerator
-                  initialSeed={seed}
-                  initialParams={generationParams}
-                  onParamsChange={(params, newSeed) => {
-                    setGenerationParams(params);
-                    setSeed(newSeed);
+                  onWorldGenerated={(data) => {
+                    setSeed(data.seed);
+                    setStructures(data.structures);
+                    // Generation params are internal to WorldGenerator now, or passed via data if needed
                   }}
-                  onStructuresGenerated={setStructures}
-                  className="h-full"
+                  isGenerating={loading}
                 />
               </div>
             </div>
@@ -697,7 +695,7 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <PrivateLayout showNavbar={false}>
+    <PrivateLayout showNavbar={true}>
       {loading && <LoadingOverlay message="Creating room..." />}
       <div className="relative mx-auto min-h-screen max-w-6xl px-6 py-16 sm:px-10 lg:px-12">
         <div className="space-y-10">

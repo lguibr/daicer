@@ -62,6 +62,14 @@
             "relation": "manyToMany",
             "target": "api::trait.trait",
             "mappedBy": "proficiencies"
+        },
+        "image": {
+            "type": "media",
+            "multiple": false,
+            "required": false,
+            "allowedTypes": [
+                "images"
+            ]
         }
     }
 }

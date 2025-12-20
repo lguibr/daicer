@@ -4,9 +4,11 @@
  * NO WebSocket - simple REST API only
  */
 
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
-import type { GridTile } from '@daicer/shared/world';
-import { auth } from '../../../services/firebase';
+import type { GlobalPlacementMap } from '@daicer/shared';
+import type { GridTile } from '@daicer/shared';
+import { apolloClient } from '../../../lib/apollo';
+import { GENERATE_TERRAIN_CHUNK_MUTATION } from '../../../queries/terrain';
+import { GenerateTerrainChunkMutation, GenerateTerrainChunkMutationVariables } from '../../../gql/graphql';
 import type { TerrainChunk, ChunkGenerator, InfiniteChunksConfig } from '../types';
 
 import { getStructuresForChunk, stampStructureOnChunk } from './structureGenerator';
@@ -93,67 +95,51 @@ export async function loadChunk(
       return result;
     }
 
-    // BACKEND API FETCH (game mode)
-    // BACKEND API FETCH (game mode)
-    // Use Strapi JWT instead of Firebase auth
-    const token = localStorage.getItem('strapi_jwt');
-    if (!token && !auth.currentUser) {
-      console.warn('[ChunkLoader] No authentication token found');
-      // We might want to throw, but for now let's try or return dummy
-      // throw new Error('User not authenticated');
-    }
-
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:1337';
-    const url = `${apiUrl}/api/terrain/chunk`;
-    console.log(`[ChunkLoader] Fetching chunk via POST: ${url} for ${chunkX},${chunkY}`);
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        roomId, // This should be the documentId now
+    // BACKEND API FETCH (game mode) using GraphQL
+    const { data } = await apolloClient.mutate<GenerateTerrainChunkMutation, GenerateTerrainChunkMutationVariables>({
+      mutation: GENERATE_TERRAIN_CHUNK_MUTATION,
+      variables: {
+        roomId,
         chunkX,
         chunkY,
         chunkSize,
-      }),
+      },
+      context: {
+        timeout: 10000,
+      },
     });
 
-    if (!response.ok) {
-      console.error(`[ChunkLoader] Failed to load chunk: ${response.status} ${response.statusText}`);
-      throw new Error(`Failed to load chunk: ${response.status} ${response.statusText}`);
+    if (!data?.generateTerrainChunk) {
+      throw new Error('No data returned from generateTerrainChunk');
     }
 
-    const result = await response.json();
-    if (!result.success || !result.data) {
-      console.error('[ChunkLoader] Invalid chunk response:', result);
-      throw new Error('Invalid chunk response from backend');
-    }
+    const chunkData = data.generateTerrainChunk;
+    const grid3D = chunkData.grid as unknown as { b: string; t: string }[][][];
+    const surfaceLayer = grid3D && grid3D[3] ? grid3D[3] : [];
 
-    // Return the raw chunk data (validated by schema in a real app)
-    // The frontend will now consume GridTile[] directly
-    const { data } = result;
-    console.log(`[ChunkLoader] Backend response for ${chunkX},${chunkY}:`, {
-      hasTiles: !!data.tiles, // Legacy check
-      hasBiomes: !!data.biomes,
-      biomesLength: data.biomes?.length,
-      worldOffset: { x: data.worldOffsetX, y: data.worldOffsetY },
-    });
+    // Convert surface objects to GridTiles
+    const tiles: GridTile[][] = surfaceLayer.map((row, y) =>
+      row.map(
+        (tileRaw, x) =>
+          ({
+            x: worldX + x,
+            y: worldY + y,
+            z: 0,
+            biome: tileRaw?.b || 'plains',
+            blockType: tileRaw?.t || 'grass',
+          }) as GridTile
+      )
+    );
 
     // Ensure worldOffsetX/Y are present (backend might omit them)
     const chunk: TerrainChunk = {
-      ...data,
+      ...chunkData,
       chunkX,
       chunkY,
-      worldOffsetX: data.worldOffsetX ?? worldX,
-      worldOffsetY: data.worldOffsetY ?? worldY,
+      worldOffsetX: chunkData.worldOffsetX ?? worldX,
+      worldOffsetY: chunkData.worldOffsetY ?? worldY,
+      tiles: tiles,
+      biomes: surfaceLayer,
     };
 
     return chunk;

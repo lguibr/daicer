@@ -65,6 +65,14 @@
         },
         "image_url": {
             "type": "string"
+        },
+        "image": {
+            "type": "media",
+            "multiple": false,
+            "required": false,
+            "allowedTypes": [
+                "images"
+            ]
         }
     }
 }

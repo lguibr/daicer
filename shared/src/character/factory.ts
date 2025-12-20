@@ -68,26 +68,7 @@ export function createCharacter(overrides: Partial<CharacterSheet> = {}): Charac
         damageType: '1d8+3 slashing',
       },
     ],
-    equipment: {
-      equippedItems: {
-        mainHand: null,
-        offHand: null,
-        armor: null,
-        shield: null,
-        head: null,
-        cloak: null,
-        belt: null,
-        boots: null,
-        gloves: null,
-        ring1: null,
-        ring2: null,
-        necklace: null,
-        accessory1: null,
-        accessory2: null,
-      },
-      inventory: [],
-      totalWeight: 0,
-    },
+    equipment: [],
 
     // Currency
     currency: {

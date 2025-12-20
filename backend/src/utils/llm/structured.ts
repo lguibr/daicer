@@ -6,9 +6,9 @@
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import type { Language } from '../../types/index';
-import { extractErrorDetails } from './gemini';
+import { extractErrorDetails, getGeminiModel } from './gemini';
 import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
-import { OpenAIModel, type TextGenConfig } from './types';
+import { OpenAIModel, type TextGenConfig, GeminiModel } from './types';
 import { streamManager } from './stream-manager';
 import { getPrompt, formatPrompt } from '../prompt';
 
@@ -114,74 +114,107 @@ export async function generateStructured<T extends z.ZodType>(
   });
 
   // If explicit model specified, use it without fallback
+  // If explicit model specified, use it without fallback
   if (config.model) {
     let baseModel;
+    const modelStr = config.model as string;
+    const isGemini = modelStr.toLowerCase().includes('gemini') || modelStr.includes('flash');
 
-    // OpenAI GPT-5 models (with strict JSON mode)
-    if (config.model === OpenAIModel.GPT_5_1) {
-      baseModel = getGPT51Model(config);
-    } else if (config.model === OpenAIModel.GPT_5_MINI) {
-      baseModel = getGPT5MiniModel(config);
-    } else if (config.model === OpenAIModel.GPT_5_NANO) {
-      baseModel = getGPT5NanoModel(config);
-    } else if (config.model === OpenAIModel.GPT_5_PRO) {
-      baseModel = getGPT5ProModel(config);
+    if (isGemini) {
+      // Handle Gemini Models
+      console.log(`[LLM Structured] Using Gemini model: ${config.model}`);
+
+      // Map 'flash-with-fallback' or similar to a valid GeminiModel enum if needed,
+      // or rely on getGeminiModel handling strings nicely or casting.
+      // For now, if it contains 'flash', default to FLASH if exact match fails, or pass exact string.
+      let geminiModelToken = config.model as GeminiModel;
+
+      if ((config.model as string) === 'flash-with-fallback') {
+        geminiModelToken = GeminiModel.FLASH;
+      }
+
+      baseModel = getGeminiModel(geminiModelToken, config);
+
+      // Gemini Structured Output
+      // LangChain's ChatGoogleGenerativeAI supports .withStructuredOutput(zodSchema) directly.
+      // We do NOT pass OpenAI specific options like method: 'jsonSchema'.
+      const structuredModel = baseModel.withStructuredOutput(schema);
+
+      try {
+        const response = await structuredModel.invoke(messages, runnableConfig);
+        console.debug('[LLM Structured] Response received');
+        return response as z.infer<T>;
+      } catch (error) {
+        console.error(`[LLM Structured] Gemini ${config.model} failed:`, extractErrorDetails(error));
+        throw error;
+      }
     } else {
-      // Default to GPT-5 mini if unknown model
-      baseModel = getGPT5MiniModel(config);
-    }
+      // OpenAI GPT-5 models (with strict JSON mode)
+      if (config.model === OpenAIModel.GPT_5_1) {
+        baseModel = getGPT51Model(config);
+      } else if (config.model === OpenAIModel.GPT_5_MINI) {
+        baseModel = getGPT5MiniModel(config);
+      } else if (config.model === OpenAIModel.GPT_5_NANO) {
+        baseModel = getGPT5NanoModel(config);
+      } else if (config.model === OpenAIModel.GPT_5_PRO) {
+        baseModel = getGPT5ProModel(config);
+      } else {
+        // Default to GPT-5 mini if unknown OpenAI model
+        baseModel = getGPT5MiniModel(config);
+      }
 
-    // Use Structured Outputs with strict: true for OpenAI models
-    const structuredModel = baseModel.withStructuredOutput(schema as any, {
-      method: 'jsonSchema',
-      strict: true,
-      includeRaw: false,
-    });
+      // Use Structured Outputs with strict: true for OpenAI models
+      const structuredModel = baseModel.withStructuredOutput(schema as any, {
+        method: 'jsonSchema',
+        strict: true,
+        includeRaw: false,
+      });
 
-    try {
-      let response;
-      const streamId = config.metadata?.streamId as string | undefined;
+      try {
+        let response;
+        const streamId = config.metadata?.streamId as string | undefined;
 
-      if (streamId) {
-        const stream = await structuredModel.streamEvents(messages, {
-          ...runnableConfig,
-          version: 'v2',
-        });
+        if (streamId) {
+          const stream = await structuredModel.streamEvents(messages, {
+            ...runnableConfig,
+            version: 'v2',
+          });
 
-        let rootRunId: string | undefined;
+          let rootRunId: string | undefined;
 
-        for await (const event of stream) {
-          if (!rootRunId && event.event === 'on_chain_start') {
-            rootRunId = event.run_id;
-          }
+          for await (const event of stream) {
+            if (!rootRunId && event.event === 'on_chain_start') {
+              rootRunId = event.run_id;
+            }
 
-          if (event.event === 'on_chat_model_stream') {
-            const chunk = event.data.chunk;
-            if (chunk.content) {
-              streamManager.emitText(streamId, chunk.content.toString());
-            } else if (chunk.tool_call_chunks && chunk.tool_call_chunks.length > 0) {
-              const args = chunk.tool_call_chunks[0].args;
-              if (args) streamManager.emitText(streamId, args);
+            if (event.event === 'on_chat_model_stream') {
+              const chunk = event.data.chunk;
+              if (chunk.content) {
+                streamManager.emitText(streamId, chunk.content.toString());
+              } else if (chunk.tool_call_chunks && chunk.tool_call_chunks.length > 0) {
+                const args = chunk.tool_call_chunks[0].args;
+                if (args) streamManager.emitText(streamId, args);
+              }
+            }
+
+            if (event.event === 'on_chain_end' && event.run_id === rootRunId) {
+              response = event.data.output;
             }
           }
 
-          if (event.event === 'on_chain_end' && event.run_id === rootRunId) {
-            response = event.data.output;
+          if (!response) {
+            throw new Error('Stream ended without output');
           }
+        } else {
+          response = await structuredModel.invoke(messages, runnableConfig);
         }
 
-        if (!response) {
-          throw new Error('Stream ended without output');
-        }
-      } else {
-        response = await structuredModel.invoke(messages, runnableConfig);
+        console.debug('[LLM Structured] Response received');
+        return response as z.infer<T>;
+      } catch (error) {
+        console.error(`[LLM Structured] ${config.model} failed:`, extractErrorDetails(error));
+        throw error;
       }
-
-      console.debug('[LLM Structured] Response received');
-      return response as z.infer<T>;
-    } catch (error) {
-      console.error(`[LLM Structured] ${config.model} failed:`, extractErrorDetails(error));
-      throw error;
     }
   }
 

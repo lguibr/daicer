@@ -49,6 +49,14 @@
       "relation": "manyToMany",
       "target": "api::proficiency.proficiency",
       "inversedBy": "traits"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
     }
   }
 }

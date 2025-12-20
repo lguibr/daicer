@@ -11,9 +11,7 @@ import { OpenAIModel, type GeminiConfig } from './types';
 function getApiKey(): string {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    // throw new Error('OPENAI_API_KEY not configured');
-    console.warn('OPENAI_API_KEY not configured, calls will fail if using OpenAI models');
-    return '';
+    throw new Error('OPENAI_API_KEY not configured');
   }
   return apiKey;
 }

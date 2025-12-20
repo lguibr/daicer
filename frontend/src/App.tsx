@@ -7,7 +7,9 @@ import RoomsPage from './pages/Rooms';
 import GamePage from './pages/Game';
 import TestSetupPage from './pages/TestSetup';
 import { TacticalCombat } from './pages/TacticalCombat';
-import ExplorePage from './pages/Explore';
+import { RulesExplorerLayout } from './pages/RulesExplorer/Layout';
+import { RulesDashboard } from './pages/RulesExplorer/RulesDashboard';
+import { RulesCategoryPage } from './pages/RulesExplorer/RulesCategoryPage';
 import AssetsPage from './pages/Assets';
 import Assets2DPage from './pages/Assets2D';
 import Assets3DPage from './pages/Assets3D';
@@ -82,7 +84,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/explore" element={<ExplorePage />} />
+        <Route
+          path="/rules"
+          element={
+            <ProtectedRoute>
+              <RulesExplorerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<RulesDashboard />} />
+          <Route path=":category" element={<RulesCategoryPage />} />
+          {/* Detail route is handled via modal in list for now, or we can add :category/:id later */}
+        </Route>
         <Route
           path="/assets"
           element={

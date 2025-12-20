@@ -6,12 +6,31 @@
  */
 
 // Re-export all types from shared package
-// Re-export all types from shared package
-export * from '@daicer/shared/character/types';
-export * from '@daicer/shared/room/types';
-export * from '@daicer/shared/player/types';
-export * from '@daicer/shared/user/types';
-export * from '@daicer/shared/world/structure-schema';
-export * from '@daicer/shared/world/road-schema';
-export * from '@daicer/shared/world/history-schema';
-export * from '@daicer/shared/world/condition-schema';
+export * from '@daicer/shared';
+
+// Explicit overrides for Architecture Migration
+export interface Message {
+  id?: string; // Legacy: may be numeric or string
+  documentId?: string; // Strapi 5
+  text?: string; // Legacy
+  content: string; // New Standard
+  sender: string; // Legacy (senderName)
+  senderName?: string; // New Standard
+  senderType?: 'dm' | 'player' | 'system';
+  timestamp: number;
+  type?: 'narration' | 'chat' | 'system'; // Legacy/Socket
+  turn?: {
+    documentId: string;
+    turnNumber: number;
+  };
+  // Extended fields used by UI
+  recipientId?: string;
+  targetPlayer?: string;
+  metadata?: {
+    ragContext?: string;
+    toolCalls?: any[];
+    [key: string]: any;
+  };
+  images?: string[]; // base64
+  diceRolls?: any[];
+}

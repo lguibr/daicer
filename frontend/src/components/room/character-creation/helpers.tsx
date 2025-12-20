@@ -74,12 +74,12 @@ export function RaceSelectionGrid({ options, selectedRace, onSelect, loading }: 
         const isSelected = race.name === selectedRace;
         const gradientIndex = index % 6;
         const gradientPalettes = [
-          'from-aurora-500/25 via-aurora-400/10 to-midnight-800/70',
-          'from-nebula-500/25 via-nebula-400/10 to-midnight-800/70',
-          'from-amber-500/25 via-amber-400/10 to-midnight-800/70',
-          'from-emerald-500/25 via-emerald-400/10 to-midnight-800/70',
-          'from-indigo-500/25 via-indigo-400/10 to-midnight-800/70',
-          'from-rose-500/25 via-rose-400/10 to-midnight-800/70',
+          'from-aurora-500/10 via-aurora-400/5 to-midnight-900/80',
+          'from-nebula-500/10 via-nebula-400/5 to-midnight-900/80',
+          'from-amber-500/10 via-amber-400/5 to-midnight-900/80',
+          'from-emerald-500/10 via-emerald-400/5 to-midnight-900/80',
+          'from-indigo-500/10 via-indigo-400/5 to-midnight-900/80',
+          'from-rose-500/10 via-rose-400/5 to-midnight-900/80',
         ];
 
         return (
@@ -105,7 +105,9 @@ export function RaceSelectionGrid({ options, selectedRace, onSelect, loading }: 
               </div>
               <div className="space-y-2">
                 <div>
-                  <p className="text-lg font-semibold text-shadow-50 group-hover:text-aurora-100">{race.name}</p>
+                  <p className="text-xl font-bold text-shadow-50 font-display group-hover:text-aurora-100">
+                    {race.name}
+                  </p>
                   {(race.size || race.speed) && (
                     <p className="text-xs font-medium uppercase tracking-[0.35em] text-shadow-400">
                       {[race.size, race.speed ? `${race.speed} ft` : undefined].filter(Boolean).join(' • ')}

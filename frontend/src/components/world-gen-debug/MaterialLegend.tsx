@@ -4,8 +4,8 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getMaterialColor } from '@daicer/shared/world-gen/structures';
-import type { StructureMaterial } from '@daicer/shared/world-gen/structures';
+import { getMaterialColor } from '@daicer/shared';
+import type { StructureMaterial } from '@daicer/shared';
 
 const MATERIALS: StructureMaterial[] = ['wood', 'stone', 'metal', 'marble', 'rock'];
 

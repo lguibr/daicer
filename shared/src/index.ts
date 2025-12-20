@@ -3,13 +3,14 @@
  */
 
 // Re-export everything from entity modules
-export * from './character';
-export * from './room';
-export * from './player';
-export * from './user';
+export * from './character/index';
+export * from './room/index';
+export * from './player/index';
+export * from './user/index';
 export * from './world/history-schema';
 // Explicitly export schemas avoiding conflict with world-gen
-export { StructureSchema, StructureSizeEnum, type StructureSize } from './world/structure-schema';
+export { StructureSchema, StructureSizeEnum } from './world/structure-schema';
+export type { StructureSize } from './world/structure-schema';
 export * from './world/road-schema';
 export * from './world/grid-tile-schema';
 export { GridFeatureSchema, FeatureTypeEnum, type GridFeature } from './world/grid-feature-schema';
@@ -19,10 +20,11 @@ export * from './world/condition-schema';
 export * from './world/entity-schema';
 
 // Re-export graph-states (section graph schemas)
-export * from './graph-states';
+export * from './graph-states/index';
 
 // Re-export assets
-export * from './assets';
+export * from './assets/index';
 
 // Re-export world-gen
-export * from './world-gen';
+export * from './world-gen/index';
+export * from './world/terrain-types';

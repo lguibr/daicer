@@ -7,7 +7,8 @@
     "backend",
     "frontend",
     "infra",
-    "shared"
+    "shared",
+    "backend/src/plugins/terrain-explorer"
   ],
   "scripts": {
     "dev": "echo '🎮 Starting Daicer environment...' && concurrently -n \"backend,frontend\" -c \"blue,green\" \"yarn dev:backend\" \"yarn dev:frontend\"",

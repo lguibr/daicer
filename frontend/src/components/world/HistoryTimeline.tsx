@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronRight, MapPin, Calendar, Scroll } from 'lucide-react';
-import type { WorldHistory, HistoricalPeriod } from '@daicer/shared/world/history-schema';
+import type { WorldHistory, HistoricalPeriod } from '@daicer/shared';
 
 interface HistoryTimelineProps {
   history: WorldHistory;

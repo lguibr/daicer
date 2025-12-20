@@ -80,6 +80,8 @@ vi.mock('../ui/LanguageSelector', () => ({
 
 const sampleRoom: Room = {
   id: 'room-1',
+  documentId: 'doc-1',
+  roomId: 'room-1',
   code: 'ABCD',
   ownerId: 'owner',
   settings: null,

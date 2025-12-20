@@ -39,6 +39,6 @@ export const Landing: Story = {
 
 export const ExploreActive: Story = {
   parameters: {
-    initialPath: '/explore',
+    path: '/rules',
   },
 };

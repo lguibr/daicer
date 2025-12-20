@@ -1,0 +1,53 @@
+{
+    "kind": "collectionType",
+    "collectionName": "messages",
+    "info": {
+        "singularName": "message",
+        "pluralName": "messages",
+        "displayName": "Message",
+        "description": "Individual communication unit"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "content": {
+            "type": "richtext",
+            "required": true
+        },
+        "senderName": {
+            "type": "string"
+        },
+        "senderType": {
+            "type": "enumeration",
+            "enum": [
+                "dm",
+                "player",
+                "system"
+            ],
+            "default": "system"
+        },
+        "room": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::room.room",
+            "inversedBy": "messages"
+        },
+        "turn": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::turn.turn",
+            "inversedBy": "messages"
+        },
+        "recipient": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "plugin::users-permissions.user"
+        },
+        "timestamp": {
+            "type": "biginteger",
+            "required": false
+        }
+    }
+}

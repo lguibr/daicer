@@ -5,7 +5,7 @@
  */
 
 import type { HistoricalPeriod, WorldCondition, Structure, Road } from '@daicer/shared';
-import type { CharacterSheet } from '@daicer/shared/character';
+import type { CharacterSheet } from '@daicer/shared';
 
 const CACHE_KEYS = {
   section1: (roomId: string) => `daice-graph-section-1-${roomId}`,

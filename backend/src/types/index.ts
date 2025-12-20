@@ -53,29 +53,15 @@ export interface AdvancementPoints {
   talent: number;
 }
 
-export interface CharacterEquipment {
-  equippedItems: {
-    mainHand: string | null;
-    offHand: string | null;
-    armor: string | null;
-    shield: string | null;
-    head: string | null;
-    cloak: string | null;
-    belt: string | null;
-    boots: string | null;
-    gloves: string | null;
-    ring1: string | null;
-    ring2: string | null;
-    necklace: string | null;
-    accessory1: string | null;
-    accessory2: string | null;
-  };
-  inventory: Array<{
-    itemIndex: string;
-    quantity: number;
-  }>;
-  totalWeight: number;
+export interface InventoryItem {
+  id?: string;
+  item: string; // ID or relation
+  quantity: number;
+  slot: string;
+  isEquipped: boolean;
 }
+
+export type CharacterEquipment = InventoryItem[];
 
 export interface CharacterSheet {
   name: string;
@@ -268,6 +254,7 @@ export interface Message {
   images?: string[];
   timestamp: number;
   targetPlayer?: string;
+  type?: 'talk' | 'narration' | 'system';
   metadata?: {
     ragContext?: string;
     toolCalls?: any[];

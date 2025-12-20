@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { SimplexNoise } from '@daicer/shared/world-gen/noise';
+import { SimplexNoise } from '@daicer/shared';
 
 export type NoiseType = 'simplex' | 'octave' | 'ridge' | 'turbulence' | 'domainWarp';
 

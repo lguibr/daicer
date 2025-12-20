@@ -654,7 +654,7 @@ export default function CharacterCreation({
       const armorClass = 10 + dexModifier;
       const proficiencyBonus = 2;
 
-      await addCharacter(room.documentId, {
+      const createdPlayer = await addCharacter(room.documentId, {
         ...formData,
         level: startingLevel,
         xp: 0,
@@ -676,8 +676,6 @@ export default function CharacterCreation({
         skills: formData.skills ?? {},
         baseAttackBonus: proficiencyBonus,
         attacks: [],
-        // ✨ ADD EQUIPMENT DATA
-        // ✨ ADD EQUIPMENT DATA
         equipment: [
           // Inventory items (in backpack)
           ...inventory
@@ -775,7 +773,7 @@ export default function CharacterCreation({
         },
         avatarPreview: { portrait, upperBody, fullBody },
       });
-      onCharacterCreated?.();
+      onCharacterCreated?.(createdPlayer);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('characterCreation.errors.createFailed'));
     } finally {
@@ -836,7 +834,6 @@ export default function CharacterCreation({
         onAssetCreated?.(asset);
       } else {
         await handleCreateCharacter();
-        onCharacterCreated?.();
       }
     }
   };

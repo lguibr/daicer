@@ -1,5 +1,7 @@
 import { SimplexNoise, Alea } from './noise';
 import { STRUCTURE_TEMPLATES, structureTileToBiome, type StructureFloor } from './structures';
+import { generateStructureFootprints, stampDetailedStructures } from './structures/generator';
+import type { ChunkDTO } from '../world/terrain-types';
 
 export interface GenerationParams {
   // Structures
@@ -55,172 +57,312 @@ export const DEFAULT_GENERATION_PARAMS: GenerationParams = {
 };
 
 /**
- * Creates a deterministic chunk generator function.
- * This function encapsulates the entire biome generation logic using Simplex Noise and specific thresholds,
- * identical to the logic used in the Frontend Preview.
+ * Pure function to get biome and block type from noise at a specific coordinate.
+ * This is the SINGLE SOURCE OF TRUTH for the "Natural World".
  */
-export function createSimpleChunkGenerator(seed: string, params: GenerationParams) {
-  return (worldX: number, worldY: number, width: number, height: number): string[][][] => {
-    const noise = new SimplexNoise(seed);
-    const structureSeed = `${seed}-structures`;
+export function getProceduralTile(
+  x: number,
+  y: number,
+  z: number, // -3 to +3
+  seed: string,
+  params: GenerationParams,
+  noise: SimplexNoise
+): { biome: string; blockType: string } {
+  // 1. Base Noise
+  const elev = noise.octaveNoise(
+    x * params.elevationScale,
+    y * params.elevationScale,
+    params.elevationOctaves,
+    params.elevationPersistence
+  );
+  const moist = noise.octaveNoise(
+    x * params.moistureScale + 1000,
+    y * params.moistureScale + 1000,
+    params.moistureOctaves,
+    params.moisturePersistence
+  );
 
-    // Cache structures that overlap this chunk
-    // Note: We recalculate this per chunk to be stateless/pure, but it's deterministic.
-    const structuresInChunk = new Map<
-      string,
-      { template: any; structureTiles: any; originX: number; originY: number }
-    >();
+  // 2. Determine Biome
+  let biome = 'plains';
+  if (elev < -0.3) biome = 'ocean';
+  else if (elev < -0.1) biome = 'beach';
+  else if (elev < 0.1) {
+    if (moist < -0.2) biome = 'desert';
+    else if (moist < 0.2) biome = 'plains';
+    else biome = 'swamp';
+  } else if (elev < 0.4) {
+    if (moist < -0.1) biome = 'savanna';
+    else if (moist < 0.3) biome = 'forest';
+    else biome = 'jungle';
+  } else if (elev < 0.6) {
+    biome = 'hills';
+  } else {
+    biome = 'mountains';
+  }
 
-    // STRUCTURE PRE-PLACEMENT: Find all structure origins that might affect this chunk
-    // We scan a grid of "potential structure sites" around the requested chunk
-    // The grid size isn't 1x1, it's defined by structureMinDistance.
-    const searchRadius = Math.ceil(Math.max(20, params.structureMinDistance * 2) / params.structureMinDistance);
+  // 3. Determine Block Type based on Z-Level and Biome
+  let blockType = 'air';
 
-    const startGridY = Math.floor(worldY / params.structureMinDistance) - searchRadius;
-    const endGridY = Math.floor((worldY + height) / params.structureMinDistance) + searchRadius;
-    const startGridX = Math.floor(worldX / params.structureMinDistance) - searchRadius;
-    const endGridX = Math.floor((worldX + width) / params.structureMinDistance) + searchRadius;
+  // Surface Level (z=0)
+  if (z === 0) {
+    // Water handling
+    if (biome === 'ocean' || biome === 'deep_ocean') return { biome, blockType: 'water' };
 
-    for (let gridY = startGridY; gridY <= endGridY; gridY++) {
-      for (let gridX = startGridX; gridX <= endGridX; gridX++) {
-        // Use Alea PRNG to deterministically check if this grid cell has a structure
-        const cellSeed = `${structureSeed}-${gridX}-${gridY}`;
-        const rng = Alea(cellSeed);
+    // Default surface blocks
+    switch (biome) {
+      case 'desert':
+        blockType = 'sand';
+        break;
+      case 'beach':
+        blockType = 'sand';
+        break;
+      case 'snowy_peaks':
+        blockType = 'snow';
+        break;
+      case 'mountains':
+        blockType = 'stone';
+        break;
+      case 'badlands':
+        blockType = 'terracotta';
+        break;
+      default:
+        blockType = 'grass';
+    }
+  }
+  // Underground (z < 0)
+  else if (z < 0) {
+    blockType = 'stone';
+    // Deep underground could be dark
+  }
+  // Sky/Air (z > 0)
+  else {
+    blockType = 'air';
+  }
 
-        // Chance of structure based on maxStructures parameter
-        // The frontend used: Math.min(params.maxStructures / 50, 0.3)
-        const structureProbability = Math.min(params.maxStructures / 50, 0.3);
+  return { biome, blockType };
+}
 
-        if (rng() < structureProbability) {
-          // This grid cell has a structure! Calculate its origin point
-          const structureOriginX = gridX * params.structureMinDistance;
-          const structureOriginY = gridY * params.structureMinDistance;
+/**
+ * Unified Terrain Generator
+ * Returns a ChunkDTO structure with 3D data.
+ */
+export function createUnifiedTerrainGenerator(seed: string, params: GenerationParams) {
+  const CORE_SIZE = 1024;
+  const noise = new SimplexNoise(seed);
 
-          // Pick structure type deterministically
-          const typeSeed = `${seed}-struct-${gridX}-${gridY}`;
-          const structRng = Alea(typeSeed);
-          const roll = structRng();
+  // --- CORE WORLD CACHE ---
+  // We still pre-generate the Core World footprints for roads and global structures
+  // But we store them differently or just use them as a "Layermask"
+  let coreStructures: string[][][] | null = null;
+  // We also need to know checking strictly for "Is this a road/structure?"
 
-          let structureType: 'house' | 'tower' | 'temple' | 'dungeon' | 'cave_entrance' | 'ancient_tree' = 'house';
-          if (roll < 0.3) structureType = 'house';
-          else if (roll < 0.45) structureType = 'tower';
-          else if (roll < 0.6) structureType = 'temple';
-          else if (roll < 0.75) structureType = 'dungeon';
-          else if (roll < 0.85) structureType = 'cave_entrance';
-          else structureType = 'ancient_tree';
+  try {
+    const structureParams = {
+      minDistance: params.structureMinDistance,
+      maxStructures: params.maxStructures,
+      generateRoads: params.generateRoads,
+      elevationScale: params.elevationScale,
+      elevationOctaves: params.elevationOctaves,
+      elevationPersistence: params.elevationPersistence,
+      moistureScale: params.moistureScale,
+      moistureOctaves: params.moistureOctaves,
+      moisturePersistence: params.moisturePersistence,
+      caveFillPercentage: params.caveFillPercentage,
+      caveIterations: params.caveIterations,
+      caveBirthLimit: params.caveBirthLimit,
+      caveDeathLimit: params.caveDeathLimit,
+      bspSize: params.bspSize,
+      bspMinRoomSize: params.bspMinRoomSize,
+      bspMaxRoomSize: params.bspMaxRoomSize,
+      featureMinDistance: params.featureMinDistance,
+      featureAttempts: params.featureAttempts,
+      roadMaterial: 'stone' as any,
+      wfcBlendEdges: false,
+    };
 
-          const template = STRUCTURE_TEMPLATES[structureType];
-          if (template) {
-            const material = template.defaultMaterial;
-            // Structure generator needs a seed too
-            const structureTiles = template.generator(material, typeSeed);
+    const footprints = generateStructureFootprints(CORE_SIZE, CORE_SIZE, seed, structureParams);
 
-            structuresInChunk.set(`${gridX}-${gridY}`, {
-              template,
-              structureTiles,
-              originX: structureOriginX,
-              originY: structureOriginY,
-            });
-          }
+    // stampDetailedStructures returns [floor][y][x] strings
+    coreStructures = stampDetailedStructures(
+      footprints.biomeGrid,
+      footprints.detailedStructures || [],
+      footprints.biomeGrid
+    );
+  } catch (e) {
+    console.warn('[UnifiedGen] Failed to generate core roads', e);
+  }
+
+  /**
+   * Generates a single tile at (x,y,z)
+   * Resolves: Core Structure -> Stateless Structure -> Procedural Terrain
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getTileAt = (x: number, y: number, z: number): { biome: string; blockType: string } => {
+    const floorIndex = z + 3; // Map -3..3 to 0..6
+
+    // 1. Check Core World Cache (if inside bounds)
+    if (coreStructures && x >= 0 && y >= 0 && x < CORE_SIZE && y < CORE_SIZE) {
+      const coreBlock = coreStructures[floorIndex]?.[y]?.[x];
+      // If coreBlock is present and NOT empty string, use it
+      if (coreBlock && coreBlock !== '') {
+        // Parse the string "biome" from the old generator
+        // The old generator returned strings like 'stone', 'plains', 'wall', etc.
+        // We need to infer blockType from it if possible, or mapping
+
+        // Quick heuristic mapping from the string soup
+        const raw = coreBlock;
+        let b = 'plains';
+        let t = 'grass';
+
+        if (raw === 'stone') {
+          t = 'stone';
+          b = 'plains';
+        } else if (raw === 'wood') {
+          t = 'wood';
+          b = 'forest';
+        } else if (raw === 'wall') {
+          t = 'wall';
+          b = 'plains';
+        } else if (raw === 'floor') {
+          t = 'floor';
+          b = 'plains';
+        } else if (raw === 'water') {
+          t = 'water';
+          b = 'ocean';
+        } else {
+          // It might be a biome name like 'forest'
+          b = raw;
+          t = 'grass'; // default
         }
+        return { biome: b, blockType: t };
       }
     }
 
-    const chunkBiomes: string[][][] = [];
+    // 2. Stateless Structures (for non-Core world)
+    // TODO: Implement stateless structures here if needed, or rely on procedural for outside
+    // For MVP, we stick to Procedural for everything else
 
-    // Generate 7 floors (-3 to +3)
-    // The frontend loop goes 0 to 7 (exclusive? no 0..6).
-    // Original frontend: for (let floor = 0; floor < 7; floor++)
+    // 3. Procedural Terrain
+    return getProceduralTile(x, y, z, seed, params, noise);
+  };
+
+  /**
+   * Bundle a chunk
+   */
+  return (chunkX: number, chunkY: number, size: number): ChunkDTO => {
+    const worldOffsetX = chunkX * size;
+    const worldOffsetY = chunkY * size;
+
+    // Initialize 7-layer grid
+    const grid: { b: string; t: string }[][][] = [];
+    for (let f = 0; f < 7; f++) grid[f] = [];
+
     for (let floor = 0; floor < 7; floor++) {
+      const z = floor - 3;
+      for (let y = 0; y < size; y++) {
+        const row: { b: string; t: string }[] = [];
+        for (let x = 0; x < size; x++) {
+          const worldX = worldOffsetX + x;
+          const worldY = worldOffsetY + y;
+
+          const tile = getTileAt(worldX, worldY, z);
+          row.push({ b: tile.biome, t: tile.blockType });
+        }
+        grid[floor].push(row);
+      }
+    }
+
+    return {
+      chunkX,
+      chunkY,
+      worldOffsetX,
+      worldOffsetY,
+      size,
+      grid,
+    };
+  };
+}
+
+// Re-export the legacy generator for now to avoid breaking imports immediately,
+// strictly aliased or wrapped if needed.
+// But we will REPLACE the content of createSimpleChunkGenerator to use the new logic
+// while maintaining the signature for compat if possible, OR just export the new one.
+
+// Backward compatibility wrapper
+export function createSimpleChunkGenerator(seed: string, params: GenerationParams) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const unified = createUnifiedTerrainGenerator(seed, params);
+  const noise = new SimplexNoise(seed);
+
+  const CORE_SIZE = 1024;
+  let coreStructures: string[][][] | null = null;
+
+  // Initialize Core Structures once (Closure)
+  try {
+    const structureParams = {
+      minDistance: params.structureMinDistance,
+      maxStructures: params.maxStructures,
+      generateRoads: params.generateRoads,
+      elevationScale: params.elevationScale,
+      elevationOctaves: params.elevationOctaves,
+      elevationPersistence: params.elevationPersistence,
+      moistureScale: params.moistureScale,
+      moistureOctaves: params.moistureOctaves,
+      moisturePersistence: params.moisturePersistence,
+      caveFillPercentage: params.caveFillPercentage,
+      caveIterations: params.caveIterations,
+      caveBirthLimit: params.caveBirthLimit,
+      caveDeathLimit: params.caveDeathLimit,
+      bspSize: params.bspSize, // params.bspSize
+      bspMinRoomSize: params.bspMinRoomSize,
+      bspMaxRoomSize: params.bspMaxRoomSize,
+      featureMinDistance: params.featureMinDistance,
+      featureAttempts: params.featureAttempts,
+      roadMaterial: 'stone' as any,
+      wfcBlendEdges: false,
+    };
+    const footprints = generateStructureFootprints(CORE_SIZE, CORE_SIZE, seed, structureParams);
+    coreStructures = stampDetailedStructures(
+      footprints.biomeGrid,
+      footprints.detailedStructures || [],
+      footprints.biomeGrid
+    );
+  } catch (e) {
+    // console.warn('Failed to gen core structures', e);
+  }
+
+  // Return the generator function
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return (worldX: number, worldY: number, width: number, height: number): string[][][] => {
+    const grid: string[][][] = []; // [floor][y][x]
+
+    for (let f = 0; f < 7; f++) {
+      const z = f - 3;
       const floorGrid: string[][] = [];
-
-      for (let y = 0; y < height; y++) {
+      for (let ly = 0; ly < height; ly++) {
         const row: string[] = [];
-        for (let x = 0; x < width; x++) {
-          const globalX = worldX + x;
-          const globalY = worldY + y;
+        for (let lx = 0; lx < width; lx++) {
+          const wx = worldX + lx;
+          const wy = worldY + ly;
 
-          let tileSet = false;
-
-          // Check if this tile is part of any cached structure
-          for (const structure of structuresInChunk.values()) {
-            const localX = globalX - structure.originX;
-            const localY = globalY - structure.originY;
-
-            // Map floor index 0..6 to structure floor -3..3
-            // Assuming the structure generator expects -3..3 or similar?
-            // Frontend: const floorLevel = (floor - 3) as StructureFloor;
-            const floorLevel = (floor - 3) as StructureFloor;
-            const floorTiles = structure.structureTiles[floorLevel];
-
-            if (
-              floorTiles &&
-              localY >= 0 &&
-              localY < floorTiles.length &&
-              localX >= 0 &&
-              localX < (floorTiles[localY]?.length || 0)
-            ) {
-              const tile = floorTiles[localY]?.[localX];
-              if (tile && tile.tileType !== 'empty') {
-                const biomeName = structureTileToBiome(
-                  tile,
-                  floorLevel,
-                  false,
-                  `struct-${structure.originX}-${structure.originY}`
-                );
-                row.push(biomeName);
-                tileSet = true;
-                break;
-              }
-            }
+          // Check Core
+          let val = '';
+          if (coreStructures && wx >= 0 && wy >= 0 && wx < CORE_SIZE && wy < CORE_SIZE) {
+            val = coreStructures[f]?.[wy]?.[wx] || '';
           }
 
-          if (tileSet) continue;
-
-          // No structure - generate terrain (surface only) or empty
-          if (floor === 3) {
-            // Surface terrain generation (floor index 3)
-            const elev = noise.octaveNoise(
-              globalX * params.elevationScale,
-              globalY * params.elevationScale,
-              params.elevationOctaves,
-              params.elevationPersistence
-            );
-            const moist = noise.octaveNoise(
-              globalX * params.moistureScale + 1000,
-              globalY * params.moistureScale + 1000,
-              params.moistureOctaves,
-              params.moisturePersistence
-            );
-
-            let biome = 'plains';
-            if (elev < -0.3) biome = 'ocean';
-            else if (elev < -0.1) biome = 'beach';
-            else if (elev < 0.1) {
-              if (moist < -0.2) biome = 'desert';
-              else if (moist < 0.2) biome = 'plains';
-              else biome = 'swamp';
-            } else if (elev < 0.4) {
-              if (moist < -0.1) biome = 'savanna';
-              else if (moist < 0.3) biome = 'forest';
-              else biome = 'jungle';
-            } else if (elev < 0.6) {
-              biome = 'hills';
-            } else {
-              biome = 'mountains';
-            }
-
-            row.push(biome);
-          } else {
-            // Non-surface floors without structures are empty
-            row.push('');
+          if (!val) {
+            // Procedural
+            const tile = getProceduralTile(wx, wy, z, seed, params, noise);
+            if (z === 0) val = tile.biome;
+            else val = '';
           }
+          row.push(val);
         }
         floorGrid.push(row);
       }
-      chunkBiomes.push(floorGrid);
+      grid.push(floorGrid);
     }
-
-    return chunkBiomes;
+    return grid;
   };
 }

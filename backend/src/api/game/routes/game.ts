@@ -41,6 +41,15 @@ export default {
       },
     },
     {
+      method: 'POST',
+      path: '/game/:roomId/action',
+      handler: 'game.submitAction',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
       method: 'GET',
       path: '/game/:roomId',
       handler: 'game.getRoom',

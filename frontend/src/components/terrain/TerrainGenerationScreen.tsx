@@ -18,7 +18,8 @@ import type { Room, Scalars } from '../../gql/graphql';
 type GridTile = Scalars['JSON']['output'];
 
 interface BiomeData {
-  biomeMap: {
+  chunks?: any[]; // ChunkDTO[]
+  biomeMap?: {
     grid: GridTile[][];
     metadata?: Record<string, unknown>;
   };
@@ -43,6 +44,76 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [biomeData, setBiomeData] = useState<BiomeData | null>(null);
+
+  // Process biomeData (Chunks -> Grid)
+  const { grid, grid3D } = (() => {
+    if (!biomeData) return { grid: null, grid3D: null };
+
+    // New Chunk Data
+    if (biomeData.chunks) {
+      const chunks = biomeData.chunks;
+      // Find bounds
+      let minX = Infinity,
+        minY = Infinity,
+        maxX = -Infinity,
+        maxY = -Infinity;
+      chunks.forEach((c: any) => {
+        minX = Math.min(minX, c.worldOffsetX);
+        minY = Math.min(minY, c.worldOffsetY);
+        maxX = Math.max(maxX, c.worldOffsetX + c.size);
+        maxY = Math.max(maxY, c.worldOffsetY + c.size);
+      });
+
+      const sizeX = maxX - minX;
+      const sizeY = maxY - minY;
+      const floorCount = 7;
+
+      // Init 3D grid [floor][y][x]
+      const newGrid3D: any[][][] = Array(floorCount)
+        .fill(null)
+        .map(() =>
+          Array(sizeY)
+            .fill(null)
+            .map(() => Array(sizeX).fill(null))
+        );
+
+      chunks.forEach((chunk: any) => {
+        const { worldOffsetX, worldOffsetY, grid: chunkGrid } = chunk;
+        for (let f = 0; f < floorCount; f++) {
+          const z = f - 3;
+          if (!chunkGrid[f]) continue;
+
+          chunkGrid[f].forEach((row: any[], ly: number) => {
+            row.forEach((tileRaw: any, lx: number) => {
+              const wx = worldOffsetX + lx;
+              const wy = worldOffsetY + ly;
+              const ax = wx - minX;
+              const ay = wy - minY;
+
+              if (ax >= 0 && ax < sizeX && ay >= 0 && ay < sizeY) {
+                newGrid3D[f][ay][ax] = {
+                  x: wx,
+                  y: wy,
+                  z,
+                  biome: tileRaw.b,
+                  blockType: tileRaw.t,
+                };
+              }
+            });
+          });
+        }
+      });
+
+      return { grid: newGrid3D[3] || [], grid3D: newGrid3D };
+    }
+
+    // Legacy fallback
+    if (biomeData.biomeMap?.grid) {
+      return { grid: biomeData.biomeMap.grid, grid3D: undefined };
+    }
+
+    return { grid: null, grid3D: null };
+  })();
 
   // Load existing terrain data (one-time only)
   useEffect(() => {
@@ -228,9 +299,10 @@ export function TerrainGenerationScreen({ room }: TerrainGenerationScreenProps) 
         ) : (
           <>
             {/* Unified Terrain Explorer (biome grid + layers + controls) */}
-            {biomeData?.biomeMap?.grid && (
+            {grid && (
               <TerrainExplorer
-                biomeGrid={biomeData.biomeMap.grid}
+                biomeGrid={grid}
+                biomeGrid3D={grid3D || undefined}
                 structures={(room.structures as unknown as GeneratedStructure[]) || []}
                 roomSize={32}
                 initialZoom={2}

@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { GlobalPlacementMap } from '@daicer/shared/world-gen/structures';
+import type { GlobalPlacementMap } from '@daicer/shared';
 import { auth } from '@/services/firebase';
 
 interface UseStructurePlacementMapResult {

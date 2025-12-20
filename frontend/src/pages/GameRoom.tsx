@@ -109,16 +109,49 @@ export default function GameRoomPage() {
     }
 
     const loadRoom = async () => {
+      console.log('[GameRoom] Loading room:', roomId);
       try {
         const roomData = (await getRoomState(roomId)) as SharedRoom & { players: Player[] };
+        console.log('[GameRoom] Loaded room data:', {
+          id: roomData.id,
+          phase: roomData.phase,
+          players: roomData.players?.length,
+        });
         setRoom(roomData);
         setPlayers(roomData.players || []);
 
         // Give socket time to initialize before joining
         setTimeout(() => {
-          joinSocketRoom(roomId);
+          console.log('[GameRoom] Joining socket room...');
+          // user (from useAuth) might be null initially, but we are in loadRoom.
+          // loadRoom is called on mount. user might load async.
+          // But useAuth runs on mount too.
+          // We can try to use the user from closure if available, or get it from auth state.
+          // Actually, 'user' is from useAuth, which is stateful.
+          // Inside this closure 'user' might be stale? No, it's a dependency of useEffect?
+          // useEffect dependency is `[roomId, navigate]`. `user` is missing!
+          // If we add `user` to dependency, it re-runs when user loads.
+          // Which is good!
+
+          // But let's look at the joinSocketRoom call.
+          // We need to pass user?.uid.
+          // Since this is inside useEffect[roomId], 'user' is captured from render scope.
+          // But if user loads LATER, this effect won't re-run.
+          // So we might join as undefined, then never update?
+
+          // Better: Separate useEffect for joining room when user/roomId changes?
+          // Or just fix the call here and rely on user being loaded (since it's fast usually).
+          // But useAuth has loading state.
+
+          // Let's pass user?.uid if available.
+          // But strict dependency rule suggests separating logic.
+
+          // For now, I'll access the current value if possible, or trigger a re-join if user changes?
+          // Existing code:
+          joinSocketRoom(roomId, user?.uid);
         }, 100);
       } catch (err) {
+        console.error('[GameRoom] Load failed:', err);
         setError(err instanceof Error ? err.message : t('gameRoom.errors.loadFailed'));
       } finally {
         setLoading(false);
@@ -126,11 +159,12 @@ export default function GameRoomPage() {
     };
 
     loadRoom();
-  }, [roomId, navigate]);
+  }, [roomId, navigate, user?.uid]);
 
   // Update state from socket
   useEffect(() => {
     if (socket.room) {
+      console.log('[GameRoom] Socket room update:', socket.room.phase);
       setRoom(socket.room);
 
       // If room has generation events, restore them to streamEvents
@@ -407,11 +441,14 @@ export default function GameRoomPage() {
       try {
         setLoading(true);
         const streamId = crypto.randomUUID();
+        console.log('GameRoom DEBUG: Calling startGame...');
         await startGame(room.documentId || room.roomId, room.settings?.language || 'en', streamId);
+        console.log('GameRoom DEBUG: startGame returned.');
 
         // Force refresh room state to ensure phase change is reflected immediately
         // This handles cases where socket event might be delayed or missed
         const updatedRoom = (await getRoomState(room.documentId || room.roomId)) as SharedRoom & { players: Player[] };
+        console.log('GameRoom DEBUG: Refetched room phase:', updatedRoom.phase);
         setRoom(updatedRoom);
       } catch (err) {
         console.error('Failed to start game:', err);
@@ -423,14 +460,39 @@ export default function GameRoomPage() {
 
     if (isCreatingCharacter) {
       return (
-        <DynamicLayout showNavbar={false} showLanguageSelector>
-          <CharacterCreation room={room} players={players} />
+        <DynamicLayout showNavbar={true} showLanguageSelector>
+          <CharacterCreation
+            room={room}
+            players={players}
+            onCharacterCreated={(player) => {
+              setIsCreatingCharacter(false);
+              if (player) {
+                // Optimistic update using returned player (with correct ID)
+                setPlayers((current) => {
+                  const idx = current.findIndex((p) => p.userId === player.userId);
+                  if (idx >= 0) {
+                    const newPlayers = [...current];
+                    newPlayers[idx] = player;
+                    return newPlayers;
+                  }
+                  return [...current, player];
+                });
+              } else if (roomId) {
+                // Fallback
+                getRoomState(roomId).then((roomData) => {
+                  const r = roomData as SharedRoom & { players: Player[] };
+                  setRoom(r);
+                  setPlayers(r.players || []);
+                });
+              }
+            }}
+          />
         </DynamicLayout>
       );
     }
 
     return (
-      <DynamicLayout showNavbar={false} showLanguageSelector>
+      <DynamicLayout showNavbar={true} showLanguageSelector>
         <LobbyScreen
           room={room}
           players={players}
@@ -456,7 +518,18 @@ export default function GameRoomPage() {
   // PHASE 5: GAMEPLAY - Active gameplay with chat, turns, etc.
   return (
     <DynamicLayout showRoomInfo className="h-dvh overflow-hidden" mainClassName="min-h-0">
-      <GameplayScreen room={room} players={players} />
+      <GameplayScreen
+        room={room}
+        players={players}
+        onRefresh={() => {
+          if (roomId) {
+            getRoomState(roomId).then((roomData) => {
+              setRoom(roomData as SharedRoom & { players: Player[] });
+              setPlayers((roomData as SharedRoom & { players: Player[] }).players || []);
+            });
+          }
+        }}
+      />
       {activeStream && activeStream.status === 'active' && (
         <div className="fixed bottom-20 right-6 z-50 w-96 rounded-lg border border-aurora-500/30 bg-midnight-900/95 p-4 shadow-xl backdrop-blur-md">
           <div className="mb-2 flex items-center justify-between">

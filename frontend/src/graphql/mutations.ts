@@ -193,3 +193,9 @@ export const SPAWN_CREATURE_MUTATION = gql`
     spawnCreature(roomId: $roomId, creature: $creature)
   }
 `;
+
+export const GENERATE_TERRAIN_CHUNK_MUTATION = gql`
+  mutation GenerateTerrainChunk($roomId: ID!, $chunkX: Int!, $chunkY: Int!, $chunkSize: Int) {
+    generateTerrainChunk(roomId: $roomId, chunkX: $chunkX, chunkY: $chunkY, chunkSize: $chunkSize)
+  }
+`;

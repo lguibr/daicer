@@ -45,7 +45,7 @@ export default function PublicNavbar() {
       {
         id: 'explore',
         label: t('navbar.links.explore'),
-        path: '/explore',
+        path: '/rules',
         icon: Compass,
         className:
           'border-aurora-400/40 bg-aurora-500/10 text-aurora-100 hover:bg-aurora-400/15 focus-visible:ring-aurora-400/40',

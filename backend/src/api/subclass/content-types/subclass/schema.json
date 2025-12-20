@@ -51,6 +51,14 @@
       "relation": "manyToOne",
       "target": "api::class.class",
       "inversedBy": "subclasses"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
     }
   }
 }

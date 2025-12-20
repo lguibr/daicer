@@ -23,7 +23,6 @@ import {
   GENERATE_WORLD_MUTATION,
   ADD_CHARACTER_MUTATION,
   START_GAME_MUTATION,
-  SUBMIT_ACTION_MUTATION,
   GENERATE_PORTRAIT_MUTATION,
   GENERATE_UPPER_BODY_MUTATION,
   GENERATE_FULL_BODY_MUTATION,
@@ -36,7 +35,6 @@ import type {
   GenerateWorldMutation,
   AddCharacterMutation,
   StartGameMutation,
-  SubmitActionMutation,
   GenerateAvatarPortraitMutation,
   GetRoomQuery,
   ListRoomsQuery,
@@ -75,15 +73,37 @@ export async function getRoomState(roomId: string): Promise<Room> {
   if (!room) return null as unknown as Room;
 
   // Map backend Component structure to frontend Player interface
-  const mappedRoom = {
-    ...room,
-    players:
-      room.players?.map((p: any) => ({
-        ...p,
-        userId: p.user?.documentId || p.user?.id || p.id, // Fallback mapping
-        // Ensure character structure matches if needed
-      })) || [],
-  };
+  let mappedRoom: Room = room as unknown as Room;
+
+  if (data?.rooms?.length > 0) {
+    const r = data.rooms[0];
+    const playersList = r?.players || [];
+
+    // Debug log for player actions
+    console.log(
+      '[api.ts] getRoomState RAW Players:',
+      JSON.stringify(
+        playersList.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          action: p.action,
+          userId: p.user?.documentId,
+        })),
+        null,
+        2
+      )
+    );
+
+    const mappedPlayers = playersList.map((p: any) => ({
+      ...p,
+      userId: p.userId || p.user?.documentId || p.user?.id || p.id, // Fallback mapping
+    }));
+
+    mappedRoom = {
+      ...(r as any), // Cast to any to avoid strict type mismatch with partial GraphQL response
+      players: mappedPlayers,
+    } as unknown as Room;
+  }
 
   return mappedRoom as unknown as Room;
 }
@@ -229,7 +249,25 @@ export async function addCharacter(roomId: string, character: CreateCharacterPay
     mutation: ADD_CHARACTER_MUTATION,
     variables: { roomId, character },
   });
-  return (data as any).addCharacter as Player;
+  const result = (data as any).addCharacter;
+
+  if (!result || !result.player) {
+    throw new Error('Invalid response from addCharacter');
+  }
+
+  // Backend returns { character, player }
+  // Player component has 'user' which is the ID string (because it's not populated fully in the return value of update?)
+  // Actually, let's check if we can rely on that.
+
+  const rawPlayer = result.player;
+  const rawUser = rawPlayer.user;
+  const userId = typeof rawUser === 'object' && rawUser !== null ? rawUser.documentId || rawUser.id : rawUser;
+
+  const mappedPlayer: Player = {
+    ...rawPlayer,
+    userId: String(userId),
+  };
+  return mappedPlayer;
 }
 
 /**
@@ -363,9 +401,50 @@ export async function invokeCharacterSetupGraph(
  * @returns Success status
  */
 export async function submitAction(roomId: string, action: string): Promise<{ success: boolean; allReady: boolean }> {
-  const { data } = await apolloClient.mutate<SubmitActionMutation>({
-    mutation: SUBMIT_ACTION_MUTATION,
-    variables: { roomId, action },
+  const token = localStorage.getItem('strapi_jwt');
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+
+  console.log(`[api.ts] Submitting action for room ${roomId}: "${action}"`);
+
+  const response = await fetch(`${API_URL}/api/game/${roomId}/action`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ action }),
   });
-  return (data as any).submitAction as { success: boolean; allReady: boolean };
+
+  if (!response.ok) {
+    throw new Error('Failed to submit action');
+  }
+  const result = await response.json();
+  console.log('[api.ts] submitAction Result:', JSON.stringify(result, null, 2));
+  return result;
+  return result;
+}
+
+/**
+ * Trigger turn processing via REST
+ * @param roomId - Room ID
+ * @param language - Language code
+ */
+export async function processTurn(roomId: string, language = 'en'): Promise<void> {
+  const token = localStorage.getItem('strapi_jwt');
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+
+  console.log(`[api.ts] Processing turn for room ${roomId}`);
+
+  const response = await fetch(`${API_URL}/api/game/${roomId}/turn`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ language }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to process turn');
+  }
 }
