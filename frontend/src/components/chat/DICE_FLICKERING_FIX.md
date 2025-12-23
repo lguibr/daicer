@@ -154,7 +154,6 @@ If dice still flicker, check:
    ```
 
 2. **DiceRollAnimation unmounting**:
-
    - Check if parent is conditionally rendering
    - Ensure `diceData` array is stable (using useMemo)
 

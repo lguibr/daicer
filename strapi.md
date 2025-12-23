@@ -754,6 +754,7 @@ sources={{
   </TabItem>
 
   </Tabs>
+
 3. Click the **Finish** button in the dialog.
 4. Click the **Save** button in the Content-Type Builder navigation.
 
@@ -1627,6 +1628,7 @@ sources={{
   </TabItem>
 
   </Tabs>
+
 3. Click the **Finish** button in the dialog.
 4. Click the **Save** button in the Content-Type Builder navigation.
 

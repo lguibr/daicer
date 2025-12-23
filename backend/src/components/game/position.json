@@ -1,22 +1,22 @@
 {
-    "collectionName": "components_game_positions",
-    "info": {
-        "displayName": "Position",
-        "icon": "map",
-        "description": "Grid coordinates"
+  "collectionName": "components_game_positions",
+  "info": {
+    "displayName": "Position",
+    "icon": "map",
+    "description": "Grid coordinates"
+  },
+  "options": {},
+  "attributes": {
+    "x": {
+      "type": "integer",
+      "default": 0
     },
-    "options": {},
-    "attributes": {
-        "x": {
-            "type": "integer",
-            "default": 0
-        },
-        "y": {
-            "type": "integer",
-            "default": 0
-        },
-        "mapId": {
-            "type": "string"
-        }
+    "y": {
+      "type": "integer",
+      "default": 0
+    },
+    "mapId": {
+      "type": "string"
     }
+  }
 }

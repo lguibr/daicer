@@ -6,8 +6,6 @@
 
 import { useState } from 'react';
 import type { CombatCharacter, Position } from '../../types/combat';
-import { MapTileDetails } from '../map/MapTileDetails';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface CombatGridProps {
   characters: CombatCharacter[];
@@ -96,29 +94,6 @@ export function CombatGrid({
         </div>
       </div>
     );
-
-    // Wrap in popover for tile details on right-click or long-press
-    if (isClicked && !character) {
-      return (
-        <Popover key={`${x}-${y}`} open onOpenChange={(open) => !open && setClickedSquare(null)}>
-          <PopoverTrigger asChild>{squareElement}</PopoverTrigger>
-          <PopoverContent side="right" className="w-64">
-            <MapTileDetails
-              tile={{
-                x,
-                y,
-                z: 0,
-                biome: 'tactical_terrain',
-                elevation: 0,
-                entities: [],
-                features: [],
-              }}
-              onClose={() => setClickedSquare(null)}
-            />
-          </PopoverContent>
-        </Popover>
-      );
-    }
 
     return squareElement;
   };

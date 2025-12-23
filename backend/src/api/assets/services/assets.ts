@@ -3,12 +3,12 @@
  */
 
 import { Core } from '@strapi/strapi';
-import { generateImageGemini, describeImageGemini } from '../../../utils/llm/image';
+import { generateImageGemini } from '../../../utils/llm/image';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
 import { getFlashLiteLatestModel } from '../../../utils/llm/gemini';
 import { HumanMessage } from '@langchain/core/messages';
 
-export default ({ strapi }: { strapi: Core.Strapi }) => ({
+export default () => ({
   async generatePortrait(payload: any) {
     try {
       const {
@@ -18,7 +18,6 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         artStyle,
         tone,
         referenceImages, // [{ mimeType, data }]
-        referenceImage, // Legacy field, might be string or null
         aspectRatio = '1:1', // Default to square
         framingContext: overrideFraming, // Optional override
       } = payload;
@@ -29,28 +28,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         framingContext = await getPrompt('image_framing_portrait', 'en', 'Close-up portrait');
       }
 
-      // 1. Analyze Reference Image if provided
-      let refDescription = '';
-      if (referenceImages && referenceImages.length > 0 && referenceImages[0].data) {
-        try {
-          const imgData = referenceImages[0].data;
-          const mimeType = referenceImages[0].mimeType;
-          console.log('Analyzing Reference Image with Gemini...');
-          const analysisPrompt = await getPrompt(
-            'image_reference_analysis',
-            'en',
-            "Describe this character's visual style, face, and key features to help generate a CONSISTENT variation. detailed."
-          );
-
-          refDescription = await describeImageGemini({
-            imageBase64: imgData,
-            mimeType: mimeType,
-            prompt: analysisPrompt,
-          });
-        } catch (err) {
-          console.warn('Reference image analysis failed, proceeding without it:', err);
-        }
-      }
+      // 1. Skip Analysis, use raw images.
+      // We no longer analyze the image to get a text description.
+      // Instead, we pass the image data directly to the model.
 
       // 2. Construct Master Prompt using Gemini Flash Lite (Nano replacement)
       const model = getFlashLiteLatestModel();
@@ -72,18 +52,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       Art Style: ${artStyle || 'Fantasy Digital Painting'}
       Tone: ${tone}
       
-      ${refDescription ? `Reference Image Analysis (Incorporate this VIBE/STYLE but keep character details from above): ${refDescription}` : ''}
-      
       The prompt should be descriptive, focusing on lighting, texture, and facial expression. ${framingContext}.
+      IMPORTANT: A reference image is being provided to the generation model. You must output a prompt that ALIGNS with the visual style of that reference image, but strictly enforces the physical description above.
+      
       Output ONLY the final prompt string.
       `;
 
       let constructionPrompt = await getPrompt('image_generation_master_prompt', 'en', defaultConstruction);
 
       // Format the prompt
-      const referenceAnalysisSection = refDescription
-        ? `Reference Image Analysis (Incorporate this VIBE/STYLE but keep character details from above): ${refDescription}`
-        : '';
+      const referenceAnalysisSection = 'Refer to the attached image for style and consistency.';
 
       if (constructionPrompt.includes('{{name}}')) {
         constructionPrompt = formatPrompt(constructionPrompt, {
@@ -110,7 +88,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       const result = await generateImageGemini({
         prompt: finalPrompt,
         aspectRatio: aspectRatio as any,
-        // referenceImages: referenceImages,
+        referenceImages: referenceImages,
       });
 
       // Expect url to be "data:mime;base64,data"

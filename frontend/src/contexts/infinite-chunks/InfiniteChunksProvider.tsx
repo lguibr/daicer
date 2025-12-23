@@ -25,6 +25,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
     chunkGenerator,
     placementMap,
     layer = 0,
+    token,
   } = options;
 
   const [state, dispatch] = useReducer(infiniteChunksReducer, createInitialState());
@@ -59,6 +60,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
           enabled,
           mode: chunkGenerator ? 'generator' : 'backend',
           layer,
+          token,
         },
         chunkGenerator,
         placementMap,
@@ -137,7 +139,9 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
   // Force initial chunk loading for empty grids
   useEffect(() => {
     if (state.initialized && initialGrid.length === 0) {
+      console.log('[InfiniteChunks] Initialized with empty grid. Triggering initial load in 100ms...');
       setTimeout(() => {
+        console.log('[InfiniteChunks] Executing initial load timeout...');
         checkChunkLoadingInternal(0, 0);
       }, 100);
     }

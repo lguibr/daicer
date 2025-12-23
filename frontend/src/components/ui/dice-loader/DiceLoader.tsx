@@ -400,7 +400,7 @@ export function DiceLoader({
       }
       stateRef.current = null;
     };
-  }, []);
+  }, [isStatic]);
 
   useEffect(() => {
     if (!stateRef.current) return;

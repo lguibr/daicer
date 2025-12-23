@@ -41,6 +41,7 @@ export function RandomItem({ items, itemKeys }: RandomItemProps) {
 
     // No valid input
     return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps: only randomize once on mount
 
   return <>{randomItem}</>;

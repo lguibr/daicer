@@ -2,7 +2,7 @@
  * LangChain configuration for Google Gemini
  */
 
-import { getFlashModel, getProModel } from '../utils/llm/gemini';
+import { getFlashModel } from '../utils/llm/gemini';
 import type { GeminiConfig } from '../utils/llm/types';
 
 /**

@@ -11,8 +11,4 @@ export default ({ env }) => ({
       },
     },
   },
-  'terrain-explorer': {
-    enabled: true,
-    resolve: './src/plugins/terrain-explorer',
-  },
 });

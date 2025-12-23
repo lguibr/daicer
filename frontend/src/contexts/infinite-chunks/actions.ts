@@ -34,6 +34,17 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
         state.loading
       );
 
+      console.log(
+        `[InfiniteChunks Action] checkChunkLoading(${playerX}, ${playerY}) found ${chunksToLoad.length} chunks to load. Config:`,
+        {
+          enabled: state.config.enabled,
+          initialized: state.initialized,
+          mode: state.config.mode,
+          chunkSize: state.config.chunkSize,
+          loadRadius: state.config.loadRadius,
+        }
+      );
+
       if (chunksToLoad.length === 0) return;
 
       // Load up to max concurrent chunks
@@ -72,7 +83,7 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
       }
     },
     [
-      state.config.enabled,
+      state.config,
       state.config.chunkSize,
       state.config.loadRadius,
       state.initialized,

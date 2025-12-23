@@ -96,19 +96,16 @@ flowchart TB
 ### Key Issues Identified
 
 1.  **Parser Duplication**: The logic to convert `ChunkDTO` (network format) to `GridTile` (render format) exists in 3 places.
-
     - `frontend/src/contexts/infinite-chunks/services/chunkLoader.ts`
     - `frontend/src/components/terrain/TerrainGenerationScreen.tsx` (Inline)
     - `backend/src/plugins/terrain-explorer/admin/src/hooks/useMapGenerator.ts` (implied)
 
 2.  **Lack of Persistence**:
-
     - The map is "Generated" deterministically from a seed, but modifications are not saved easily.
     - If we want to burn down a forest or build a wall, we have no way to store that delta efficiently.
     - We rely on `room.history` for events, but not for the terrain state itself.
 
 3.  **Entity Disconnection**:
-
     - Players and Creatures float "above" the map. They are not part of the grid.
     - We cannot query "What is at x,y?" purely from the backend without regenerating the chunk for that coordinate.
 

@@ -1,9 +1,9 @@
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Sparkles } from 'lucide-react';
-import { RulesResourceList } from './RulesResourceList';
 import cn from '@/lib/utils';
 import { gildedTokens } from '@/theme/gildedTokens';
+import { RulesResourceList } from './RulesResourceList';
 
 export function RulesCategoryPage() {
   const { category } = useParams<{ category: string }>();

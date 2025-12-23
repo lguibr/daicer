@@ -1,8 +1,5 @@
 import { z } from 'zod';
 import { GamePhase } from './types';
-import { WorldHistorySchema } from '../world/history-schema';
-import { StructureSchema } from '../world/structure-schema';
-import { RoadSchema } from '../world/road-schema';
 
 const dmStyleSchema = z.object({
   verbosity: z.number().int().min(0).max(6),
@@ -43,9 +40,6 @@ export const roomSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   isActive: z.boolean().optional(),
-  worldHistory: WorldHistorySchema.nullable().optional(),
-  structures: z.array(StructureSchema).default([]),
-  roads: z.array(RoadSchema).default([]),
 });
 
 export { worldSettingsSchema };

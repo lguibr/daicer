@@ -13,6 +13,7 @@ interface UseDiceWorkerOptions {
 }
 
 export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
+  const { onRollComplete, autoAnimate } = options;
   const workerRef = useRef<WorkerManager | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isWorkerActiveRef = useRef(false);
@@ -31,8 +32,8 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
 
       // Setup message handlers
       worker.on('roll-complete', (results: number[]) => {
-        if (options.onRollComplete) {
-          options.onRollComplete(results);
+        if (onRollComplete) {
+          onRollComplete(results);
         }
       });
 
@@ -49,7 +50,7 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
         isWorkerActiveRef.current = true;
 
         // Start animation if auto-animate is enabled
-        if (options.autoAnimate) {
+        if (autoAnimate) {
           worker.postMessage({ type: 'start-animation' });
         }
 
@@ -60,6 +61,7 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
       console.warn('[useDiceWorker] Worker initialization failed, using main thread');
       return false;
     },
+
     [options.onRollComplete, options.autoAnimate]
   );
 

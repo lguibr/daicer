@@ -34,7 +34,7 @@ export function useTacticalActions(encounterId: string | null): UseTacticalActio
 
     try {
       const previewData = await tacticalApi.previewAction(encounterId, command);
-      setPreview(previewData);
+      setPreview(previewData as unknown as tacticalApi.ActionPreview);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to preview action');
     } finally {
@@ -51,7 +51,7 @@ export function useTacticalActions(encounterId: string | null): UseTacticalActio
       setError(null);
 
       try {
-        await tacticalApi.executeAction(encounterId, preview.planId, true, { allowFriendlyFire });
+        await tacticalApi.executeAction(encounterId, preview.planId as string, true, { allowFriendlyFire });
 
         // Clear preview and command after successful execution
         setPreview(null);

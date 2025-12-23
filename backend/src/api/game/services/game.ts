@@ -3,20 +3,9 @@
  * Ported to Strapi
  */
 
-import { factories } from '@strapi/strapi';
-import { getLLMModel } from '../../../config/langchain';
 import { uploadBase64Image } from '../../../utils/upload';
-import type {
-  WorldSettings,
-  Player,
-  Creature,
-  Message,
-  Language,
-  CharacterSheet,
-  DMStyle,
-  ScaleLevel,
-} from '../../../types/index';
-import { z } from 'zod';
+import type { WorldSettings, Player, Creature, Message, Language, CharacterSheet } from '../../../types/index';
+
 import { generateText } from '../../../utils/llm';
 import { generateStructured } from '../../../utils/llm/structured';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
@@ -44,49 +33,9 @@ const createSnapshot = (characterSheets: any[]) => {
 };
 
 // Stub for RAG
-async function getRuleContext(query: string, limit: number): Promise<string> {
+async function getRuleContext(): Promise<string> {
   return '';
 }
-
-const VERBOSITY_DESCRIPTORS: Record<ScaleLevel, string> = {
-  0: 'Deliver crisp headline summaries; keep narration to essential beats.',
-  1: 'Speak in short bursts that hit key sensory notes while staying brisk.',
-  2: 'Balance concise narration with a handful of atmospheric details.',
-  3: 'Weave story-driven paragraphs with recurring hooks and callbacks.',
-  4: 'Lean into rich language, metaphor, and evocative cadence.',
-  5: 'Craft epic narration with layered description and dramatic pacing.',
-  6: 'Unleash operatic storytelling fit for bardic sagas and legendary chronicles.',
-};
-
-const DETAIL_DESCRIPTORS: Record<ScaleLevel, string> = {
-  0: 'Prioritise mechanical clarity; pare down to tactical essentials.',
-  1: 'Highlight only the props, hazards, and clues the party must see.',
-  2: 'Blend mechanical stakes with a handful of sensory anchors.',
-  3: 'Balance environmental description with rule-focused insight.',
-  4: 'Layer textures, sounds, and histories into every scene.',
-  5: 'Immerse players with nuanced lore, mood, and symbolism.',
-  6: 'Paint cinematic tableaux dense with cultural and emotional context.',
-};
-
-const ENGAGEMENT_DESCRIPTORS: Record<ScaleLevel, string> = {
-  0: 'Stay observational; deliver outcomes with minimal prompting.',
-  1: 'Invite player decisions at inflection points but keep a light touch.',
-  2: 'Check in routinely for intentions, reactions, and table talk.',
-  3: 'Co-author moments; spotlight teamwork and shared discovery.',
-  4: 'Seed dilemmas, rivalries, and cliff-hangers that demand responses.',
-  5: 'Escalate dramatic tension and rotate the spotlight deliberately.',
-  6: 'Fully immerse the party with in-character dialogue and emotive beats.',
-};
-
-const NARRATIVE_DESCRIPTORS: Record<ScaleLevel, string> = {
-  0: 'Let the party define the arc; you react swiftly to their initiatives.',
-  1: 'Offer scattered threads and let players braid them together.',
-  2: 'Blend branching choices with gentle narrative nudges.',
-  3: 'Maintain balanced arcs with equal agency and plotted beats.',
-  4: 'Guide scenes with clear stakes and recurring NPC agendas.',
-  5: 'Engineer planned twists and episodic crescendos.',
-  6: 'Author a sweeping saga with foreshadowed climaxes and mythic structure.',
-};
 
 // Helper to format DM style into a readable summary for the LLM
 function formatDmStyle(style) {
@@ -306,7 +255,7 @@ You MUST use rich markdown formatting in your narrative.`;
     // RAG
     let relevantRules = '';
     try {
-      relevantRules = await getRuleContext(currentActions || 'general gameplay', 3);
+      relevantRules = await getRuleContext();
     } catch (e) {
       strapi.log.warn('RAG failed', e);
     }

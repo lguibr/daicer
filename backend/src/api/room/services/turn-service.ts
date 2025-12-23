@@ -74,7 +74,7 @@ export default ({ strapi }) => ({
    * Check if we should trigger the turn automatically (e.g. all ready)
    * For now, this is a placeholder or manual trigger
    */
-  async checkTurnTrigger(roomId: string | number) {
+  async checkTurnTrigger(_roomId: string | number) {
     // Logic: If all players have submitted an action?
     // For now, return false, wait for manual trigger
     return false;

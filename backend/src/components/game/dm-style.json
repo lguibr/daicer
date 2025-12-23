@@ -1,32 +1,32 @@
 {
-    "collectionName": "components_game_dm_styles",
-    "info": {
-        "displayName": "DM Style",
-        "icon": "dungeon"
+  "collectionName": "components_game_dm_styles",
+  "info": {
+    "displayName": "DM Style",
+    "icon": "dungeon"
+  },
+  "options": {},
+  "attributes": {
+    "verbosity": {
+      "type": "integer",
+      "default": 1
     },
-    "options": {},
-    "attributes": {
-        "verbosity": {
-            "type": "integer",
-            "default": 1
-        },
-        "detail": {
-            "type": "integer",
-            "default": 1
-        },
-        "engagement": {
-            "type": "integer",
-            "default": 1
-        },
-        "narrative": {
-            "type": "integer",
-            "default": 1
-        },
-        "specialMode": {
-            "type": "string"
-        },
-        "customDirectives": {
-            "type": "text"
-        }
+    "detail": {
+      "type": "integer",
+      "default": 1
+    },
+    "engagement": {
+      "type": "integer",
+      "default": 1
+    },
+    "narrative": {
+      "type": "integer",
+      "default": 1
+    },
+    "specialMode": {
+      "type": "string"
+    },
+    "customDirectives": {
+      "type": "text"
     }
+  }
 }

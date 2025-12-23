@@ -43,7 +43,6 @@ export const GET_ROOM_QUERY = gql`
         }
       }
       settings
-      worldType
       worldSize
       adventureLength
       difficulty
@@ -60,27 +59,6 @@ export const GET_ROOM_QUERY = gql`
         specialMode
         customDirectives
       }
-      generationParams {
-        structureMinDistance
-        maxStructures
-        generateRoads
-        elevationScale
-        elevationOctaves
-        elevationPersistence
-        moistureScale
-        moistureOctaves
-        moisturePersistence
-        caveFillPercentage
-        caveIterations
-        caveBirthLimit
-        caveDeathLimit
-        bspSize
-        bspMinRoomSize
-        bspMaxRoomSize
-        featureMinDistance
-        featureAttempts
-      }
-      structures
       worldDescription
       history # Keeping for legacy support
       messages(sort: "timestamp:asc", pagination: { limit: 100 }) {

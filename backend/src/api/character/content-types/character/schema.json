@@ -1,76 +1,70 @@
 {
-    "kind": "collectionType",
-    "collectionName": "characters",
-    "info": {
-        "singularName": "character",
-        "pluralName": "characters",
-        "displayName": "Character",
-        "description": "Blueprint for a character"
+  "kind": "collectionType",
+  "collectionName": "characters",
+  "info": {
+    "singularName": "character",
+    "pluralName": "characters",
+    "displayName": "Character",
+    "description": "Blueprint for a character"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
     },
-    "options": {
-        "draftAndPublish": false
+    "portrait": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
     },
-    "pluginOptions": {},
-    "attributes": {
-        "name": {
-            "type": "string",
-            "required": true
-        },
-        "portrait": {
-            "type": "media",
-            "multiple": false,
-            "required": false,
-            "allowedTypes": [
-                "images"
-            ]
-        },
-        "upperBody": {
-            "type": "media",
-            "multiple": false,
-            "required": false,
-            "allowedTypes": [
-                "images"
-            ]
-        },
-        "fullBody": {
-            "type": "media",
-            "multiple": false,
-            "required": false,
-            "allowedTypes": [
-                "images"
-            ]
-        },
-        "race": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "api::race.race"
-        },
-        "class": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "api::class.class"
-        },
-        "baseStats": {
-            "type": "component",
-            "repeatable": false,
-            "component": "game.stats"
-        },
-        "user": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "plugin::users-permissions.user",
-            "inversedBy": "characters"
-        },
-        "appearance": {
-            "type": "json"
-        },
-        "backstory": {
-            "type": "text"
-        },
-        "equipment": {
-            "type": "component",
-            "repeatable": true,
-            "component": "game.inventory-item"
-        }
+    "upperBody": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "fullBody": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "race": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::race.race"
+    },
+    "class": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::class.class"
+    },
+    "baseStats": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.stats"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "characters"
+    },
+    "appearance": {
+      "type": "json"
+    },
+    "backstory": {
+      "type": "text"
+    },
+    "equipment": {
+      "type": "component",
+      "repeatable": true,
+      "component": "game.inventory-item"
     }
+  }
 }

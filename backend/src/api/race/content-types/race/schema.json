@@ -43,12 +43,7 @@
     },
     "size": {
       "type": "enumeration",
-      "enum": [
-        "Tiny",
-        "Small",
-        "Medium",
-        "Large"
-      ]
+      "enum": ["Tiny", "Small", "Medium", "Large"]
     },
     "traits": {
       "type": "relation",
@@ -66,9 +61,7 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     }
   }
 }

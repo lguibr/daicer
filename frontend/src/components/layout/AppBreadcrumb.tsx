@@ -1,6 +1,14 @@
+import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Home, ChevronRight } from 'lucide-react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { useI18n } from '@/i18n';
 
 interface BreadcrumbSegment {
@@ -71,8 +79,10 @@ export default function AppBreadcrumb() {
             {breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               return (
-                <li key={crumb.path} className="flex items-center gap-2">
-                  <ChevronRight className="h-3 w-3 text-midnight-500" />
+                <React.Fragment key={crumb.path}>
+                  <BreadcrumbSeparator className="text-midnight-500">
+                    <ChevronRight className="h-3 w-3" />
+                  </BreadcrumbSeparator>
                   <BreadcrumbItem>
                     {isLast ? (
                       <BreadcrumbPage className="font-display font-semibold text-aurora-200 drop-shadow-[0_0_8px_rgba(211,143,31,0.2)]">
@@ -89,7 +99,7 @@ export default function AppBreadcrumb() {
                       </BreadcrumbLink>
                     )}
                   </BreadcrumbItem>
-                </li>
+                </React.Fragment>
               );
             })}
           </BreadcrumbList>

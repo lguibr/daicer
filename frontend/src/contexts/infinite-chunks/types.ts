@@ -3,8 +3,7 @@
  * All interfaces and types for the infinite chunk system
  */
 
-import type { GlobalPlacementMap } from '@daicer/shared';
-import type { GridChunk, GridTile } from '@daicer/shared';
+import type { GlobalPlacementMap, GridChunk, GridTile, ChunkDTO } from '@daicer/shared';
 
 export type TerrainChunk = Omit<GridChunk, 'tiles' | 'biomes'> & {
   tiles: GridTile[][];
@@ -12,6 +11,7 @@ export type TerrainChunk = Omit<GridChunk, 'tiles' | 'biomes'> & {
   worldOffsetX: number;
   worldOffsetY: number;
   structures: unknown[];
+  grid?: ChunkDTO['grid']; // 3D Grid support (Lightweight DTO format)
 };
 
 export interface ChunkGenerator {
@@ -30,6 +30,7 @@ export interface InfiniteChunksConfig {
   enabled: boolean;
   mode: 'backend' | 'generator'; // Backend API or client-side generator
   layer: number; // Z-level
+  token?: string; // Auth token for backend API
 }
 
 export interface InfiniteChunksOptions {
@@ -41,6 +42,7 @@ export interface InfiniteChunksOptions {
   chunkGenerator?: ChunkGenerator;
   placementMap?: GlobalPlacementMap | null;
   layer?: number;
+  token?: string;
 }
 
 // ============================================================================

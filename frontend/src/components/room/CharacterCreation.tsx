@@ -46,7 +46,6 @@ import {
 } from '../ui/FormWizard';
 import { type ToggleButtonOption } from '../ui/ToggleButtonGroup';
 import { buildCharacterSheetAsset } from './character-creation/characterSheetAsset';
-import { WorldGenerationProgress } from '../world/WorldGenerationProgress';
 
 type RaceOption = {
   id: string;
@@ -440,14 +439,16 @@ export default function CharacterCreation({
       setError(null);
 
       // Simulate network delay for better UX
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 600);
+      });
 
       const generated = generateRandomCharacter(archetype, formData.race);
 
       setFormData((prev) => ({
         ...prev,
         ...generated,
-        attributes: generated.attributes as any, // TS coercion for loose typing
+        attributes: generated.attributes as Record<string, number>, // TS coercion for loose typing
         appearance: {
           ...prev.appearance,
           ...generated.appearance,
@@ -872,9 +873,6 @@ export default function CharacterCreation({
 
   return (
     <>
-      {/* World Generation Progress Overlay */}
-      {room && <WorldGenerationProgress />}
-
       {(loading || dataLoading) && (
         <LoadingOverlay
           message={loading ? t('characterCreation.overlays.creating') : t('characterCreation.overlays.loadingData')}

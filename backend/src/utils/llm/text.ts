@@ -2,11 +2,10 @@
  * Text generation service with LangChain and Gemini
  */
 
-import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import type { Language } from '../../types/index';
-import { getFlashModel, getProModel, extractErrorDetails } from './gemini';
-import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
-import { GeminiModel, OpenAIModel, TextGenConfig } from './types';
+import { getFlashModel, extractErrorDetails } from './gemini';
+import { TextGenConfig } from './types';
 import { streamManager } from './stream-manager';
 import { getPrompt } from '../prompt';
 

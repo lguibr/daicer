@@ -83,24 +83,29 @@ export async function getRoomState(roomId: string): Promise<Room> {
     console.log(
       '[api.ts] getRoomState RAW Players:',
       JSON.stringify(
-        playersList.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          action: p.action,
-          userId: p.user?.documentId,
-        })),
+        playersList
+          .filter((p) => !!p)
+          .map((p) => ({
+            id: p!.id,
+            name: p!.name,
+            action: p!.action,
+            userId: p!.user?.documentId,
+          })),
         null,
         2
       )
     );
 
-    const mappedPlayers = playersList.map((p: any) => ({
-      ...p,
-      userId: p.userId || p.user?.documentId || p.user?.id || p.id, // Fallback mapping
-    }));
+    const mappedPlayers = playersList
+      .filter((p) => !!p)
+      .map((p) => ({
+        ...p,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userId: (p as any).userId || p!.user?.documentId || (p!.user as any)?.id || p!.id, // Fallback mapping
+      }));
 
     mappedRoom = {
-      ...(r as any), // Cast to any to avoid strict type mismatch with partial GraphQL response
+      ...(r as unknown as Record<string, unknown>), // Cast to avoid strict type mismatch with partial GraphQL response
       players: mappedPlayers,
     } as unknown as Room;
   }
@@ -170,7 +175,6 @@ export async function createRoom(options?: { settings?: WorldSettings; structure
     settings,
 
     // New Structured Fields
-    worldType: settings?.worldType,
     worldSize: settings?.worldSize,
     adventureLength: settings?.adventureLength,
     difficulty: settings?.difficulty,
@@ -191,10 +195,6 @@ export async function createRoom(options?: { settings?: WorldSettings; structure
           customDirectives: settings.dmStyle.customDirectives,
         }
       : undefined,
-
-    generationParams: (settings as any)?.generationParams,
-
-    structures: options?.structures,
   };
 
   const { data } = await apolloClient.mutate<CreateRoomMutation>({
@@ -231,7 +231,7 @@ export async function generateWorld(roomId: string, language: string): Promise<R
   // I will make a note to fix `index.ts` types in next step. For now I keep `api.ts` assuming types exist.
 
   // Casting to prevent TS error if the generated type is Scalar
-  return (data as any).generateWorld as unknown as Room;
+  return (data as unknown as { generateWorld: Room }).generateWorld;
 }
 
 /**
@@ -249,7 +249,9 @@ export async function addCharacter(roomId: string, character: CreateCharacterPay
     mutation: ADD_CHARACTER_MUTATION,
     variables: { roomId, character },
   });
-  const result = (data as any).addCharacter;
+  const result = (
+    data as unknown as { addCharacter: { player: { user?: { documentId: string; id: string } | string } & Player } }
+  ).addCharacter;
 
   if (!result || !result.player) {
     throw new Error('Invalid response from addCharacter');
@@ -281,7 +283,7 @@ export async function startGame(roomId: string, language: string, streamId?: str
     mutation: START_GAME_MUTATION,
     variables: { roomId, language, streamId },
   });
-  return (data as any).startGame as Message;
+  return (data as unknown as { startGame: Message }).startGame;
 }
 
 export async function generateAvatarPortrait(
@@ -292,7 +294,7 @@ export async function generateAvatarPortrait(
     mutation: GENERATE_PORTRAIT_MUTATION,
     variables: { payload, referenceImage },
   });
-  return (data as any).generateAvatarPortrait as AvatarPreviewImage;
+  return (data as unknown as { generateAvatarPortrait: AvatarPreviewImage }).generateAvatarPortrait;
 }
 
 // TODO: Implement other avatar parts (Upper/Full) with GraphQL if needed, or keeping them stubbed
@@ -303,11 +305,11 @@ export async function generateAvatarUpperBody(
   portrait: AvatarPreviewImage,
   referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
-  const { data } = await apolloClient.mutate<any>({
+  const { data } = await apolloClient.mutate<GenerateAvatarPortraitMutation>({
     mutation: GENERATE_UPPER_BODY_MUTATION,
     variables: { payload, portrait, referenceImage },
   });
-  return (data as any).generateAvatarUpperBody as AvatarPreviewImage;
+  return (data as unknown as { generateAvatarUpperBody: AvatarPreviewImage }).generateAvatarUpperBody;
 }
 
 export async function generateAvatarFullBody(
@@ -316,11 +318,11 @@ export async function generateAvatarFullBody(
   upperBody: AvatarPreviewImage,
   referenceImage?: string | null
 ): Promise<AvatarPreviewImage> {
-  const { data } = await apolloClient.mutate<any>({
+  const { data } = await apolloClient.mutate<GenerateAvatarPortraitMutation>({
     mutation: GENERATE_FULL_BODY_MUTATION,
     variables: { payload, portrait, upperBody, referenceImage },
   });
-  return (data as any).generateAvatarFullBody as AvatarPreviewImage;
+  return (data as unknown as { generateAvatarFullBody: AvatarPreviewImage }).generateAvatarFullBody;
 }
 
 /**
@@ -420,7 +422,6 @@ export async function submitAction(roomId: string, action: string): Promise<{ su
   }
   const result = await response.json();
   console.log('[api.ts] submitAction Result:', JSON.stringify(result, null, 2));
-  return result;
   return result;
 }
 

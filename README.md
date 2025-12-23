@@ -94,13 +94,11 @@ Daicer now includes AI-powered asset generation tools accessible at `/assets`:
 ### Features
 
 - **2D Image Generation**: Create character sprites and image variations using Gemini 2.5 Flash Image
-
   - Variations mode: Generate multiple versions of a base character
   - Text-to-Image: Create images from descriptions
   - Batch Transform: Apply transformations to multiple images
 
 - **3D Voxel Models**: Generate low-poly 3D assets using Gemini 2.5 Pro
-
   - Creatures, Trees, Terrain, Humanoids, POIs, Objects
   - JSON-based voxel model format with primitive shapes
   - Real-time 3D preview with React Three Fiber
@@ -132,7 +130,6 @@ Get your API key at: https://aistudio.google.com/app/apikey
 ## Quick Start
 
 1. **Prerequisites**
-
    - Node.js 22+
    - Yarn (Berry, shipped via repo)
    - Java 11+ (Firebase emulators)

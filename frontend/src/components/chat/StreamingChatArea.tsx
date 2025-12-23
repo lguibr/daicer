@@ -54,7 +54,7 @@ export default function StreamingChatArea({
   // Combine messages with streaming content
   const displayMessages = useMemo(() => {
     const combined: StreamingMessage[] = messages.map((msg) => {
-      const streamContent = streamingMessages.get(msg.id);
+      const streamContent = msg.id ? streamingMessages.get(msg.id) : undefined;
       if (streamContent) {
         return {
           ...msg,
@@ -73,7 +73,7 @@ export default function StreamingChatArea({
           id: messageId,
           sender: 'DM',
           text: '',
-          content: content,
+          content,
           timestamp: Date.now(),
           isStreaming: true,
           streamContent: content,
@@ -180,7 +180,7 @@ export default function StreamingChatArea({
 
               <div className="prose prose-invert max-w-none text-shadow-50 break-words">
                 {isDM ? (
-                  <MarkdownMessage content={content} />
+                  <MarkdownMessage content={content || ''} />
                 ) : (
                   <p className="whitespace-pre-wrap leading-relaxed break-words">{content}</p>
                 )}

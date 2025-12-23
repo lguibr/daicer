@@ -28,6 +28,7 @@ interface UseMapWorkerOptions {
 }
 
 export function useMapWorker(options: UseMapWorkerOptions) {
+  const { width, height, onRenderComplete } = options;
   const workerRef = useRef<WorkerManager | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewportRef = useRef({ x: 0, y: 0, zoom: 1.0 });
@@ -49,8 +50,8 @@ export function useMapWorker(options: UseMapWorkerOptions) {
       const success = worker.initialize({
         canvas,
         onMessage: (data) => {
-          if (data.type === 'render-complete' && options.onRenderComplete) {
-            options.onRenderComplete();
+          if (data.type === 'render-complete' && onRenderComplete) {
+            onRenderComplete();
           }
         },
         onError: (error) => {
@@ -65,8 +66,8 @@ export function useMapWorker(options: UseMapWorkerOptions) {
         // Send initial size
         worker.postMessage({
           type: 'resize',
-          width: options.width,
-          height: options.height,
+          width,
+          height,
           offset: viewportRef.current,
           zoom: viewportRef.current.zoom,
         });
@@ -78,7 +79,8 @@ export function useMapWorker(options: UseMapWorkerOptions) {
       console.warn('[useMapWorker] Worker initialization failed, using main thread');
       return false;
     },
-    [options.width, options.height, options.onRenderComplete]
+
+    [width, height, onRenderComplete]
   );
 
   /**
@@ -136,15 +138,15 @@ export function useMapWorker(options: UseMapWorkerOptions) {
   /**
    * Resize canvas
    */
-  const resize = useCallback((width: number, height: number) => {
+  const resize = useCallback((w: number, h: number) => {
     if (!workerRef.current || !isWorkerActiveRef.current) {
       return false;
     }
 
     workerRef.current.postMessage({
       type: 'resize',
-      width,
-      height,
+      width: w,
+      height: h,
       offset: viewportRef.current,
       zoom: viewportRef.current.zoom,
     });

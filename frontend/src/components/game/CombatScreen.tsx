@@ -4,19 +4,18 @@
  * Enhanced with optional feature radius panel
  */
 
-import { useState, useMemo, useCallback } from 'react';
-import { MapPin } from 'lucide-react';
+import { useState, useMemo } from 'react';
+
 import { useCombat } from '../../hooks/useCombat';
 import type { Position } from '../../types/combat';
 import type { Player, CharacterSheet } from '../../types/shared';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../ui/resizable';
-import { Button } from '../ui/button';
+import { ResizablePanelGroup, ResizablePanel } from '../ui/resizable';
+
 import { CombatGrid } from '../combat/CombatGrid';
 import { CharacterCard } from '../combat/CharacterCard';
 import { CombatLog } from '../combat/CombatLog';
 import { TimeTravelPanel } from '../combat/TimeTravelPanel';
 import { CombatCharacterSheet } from '../combat/CombatCharacterSheet';
-import { FeatureRadiusPanel } from '../map/FeatureRadiusPanel';
 
 interface CombatScreenProps {
   roomId: string;
@@ -28,9 +27,6 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [_selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
   const [isTimeTravelOpen, setIsTimeTravelOpen] = useState(false);
-  const [showFeaturePanel, setShowFeaturePanel] = useState(false);
-  const [featureRadius, setFeatureRadius] = useState(10);
-  const [featureViewMode, setFeatureViewMode] = useState<'player' | 'dm'>('player');
 
   const activeCharacter = getActiveCharacter();
   const selectedCharacter = selectedCharacterId
@@ -127,11 +123,6 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
     setSelectedTargetId(null);
   };
 
-  const handleFeatureClick = useCallback((feature: { position: { x: number; y: number; z: number } }) => {
-    // Center view on feature position (would need view control in CombatGrid)
-    console.log('Center on feature:', feature.position);
-  }, []);
-
   if (!combatState) {
     return (
       <div className="flex items-center justify-center h-screen bg-midnight-900 text-shadow-300">
@@ -158,15 +149,6 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFeaturePanel(!showFeaturePanel)}
-              data-testid="combat-toggle-features"
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              {showFeaturePanel ? 'Hide' : 'Show'} Map Features
-            </Button>
             <button
               type="button"
               onClick={handleEndTurn}
@@ -183,7 +165,7 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal">
           {/* Content Area */}
-          <ResizablePanel defaultSize={showFeaturePanel ? 75 : 100} minSize={50}>
+          <ResizablePanel defaultSize={100} minSize={50}>
             <div className="h-full grid grid-cols-12 gap-4 p-4 overflow-hidden">
               {/* Left Sidebar - Player Characters */}
               <div className="col-span-2 overflow-y-auto space-y-2">
@@ -238,27 +220,6 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
               </div>
             </div>
           </ResizablePanel>
-
-          {/* Feature Panel (Conditional) */}
-          {showFeaturePanel && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-                <div className="h-full p-4 bg-midnight-900/90">
-                  <FeatureRadiusPanel
-                    center={activeCharacter?.position || null}
-                    radius={featureRadius}
-                    onRadiusChange={setFeatureRadius}
-                    viewMode={featureViewMode}
-                    onViewModeChange={setFeatureViewMode}
-                    features={[]}
-                    onFeatureClick={handleFeatureClick}
-                    isLoading={false}
-                  />
-                </div>
-              </ResizablePanel>
-            </>
-          )}
         </ResizablePanelGroup>
       </div>
 

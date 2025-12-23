@@ -24,14 +24,7 @@
     },
     "phase": {
       "type": "enumeration",
-      "enum": [
-        "lobby",
-        "character_creation",
-        "world_generation",
-        "gameplay",
-        "combat",
-        "ending"
-      ],
+      "enum": ["lobby", "character_creation", "world_generation", "gameplay", "combat", "ending"],
       "default": "lobby"
     },
     "worldDescription": {
@@ -59,11 +52,11 @@
     "settings": {
       "type": "json"
     },
-    "structures": {
-      "type": "json"
-    },
-    "terrainData": {
-      "type": "json"
+    "map": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::map.map",
+      "mappedBy": "room"
     },
     "character_sheets": {
       "type": "relation",
@@ -83,55 +76,19 @@
       "target": "api::message.message",
       "mappedBy": "room"
     },
-    "worldType": {
-      "type": "enumeration",
-      "enum": [
-        "terra",
-        "water",
-        "desert",
-        "ice",
-        "volcanic",
-        "forest",
-        "sky",
-        "underground",
-        "custom"
-      ],
-      "default": "terra"
-    },
     "worldSize": {
       "type": "enumeration",
-      "enum": [
-        "intimate",
-        "small",
-        "medium",
-        "large",
-        "vast",
-        "epic"
-      ],
+      "enum": ["intimate", "small", "medium", "large", "vast", "epic"],
       "default": "small"
     },
     "adventureLength": {
       "type": "enumeration",
-      "enum": [
-        "flash",
-        "short",
-        "medium",
-        "long",
-        "epic",
-        "legendary"
-      ],
+      "enum": ["flash", "short", "medium", "long", "epic", "legendary"],
       "default": "short"
     },
     "difficulty": {
       "type": "enumeration",
-      "enum": [
-        "storyteller",
-        "easy",
-        "medium",
-        "challenging",
-        "gritty",
-        "deadly"
-      ],
+      "enum": ["storyteller", "easy", "medium", "challenging", "gritty", "deadly"],
       "default": "easy"
     },
     "startingLevel": {
@@ -155,11 +112,6 @@
       "type": "component",
       "repeatable": false,
       "component": "game.dm-style"
-    },
-    "generationParams": {
-      "type": "component",
-      "repeatable": false,
-      "component": "game.generation-params"
     }
   }
 }

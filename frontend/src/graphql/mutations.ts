@@ -6,7 +6,6 @@ export const CREATE_ROOM_MUTATION = gql`
       documentId
       roomId
       code
-      worldType
       worldSize
       adventureLength
       difficulty
@@ -22,26 +21,6 @@ export const CREATE_ROOM_MUTATION = gql`
         narrative
         specialMode
         customDirectives
-      }
-      generationParams {
-        structureMinDistance
-        maxStructures
-        generateRoads
-        elevationScale
-        elevationOctaves
-        elevationPersistence
-        moistureScale
-        moistureOctaves
-        moisturePersistence
-        caveFillPercentage
-        caveIterations
-        caveBirthLimit
-        caveDeathLimit
-        bspSize
-        bspMinRoomSize
-        bspMaxRoomSize
-        featureMinDistance
-        featureAttempts
       }
     }
   }
@@ -88,7 +67,6 @@ export const JOIN_ROOM_MUTATION = gql`
       }
       phase
       settings
-      worldType
       worldSize
       adventureLength
       difficulty
@@ -104,27 +82,6 @@ export const JOIN_ROOM_MUTATION = gql`
         specialMode
         customDirectives
       }
-      generationParams {
-        structureMinDistance
-        maxStructures
-        generateRoads
-        elevationScale
-        elevationOctaves
-        elevationPersistence
-        moistureScale
-        moistureOctaves
-        moisturePersistence
-        caveFillPercentage
-        caveIterations
-        caveBirthLimit
-        caveDeathLimit
-        bspSize
-        bspMinRoomSize
-        bspMaxRoomSize
-        featureMinDistance
-        featureAttempts
-      }
-      structures
       worldDescription
       history
     }

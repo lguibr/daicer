@@ -4,14 +4,14 @@
  * NO WebSocket - simple REST API only
  */
 
-import type { GlobalPlacementMap } from '@daicer/shared';
-import type { GridTile } from '@daicer/shared';
-import { apolloClient } from '../../../lib/apollo';
-import { GENERATE_TERRAIN_CHUNK_MUTATION } from '../../../queries/terrain';
-import { GenerateTerrainChunkMutation, GenerateTerrainChunkMutationVariables } from '../../../gql/graphql';
-import type { TerrainChunk, ChunkGenerator, InfiniteChunksConfig } from '../types';
+import type { GridTile, ChunkDTO } from '@daicer/shared';
 
-import { getStructuresForChunk, stampStructureOnChunk } from './structureGenerator';
+import { gql } from '@apollo/client';
+import { apolloClient } from '../../../lib/apollo';
+import type { TerrainChunk, InfiniteChunksConfig } from '../types';
+// import { TerrainAPI } from '../../../api/TerrainAPI'; // Deprecated in favor of GraphQL
+import { useTerrainStore } from '../../../stores/useTerrainStore';
+
 import { getChunkKey } from './gridExpander';
 
 const CHUNK_BOUNDS = 8192; // ±8192 chunks = ~32k tiles radius with 4x4 chunks
@@ -22,9 +22,9 @@ const CHUNK_BOUNDS = 8192; // ±8192 chunks = ~32k tiles radius with 4x4 chunks
 export async function loadChunk(
   chunkX: number,
   chunkY: number,
-  config: InfiniteChunksConfig,
-  chunkGenerator?: ChunkGenerator,
-  placementMap?: GlobalPlacementMap | null
+  config: InfiniteChunksConfig
+  // chunkGenerator, // Removed
+  // placementMap // Removed
 ): Promise<TerrainChunk> {
   const { chunkSize, mode, roomId } = config;
   const worldX = chunkX * chunkSize;
@@ -33,113 +33,91 @@ export async function loadChunk(
   try {
     console.log(`[ChunkLoader] Loading chunk ${chunkX},${chunkY} (mode: ${mode})`);
 
-    // CLIENT-SIDE GENERATION (debug mode)
-    if (mode === 'generator' && chunkGenerator) {
-      // Generate base terrain
-      const chunkBiomes = chunkGenerator.generateChunk(worldX, worldY, chunkSize, chunkSize);
-
-      // Get structures that overlap this chunk
-      const structures = getStructuresForChunk(
-        placementMap || null,
-        worldX,
-        worldY,
-        chunkSize,
-        roomId // Use roomId as seed
-      );
-
-      // Stamp structures onto chunk
-      let finalBiomes = chunkBiomes;
-      for (const structure of structures) {
-        finalBiomes = stampStructureOnChunk(finalBiomes, structure, worldX, worldY);
-      }
-
-      const tiles: GridTile[][] = finalBiomes.map((row, y) =>
-        row.map(
-          (biome, x) =>
-            ({
-              x: worldX + x,
-              y: worldY + y,
-              z: 0,
-              biome,
-              blockType: 'grass',
-              lightLevel: 15,
-            }) as GridTile
-        )
-      );
-
-      const result: TerrainChunk = {
-        chunkX,
-        chunkY,
-        worldOffsetX: worldX,
-        worldOffsetY: worldY,
-        biomes: finalBiomes,
-        tiles,
-        seed: roomId,
-        z: 0,
-        generated: true,
-        hasStructure: structures.length > 0,
-        hasCave: false,
-        isStartingArea: chunkX === 0 && chunkY === 0,
-        features: [],
-        structures: structures.map((s) => ({
-          name: s.name,
-          type: s.type,
-          x: s.worldX,
-          y: s.worldY,
-          rotation: 0,
-          floor: 0,
-          material: s.material,
-        })),
-      };
-      console.log(`[ChunkLoader] Generated chunk data for ${chunkX},${chunkY}:`, result);
-      return result;
+    // GRAPHQL API FETCH (game mode)
+    // We use standard Strapi GraphQL mutation for chunk generation/fetching
+    // "generator" mode is strictly forbidden now to force backend parity.
+    if (mode === 'generator') {
+      console.warn('[ChunkLoader] Generator mode is deprecated/removed. Falling back to backend.');
     }
 
-    // BACKEND API FETCH (game mode) using GraphQL
-    const { data } = await apolloClient.mutate<GenerateTerrainChunkMutation, GenerateTerrainChunkMutationVariables>({
-      mutation: GENERATE_TERRAIN_CHUNK_MUTATION,
+    // GRAPHQL API FETCH (game mode)
+    // We use standard Strapi GraphQL mutation for chunk generation/fetching
+    const GENERATE_CHUNK_MUTATION = gql`
+      mutation GenerateTerrainChunk($roomId: ID!, $chunkX: Int!, $chunkY: Int!) {
+        generateTerrainChunk(roomId: $roomId, chunkX: $chunkX, chunkY: $chunkY)
+      }
+    `;
+
+    const response = await apolloClient.mutate<{ generateTerrainChunk: ChunkDTO }>({
+      mutation: GENERATE_CHUNK_MUTATION,
       variables: {
         roomId,
         chunkX,
         chunkY,
-        chunkSize,
       },
       context: {
-        timeout: 10000,
+        headers: {
+          Authorization: config.token ? `Bearer ${config.token}` : '',
+        },
       },
+      fetchPolicy: 'no-cache', // Ensure we always get fresh data if needed, or rely on apollo cache?
     });
 
-    if (!data?.generateTerrainChunk) {
-      throw new Error('No data returned from generateTerrainChunk');
-    }
+    const chunkData = response.data?.generateTerrainChunk as ChunkDTO;
+    if (!chunkData) throw new Error('No data returned from GraphQL');
 
-    const chunkData = data.generateTerrainChunk;
-    const grid3D = chunkData.grid as unknown as { b: string; t: string }[][][];
-    const surfaceLayer = grid3D && grid3D[3] ? grid3D[3] : [];
+    // SIDE EFFECT: Update the global Zustand store for new components
+    useTerrainStore.getState().setChunk(chunkX, chunkY, chunkData);
 
-    // Convert surface objects to GridTiles
-    const tiles: GridTile[][] = surfaceLayer.map((row, y) =>
-      row.map(
-        (tileRaw, x) =>
-          ({
-            x: worldX + x,
-            y: worldY + y,
-            z: 0,
-            biome: tileRaw?.b || 'plains',
-            blockType: tileRaw?.t || 'grass',
-          }) as GridTile
-      )
-    );
+    // Map ChunkDTO (grid: GridTile[][][]) to TerrainChunk (tiles: GridTile[][], biomes: string[][])
+    // The TerrainExplorer (Legacy) primarily looks at layer 0 (surface?).
+    // In our 3D grid, surface is floor 3 (z=0).
+    // TerrainExplorer expects "tiles" to be 2D array of GridTile.
 
-    // Ensure worldOffsetX/Y are present (backend might omit them)
+    // ChunkDTO: grid from shared is [floor][y][x]
+    const grid3D = chunkData.grid;
+    const surfaceLayer = grid3D[3] || []; // Floor 3 is Z=0
+
+    // Safely map surface layer to GridTiles
+    const tiles: GridTile[][] = Array(chunkSize)
+      .fill(null)
+      .map((_row, y) =>
+        Array(chunkSize)
+          .fill(null)
+          .map((_col, x) => {
+            const tileRaw = surfaceLayer[y]?.[x];
+            return {
+              x: worldX + x,
+              y: worldY + y,
+              z: 0,
+              biome: tileRaw?.b || 'plains',
+              blockType: tileRaw?.t || 'grass',
+              // Default light
+              lightLevel: 15,
+            } as GridTile;
+          })
+      );
+
+    // Create biomes 2D array (legacy)
+    const biomes: string[][] = tiles.map((row) => row.map((t) => t.biome));
+
     const chunk: TerrainChunk = {
-      ...chunkData,
       chunkX,
       chunkY,
-      worldOffsetX: chunkData.worldOffsetX ?? worldX,
-      worldOffsetY: chunkData.worldOffsetY ?? worldY,
-      tiles: tiles,
-      biomes: surfaceLayer,
+      worldOffsetX: worldX,
+      worldOffsetY: worldY,
+      tiles,
+      biomes,
+      structures: [], // TODO: Structure metadata if needed
+      features: [],
+      // Legacy flags
+      hasCave: false,
+      hasStructure: false,
+      generated: false,
+      isStartingArea: chunkX === 0 && chunkY === 0,
+      seed: roomId,
+      z: 0,
+      grid: chunkData.grid, // Pass 3D grid
     };
 
     return chunk;

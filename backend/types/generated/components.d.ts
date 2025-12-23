@@ -1,5 +1,36 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface GameBiomeConfig extends Struct.ComponentSchema {
+  collectionName: 'components_game_biome_configs';
+  info: {
+    description: 'Configuration for biome weights and default biome';
+    displayName: 'Biome Config';
+    icon: 'globe';
+  };
+  attributes: {
+    biomes: Schema.Attribute.Component<'game.biome-definition', true>;
+    defaultBiome: Schema.Attribute.String & Schema.Attribute.DefaultTo<'plains'>;
+    noiseScale: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<1>;
+  };
+}
+
+export interface GameBiomeDefinition extends Struct.ComponentSchema {
+  collectionName: 'components_game_biome_definitions';
+  info: {
+    description: 'Visual and generation properties for a biome';
+    displayName: 'Biome Definition';
+    icon: 'brush';
+  };
+  attributes: {
+    color: Schema.Attribute.String & Schema.Attribute.DefaultTo<'#00ff00'>;
+    description: Schema.Attribute.Text;
+    hasBorder: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    name: Schema.Attribute.String;
+    slug: Schema.Attribute.String & Schema.Attribute.Required & Schema.Attribute.DefaultTo<'plains'>;
+    weight: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<1>;
+  };
+}
+
 export interface GameDmStyle extends Struct.ComponentSchema {
   collectionName: 'components_game_dm_styles';
   info: {
@@ -135,6 +166,8 @@ export interface GameStats extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'game.biome-config': GameBiomeConfig;
+      'game.biome-definition': GameBiomeDefinition;
       'game.dm-style': GameDmStyle;
       'game.generation-params': GameGenerationParams;
       'game.inventory-item': GameInventoryItem;

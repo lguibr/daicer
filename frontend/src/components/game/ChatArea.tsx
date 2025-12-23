@@ -80,7 +80,7 @@ export default function ChatArea({ messages, worldDescription, isProcessing }: C
                       isDM ? 'text-aurora-200' : 'text-shadow-100'
                     )}
                   >
-                    {msg.sender}
+                    {msg.sender || 'Unknown'}
                   </p>
                   {isPrivate && (
                     <span className="flex items-center gap-1 rounded-full bg-nebula-500/25 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-nebula-200">
@@ -93,9 +93,9 @@ export default function ChatArea({ messages, worldDescription, isProcessing }: C
 
               <div className="prose prose-invert max-w-none text-shadow-50 break-words">
                 {isDM ? (
-                  <MarkdownMessage content={msg.text} />
+                  <MarkdownMessage content={msg.text || ''} />
                 ) : (
-                  <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.text}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.text || ''}</p>
                 )}
               </div>
 

@@ -73,13 +73,11 @@ interface ChunkUpdate {
 ## Optimizing Transmission
 
 1.  **Index-Mapped Enums**:
-
     - Instead of sending string `"structure_wall_stone_c"`, we map it to an integer `ID` in a shared registry.
     - `grass` = 0, `stone` = 1, `wall` = 45.
     - Saves ~80% of JSON size.
 
 2.  **Run-Length Encoding (RLE) for Areas**:
-
     - If a whole 16x16 area is filled with "Lava", we define a "Zone" rather than 256 individual tiles.
 
 3.  **Socket.io Rooms per Region**:

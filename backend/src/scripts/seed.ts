@@ -28,6 +28,7 @@ async function main() {
       console.log('Creating prompt:', p.key);
       // Check if exists
       const existing = await strapi.documents('api::prompt.prompt').findMany({ filters: { key: p.key } });
+
       if (existing.length === 0) {
         const doc = await strapi.documents('api::prompt.prompt').create({
           data: {
@@ -60,6 +61,20 @@ async function main() {
               key: p.key,
               text: p.text_ptBR,
             },
+            status: 'published',
+          });
+        }
+      } else {
+        // Check if text needs update
+        const existingDoc = existing[0];
+        if (existingDoc.text !== p.text_en) {
+          console.log(`Updating prompt ${p.key}...`);
+          await strapi.documents('api::prompt.prompt').update({
+            documentId: existingDoc.documentId,
+            data: {
+              text: p.text_en,
+              category: p.category,
+            } as any,
             status: 'published',
           });
         }

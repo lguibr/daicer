@@ -135,39 +135,39 @@ export async function initSocket(
 /**
  * Helper to register events
  */
-function registerSocketEvents(socket: Socket<ServerToClientEvents, ClientToServerEvents>, events: SocketEvents) {
-  if (events.onConnect) socket.on('connect', events.onConnect);
-  if (events.onError) socket.on('connect_error', (err) => events.onError?.({ message: err.message }));
-  if (events.onDisconnect) socket.on('disconnect', events.onDisconnect);
+function registerSocketEvents(s: Socket<ServerToClientEvents, ClientToServerEvents>, events: SocketEvents) {
+  if (events.onConnect) s.on('connect', events.onConnect);
+  if (events.onError) s.on('connect_error', (err) => events.onError?.({ message: err.message }));
+  if (events.onDisconnect) s.on('disconnect', events.onDisconnect);
 
-  if (events.onGameState) socket.on('game:state', events.onGameState);
-  if (events.onRoomUpdated) socket.on('room:updated', events.onRoomUpdated);
-  if (events.onPlayerJoined) socket.on('player:joined', events.onPlayerJoined);
-  if (events.onPlayerLeft) socket.on('player:left', events.onPlayerLeft);
-  if (events.onPlayerCreated) socket.on('player:created', events.onPlayerCreated);
-  if (events.onPlayerReadyUpdated) socket.on('player:ready_updated', events.onPlayerReadyUpdated);
-  if (events.onAllReady) socket.on('room:all_ready', events.onAllReady);
-  if (events.onPhaseChanged) socket.on('room:phase_changed', events.onPhaseChanged);
-  if (events.onTurnProcessing) socket.on('turn:processing', events.onTurnProcessing);
-  if (events.onTurnComplete) socket.on('turn:complete', events.onTurnComplete);
-  if (events.onToolCalls) socket.on('tool:calls', events.onToolCalls);
-  if (events.onMessageNew) socket.on('message:new', events.onMessageNew);
-  if (events.onGameStart) socket.on('game:start', events.onGameStart);
+  if (events.onGameState) s.on('game:state', events.onGameState);
+  if (events.onRoomUpdated) s.on('room:updated', events.onRoomUpdated);
+  if (events.onPlayerJoined) s.on('player:joined', events.onPlayerJoined);
+  if (events.onPlayerLeft) s.on('player:left', events.onPlayerLeft);
+  if (events.onPlayerCreated) s.on('player:created', events.onPlayerCreated);
+  if (events.onPlayerReadyUpdated) s.on('player:ready_updated', events.onPlayerReadyUpdated);
+  if (events.onAllReady) s.on('room:all_ready', events.onAllReady);
+  if (events.onPhaseChanged) s.on('room:phase_changed', events.onPhaseChanged);
+  if (events.onTurnProcessing) s.on('turn:processing', events.onTurnProcessing);
+  if (events.onTurnComplete) s.on('turn:complete', events.onTurnComplete);
+  if (events.onToolCalls) s.on('tool:calls', events.onToolCalls);
+  if (events.onMessageNew) s.on('message:new', events.onMessageNew);
+  if (events.onGameStart) s.on('game:start', events.onGameStart);
 
   // Streaming events
-  if (events.onStreamStart) socket.on('message:stream:start', events.onStreamStart);
-  if (events.onStreamChunk) socket.on('message:stream:chunk', events.onStreamChunk);
-  if (events.onStreamEnd) socket.on('message:stream:end', events.onStreamEnd);
-  if (events.onStreamError) socket.on('message:stream:error', events.onStreamError);
-  if (events.onStreamAborted) socket.on('message:stream:aborted', events.onStreamAborted);
+  if (events.onStreamStart) s.on('message:stream:start', events.onStreamStart);
+  if (events.onStreamChunk) s.on('message:stream:chunk', events.onStreamChunk);
+  if (events.onStreamEnd) s.on('message:stream:end', events.onStreamEnd);
+  if (events.onStreamError) s.on('message:stream:error', events.onStreamError);
+  if (events.onStreamAborted) s.on('message:stream:aborted', events.onStreamAborted);
 
   // Presence events
-  if (events.onPresenceUpdate) socket.on('presence:update', events.onPresenceUpdate);
+  if (events.onPresenceUpdate) s.on('presence:update', events.onPresenceUpdate);
 
   // Unified LLM Stream
-  if (events.onLLMStreamEvent) socket.on('llm:stream:event', events.onLLMStreamEvent);
+  if (events.onLLMStreamEvent) s.on('llm:stream:event', events.onLLMStreamEvent);
 
-  return socket;
+  return s;
 }
 
 /**

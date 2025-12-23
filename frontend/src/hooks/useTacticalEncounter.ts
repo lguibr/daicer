@@ -34,7 +34,7 @@ export function useTacticalEncounter(encounterId: string | null): UseTacticalEnc
 
     try {
       const data = await tacticalApi.getEncounter(encounterId);
-      setEncounter(data);
+      setEncounter(data as unknown as TacticalEncounter);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load encounter');
     } finally {
@@ -65,7 +65,8 @@ export function useTacticalEncounter(encounterId: string | null): UseTacticalEnc
         const newUnit = await tacticalApi.addUnit(encounterId, payload);
 
         // Update local state
-        setEncounter((prev) => (prev ? { ...prev, units: [...prev.units, newUnit] } : prev));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setEncounter((prev) => (prev ? { ...prev, units: [...prev.units, newUnit as any] } : prev));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to add unit');
       } finally {
@@ -106,7 +107,7 @@ export function useTacticalEncounter(encounterId: string | null): UseTacticalEnc
 
     try {
       const updatedEncounter = await tacticalApi.startCombat(encounterId);
-      setEncounter(updatedEncounter);
+      setEncounter(updatedEncounter as unknown as TacticalEncounter);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start combat');
     } finally {

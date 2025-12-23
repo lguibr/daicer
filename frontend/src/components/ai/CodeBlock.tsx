@@ -103,7 +103,6 @@ export function CodeBlock({ code, language = 'text', showLineNumbers = false, cl
 
       {/* Code content */}
       <div className="overflow-x-auto">
-        {/* @ts-expect-error - SyntaxHighlighter types are incompatible with React 18 refs */}
         <SyntaxHighlighter
           language={language}
           style={oneDark}

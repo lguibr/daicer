@@ -37,7 +37,6 @@ We need to query "Who is at (10, 10)?" efficiently without iterating through a l
 The system must support "Infinite" worlds without crashing the browser or the server.
 
 - **Chunking Strategy**:
-
   - **Network**: Send data in 16x16x7 chunks (Protocol Buffers or optimized JSON).
   - **Frontend**: Keep only active chunks in memory (LRU Cache). Drop chunks far from the player.
   - **Backend**: Stream chunks from DB. Do not load the entire world into Node.js memory.

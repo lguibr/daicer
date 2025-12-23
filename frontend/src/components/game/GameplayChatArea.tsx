@@ -91,7 +91,7 @@ export default function GameplayChatArea({
         combined.push({
           id: messageId,
           sender: 'DM',
-          content: content, // Map content to satisfy StreamingMessage type
+          content, // Map content to satisfy StreamingMessage type
           text: '',
           timestamp: Date.now(),
           isStreaming: true,

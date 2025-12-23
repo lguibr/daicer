@@ -1,95 +1,93 @@
 {
-    "kind": "collectionType",
-    "collectionName": "equipments",
-    "info": {
-        "singularName": "equipment",
-        "pluralName": "equipments",
-        "displayName": "Equipment",
-        "description": "Weapons, armor, and adventuring gear"
-    },
-    "options": {
-        "draftAndPublish": true
-    },
-    "pluginOptions": {
-        "i18n": {
-            "localized": true
-        }
-    },
-    "attributes": {
-        "slug": {
-            "type": "uid",
-            "targetField": "name",
-            "required": true
-        },
-        "name": {
-            "type": "string",
-            "pluginOptions": {
-                "i18n": {
-                    "localized": true
-                }
-            },
-            "required": true
-        },
-        "equipment_category": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "api::equipment-category.equipment-category"
-        },
-        "cost_quantity": {
-            "type": "integer"
-        },
-        "cost_unit": {
-            "type": "string"
-        },
-        "weight": {
-            "type": "float"
-        },
-        "description": {
-            "type": "richtext",
-            "pluginOptions": {
-                "i18n": {
-                    "localized": true
-                }
-            }
-        },
-        "damage_dice": {
-            "type": "string"
-        },
-        "damage_type": {
-            "type": "relation",
-            "relation": "oneToOne",
-            "target": "api::damage-type.damage-type"
-        },
-        "range_normal": {
-            "type": "integer"
-        },
-        "range_long": {
-            "type": "integer"
-        },
-        "properties": {
-            "type": "relation",
-            "relation": "manyToMany",
-            "target": "api::weapon-property.weapon-property"
-        },
-        "armor_class_base": {
-            "type": "integer"
-        },
-        "armor_class_dex_bonus": {
-            "type": "boolean"
-        },
-        "str_minimum": {
-            "type": "integer"
-        },
-        "stealth_disadvantage": {
-            "type": "boolean"
-        },
-        "image": {
-            "type": "media",
-            "multiple": false,
-            "required": false,
-            "allowedTypes": [
-                "images"
-            ]
-        }
+  "kind": "collectionType",
+  "collectionName": "equipments",
+  "info": {
+    "singularName": "equipment",
+    "pluralName": "equipments",
+    "displayName": "Equipment",
+    "description": "Weapons, armor, and adventuring gear"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
     }
+  },
+  "attributes": {
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "required": true
+    },
+    "equipment_category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::equipment-category.equipment-category"
+    },
+    "cost_quantity": {
+      "type": "integer"
+    },
+    "cost_unit": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "float"
+    },
+    "description": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "damage_dice": {
+      "type": "string"
+    },
+    "damage_type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::damage-type.damage-type"
+    },
+    "range_normal": {
+      "type": "integer"
+    },
+    "range_long": {
+      "type": "integer"
+    },
+    "properties": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::weapon-property.weapon-property"
+    },
+    "armor_class_base": {
+      "type": "integer"
+    },
+    "armor_class_dex_bonus": {
+      "type": "boolean"
+    },
+    "str_minimum": {
+      "type": "integer"
+    },
+    "stealth_disadvantage": {
+      "type": "boolean"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    }
+  }
 }

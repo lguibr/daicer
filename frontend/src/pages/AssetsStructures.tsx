@@ -2,7 +2,7 @@
  * Structures Assets Page - Building/Structure Components
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/toast';
@@ -39,19 +39,7 @@ export default function AssetsStructuresPage() {
   const [movingAsset, setMovingAsset] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'collection' | 'asset'; id: string } | null>(null);
 
-  useEffect(() => {
-    loadCollections();
-  }, []);
-
-  useEffect(() => {
-    if (selectedCollection) {
-      loadAssets(selectedCollection);
-    } else {
-      setAssets([]);
-    }
-  }, [selectedCollection]);
-
-  const loadCollections = async () => {
+  const loadCollections = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getCollections('structures');
@@ -61,19 +49,34 @@ export default function AssetsStructuresPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setCollections, setError, setLoading]);
 
-  const loadAssets = async (collectionId: string) => {
-    setLoading(true);
-    try {
-      const data = await getCollectionAssets(collectionId);
-      setAssets(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load assets');
-    } finally {
-      setLoading(false);
+  const loadAssets = useCallback(
+    async (collectionId: string) => {
+      setLoading(true);
+      try {
+        const data = await getCollectionAssets(collectionId);
+        setAssets(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load assets');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setAssets, setError, setLoading]
+  );
+
+  useEffect(() => {
+    loadCollections();
+  }, [loadCollections]);
+
+  useEffect(() => {
+    if (selectedCollection) {
+      loadAssets(selectedCollection);
+    } else {
+      setAssets([]);
     }
-  };
+  }, [selectedCollection, loadAssets, setAssets]);
 
   const handleRenameCollection = async (collectionId: string, newName: string) => {
     try {

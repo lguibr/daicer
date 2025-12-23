@@ -10,7 +10,6 @@ import { joinRoom as joinSocketRoom, setReady } from '../services/socket';
 import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
 import { LobbyScreen } from '../components/room/LobbyScreen';
-import { TerrainGenerationScreen } from '../components/terrain/TerrainGenerationScreen';
 import GameplayScreen from '../components/game/GameplayScreen';
 import { CombatScreen } from '../components/game/CombatScreen';
 import { DynamicLayout } from '../components/layout';
@@ -25,7 +24,7 @@ import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
 import { Room as SharedRoom, Player, GamePhase } from '../types/shared';
-import type { Room as GQLRoom } from '../gql/graphql';
+
 import { useI18n } from '../i18n';
 
 /**
@@ -159,7 +158,7 @@ export default function GameRoomPage() {
     };
 
     loadRoom();
-  }, [roomId, navigate, user?.uid]);
+  }, [roomId, navigate, user?.uid, t]);
 
   // Update state from socket
   useEffect(() => {
@@ -175,7 +174,7 @@ export default function GameRoomPage() {
     if (socket.players.length > 0) {
       setPlayers(socket.players);
     }
-  }, [socket.room, socket.players]);
+  }, [socket.room, socket.players, streamEvents.length]);
 
   // Monitor world generation if room is in SETUP phase
   // const isWorldGenerating = room && room.phase === 'SETUP' && !room.worldDescription;
@@ -403,15 +402,6 @@ export default function GameRoomPage() {
     );
   }
 
-  // PHASE 2: TERRAIN_GENERATION - Approve terrain visualization
-  if (room.phase === 'TERRAIN_GENERATION') {
-    return (
-      <DynamicLayout showNavbar={false} showLanguageSelector>
-        <TerrainGenerationScreen room={room as unknown as GQLRoom} />
-      </DynamicLayout>
-    );
-  }
-
   // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
   // Also show this for SETUP phase to skip the streaming intro
   // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
@@ -460,7 +450,7 @@ export default function GameRoomPage() {
 
     if (isCreatingCharacter) {
       return (
-        <DynamicLayout showNavbar={true} showLanguageSelector>
+        <DynamicLayout showNavbar showLanguageSelector>
           <CharacterCreation
             room={room}
             players={players}
@@ -492,7 +482,7 @@ export default function GameRoomPage() {
     }
 
     return (
-      <DynamicLayout showNavbar={true} showLanguageSelector>
+      <DynamicLayout showNavbar showLanguageSelector>
         <LobbyScreen
           room={room}
           players={players}

@@ -3,26 +3,28 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen } from 'lucide-react';
+
 import type { Room, Player } from '../../types/shared';
+// import { Player, Creature } from '@daicer/shared'; // Note: GameplayScreen uses local types/shared, need to alignment check.
+// GameplayScreen seems to use local types. TerrainExplorer uses @daicer/shared.
+// Let's verify compatibility.
+
 import useStreamingSocket from '../../hooks/useStreamingSocket';
 import { processTurn, submitAction } from '../../services/api';
-import { movePlayer } from '../../services/socket';
+
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
 // eslint-disable-next-line import/no-unresolved
 // import { auth } from '../../services/firebase';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
+
 import GameplayChatArea from './GameplayChatArea';
 import GameplayComposer from './GameplayComposer';
 import { RoomTabs } from '../room/RoomTabs';
 import { PlayerListTab } from '../room/PlayerListTab';
 import { RoomSettingsTab } from '../room/RoomSettingsTab';
-import { TerrainExplorer } from '../terrain/TerrainExplorer';
 import { EntityListModal } from '../room/EntityListModal';
 import { Button } from '../ui/button';
-import { useMutation } from '@apollo/client/react';
-import { GenerateTerrainMutation, GenerateTerrainMutationVariables } from '../../gql/graphql';
-import { GENERATE_TERRAIN_MUTATION } from '../../queries/terrain';
 
 interface GameplayScreenProps {
   room: Room;
@@ -69,179 +71,9 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
   const [submitting, setSubmitting] = useState(false);
   const [showEntityList, setShowEntityList] = useState(false);
   const [composerValue, setComposerValue] = useState('');
-  // State for terrain grids
-  const [terrainGrid, setTerrainGrid] = useState<any[]>([]);
-  const [terrainGrid3D, setTerrainGrid3D] = useState<any[] | undefined>(undefined);
-
-  const [generateTerrain] = useMutation<GenerateTerrainMutation, GenerateTerrainMutationVariables>(
-    GENERATE_TERRAIN_MUTATION
-  );
-
-  // Load terrain grid from backend (same as TerrainGenerationScreen)
-  useEffect(() => {
-    const loadTerrain = async () => {
-      // Only load if empty
-      if (terrainGrid.length === 0) {
-        try {
-          const roomIdToUse = room.documentId || room.id;
-          if (!roomIdToUse) return;
-
-          console.log('[GameplayScreen] Fetching terrain grid via GraphQL:', roomIdToUse);
-
-          const { data } = await generateTerrain({
-            variables: { roomId: roomIdToUse },
-          });
-
-          // NEW: Handle Unified Chunk Response
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const payload = data?.generateTerrain as any;
-
-          if (payload?.chunks) {
-            // Unify chunks into a single 3D grid
-            // For now, assume the first chunk OR merge them.
-            // Since generateInitialMap returns 1 big chunk (64x64) or a few, we can handle it.
-            // Simplified: We reconstruct a single large grid for GameplayScreen state.
-
-            // 1. Determine bounds
-            // For MVP simplicty, let's assume valid chunks start at 0?
-            // Actually, let's just grab the first chunk if we did 1 big one.
-            const chunks = payload.chunks; // typed as ChunkDTO[] theoretically
-            console.log('[GameplayScreen] Loaded chunks:', chunks.length);
-
-            // Merge chunks into a map or grid
-            // We use a Map to store tiles by key "x,y,z" or just "x,y" for surface
-            // But TerrainExplorer expects a 2D/3D array.
-
-            // Find map dimensions
-            let minX = Infinity,
-              minY = Infinity,
-              maxX = -Infinity,
-              maxY = -Infinity;
-            chunks.forEach((c: any) => {
-              minX = Math.min(minX, c.worldOffsetX);
-              minY = Math.min(minY, c.worldOffsetY);
-              maxX = Math.max(maxX, c.worldOffsetX + c.size);
-              maxY = Math.max(maxY, c.worldOffsetY + c.size);
-            });
-
-            const sizeX = maxX - minX;
-            const sizeY = maxY - minY;
-            const floorCount = 7;
-
-            // Init 3D grid
-            // [floor][y][x]
-            const grid3D: any[][][] = Array(floorCount)
-              .fill(null)
-              .map(() =>
-                Array(sizeY)
-                  .fill(null)
-                  .map(() => Array(sizeX).fill(null))
-              );
-
-            chunks.forEach((chunk: any) => {
-              const { worldOffsetX, worldOffsetY, grid } = chunk;
-
-              // grid is [floor][localY][localX]
-              // Check if grid exists and has layers
-              if (!grid || !Array.isArray(grid)) return;
-
-              for (let f = 0; f < floorCount; f++) {
-                const z = f - 3;
-                if (!grid[f]) continue;
-
-                grid[f].forEach((row: any[], ly: number) => {
-                  if (!row) return;
-                  row.forEach((tileRaw: any, lx: number) => {
-                    // Skip if null/empty
-                    if (!tileRaw) return;
-
-                    const wx = worldOffsetX + lx;
-                    const wy = worldOffsetY + ly;
-
-                    // Map to array indices (relative to minX/Y)
-                    const ax = wx - minX;
-                    const ay = wy - minY;
-
-                    // tileRaw is { b: string, t: string }
-                    const biome = tileRaw.b;
-                    const blockType = tileRaw.t;
-
-                    if (ax >= 0 && ax < sizeX && ay >= 0 && ay < sizeY) {
-                      // Check if layer exists before assigning (though it should from init)
-                      if (grid3D[f] && grid3D[f][ay]) {
-                        grid3D[f][ay][ax] = {
-                          x: wx,
-                          y: wy,
-                          z,
-                          biome,
-                          blockType,
-                        };
-                      }
-                    }
-                  });
-                });
-              }
-            });
-
-            console.log(`[GameplayScreen] Processed 3D Grid: ${sizeX}x${sizeY} with offset ${minX},${minY}`);
-            setTerrainGrid3D(grid3D);
-            // Surface is index 3
-            setTerrainGrid(grid3D[3] || []);
-          } else if (data?.generateTerrain?.biomeMap?.grid) {
-            // --- LEGACY FALLBACK (Keep for safety or remove if confident) ---
-            const rawGrid = data.generateTerrain.biomeMap.grid as string[][][];
-            console.warn('[GameplayScreen] Using Legacy Grid Format!');
-
-            const converted3D = rawGrid.map((floor, zIndex) =>
-              floor.map((row, y) =>
-                row.map((biome, x) => ({
-                  x: x,
-                  y: y,
-                  z: zIndex - 3,
-                  biome: biome || '',
-                  blockType: 'grass',
-                }))
-              )
-            );
-
-            const surfaceGrid = converted3D[3] || [];
-            setTerrainGrid3D(converted3D);
-            setTerrainGrid(surfaceGrid);
-          } else {
-            console.warn('[GameplayScreen] GraphQL response OK but no grid found??', data);
-          }
-        } catch (err) {
-          console.warn('[GameplayScreen] Failed to load terrain grid:', err);
-        }
-      }
-    };
-
-    loadTerrain();
-  }, [room, terrainGrid.length, generateTerrain]);
 
   const hasPlayerAction = (playerAction: Player['action']) =>
     typeof playerAction === 'string' && playerAction.trim().length > 0;
-
-  // Merge positions from character sheets (Entity/Engine Authority) into Player objects
-  const playersWithPositions = players.map((p) => {
-    // Find the character sheet for this player
-    // Strategy: Match by character ID if linked, or owner ID if available
-    // room.character_sheets is populated via strapi
-    const sheets = room.character_sheets;
-    if (!sheets) return p;
-
-    const sheet = sheets.find(
-      (s: any) => (p.character && s.id === p.character.id) || (s.character && s.character.id === p.character?.id)
-    );
-
-    if (sheet && sheet.position) {
-      return {
-        ...p,
-        position: sheet.position,
-      };
-    }
-    return p;
-  });
 
   const currentPlayer = players.find(
     (p) => p.userId === user?.uid || (user?.documentId && p.userId === user.documentId)
@@ -295,16 +127,6 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleTileClick = (tile: { x: number; y: number; z: number }) => {
-    // Append formatted coordinate reference to composer
-    const ref = `[@ ${tile.x},${tile.y},${tile.z}]`;
-    setComposerValue((prev) => {
-      // Add space if needed
-      const prefix = prev.length > 0 && !prev.endsWith(' ') ? ' ' : '';
-      return prev + prefix + ref;
-    });
   };
 
   const handleProcessTurn = () => {
@@ -426,28 +248,13 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
     <>
       {submitting && socket.isProcessing && <LoadingOverlay message={t('gameplay.processing')} />}
 
-      {/* Desktop Split View (lg+) */}
+      {/* Desktop View (lg+) */}
       <div className="hidden h-full w-full lg:flex">
-        {/* Left Panel: Chat (35%) */}
-        <div className="w-[35%] min-w-[350px] border-r border-midnight-700 bg-midnight-900/95">{chatContent}</div>
+        {/* Full Screen Chat */}
+        <div className="w-full h-full border-r border-midnight-700 bg-midnight-900/95 relative">
+          {chatContent}
 
-        {/* Right Panel: Map (65%) */}
-        <div className="relative flex-1 bg-black">
-          <TerrainExplorer
-            roomId={room.documentId || room.id}
-            biomeGrid={terrainGrid}
-            biomeGrid3D={terrainGrid3D}
-            roomSize={32}
-            enableInfinite
-            players={playersWithPositions}
-            creatures={socket.creatures}
-            structures={room.structures as any}
-            onPlayerMove={isDM ? (x, y) => movePlayer(room.documentId || room.id, { x, y, z: 0 }) : undefined}
-            onTileClick={handleTileClick}
-            currentUserId={user?.uid || user?.documentId}
-          />
-
-          {/* Overlay Controls */}
+          {/* Overlay Controls (repositioned) */}
           <div className="absolute right-4 top-4 flex gap-2">
             <Button size="icon" variant="secondary" onClick={() => setShowEntityList(true)} title="Entities & Sheets">
               <BookOpen className="w-4 h-4" />
@@ -464,18 +271,9 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
           roomId={room.documentId || room.id}
           chatContent={chatContent}
           mapContent={
-            <TerrainExplorer
-              roomId={room.documentId || room.id}
-              biomeGrid={terrainGrid}
-              biomeGrid3D={terrainGrid3D}
-              roomSize={32}
-              enableInfinite
-              players={playersWithPositions}
-              creatures={socket.creatures}
-              structures={room.structures}
-              onPlayerMove={isDM ? (x, y) => movePlayer(room.documentId || room.id, { x, y, z: 0 }) : undefined}
-              onTileClick={handleTileClick}
-            />
+            <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
+              <p>Map view is currently disabled.</p>
+            </div>
           }
           playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
           settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}

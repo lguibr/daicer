@@ -3,7 +3,7 @@
  * Full-page view for a single asset with edit capabilities
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Sparkles, Copy, MoveRight, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
@@ -45,7 +45,7 @@ export default function AssetDetailPage() {
   const [variationsModifier, setVariationsModifier] = useState('');
   const [isCreatingVariations, setIsCreatingVariations] = useState(false);
 
-  const loadAsset = async () => {
+  const loadAsset = useCallback(async () => {
     if (!assetId) return;
 
     setIsLoading(true);
@@ -61,23 +61,23 @@ export default function AssetDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [assetId, navigate, toast]);
 
-  const loadCollections = async () => {
+  const loadCollections = useCallback(async () => {
     try {
       const data = await getCollections();
       setCollections(data);
     } catch (error) {
       console.error('Failed to load collections:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (assetId) {
       loadAsset();
       loadCollections();
     }
-  }, [assetId]);
+  }, [assetId, loadAsset, loadCollections]);
 
   const handleSave = async () => {
     if (!asset) return;

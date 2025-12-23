@@ -42,7 +42,7 @@ export function useKeyboardMovement({
       setPosition(initialPosition);
       setIsInitialized(true);
     }
-  }, [initialPosition.x, initialPosition.y, isInitialized]);
+  }, [initialPosition, isInitialized]);
 
   // Adjust position when coordinate offset changes (grid expansion)
   useEffect(() => {
@@ -51,7 +51,7 @@ export function useKeyboardMovement({
       // This prevents teleportation when grid expands
       console.log('[useKeyboardMovement] Coordinate offset changed:', coordinateOffset);
     }
-  }, [coordinateOffset.x, coordinateOffset.y, isInitialized]);
+  }, [coordinateOffset, isInitialized]);
   useEffect(() => {
     if (!enabled) return;
 
@@ -113,7 +113,7 @@ export function useKeyboardMovement({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [position, moveSpeed, bounds, enabled]);
+  }, [position, moveSpeed, bounds, enabled, onMove]);
 
   return {
     position,

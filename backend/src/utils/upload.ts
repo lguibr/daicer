@@ -7,8 +7,7 @@ import os from 'os';
  */
 export async function uploadBase64Image(
   base64Data: string,
-  filename: string,
-  folder?: string
+  filename: string
 ): Promise<{ id: number; url: string } | null> {
   let tempFilePath = null;
   try {

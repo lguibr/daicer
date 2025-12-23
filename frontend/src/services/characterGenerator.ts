@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { faker } from '@faker-js/faker';
 import type { CharacterFormState } from '../components/room/character-creation/types';
 
@@ -70,7 +71,7 @@ export const generateRandomCharacter = (
   priority.primary.forEach((stat) => {
     const valueIndex = statPool.findIndex((v) => v === Math.max(...statPool));
     if (valueIndex !== -1) {
-      // @ts-ignore
+      // @ts-expect-error - legacy code support
       attributes[stat] = statPool[valueIndex];
       statPool.splice(valueIndex, 1);
     }
@@ -80,7 +81,7 @@ export const generateRandomCharacter = (
   priority.secondary.forEach((stat) => {
     const valueIndex = statPool.findIndex((v) => v === Math.max(...statPool));
     if (valueIndex !== -1) {
-      // @ts-ignore
+      // @ts-expect-error - legacy code support
       attributes[stat] = statPool[valueIndex];
       statPool.splice(valueIndex, 1);
     }
@@ -88,7 +89,7 @@ export const generateRandomCharacter = (
 
   // Assign rest randomly
   Object.keys(attributes).forEach((key) => {
-    // @ts-ignore
+    // @ts-expect-error - legacy code support
     if (attributes[key] === 10 && statPool.length > 0) {
       // Check if not assigned (default 10 matches one of standard array but we can track assignment better, simpler here)
       // Actually this logic is flawed because 10 is in standard array.
@@ -98,7 +99,7 @@ export const generateRandomCharacter = (
   });
 
   // Re-do attributes clean
-  const cleanAttributes: any = {};
+  const cleanAttributes: Record<string, number> = {};
   const pool = [...STANDARD_ARRAY];
   const assigned = new Set<string>();
 
@@ -124,7 +125,7 @@ export const generateRandomCharacter = (
   ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'].forEach((stat) => {
     if (!assigned.has(stat)) {
       const idx = Math.floor(Math.random() * pool.length);
-      cleanAttributes[stat] = pool[idx];
+      cleanAttributes[stat] = pool[idx]!;
       pool.splice(idx, 1);
       assigned.add(stat);
     }

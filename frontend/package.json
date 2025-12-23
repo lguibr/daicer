@@ -26,8 +26,8 @@
     "fix": "echo '🔧 Auto-fixing frontend...' && yarn format && yarn lint:fix && echo '✅ Frontend auto-fix complete!'"
   },
   "dependencies": {
-    "@daicer/shared": "*",
     "@apollo/client": "^4.0.10",
+    "@daicer/shared": "*",
     "@heroicons/react": "2.1.5",
     "@playwright/test": "^1.56.1",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -67,7 +67,8 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.181.1"
+    "three": "^0.181.1",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.1.0",

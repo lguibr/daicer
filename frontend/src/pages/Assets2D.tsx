@@ -2,7 +2,7 @@
  * 2D Assets Page - Image Generation
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Plus, Upload, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/toast';
@@ -45,21 +45,7 @@ export default function Assets2DPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  // Load collections on mount
-  useEffect(() => {
-    loadCollections();
-  }, []);
-
-  // Load assets when collection is selected
-  useEffect(() => {
-    if (selectedCollection) {
-      loadAssets(selectedCollection);
-    } else {
-      setAssets([]);
-    }
-  }, [selectedCollection]);
-
-  const loadCollections = async () => {
+  const loadCollections = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getCollections('2d');
@@ -69,20 +55,36 @@ export default function Assets2DPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setCollections, setError, setLoading]);
 
-  const loadAssets = async (collectionId: string) => {
-    setLoading(true);
-    try {
-      const data = await getCollectionAssets(collectionId);
-      setAssets(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load assets');
-    } finally {
-      setLoading(false);
+  const loadAssets = useCallback(
+    async (collectionId: string) => {
+      setLoading(true);
+      try {
+        const data = await getCollectionAssets(collectionId);
+        setAssets(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load assets');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setAssets, setError, setLoading]
+  );
+
+  // Load collections on mount
+  useEffect(() => {
+    loadCollections();
+  }, [loadCollections]);
+
+  // Load assets when collection is selected
+  useEffect(() => {
+    if (selectedCollection) {
+      loadAssets(selectedCollection);
+    } else {
+      setAssets([]);
     }
-  };
-
+  }, [selectedCollection, loadAssets, setAssets]);
   const handleRenameCollection = async (collectionId: string, newName: string) => {
     try {
       await updateCollection(collectionId, { name: newName });

@@ -7,8 +7,7 @@ import DiscreteSlider, { type SliderMark } from '../components/forms/DiscreteSli
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import PrivateLayout from '../components/layout/PrivateLayout';
 import { createRoom } from '../services/api';
-import { WorldGenerator } from '../components/terrain/WorldGenerator';
-import { DEFAULT_GENERATION_PARAMS, type GenerationParams } from '../hooks/useWorldGeneration';
+
 import type { WorldSettings, WorldType, DMStyle, ScaleLevel } from '../types/shared';
 import { WORLD_ARCHETYPES } from '../constants/worldArchetypes';
 import {
@@ -44,11 +43,8 @@ export default function CreateRoomPage() {
   const [currentGroup, setCurrentGroup] = useState(0);
   const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
 
-  // Terrain generation state
-  const [seed, setSeed] = useState<string>('daicer-world');
-  // const [generationParams, setGenerationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS); // Removed unused
-  const [generationParams] = useState<GenerationParams>(DEFAULT_GENERATION_PARAMS);
-  const [structures, setStructures] = useState<any[]>([]);
+  const seed = 'daicer-world';
+  const structures: unknown[] = [];
 
   const verbosityMarks = useMemo<SliderMark[]>(
     () =>
@@ -299,8 +295,6 @@ export default function CreateRoomPage() {
     switch (groupName) {
       case 'dmAndScope':
         return !!settings.theme && !!settings.tone && !!settings.setting;
-      case 'terrainBuilder':
-        return true; // Always valid as it has defaults
       default:
         return false;
     }
@@ -388,13 +382,19 @@ export default function CreateRoomPage() {
           ...settings,
 
           seed,
-          generationParams,
         },
         structures,
       });
 
-      // Redirect immediately to the room
-      navigate(`/room/${room.documentId}`);
+      // Redirect immediately to the room, passing generation data in state
+      navigate(`/room/${room.documentId}`, {
+        state: {
+          initialSeed: seed,
+
+          initialStructures: structures,
+          initialSettings: settings, // including worldType for preset inference
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('createWizard.errors.createFailed'));
     } finally {
@@ -647,55 +647,22 @@ export default function CreateRoomPage() {
           </div>
         );
       }
-
-      case 'terrainBuilder': {
-        return (
-          <section className="space-y-6" data-testid="wizard-group-terrain">
-            <div className="card p-8">
-              <div className="space-y-2 mb-6">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Terrain Builder</h2>
-                <p className="text-sm text-shadow-300">Design your world's geography and structures</p>
-              </div>
-
-              {/* Step 3: World Generation */}
-              <div className="space-y-6 animate-in slide-in-from-right duration-300">
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-bold text-white">{t('createWizard.steps.world.title')}</h2>
-                  <p className="text-shadow-300">{t('createWizard.steps.world.description')}</p>
-                </div>
-
-                <WorldGenerator
-                  onWorldGenerated={(data) => {
-                    setSeed(data.seed);
-                    setStructures(data.structures);
-                    // Generation params are internal to WorldGenerator now, or passed via data if needed
-                  }}
-                  isGenerating={loading}
-                />
-              </div>
-            </div>
-          </section>
-        );
-      }
-
-      default:
-        return null;
     }
+    return null;
   };
 
   const getGroupLabel = (group: WizardGroup): string => {
     switch (group) {
       case 'dmAndScope':
         return 'DM & Scope';
-      case 'terrainBuilder':
-        return 'Terrain Builder';
+
       default:
         return group;
     }
   };
 
   return (
-    <PrivateLayout showNavbar={true}>
+    <PrivateLayout showNavbar>
       {loading && <LoadingOverlay message="Creating room..." />}
       <div className="relative mx-auto min-h-screen max-w-6xl px-6 py-16 sm:px-10 lg:px-12">
         <div className="space-y-10">

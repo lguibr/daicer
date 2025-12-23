@@ -805,6 +805,127 @@ export interface ApiMagicSchoolMagicSchool extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMapChunkMapChunk extends Struct.CollectionTypeSchema {
+  collectionName: 'map_chunks';
+  info: {
+    description: 'Stores persistent terrain deltas for the unified map system';
+    displayName: 'Map Chunk';
+    pluralName: 'map-chunks';
+    singularName: 'map-chunk';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    deltas: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::map-chunk.map-chunk'> & Schema.Attribute.Private;
+    map: Schema.Attribute.Relation<'manyToOne', 'api::map.map'>;
+    publishedAt: Schema.Attribute.DateTime;
+    room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    version: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    x: Schema.Attribute.Integer & Schema.Attribute.Required;
+    y: Schema.Attribute.Integer & Schema.Attribute.Required;
+  };
+}
+
+export interface ApiMapFeatureMapFeature extends Struct.CollectionTypeSchema {
+  collectionName: 'map_features';
+  info: {
+    description: 'Linear or complex features like roads and rivers';
+    displayName: 'Map Feature';
+    pluralName: 'map-features';
+    singularName: 'map-feature';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::map-feature.map-feature'> & Schema.Attribute.Private;
+    map: Schema.Attribute.Relation<'manyToOne', 'api::map.map'>;
+    metadata: Schema.Attribute.JSON;
+    points: Schema.Attribute.JSON & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    type: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMapStructureMapStructure extends Struct.CollectionTypeSchema {
+  collectionName: 'map_structures';
+  info: {
+    description: 'High-level map entities like buildings';
+    displayName: 'Map Structure';
+    pluralName: 'map-structures';
+    singularName: 'map-structure';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    data: Schema.Attribute.JSON;
+    height: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::map-structure.map-structure'> &
+      Schema.Attribute.Private;
+    map: Schema.Attribute.Relation<'manyToOne', 'api::map.map'>;
+    name: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    rotation: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    seed: Schema.Attribute.String;
+    type: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    width: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    x: Schema.Attribute.Integer & Schema.Attribute.Required;
+    y: Schema.Attribute.Integer & Schema.Attribute.Required;
+  };
+}
+
+export interface ApiMapMap extends Struct.CollectionTypeSchema {
+  collectionName: 'maps';
+  info: {
+    description: 'Unified Map Entity containing configuration and features';
+    displayName: 'Map';
+    pluralName: 'maps';
+    singularName: 'map';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    biome_config: Schema.Attribute.Component<'game.biome-config', false>;
+    chunks: Schema.Attribute.Relation<'oneToMany', 'api::map-chunk.map-chunk'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    features: Schema.Attribute.Relation<'oneToMany', 'api::map-feature.map-feature'>;
+    generation_params: Schema.Attribute.Component<'game.generation-params', false>;
+    height: Schema.Attribute.Integer;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::map.map'> & Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    preset: Schema.Attribute.Enumeration<['default', 'flat', 'vulcan', 'archipelago', 'custom']> &
+      Schema.Attribute.DefaultTo<'default'>;
+    publishedAt: Schema.Attribute.DateTime;
+    room: Schema.Attribute.Relation<'oneToOne', 'api::room.room'>;
+    seed: Schema.Attribute.String & Schema.Attribute.Required;
+    structures: Schema.Attribute.Relation<'oneToMany', 'api::map-structure.map-structure'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    width: Schema.Attribute.Integer;
+  };
+}
+
 export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
   collectionName: 'messages';
   info: {
@@ -1047,11 +1168,11 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
       Schema.Attribute.DefaultTo<'easy'>;
     dmStyle: Schema.Attribute.Component<'game.dm-style', false>;
-    generationParams: Schema.Attribute.Component<'game.generation-params', false>;
     history: Schema.Attribute.JSON;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::room.room'> & Schema.Attribute.Private;
+    map: Schema.Attribute.Relation<'oneToOne', 'api::map.map'>;
     messages: Schema.Attribute.Relation<'oneToMany', 'api::message.message'>;
     owner: Schema.Attribute.Relation<'manyToOne', 'plugin::users-permissions.user'>;
     phase: Schema.Attribute.Enumeration<
@@ -1065,8 +1186,6 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     setting: Schema.Attribute.String;
     settings: Schema.Attribute.JSON;
     startingLevel: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
-    structures: Schema.Attribute.JSON;
-    terrainData: Schema.Attribute.JSON;
     theme: Schema.Attribute.String;
     tone: Schema.Attribute.String;
     turnData: Schema.Attribute.JSON;
@@ -1076,10 +1195,6 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     worldDescription: Schema.Attribute.RichText;
     worldSize: Schema.Attribute.Enumeration<['intimate', 'small', 'medium', 'large', 'vast', 'epic']> &
       Schema.Attribute.DefaultTo<'small'>;
-    worldType: Schema.Attribute.Enumeration<
-      ['terra', 'water', 'desert', 'ice', 'volcanic', 'forest', 'sky', 'underground', 'custom']
-    > &
-      Schema.Attribute.DefaultTo<'terra'>;
   };
 }
 
@@ -1720,6 +1835,10 @@ declare module '@strapi/strapi' {
       'api::language.language': ApiLanguageLanguage;
       'api::magic-item.magic-item': ApiMagicItemMagicItem;
       'api::magic-school.magic-school': ApiMagicSchoolMagicSchool;
+      'api::map-chunk.map-chunk': ApiMapChunkMapChunk;
+      'api::map-feature.map-feature': ApiMapFeatureMapFeature;
+      'api::map-structure.map-structure': ApiMapStructureMapStructure;
+      'api::map.map': ApiMapMap;
       'api::message.message': ApiMessageMessage;
       'api::monster.monster': ApiMonsterMonster;
       'api::proficiency.proficiency': ApiProficiencyProficiency;

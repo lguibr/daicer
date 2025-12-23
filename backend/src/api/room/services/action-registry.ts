@@ -83,7 +83,7 @@ export default ({ strapi }) => ({
     // 4. Update Position
     // TODO: Check Room Terrain for Walls
 
-    const updatedSheet = await strapi.entityService.update('api::character-sheet.character-sheet', characterId, {
+    await strapi.entityService.update('api::character-sheet.character-sheet', characterId, {
       data: {
         position: { x, y },
       },

@@ -1,63 +1,55 @@
 {
-    "kind": "collectionType",
-    "collectionName": "turns",
-    "info": {
-        "singularName": "turn",
-        "pluralName": "turns",
-        "displayName": "Turn",
-        "description": "A discrete cycle of gameplay history"
+  "kind": "collectionType",
+  "collectionName": "turns",
+  "info": {
+    "singularName": "turn",
+    "pluralName": "turns",
+    "displayName": "Turn",
+    "description": "A discrete cycle of gameplay history"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "turnNumber": {
+      "type": "integer",
+      "default": 0,
+      "required": true
     },
-    "options": {
-        "draftAndPublish": false
+    "room": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::room.room",
+      "inversedBy": "turns"
     },
-    "pluginOptions": {},
-    "attributes": {
-        "turnNumber": {
-            "type": "integer",
-            "default": 0,
-            "required": true
-        },
-        "room": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "api::room.room",
-            "inversedBy": "turns"
-        },
-        "messages": {
-            "type": "relation",
-            "relation": "oneToMany",
-            "target": "api::message.message",
-            "mappedBy": "turn"
-        },
-        "narrative": {
-            "type": "richtext"
-        },
-        "type": {
-            "type": "enumeration",
-            "enum": [
-                "group",
-                "combat",
-                "exploration"
-            ],
-            "default": "group"
-        },
-        "status": {
-            "type": "enumeration",
-            "enum": [
-                "waiting",
-                "processing",
-                "complete"
-            ],
-            "default": "waiting"
-        },
-        "actions": {
-            "type": "json"
-        },
-        "metadata": {
-            "type": "json"
-        },
-        "characterSnapshots": {
-            "type": "json"
-        }
+    "messages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::message.message",
+      "mappedBy": "turn"
+    },
+    "narrative": {
+      "type": "richtext"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["group", "combat", "exploration"],
+      "default": "group"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["waiting", "processing", "complete"],
+      "default": "waiting"
+    },
+    "actions": {
+      "type": "json"
+    },
+    "metadata": {
+      "type": "json"
+    },
+    "characterSnapshots": {
+      "type": "json"
     }
+  }
 }

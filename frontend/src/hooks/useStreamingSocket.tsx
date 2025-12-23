@@ -116,9 +116,9 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
             recordSSEEvent();
             // Rejoin room if we have a roomId
             if (roomId) {
-              const socket = getSocket();
-              if (socket) {
-                socket.emit('room:join', { roomId });
+              const s = getSocket();
+              if (s) {
+                s.emit('room:join', { roomId });
               }
             }
           },
@@ -128,11 +128,15 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
           onGameState: (data) => {
             recordSSEEvent();
             // Map incoming messages to ensure content/text compat
-            const mappedMessages = (data.messages || []).map((msg: any) => ({
-              ...msg,
-              content: msg.content || msg.text || '', // Ensure content is set
-              sender: msg.sender || msg.senderName, // Ensure sender
-            }));
+            const mappedMessages = ((data.messages as unknown[]) || []).map((m) => {
+              const msg = m as Record<string, unknown>;
+              return {
+                ...msg,
+                timestamp: (msg.timestamp as number) || Date.now(),
+                content: (msg.content as string) || (msg.text as string) || '',
+                sender: (msg.sender as string) || (msg.senderName as string),
+              };
+            });
 
             updateState({
               room: data.room,

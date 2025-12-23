@@ -6,14 +6,12 @@ import GameRoomPage from './pages/GameRoom';
 import RoomsPage from './pages/Rooms';
 import GamePage from './pages/Game';
 import TestSetupPage from './pages/TestSetup';
-import { TacticalCombat } from './pages/TacticalCombat';
 import { RulesExplorerLayout } from './pages/RulesExplorer/Layout';
 import { RulesDashboard } from './pages/RulesExplorer/RulesDashboard';
 import { RulesCategoryPage } from './pages/RulesExplorer/RulesCategoryPage';
 import AssetsPage from './pages/Assets';
 import Assets2DPage from './pages/Assets2D';
 import Assets3DPage from './pages/Assets3D';
-import AssetsMapsPage from './pages/AssetsMaps';
 import AssetsCharacterSheetPage from './pages/AssetsCharacterSheet';
 import AssetsStructuresPage from './pages/AssetsStructures';
 import AssetDetailPage from './pages/AssetDetail';
@@ -77,14 +75,6 @@ export default function App() {
           }
         />
         <Route
-          path="/tactical"
-          element={
-            <ProtectedRoute>
-              <TacticalCombat />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/rules"
           element={
             <ProtectedRoute>
@@ -126,16 +116,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/assets/maps"
-          element={
-            <ProtectedRoute>
-              <AssetsProvider>
-                <AssetsMapsPage />
-              </AssetsProvider>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/assets/character-sheet"
           element={

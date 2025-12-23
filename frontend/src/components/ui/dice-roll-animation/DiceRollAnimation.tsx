@@ -404,7 +404,7 @@ export function DiceRollAnimation({
 
       stateRef.current = null;
     };
-  }, [autoStart, onComplete, isComplete]);
+  }, [autoStart, onComplete, isComplete, size]);
 
   // Create and position dice
   useEffect(() => {
@@ -496,7 +496,7 @@ export function DiceRollAnimation({
       const center = boundingBox.getCenter(new THREE.Vector3());
       currentState.diceGroup.position.set(-center.x, -center.y, -center.z);
     }
-  }, [dice, size, autoStart]);
+  }, [dice, size, autoStart, colorByResult]);
 
   // Update axes visibility
   useEffect(() => {

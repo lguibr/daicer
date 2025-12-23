@@ -5,7 +5,7 @@ import cn from '@/lib/utils';
 
 export function RulesExplorerLayout() {
   return (
-    <DynamicLayout showNavbar={true} className="bg-midnight-950" mainClassName="relative min-h-[calc(100vh-4.5rem)]">
+    <DynamicLayout showNavbar className="bg-midnight-950" mainClassName="relative min-h-[calc(100vh-4.5rem)]">
       <div className={cn(gildedTokens.gradientBackdrop, 'fixed inset-0 pointer-events-none')} />
 
       {/* Content Container - with padding for the fixed breadcrumb rail */}

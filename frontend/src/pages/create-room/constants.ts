@@ -28,12 +28,8 @@ export const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {
  */
 
 // Wizard flow (2 steps only)
-export type WizardGroup = 'dmAndScope' | 'terrainBuilder';
-
-export const WIZARD_GROUPS: WizardGroup[] = [
-  'dmAndScope', // DM settings, characters, level, points
-  'terrainBuilder', // Seed, terrain params, live explorer
-];
+export type WizardGroup = 'dmAndScope';
+export const WIZARD_GROUPS: WizardGroup[] = ['dmAndScope'];
 
 // Verbosity scale (0-6)
 export const VERBOSITY_MARK_KEYS = [
