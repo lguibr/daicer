@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { WorldGenerator, WorldConfig, GameEvent, MoveEventPayload, EntityState } from '../../voxel';
+import { WorldGenerator, WorldConfig, GameEvent, MoveEventPayload, EntityState } from '../../../core/voxel';
 
 interface GameCanvasProps {
   worldConfig: WorldConfig;

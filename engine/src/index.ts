@@ -4,22 +4,25 @@
 
 // Export schemas
 // Re-export graph-states (section graph schemas)
-export * from './graph-states/index';
+export * from './core/graph-states/index';
 
 // Re-export entity modules
-export * from './character/index';
-export * from './room/index';
-export * from './player/index';
-export * from './user/index';
+export * from './core/character/index';
+export * from './core/room/index';
+export * from './core/player/index';
+export * from './core/user/index';
 
-export * from './voxel/index';
-export * from './render/index';
-export * as Voxel from './voxel/index';
-export * as Render from './render/index';
+export * from './core/voxel/index';
+export * from './client/render/index';
+export * as Voxel from './core/voxel/index';
+export * as Render from './client/render/index';
 
 // Export state
-export * from './state/core/index';
-export * from './state/core/registry';
+export * from './core/state/core/index';
+export * from './core/state/core/registry';
 
 // Export world types
-export * from './world/types';
+export * from './core/world/types';
+
+// Export utils
+export * from './core/utils/index';

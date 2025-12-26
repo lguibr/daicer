@@ -59,12 +59,6 @@
     "settings": {
       "type": "json"
     },
-    "map": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::map.map",
-      "mappedBy": "room"
-    },
     "character_sheets": {
       "type": "relation",
       "relation": "oneToMany",

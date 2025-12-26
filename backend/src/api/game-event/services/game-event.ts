@@ -43,7 +43,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     // In a real system we might track this in the Room directly or count events
     // @ts-ignore
     const lastEvent = await strapi.entityService.findMany('api::game-event.game-event', {
-      filters: { room: roomId },
+      filters: { room: { id: roomId } },
       sort: { turnNumber: 'desc' },
       limit: 1,
     });
@@ -91,7 +91,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
   async getGameState(roomId: number) {
     // @ts-ignore
     const events = await strapi.entityService.findMany('api::game-event.game-event', {
-      filters: { room: roomId },
+      filters: { room: { id: roomId } },
       sort: { turnNumber: 'asc' },
       limit: -1, // Fetch all (careful in production!)
     });
