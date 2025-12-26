@@ -1,12 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import type { WorldConfig as OldWorldConfig, Coordinates, Tile, Chunk } from '../utils/types';
-import { Eye, Loader2, AlertCircle } from 'lucide-react';
+import type { WorldConfig as OldWorldConfig, Coordinates, Chunk } from '../utils/types';
 import { MapRenderer } from './MapRenderer';
-import { WorldConfigForm } from './WorldConfigForm';
-import { TileInspector } from './TileInspector';
 import { GodModeChat, type GodModeMessage } from './GodModeChat'; // New Chat Component
-import { executeEngineAction } from '@/services/api';
 import useSocket from '@/hooks/useSocket';
+import clsx from 'clsx';
 
 // Default config
 const DEFAULT_CONFIG: OldWorldConfig = {
@@ -45,13 +42,14 @@ interface GameDebugViewProps {
 
 export function GameDebugView({ roomId }: GameDebugViewProps) {
   // Config State
-  const [config, setConfig] = useState<OldWorldConfig>(DEFAULT_CONFIG);
+  const [config] = useState<OldWorldConfig>(DEFAULT_CONFIG);
 
   // Entities
   const [entities, setEntities] = useState<DebugEntity[]>([]);
-  const [activeEntityId, setActiveEntityId] = useState<string>('');
+  // const [activeEntityId, setActiveEntityId] = useState<string>('');
+  const activeEntityId = ''; // Default to empty or first if needed, logic below handles it
   const activeEntity = entities.find((e) => e.id === activeEntityId) || entities[0];
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const { socket } = useSocket(roomId, 'debug-user');
 
@@ -77,7 +75,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
         if (data.entities) {
           data.entities.forEach((u) => {
             const idx = next.findIndex((e) => e.id === u.id);
-            if (idx !== -1) {
+            if (idx !== -1 && next[idx]) {
               next[idx] = {
                 ...next[idx],
                 ...u,
@@ -113,9 +111,6 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
     };
   }, [socket]);
 
-  // Context Menu State
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; coords: Coordinates } | null>(null);
-
   // Map & View State
   const [cameraPosition, setCameraPosition] = useState<Coordinates>({ x: 0, y: 0, z: 0 });
 
@@ -130,7 +125,6 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
 
     // Open Context Menu (Still optional, but maybe user wants it?)
     // For now, let's keep context menu logic effectively disabled or minimal if God Mode is primary
-    setContextMenu(null);
   };
 
   const [viewZ, setViewZ] = useState<number>(0);
@@ -159,15 +153,14 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   }, [activeEntityId, activeEntity]);
 
   // Inspector State
-  const [hoveredCoords, setHoveredCoords] = useState<Coordinates | null>(null);
-  const [hoveredTile, setHoveredTile] = useState<Tile | null>(null);
+  // const [hoveredCoords, setHoveredCoords] = useState<Coordinates | null>(null);
+  // const [hoveredTile, setHoveredTile] = useState<Tile | null>(null);
   // Pathfinding State
-  const [pathDistance] = useState<number | null>(null);
+  // const [pathDistance] = useState<number | null>(null);
 
   // Chunk Cache
   const [chunkCache, setChunkCache] = useState<Record<string, Chunk>>({});
   const [loadingChunks, setLoadingChunks] = useState<Set<string>>(new Set());
-  const isLoading = loadingChunks.size > 0;
 
   // Active Entity Visibility (Derived)
   const visibleTiles = useMemo(() => {
@@ -189,46 +182,109 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
 
   // --- Effects ---
 
+  // Batching Refs
+  const batchQueue = useRef<Set<string>>(new Set());
+  const batchTimeout = useRef<NodeJS.Timeout | null>(null);
+
   // Helper to get raw tile data - modified to fetch if missing
   const getChunkId = (cx: number, cy: number) => `${cx},${cy}`;
 
-  const fetchChunk = async (cx: number, cy: number, cfg: OldWorldConfig) => {
-    const id = getChunkId(cx, cy);
-    if (loadingChunks.has(id) || chunkCache[id]) return;
+  const processBatch = async () => {
+    if (batchQueue.current.size === 0) return;
+
+    // Snapshot queue
+    const queuedIds = Array.from(batchQueue.current);
+    batchQueue.current.clear();
+    batchTimeout.current = null;
+
+    const chunksToFetch = queuedIds
+      .map((id) => {
+        const [x, y] = id.split(',').map(Number);
+        if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) return null;
+        return { x, y };
+      })
+      .filter((c): c is { x: number; y: number } => c !== null);
 
     try {
-      setLoadingChunks((prev) => new Set(prev).add(id));
-      const res = await fetch('http://localhost:1337/api/voxel-engine/preview', {
+      // GraphQL Query
+      const query = `
+        query VoxelPreview($chunks: [ChunkRequestInput]!, $config: WorldConfigInput!) {
+          voxelPreview(chunks: $chunks, config: $config)
+        }
+      `;
+
+      const response = await fetch('http://localhost:1337/graphql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ x: cx, y: cy, config: cfg }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('jwt') || ''}`, // Pass auth if needed, though resolver is public
+        },
+        body: JSON.stringify({
+          query,
+          variables: {
+            chunks: chunksToFetch,
+            config: config,
+          },
+        }),
       });
-      if (!res.ok) throw new Error('Failed to fetch chunk');
-      const chunk = await res.json();
-      setChunkCache((prev) => ({ ...prev, [id]: chunk }));
+
+      const json = await response.json();
+
+      if (json.errors) {
+        throw new Error(json.errors[0].message);
+      }
+
+      const results = json.data?.voxelPreview;
+
+      if (Array.isArray(results)) {
+        setChunkCache((prev) => {
+          const next = { ...prev };
+          results.forEach((chunk: Chunk, index: number) => {
+            const req = chunksToFetch[index];
+            if (req) {
+              next[getChunkId(req.x, req.y)] = chunk;
+            }
+          });
+          return next;
+        });
+      }
     } catch (e) {
-      console.error(e);
+      console.error('Batch Fetch Failed', e);
+      // Remove from loading so they can be retried?
+      // Or keep them as loading to prevent flood loop on error?
+      // For now, allow retry after some time or just log.
     } finally {
+      // Clear loading status
       setLoadingChunks((prev) => {
         const next = new Set(prev);
-        next.delete(id);
+        queuedIds.forEach((id) => next.delete(id));
         return next;
       });
     }
   };
 
+  const fetchChunk = (cx: number, cy: number) => {
+    const id = getChunkId(cx, cy);
+    if (loadingChunks.has(id) || chunkCache[id]) return;
+
+    // Add to loading immediately to prevent duplicate queueing
+    setLoadingChunks((prev) => new Set(prev).add(id));
+
+    // Add to batch queue
+    batchQueue.current.add(id);
+
+    // Debounce
+    if (batchTimeout.current) {
+      clearTimeout(batchTimeout.current);
+    }
+    batchTimeout.current = setTimeout(processBatch, 50); // 50ms batch window
+  };
+
   // Initial load
   useEffect(() => {
     setChunkCache({});
-    fetchChunk(0, 0, config);
-  }, [config.seed]); // Reload on seed change
-
-  const handleRegenerate = () => {
-    setChunkCache({});
-    fetchChunk(0, 0, config);
-    // Reset all entities exploration
-    setEntities((prev) => prev.map((e) => ({ ...e, exploredTiles: new Set(), pendingPath: undefined })));
-  };
+    fetchChunk(0, 0); // Reload on seed change
+  }, [config.seed]);
 
   // Chunk Provider for Renderer
   const chunkProvider = useMemo(
@@ -238,7 +294,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
         if (chunk) return chunk;
 
         // Trigger fetch if not found and not loading
-        fetchChunk(x, y, config);
+        fetchChunk(x, y);
         return null; // Return null while loading
       },
     }),
@@ -291,13 +347,12 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
 
   // Turn Logic (Movement only via Plan Move context menu for debug)
   const handlePlanMove = (target: Coordinates) => {
-    setContextMenu(null);
     if (!activeEntity) return;
 
     import('../utils/pathfinding').then(({ findPath, calculatePathLength }) => {
       const path = findPath(activeEntity.position, target, getTileCallback);
       if (!path) {
-        setErrorMsg('Cannot move there');
+        console.warn('Cannot move there');
         return;
       }
 
@@ -313,62 +368,20 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
         if (!finalStep) return;
 
         setEntities((prev) => prev.map((e) => (e.id === activeEntityId ? { ...e, pendingPath: validPath } : e)));
-        setErrorMsg(`Planned partial move (${finalStep.cost.toFixed(1)} / ${maxDist} tiles)`);
+        console.log(`Planned partial move (${finalStep.cost.toFixed(1)} / ${maxDist} tiles)`);
       } else {
         setEntities((prev) => prev.map((e) => (e.id === activeEntityId ? { ...e, pendingPath: path } : e)));
-        setErrorMsg(`Planned move (${totalCost.toFixed(1)} tiles)`);
+        console.log(`Planned move (${totalCost.toFixed(1)} tiles)`);
       }
     });
-  };
-
-  const handleExecuteTurn = async () => {
-    if (roomId) {
-      // Backend Execution
-      const moveActions = entities
-        .filter((e) => e.pendingPath && e.pendingPath.length > 0)
-        .flatMap((e) => {
-          const dest = e.pendingPath![e.pendingPath!.length - 1];
-          if (!dest) return [];
-          return [
-            {
-              type: 'move',
-              entityId: e.id,
-              payload: { x: dest.x, y: dest.y, z: dest.z },
-            },
-          ];
-        });
-
-      // Removed spawnActions from here as they are now handled via Chat/GodMode
-
-      const actions = [...moveActions];
-
-      if (actions.length === 0) return;
-
-      try {
-        await executeEngineAction(roomId, actions);
-        setErrorMsg('Turn Executed (Backend)');
-        // Clear pending paths
-        setEntities((prev) => prev.map((e) => ({ ...e, pendingPath: undefined })));
-      } catch (e) {
-        console.error(e);
-        setErrorMsg('Failed to execute turn: ' + (e instanceof Error ? e.message : 'Unknown error'));
-      }
-    }
   };
 
   const handleTileDoubleClick = (target: Coordinates) => {
     handlePlanMove(target);
   };
 
-  const handleTileHover = (coords: Coordinates | null) => {
-    setHoveredCoords(coords);
-    if (!coords) {
-      setHoveredTile(null);
-      return;
-    }
-
-    const tile = getTileAt(coords.x, coords.y, coords.z);
-    setHoveredTile(tile || null);
+  const handleTileHover = (_: Coordinates | null) => {
+    // Optional inspector hook
   };
 
   // Chat Handler
@@ -416,32 +429,12 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-80 flex-shrink-0 bg-midnight-900 border-r border-midnight-800 flex flex-col z-10 shadow-xl overflow-hidden">
-        <div className="p-4 border-b border-midnight-800 bg-midnight-950/80 sticky top-0 z-20">
-          <div className="flex flex-col gap-2 mb-2">
-            <h1 className="text-xl font-black text-aurora-500 tracking-tighter flex items-center gap-2">
-              DEBUG GAME ENGINE
-            </h1>
-            <div className="text-[10px] text-green-400">Connected to: {roomId}</div>
-          </div>
-          <p className="text-[10px] text-shadow-500 font-mono font-normal mt-1 uppercase tracking-widest">
-            Real-time Map & Entity Debugger
-          </p>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-midnight-700 scrollbar-track-transparent">
-          {/* Error Banner */}
-          {errorMsg && (
-            <div className="p-3 bg-red-900/20 border border-red-500/50 rounded flex items-center gap-2 text-xs text-red-200">
-              <AlertCircle className="w-4 h-4 text-red-500" />
-              {errorMsg}
-            </div>
-          )}
-
-          {/* 0. GOD MODE CHAT */}
-          <div className="h-[300px] flex flex-col">
+    <div className="flex-1 flex overflow-hidden">
+      {/* Left Panel: God Mode Chat & Status */}
+      <div className="w-[400px] flex-shrink-0 bg-midnight-950 border-r border-midnight-800 flex flex-col z-10 shadow-2xl">
+        <div className="flex-1 min-h-0 p-4 flex flex-col gap-4">
+          {/* Chat takes up most space */}
+          <div className="flex-1 min-h-0">
             <GodModeChat
               messages={chatMessages}
               onSendMessage={handleGodModeCommand}
@@ -451,164 +444,103 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
             />
           </div>
 
-          {/* 1. World Gen */}
-          <WorldConfigForm
-            config={config}
-            isActive={!isLoading}
-            onConfigChange={setConfig}
-            onRegenerate={handleRegenerate}
-          />
-
-          {/* 2. Inspector */}
-          <TileInspector
-            coords={hoveredCoords}
-            tileData={hoveredTile}
-            isReachable={pathDistance !== null}
-            distance={pathDistance}
-          />
-
-          {/* 3. View Controls */}
-          <div className="space-y-3 bg-midnight-800/50 p-4 rounded-xl border border-midnight-700/50">
-            <h2 className="text-xs font-bold text-aurora-400 uppercase tracking-wider mb-2">View Controls</h2>
-
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-shadow-300">View Layer (Z)</span>
-                <span className="font-mono text-aurora-300">{viewZ}</span>
-              </div>
-              <div className="flex items-center gap-1 bg-midnight-950/50 rounded-lg p-1 border border-midnight-800">
-                {[-3, -2, -1, 0, 1, 2, 3].map((z) => (
-                  // @ts-ignore
-                  <button
-                    key={z}
-                    // @ts-ignore
-                    onClick={() => setViewZ(z)}
-                    className={`flex-1 h-6 rounded flex items-center justify-center font-mono text-[10px] transition-all ${
-                      viewZ === z
-                        ? 'bg-aurora-500 text-midnight-950 font-bold shadow-lg shadow-aurora-500/20'
-                        : 'text-shadow-500 hover:text-shadow-100 hover:bg-midnight-800'
-                    }`}
-                  >
-                    {z === 0 ? '0' : z}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center text-xs pt-2 border-t border-midnight-700/50">
-              <span className="text-shadow-300">Zoom Level</span>
-              <div className="flex items-center gap-2 bg-midnight-950/50 rounded-lg p-1 border border-midnight-800">
-                <button
-                  onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
-                  className="w-8 h-6 flex items-center justify-center text-shadow-400 hover:text-white hover:bg-midnight-800 rounded"
-                >
-                  -
-                </button>
-                <span className="w-10 text-center font-mono text-aurora-400">{Math.round(zoom * 100)}%</span>
-                <button
-                  onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
-                  className="w-8 h-6 flex items-center justify-center text-shadow-400 hover:text-white hover:bg-midnight-800 rounded"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Entities List (Compact) */}
-          <div className="space-y-3 p-4 bg-midnight-800/30 rounded-xl border border-midnight-700/30">
-            <h2 className="text-xs font-bold text-shadow-400 uppercase tracking-wider">Active Entities</h2>
-            <div className="space-y-2">
-              {entities.map((ent) => (
-                <div
-                  key={ent.id}
-                  onClick={() => setActiveEntityId(ent.id)}
-                  className={`flex items-center justify-between p-3 rounded-lg cursor-pointer border transition-all ${
-                    activeEntityId === ent.id
-                      ? 'bg-aurora-500/10 border-aurora-500/50 shadow-[inset_0_0_10px_rgba(211,143,31,0.05)]'
-                      : 'bg-midnight-950/40 border-transparent hover:border-midnight-700 hover:bg-midnight-900'
-                  }`}
-                >
-                  <div className="flex flex-col">
-                    <span
-                      className={`text-sm font-bold ${activeEntityId === ent.id ? 'text-aurora-200' : 'text-shadow-300'}`}
-                    >
-                      {ent.name}
-                    </span>
-                    <span className="text-[10px] text-shadow-500 uppercase tracking-wide">{ent.type}</span>
+          {/* Quick Status / Entity Inspector (Mini) */}
+          <div className="h-1/3 bg-midnight-900/50 rounded-xl border border-midnight-800 p-4 overflow-y-auto min-h-[200px]">
+            <h3 className="text-xs font-bold text-shadow-400 uppercase tracking-wider mb-2 sticky top-0 bg-midnight-900/50 backdrop-blur pb-2">
+              Inspector
+            </h3>
+            {activeEntity ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded bg-midnight-800 flex items-center justify-center text-lg">
+                    {activeEntity.type === 'player' ? '👤' : '👾'}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-[10px] font-mono text-right">
-                      <div className="text-shadow-400">SPD: {ent.parsedSpeed}</div>
-                      <div className="text-shadow-600">VIS: {ent.visionRadius}</div>
+                  <div>
+                    <div className="font-bold text-aurora-300 text-sm">{activeEntity.name || activeEntity.id}</div>
+                    <div className="text-[10px] text-shadow-400 font-mono">
+                      {activeEntity.position.x}, {activeEntity.position.y}, {activeEntity.position.z}
                     </div>
-                    <Eye className={`w-4 h-4 ${activeEntityId === ent.id ? 'text-aurora-400' : 'text-shadow-600'}`} />
                   </div>
                 </div>
-              ))}
-            </div>
+                {/* Stats if available */}
+                {/* @ts-ignore */}
+                {activeEntity.stats && (
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-shadow-300">
+                    <div className="bg-midnight-950 p-1 rounded border border-midnight-700">
+                      {/* @ts-ignore */}
+                      HP: <span className="text-red-400">{activeEntity.stats.hp}</span>
+                    </div>
+                    <div className="bg-midnight-950 p-1 rounded border border-midnight-700">
+                      {/* @ts-ignore */}
+                      AC: <span className="text-blue-400">{activeEntity.stats.ac}</span>
+                    </div>
+                  </div>
+                )}
+                <div className="text-[10px] font-mono text-shadow-500 mt-2 break-all">ID: {activeEntity.id}</div>
+              </div>
+            ) : (
+              <div className="text-center text-shadow-500 text-xs py-8">Select an entity on map to inspect</div>
+            )}
           </div>
-
-          {/* Turn Controls */}
-          <div className="bg-midnight-800/50 p-4 rounded-xl border border-midnight-700/50">
-            <h2 className="text-xs font-bold text-aurora-400 uppercase tracking-wider mb-2">Turn Controls</h2>
-            <button
-              onClick={handleExecuteTurn}
-              className="w-full bg-aurora-600 hover:bg-aurora-500 text-midnight-950 font-bold py-2 rounded shadow-lg transition-all active:translate-y-0.5"
-            >
-              Execute Turn
-            </button>
-          </div>
-        </div>
-
-        <div className="p-3 border-t border-midnight-800 bg-midnight-950 text-[10px] text-shadow-600 font-mono text-center">
-          View: {mapSize.w}x{mapSize.h}px | Engine: Voxel V2
         </div>
       </div>
 
-      {/* Main Map */}
-      <div className="flex-1 relative bg-black" ref={mapRef}>
-        {/* Context Menu */}
-        {contextMenu && (
-          <div
-            style={{
-              position: 'fixed',
-              left: (contextMenu as any).x,
-              top: (contextMenu as any).y,
-              zIndex: 100,
-            }}
-            className="bg-midnight-900 border border-midnight-700 rounded shadow-xl overflow-hidden min-w-[120px]"
-          >
-            <button
-              className="w-full text-left px-3 py-2 text-xs text-shadow-200 hover:bg-midnight-800 hover:text-aurora-400 block"
-              onClick={() => handlePlanMove((contextMenu as any).coords)}
-            >
-              Plan Move
-            </button>
-            <button
-              className="w-full text-left px-3 py-2 text-xs text-shadow-200 hover:bg-midnight-800 hover:text-red-400 block"
-              onClick={() => {
-                setErrorMsg('Attack not implemented');
-                setContextMenu(null);
-              }}
-            >
-              Attack
-            </button>
-            <button
-              className="w-full text-left px-3 py-2 text-xs text-shadow-200 hover:bg-midnight-800 block"
-              onClick={() => setContextMenu(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
-        <div className="absolute inset-0 overflow-hidden">
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-              <Loader2 className="w-8 h-8 text-aurora-500 animate-spin" />
+      {/* Right Panel: Map & Overlays */}
+      <div className="flex-1 relative bg-black flex flex-col min-w-0" ref={mapRef}>
+        {/* Top Bar Overlays */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between z-20 pointer-events-none">
+          {/* Left: Turn Info (Placeholder if needed, or just connection status) */}
+          <div className="pointer-events-auto bg-midnight-900/90 backdrop-blur border border-midnight-700 rounded-lg p-2 shadow-xl flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${socket ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`} />
+              <span className="text-[10px] font-mono text-shadow-300">{roomId}</span>
             </div>
-          )}
+          </div>
+
+          {/* Right: View Controls */}
+          <div className="pointer-events-auto bg-midnight-900/90 backdrop-blur border border-midnight-700 rounded-lg p-2 shadow-xl flex flex-col gap-2">
+            <div className="flex flex-col items-center gap-1">
+              <button
+                className="h-6 w-6 flex items-center justify-center text-shadow-300 hover:text-white"
+                onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+              >
+                +
+              </button>
+              <span className="text-[9px] font-mono text-shadow-300">{Math.round(zoom * 100)}%</span>
+              <button
+                className="h-6 w-6 flex items-center justify-center text-shadow-300 hover:text-white"
+                onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
+              >
+                -
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Layer Control (Bottom Center) */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
+          <div className="bg-midnight-900/90 backdrop-blur border border-midnight-700 rounded-full px-4 py-2 shadow-xl flex items-center gap-2">
+            <span className="text-[10px] text-shadow-400 uppercase mr-2 font-bold">Z-Link</span>
+            {[-1, 0, 1].map((z) => (
+              <button
+                key={z}
+                // @ts-ignore
+                onClick={() => setViewZ(z)}
+                className={clsx(
+                  'w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs transition-all',
+                  viewZ === z
+                    ? 'bg-aurora-500 text-midnight-950 font-bold shadow-lg shadow-aurora-500/50 scale-110'
+                    : 'text-shadow-400 hover:bg-midnight-800 hover:text-aurora-200'
+                )}
+              >
+                {z}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Map Canvas */}
+        <div className="flex-1 relative overflow-hidden">
           <MapRenderer
             width={mapSize.w}
             height={mapSize.h}
@@ -619,7 +551,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
             visibleTiles={visibleTiles}
             exploredTiles={activeEntity?.exploredTiles || new Set()}
             entities={entities}
-            ghostEntities={[]} // No visual ghosts anymore
+            ghostEntities={[]}
             previewPath={activeEntity?.pendingPath}
             // @ts-ignore
             onTileClick={handleTileSingleClick}
@@ -651,20 +583,6 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
             }}
           />
         </div>
-
-        {activeEntity && (
-          <div className="absolute top-4 right-4 bg-midnight-950/80 backdrop-blur border border-midnight-700/50 px-4 py-2 rounded-full text-xs font-mono text-shadow-400 flex gap-4 pointer-events-none shadow-xl">
-            <div>
-              X: <span className="text-shadow-100">{activeEntity.position.x}</span>
-            </div>
-            <div>
-              Y: <span className="text-shadow-100">{activeEntity.position.y}</span>
-            </div>
-            <div>
-              Z: <span className="text-aurora-400">{activeEntity.position.z}</span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -80,9 +80,9 @@ Event logic is separated into specific handlers:
 
 - **`handlers/turn-handlers.ts`**:
 
-  - Calls `strapi.service('api::game.game').processTurn(...)`.
+  - Calls `strapi.service('api::game.game').processTurn(...)` (See **[Game API](../../api/game/README.md)**).
   - Manages the `turn:processing` and `turn:complete` lifecycle broadcasts.
 
 - **`stream-manager` Integration**:
   - The `streamManager` singleton holds a reference to the `io` instance.
-  - Used by unrelated services (like the AI Engine) to push updates to frontend clients without direct access to the socket object.
+  - Used by unrelated services (like the **[AI Narrator](../../api/narrator/README.md)**) to push updates to frontend clients without direct access to the socket object.

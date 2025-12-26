@@ -33,7 +33,7 @@ The `Room` entity maintains a `currentTimeFrame` relation, which points to the "
 
 ### `createSnapshot(roomId, gameState)`
 
-**Write Operation**: Called by the Engine/Game Loop at the end of a Turn.
+**Write Operation**: Called by the **[Engine/Game Loop](../game/README.md)** at the end of a Turn.
 
 1. Fetches the current turn count for the Room.
 2. Serializes the entire engine state into the `gameState` JSON.

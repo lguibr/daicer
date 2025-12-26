@@ -35,12 +35,35 @@ export const typeDefs = `
     description: String
   }
 
+  input ChunkRequestInput {
+    x: Int!
+    y: Int!
+  }
+
+  input WorldConfigInput {
+    seed: String
+    chunkSize: Int
+    globalScale: Float
+    seaLevel: Int
+    elevationScale: Float
+    roughness: Float
+    detail: Float
+    moistureScale: Float
+    temperatureOffset: Float
+    structureChance: Float
+    structureSpacing: Int
+    structureSizeAvg: Int
+    roadDensity: Float
+    fogRadius: Int
+  }
+
   extend type Query {
     abilities: [Ability]
     skills: [Skill]
     alignments: [Alignment]
     backgrounds: [Background]
     conditions: [GameCondition]
+    voxelPreview(chunks: [ChunkRequestInput]!, config: WorldConfigInput!): [JSON]!
   }
 
   extend type Mutation {

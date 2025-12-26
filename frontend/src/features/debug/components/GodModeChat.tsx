@@ -1,7 +1,20 @@
 import React, { useRef, useEffect } from 'react';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/i18n';
 import clsx from 'clsx';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+  Message as AIMessage,
+  MessageContent,
+  MessageHeader,
+  MessageSender,
+  MessageAvatar,
+  MessageTime,
+  MessageBadge,
+} from '@/components/ai';
 
 export interface GodModeMessage {
   id: string;
@@ -25,13 +38,7 @@ export function GodModeChat({
   inputValue,
   onInputChange,
 }: GodModeChatProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, isProcessing]);
+  const { t } = useI18n();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,75 +50,95 @@ export function GodModeChat({
   };
 
   return (
-    <div className="flex flex-col h-full bg-midnight-900/50 rounded-xl border border-aurora-500/20 overflow-hidden shadow-lg backdrop-blur-sm">
+    <div className="flex flex-col h-full bg-midnight-950 rounded-xl overflow-hidden shadow-2xl border border-midnight-800">
       {/* Header */}
-      <div className="p-3 border-b border-aurora-500/20 bg-midnight-950/80 flex items-center gap-2">
+      <div className="p-3 border-b border-aurora-500/20 bg-midnight-900 flex items-center gap-2 shadow-sm z-10">
         <Sparkles className="w-4 h-4 text-aurora-400" />
         <h3 className="text-xs font-bold text-aurora-300 uppercase tracking-wider">God Mode Interface</h3>
       </div>
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-midnight-700 scrollbar-track-transparent bg-black/20"
-      >
-        {messages.length === 0 && (
-          <div className="text-center mt-10 opacity-50 space-y-2">
-            <Sparkles className="w-8 h-8 text-aurora-500/30 mx-auto" />
-            <p className="text-xs text-aurora-200/50">Await your command, Creator.</p>
-          </div>
-        )}
-
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={clsx(
-              'flex flex-col gap-1 max-w-[90%]',
-              msg.role === 'user' ? 'self-end items-end' : 'self-start items-start'
+      <div className="flex-1 min-h-0 relative">
+        <Conversation className="h-full">
+          <ConversationContent className="p-4 gap-4">
+            {messages.length === 0 && (
+              <div className="text-center mt-10 opacity-50 space-y-2">
+                <Sparkles className="w-8 h-8 text-aurora-500/30 mx-auto" />
+                <p className="text-xs text-aurora-200/50">Await your command, Creator.</p>
+              </div>
             )}
-          >
-            <div
-              className={clsx(
-                'rounded-lg px-3 py-2 text-xs leading-relaxed shadow-sm',
-                msg.role === 'user'
-                  ? 'bg-aurora-600/20 text-aurora-100 border border-aurora-500/30 rounded-br-none'
-                  : 'bg-midnight-800 text-shadow-200 border border-midnight-700 rounded-bl-none'
-              )}
-            >
-              {msg.content}
-            </div>
-            <span className="text-[9px] text-shadow-500/50 px-1">
-              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-        ))}
 
-        {isProcessing && (
-          <div className="self-start flex items-center gap-2 text-xs text-aurora-400/70 p-2 animate-pulse">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            <span>Divining will...</span>
-          </div>
-        )}
+            {messages.map((msg) => {
+              const isSystem = msg.role === 'system';
+              const isAssistant = msg.role === 'assistant';
+              const isUser = msg.role === 'user';
+
+              if (isSystem) {
+                return (
+                  <div key={msg.id} className="flex justify-center my-2">
+                    <div className="bg-midnight-800/80 border border-aurora-500/20 rounded-full px-3 py-1 text-[10px] text-aurora-300 shadow-sm flex items-center gap-2">
+                      <Sparkles className="w-3 h-3" />
+                      {msg.content}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={msg.id} className={clsx('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
+                  <AIMessage from={isUser ? 'user' : 'assistant'} className="max-w-[90%]">
+                    <div className="flex flex-col gap-2">
+                      <MessageHeader>
+                        <div className="flex items-center gap-2">
+                          <MessageAvatar
+                            name={isUser ? 'Creator' : 'System'}
+                            src={!isUser ? '/logo.png' : undefined}
+                            fallback={isUser ? 'GM' : 'AI'}
+                            className={isUser ? 'border-aurora-500/50' : 'border-midnight-500'}
+                          />
+                          <MessageSender isDM={!isUser}>{isUser ? 'Creator' : 'System'}</MessageSender>
+                          <MessageTime timestamp={msg.timestamp} />
+                        </div>
+                      </MessageHeader>
+                      <MessageContent>
+                        <p className="whitespace-pre-wrap leading-relaxed text-shadow-100 text-sm">{msg.content}</p>
+                      </MessageContent>
+                    </div>
+                  </AIMessage>
+                </div>
+              );
+            })}
+
+            {isProcessing && (
+              <div className="flex justify-start animate-pulse">
+                <div className="flex items-center gap-2 bg-midnight-800 rounded-2xl px-4 py-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-aurora-400" />
+                  <span className="text-xs text-shadow-400">Processing command...</span>
+                </div>
+              </div>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-3 bg-midnight-950/50 border-t border-aurora-500/20 flex gap-2">
+      <form onSubmit={handleSubmit} className="p-3 bg-midnight-900 border-t border-midnight-800 flex gap-2 z-10">
         <input
           type="text"
           value={inputValue}
           onChange={(e) => onInputChange(e.target.value)}
           placeholder="Command the world (e.g., 'Spawn a dragon at 10,10')"
-          className="flex-1 bg-midnight-900 border border-midnight-700 rounded-lg px-3 py-2 text-xs text-shadow-100 focus:outline-none focus:border-aurora-500/50 focus:bg-midnight-800 transition-all placeholder:text-midnight-600"
+          className="flex-1 bg-midnight-950 border border-midnight-700 rounded-xl px-4 py-3 text-sm text-shadow-100 focus:outline-none focus:border-aurora-500/50 focus:ring-1 focus:ring-aurora-500/20 transition-all placeholder:text-midnight-600"
           disabled={isProcessing}
         />
         <Button
           type="submit"
           size="icon"
-          variant="ghost"
           disabled={isProcessing || !inputValue.trim()}
-          className="h-8 w-8 text-aurora-400 hover:text-aurora-300 hover:bg-aurora-500/10"
+          className="h-full aspect-square bg-aurora-600 hover:bg-aurora-500 text-white rounded-xl shadow-lg shadow-aurora-900/20 transition-all active:scale-95"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-5 h-5" />
         </Button>
       </form>
     </div>

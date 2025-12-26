@@ -58,67 +58,103 @@ export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, 
     <div className="space-y-4">
       {/* Seed */}
       <div className="space-y-1">
-        <label className="text-xs font-bold text-neutral-400 uppercase tracking-wider">SEED ID</label>
+        <label className="text-xs font-bold text-shadow-400 uppercase tracking-wider">SEED ID</label>
         <div className="flex gap-2">
           <input
             type="text"
             value={config.seed}
             onChange={(e) => handleChange('seed', e.target.value)}
-            className="flex-1 bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-sm font-mono text-blue-400 focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-midnight-950/50 border border-midnight-700 rounded-lg px-3 py-2 text-sm font-mono text-aurora-300 focus:outline-none focus:border-aurora-500/50 transition-colors"
           />
           <button
             onClick={() => handleChange('seed', Math.random().toString(36).substr(2, 6))}
-            className="p-1 bg-neutral-700 hover:bg-neutral-600 rounded"
+            className="p-2 bg-midnight-800 hover:bg-midnight-700 border border-midnight-600 rounded-lg transition-colors group"
+            title="Randomize Seed"
           >
-            <RotateCcw className="w-4 h-4 text-neutral-300" />
+            <RotateCcw className="w-4 h-4 text-shadow-300 group-hover:text-aurora-400 transition-colors" />
           </button>
         </div>
       </div>
 
       {/* Dynamic Sliders */}
-      {SliderParams.map((group) => (
-        <div key={group.group} className="space-y-3 pt-2">
-          <h2 className="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-neutral-700 pb-1">
-            {group.group}
-          </h2>
-          {group.params.map((p) => {
-            const val = config[p.key as keyof WorldConfig] as number;
-            return (
-              <div key={p.key} className="space-y-1">
-                <div className="flex justify-between text-xs text-neutral-300">
-                  <span>{p.label}</span>
-                  <span className="font-mono text-blue-400">
-                    {p.format ? p.format(val) : val}
-                    {p.suffix || ''}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={p.min}
-                  max={p.max}
-                  step={p.step}
-                  value={val}
-                  onChange={(e) => handleChange(p.key as keyof WorldConfig, parseFloat(e.target.value))}
-                  className="w-full accent-blue-500 h-1 bg-neutral-700 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-            );
-          })}
-        </div>
-      ))}
+      <div className="space-y-6 pt-2">
+        {SliderParams.map((group) => (
+          <div key={group.group} className="space-y-4">
+            <h2 className="text-[10px] font-black text-aurora-500/80 uppercase tracking-widest border-b border-aurora-500/20 pb-1">
+              {group.group}
+            </h2>
+            <div className="grid gap-6">
+              {group.params.map((p) => {
+                const val = config[p.key as keyof WorldConfig] as number;
+
+                // Create dynamic marks for consistent UI feel
+                // We'll make start, mid, end marks
+                const range = p.max - p.min;
+                const mid = p.min + range / 2;
+                const marks = [
+                  { value: p.min, label: 'Low' },
+                  { value: mid, label: 'Med' },
+                  { value: p.max, label: 'High' },
+                ];
+
+                return (
+                  <div key={p.key}>
+                    {/* We use a custom wrapper around input range or potentially reuse DiscreteSlider if suitable.
+                       However, DiscreteSlider expects discrete array of marks and snapping.
+                       These world params are continuous. Let's build a ContinuousSlider here or style the input nicely.
+                   */}
+
+                    <div className="flex justify-between items-center text-xs mb-2">
+                      <span className="font-semibold text-shadow-300 uppercase tracking-wider">{p.label}</span>
+                      <span className="font-mono text-aurora-400 text-xs bg-aurora-500/10 px-1.5 py-0.5 rounded border border-aurora-500/20">
+                        {p.format ? p.format(val) : val}
+                        {p.suffix || ''}
+                      </span>
+                    </div>
+
+                    <div className="relative h-6 flex items-center">
+                      <div className="absolute inset-0 top-1/2 -translate-y-1/2 h-1.5 bg-midnight-800 rounded-full overflow-hidden border border-midnight-700">
+                        <div
+                          className="h-full bg-gradient-to-r from-aurora-900 via-aurora-500 to-aurora-400"
+                          style={{ width: `${((val - p.min) / (p.max - p.min)) * 100}%` }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        min={p.min}
+                        max={p.max}
+                        step={p.step}
+                        value={val}
+                        onChange={(e) => handleChange(p.key as keyof WorldConfig, parseFloat(e.target.value))}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                      />
+                      {/* Thumb knob visualization (since input is hidden) */}
+                      <div
+                        className="pointer-events-none absolute h-4 w-4 rounded-full bg-midnight-950 border-2 border-aurora-400 shadow-[0_0_10px_rgba(122,73,217,0.5)] transition-transform"
+                        style={{ left: `calc(${((val - p.min) / (p.max - p.min)) * 100}% - 8px)` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Regenerate Button */}
       <button
         onClick={onRegenerate}
+        disabled={!isActive}
         className={clsx(
-          'w-full py-2 rounded text-sm font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 mt-4',
+          'w-full py-3 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 mt-6 border',
           isActive
-            ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
-            : 'bg-neutral-700 text-neutral-400 cursor-not-allowed opacity-50'
+            ? 'bg-aurora-600 hover:bg-aurora-500 text-white border-aurora-400 shadow-[0_0_20px_rgba(122,73,217,0.3)] hover:shadow-[0_0_30px_rgba(122,73,217,0.5)] active:scale-[0.98]'
+            : 'bg-midnight-800 text-midnight-500 border-midnight-700 cursor-not-allowed'
         )}
       >
         <RefreshCw className={clsx('w-4 h-4', !isActive && 'animate-spin')} />
-        {isActive ? 'Regenerate World' : 'Rendering...'}
+        {isActive ? 'Regenerate World' : 'Forging...'}
       </button>
     </div>
   );

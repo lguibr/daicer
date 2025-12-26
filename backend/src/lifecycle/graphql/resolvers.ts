@@ -81,9 +81,27 @@ export const registerGraphQLExtension = (strapi) => {
           { id: 'soldier', documentId: 'soldier', name: 'Soldier', description: 'Military veteran' },
         ],
         conditions: () => [
-          { id: 'blinded', documentId: 'blinded', name: 'Blinded', description: 'Cannot see' },
           { id: 'charmed', documentId: 'charmed', name: 'Charmed', description: 'Friendly to charmer' },
         ],
+        voxelPreview: async (_parent, args, _context) => {
+          const { chunks, config } = args;
+          if (!config) throw new Error('Missing config');
+
+          // Use the existing service to generate chunks
+          const service = strapi.service('api::voxel-engine.voxel-engine');
+
+          // Execute all chunk generations in parallel
+          // Note: Since this is CPU bound (procedural generation),
+          // Promise.all doesn't make it faster on single thread JS,
+          // but it allows formatting the response efficiently.
+          const results = await Promise.all(
+            chunks.map(async (c: { x: number; y: number }) => {
+              return service.getChunk(c.x, c.y, config);
+            })
+          );
+
+          return results;
+        },
       },
       Mutation: getMutationResolvers(strapi),
     },

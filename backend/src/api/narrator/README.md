@@ -3,7 +3,7 @@
 > **Namespace**: `api::narrator`  
 > **Route**: `/api/narrator/action`
 
-The **Narrator API** acts as the interface for the AI Dungeon Master (DM). It processes player input, interprets intent, interacts with the deterministic Game Engine, and generates immersive flavor text.
+The **Narrator API** acts as the interface for the AI Dungeon Master (DM). It processes player input, interprets intent, interacts with the **[Deterministic Game Engine](../game/README.md)**, and generates immersive flavor text.
 
 ## 🧠 Architecture
 
@@ -48,7 +48,7 @@ sequenceDiagram
 
 The orchestrator of the system.
 
-- **Identity Resolution**: Maps `userId` to a character name.
+- **Identity Resolution**: Maps `userId` to a character name (Using the **[Character System](../character/README.md)**).
 - **LLM Initialization**: Instantiates `ChatGoogleGenerativeAI` (Gemini 1.5 Flash).
 - **Prompt Engineering**: Selects the system prompt based on mode:
   - **DM Mode**: Immersive, roleplay-heavy, interprets intent.

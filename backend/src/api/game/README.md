@@ -1,6 +1,6 @@
 # Game API (`backend/src/api/game`)
 
-The **Game API** is the central orchestrator for the gameplay session. It ties together the **Voxel Engine**, **LLM Narrator**, and **Player State** to advance the game.
+The **Game API** is the central orchestrator for the gameplay session. It ties together the **Voxel Engine**, **[LLM Narrator](../narrator/README.md)**, and **Player State** to advance the game.
 
 Unlike strict CRUD endpoints, this module focuses on **processes**—handling the flow of turns, actions, and events.
 
@@ -36,7 +36,7 @@ The Game API drives the **linear history** of the game by creating `Turn` entiti
    - **Snapshots**: A frozen state of all characters (HP, Position, Stats).
    - **Metadata**: Engine results or LLM reasoning.
 
-> **Note**: These `Turn` entities are the source of truth for **TimeFrames**. While this module doesn't manipulate `TimeFrame` entities directly, its `Turn` outputs are what the TimeFrame system uses to reconstruct the state at any point in history.
+> **Note**: These `Turn` entities are the source of truth for **[TimeFrames](../time-frame/README.md)**. While this module doesn't manipulate `TimeFrame` entities directly, its `Turn` outputs are what the TimeFrame system uses to reconstruct the state at any point in history.
 
 ### The Engine (Deterministic vs LLM)
 
@@ -49,7 +49,7 @@ The module manages a hybrid loop:
 
 ## 📡 Global vs. Local Events
 
-The Game API uses the `StreamManager` to broadcast real-time state changes to connected clients over Socket.IO.
+The Game API uses the `StreamManager` to broadcast real-time state changes to connected clients over **[Socket.IO](../../lifecycle/socket/README.md)**.
 
 ### Global Events (Room-Wide)
 

@@ -4,6 +4,7 @@ import { useI18n } from '@/i18n';
 import DiscreteSlider, { type SliderMark } from '@/components/forms/DiscreteSlider';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { WorldConfigForm } from '@/features/debug/components/WorldConfigForm';
+import { WorldPreview } from './WorldPreview';
 import {
   WIZARD_GROUPS,
   type WizardGroup,
@@ -510,28 +511,37 @@ export function CampaignWizard({
         };
 
         return (
-          <div className="space-y-8 animate-in fade-in duration-500">
-            <section className="card p-8 border border-midnight-700/50 bg-midnight-900/40 backdrop-blur-sm">
-              <div className="space-y-2 mb-6">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">
-                  World Configuration
-                </h2>
-                <p className="text-sm text-shadow-300">Fine-tune the physical parameters of the world generation</p>
+          <div className="animate-in fade-in duration-500 h-full flex flex-col">
+            <div className="space-y-2 mb-6 text-center">
+              <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">World Configuration</h2>
+              <p className="text-sm text-shadow-300">Fine-tune the physical parameters of the world generation</p>
+            </div>
+
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-0">
+              {/* Visual Preview (Left/Top on mobile) - Taking more space for impact */}
+              <div className="lg:col-span-8 order-2 lg:order-1 h-[400px] lg:h-auto min-h-0 bg-midnight-950/30 rounded-2xl border border-midnight-700/50 backdrop-blur-sm p-1 shadow-2xl relative">
+                <div className="absolute inset-0 rounded-xl overflow-hidden">
+                  <WorldPreview config={config} />
+                </div>
               </div>
 
-              <WorldConfigForm
-                config={config}
-                isActive={true}
-                onConfigChange={handleWorldConfigChange}
-                onRegenerate={() => {
-                  // Regenerate just updates seed usually
-                  handleWorldConfigChange({
-                    ...config,
-                    seed: Math.random().toString(36).substr(2, 6),
-                  });
-                }}
-              />
-            </section>
+              {/* Controls (Right/Bottom) */}
+              <div className="lg:col-span-4 order-1 lg:order-2 h-full overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-midnight-700 scrollbar-track-transparent">
+                <section className="card p-6 border border-midnight-700/50 bg-midnight-900/40 backdrop-blur-sm h-full">
+                  <WorldConfigForm
+                    config={config}
+                    isActive={true}
+                    onConfigChange={handleWorldConfigChange}
+                    onRegenerate={() => {
+                      handleWorldConfigChange({
+                        ...config,
+                        seed: Math.random().toString(36).substr(2, 6),
+                      });
+                    }}
+                  />
+                </section>
+              </div>
+            </div>
           </div>
         );
       }
