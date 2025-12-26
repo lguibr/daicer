@@ -10,6 +10,7 @@ import { gql } from '@apollo/client';
 import { apolloClient } from '../../../lib/apollo';
 import type { TerrainChunk, InfiniteChunksConfig } from '../types';
 import { useTerrainStore } from '../../../stores/useTerrainStore';
+import { GENERATE_TERRAIN_CHUNK_MUTATION } from '../../../graphql/mutations';
 
 export const getChunkKey = (x: number, y: number) => `${x},${y}`;
 
@@ -41,18 +42,13 @@ export async function loadChunk(
 
     // GRAPHQL API FETCH (game mode)
     // We use standard Strapi GraphQL mutation for chunk generation/fetching
-    const GENERATE_CHUNK_MUTATION = gql`
-      mutation GenerateTerrainChunk($roomId: ID!, $chunkX: Int!, $chunkY: Int!) {
-        generateTerrainChunk(roomId: $roomId, chunkX: $chunkX, chunkY: $chunkY)
-      }
-    `;
-
     const response = await apolloClient.mutate<{ generateTerrainChunk: ChunkDTO }>({
-      mutation: GENERATE_CHUNK_MUTATION,
+      mutation: GENERATE_TERRAIN_CHUNK_MUTATION,
       variables: {
         roomId,
         chunkX,
         chunkY,
+        chunkSize,
       },
       context: {
         headers: {

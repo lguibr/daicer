@@ -67,6 +67,11 @@ export default {
           startGame(roomId: ID!, language: String, streamId: String): JSON
           submitAction(roomId: ID!, action: String): JSON
           spawnCreature(roomId: ID!, creature: JSON): JSON
+          generateAvatarPortrait(payload: JSON!, referenceImage: String): JSON
+          generateAvatarUpperBody(payload: JSON!, portrait: JSON!, referenceImage: String): JSON
+          generateAvatarFullBody(payload: JSON!, portrait: JSON!, upperBody: JSON!, referenceImage: String): JSON
+          generateTerrainChunk(roomId: ID!, chunkX: Int!, chunkY: Int!, chunkSize: Int): JSON
+          generateTerrain(roomId: ID!): Boolean
         }
       `,
       resolvers: {
@@ -366,6 +371,52 @@ export default {
             resolve: async (_parent, args, _context) => {
               const { roomId, creature } = args;
               return strapi.service('api::game.game').spawnCreature(roomId, creature);
+            },
+          },
+          generateAvatarPortrait: {
+            resolve: async (_parent, args, _context) => {
+              const { payload, referenceImage } = args;
+              return strapi.service('api::assets.assets').generatePortrait({ ...payload, referenceImage });
+            },
+          },
+          generateAvatarUpperBody: {
+            resolve: async (_parent, args, _context) => {
+              const { payload, portrait, referenceImage } = args;
+              return strapi.service('api::assets.assets').generateUpperBody({ payload, portrait, referenceImage });
+            },
+          },
+          generateAvatarFullBody: {
+            resolve: async (_parent, args, _context) => {
+              const { payload, portrait, upperBody, referenceImage } = args;
+              return strapi
+                .service('api::assets.assets')
+                .generateFullBody({ payload, portrait, upperBody, referenceImage });
+            },
+          },
+          generateTerrainChunk: {
+            resolve: async (_parent, args, _context) => {
+              const { roomId, chunkX, chunkY, chunkSize } = args;
+              // Fetch room settings for seed/config
+              const rooms = await strapi.documents('api::room.room').findMany({
+                filters: { roomId },
+              });
+              if (!rooms || rooms.length === 0) throw new Error('Room not found');
+              const room = rooms[0] as any;
+
+              const config = {
+                seed: room.settings?.seed || room.roomId || 'default_seed', // Use roomId as fallback seed
+                chunkSize: chunkSize || 16,
+                // Add other world settings mapping if available in room.settings
+                // But for now voxel-engine likely uses seed + noise
+              };
+
+              return strapi.service('api::voxel-engine.voxel-engine').getChunk(chunkX, chunkY, config);
+            },
+          },
+          generateTerrain: {
+            resolve: async (_parent, args, _context) => {
+              // Legacy/Initialization stub
+              return true;
             },
           },
         },
