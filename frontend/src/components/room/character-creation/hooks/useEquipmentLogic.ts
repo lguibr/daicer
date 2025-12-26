@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { EquipmentItemData } from '../../equipment/EquipmentItemCard';
+import type { EquipmentItemData } from '../../../equipment/EquipmentItemCard';
 
 interface UseEquipmentLogicProps {
   assetMode: boolean;

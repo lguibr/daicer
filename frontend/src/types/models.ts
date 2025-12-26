@@ -117,3 +117,28 @@ export interface TimeFrame {
     mapConfig: any; // Snapshot of map config
   };
 }
+
+export type Attribute = 'Strength' | 'Dexterity' | 'Constitution' | 'Intelligence' | 'Wisdom' | 'Charisma';
+
+export interface ResourcePool {
+  id?: string;
+  name: string;
+  current: number;
+  max: number;
+  refresh?: 'short_rest' | 'long_rest' | 'dawn';
+}
+
+export interface Talent {
+  id?: string;
+  name: string;
+  description?: string;
+  type?: string;
+}
+
+export interface CharacterSheet {
+  documentId?: string;
+  name?: string;
+  currency: { cp: number; sp: number; ep: number; gp: number; pp: number };
+  // Add other loose properties if needed
+  [key: string]: any;
+}

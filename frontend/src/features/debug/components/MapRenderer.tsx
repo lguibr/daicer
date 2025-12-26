@@ -15,13 +15,17 @@ interface MapRendererProps {
   visibleTiles: Set<string>;
   exploredTiles: Set<string>;
   entities: any[];
-  onTileClick: (coords: Coordinates) => void;
-  onTileHover?: (coords: Coordinates | null) => void;
+  onTileClick: (coords: Coordinates, e: React.MouseEvent) => void;
+  onTileDoubleClick?: (coords: Coordinates) => void;
+  onTileHover: (coords: Coordinates | null) => void;
+  previewPath?: Coordinates[] | null | undefined;
   isLive?: boolean;
   currentTimeFrame?: any;
+  onZoom?: (delta: number, mouseX: number, mouseY: number) => void;
+  onPan?: (dx: number, dy: number) => void;
 }
 
-export const MapRenderer: React.FC<MapRendererProps> = ({
+export const MapRenderer = ({
   width,
   height,
   center,
@@ -32,19 +36,26 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
   exploredTiles,
   entities,
   onTileClick,
+  onTileDoubleClick,
   onTileHover,
   isLive = true,
   currentTimeFrame = null,
-}) => {
+  previewPath,
+  onZoom,
+  onPan,
+}: MapRendererProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Timer for single/double click differentiation
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Drag state
+  const isDownRef = useRef(false);
+  const isPanningRef = useRef(false);
+  const lastPosRef = useRef({ x: 0, y: 0 });
+  const startPosRef = useRef({ x: 0, y: 0 });
 
   // Use provided entities if live, or timeFrame entities if in history
   const renderEntities = !isLive && currentTimeFrame ? currentTimeFrame.gameState.entities : entities;
-
-  // Note: For map tiles, we ideally want to fetch 'historical chunks' but that's expensive.
-  // For now, we assume the map terrain is static and only entities move,
-  // OR we rely on the parent to provide the correct chunkProvider based on time.
-  // We'll stick to static terrain + dynamic entities for MVP.
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,11 +73,15 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
     const HALF_W = Math.floor(VIEW_W / 2);
     const HALF_H = Math.floor(VIEW_H / 2);
 
+    // Calculate visible tile bounds (integer coordinates)
+    const startX = Math.floor(center.x - HALF_W - 1);
+    const endX = Math.ceil(center.x + HALF_W + 1);
+    const startY = Math.floor(center.y - HALF_H - 1);
+    const endY = Math.ceil(center.y + HALF_H + 1);
+
     // Draw Map
-    for (let dy = -HALF_H - 1; dy <= HALF_H + 1; dy++) {
-      for (let dx = -HALF_W - 1; dx <= HALF_W + 1; dx++) {
-        const wx = center.x + dx;
-        const wy = center.y + dy;
+    for (let wy = startY; wy <= endY; wy++) {
+      for (let wx = startX; wx <= endX; wx++) {
         const key = `${wx},${wy}`;
 
         const isExplored = exploredTiles.has(key);
@@ -108,8 +123,25 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         if (tile.block.includes('door')) color = '#854d0e';
 
         ctx.fillStyle = color;
-        const screenX = width / 2 + dx * TILE_SIZE - TILE_SIZE / 2;
-        const screenY = height / 2 + dy * TILE_SIZE - TILE_SIZE / 2;
+        // Calculate screen position based on difference from float center
+        // Center of screen corresponds to center.x, center.y
+        // Tile wx is at world position wx. Screen position is (wx - center.x) * TILE_SIZE
+        // But we want top-left of tile?
+        // Standard: tiled world 0 is at 0.
+        // Screen Center X = width/2.
+        // Tile WX's center is at (wx) * TILE_SIZE ?? No, treating wx as top-left grid?
+        // Let's assume wx is the coordinate of the tile.
+        // Screen X = (wx - center.x) * TILE_SIZE + width / 2;
+        // But (wx - center.x) puts 0 at center.
+        // We want tile (0,0) to be at center if center=(0,0).
+        // If we drawrect at screenX, that's top-left.
+        // If center is (0.5, 0.5), tile (0,0) is to the top-left.
+        // Screen X = (wx - center.x) * TILE_SIZE + width/2 - TILE_SIZE/2 ?
+        // Let's stick to: center tile aligns with center screen.
+        // (wx - center.x) is distance in tiles.
+
+        const screenX = (wx - center.x) * TILE_SIZE + width / 2 - TILE_SIZE / 2;
+        const screenY = (wy - center.y) * TILE_SIZE + height / 2 - TILE_SIZE / 2;
 
         ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
 
@@ -125,16 +157,41 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
       }
     }
 
+    // Draw Preview Path
+    if (previewPath && previewPath.length > 0) {
+      ctx.strokeStyle = '#fbbf24'; // Amber-400
+      ctx.lineWidth = 3 * scale;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([5 * scale, 5 * scale]); // Dashed line
+
+      ctx.beginPath();
+      let first = true;
+      for (const pt of previewPath) {
+        // Only draw if on same Z
+        if (pt.z !== viewZ) continue; // Or draw ghost?
+
+        const valX = (pt.x - center.x) * TILE_SIZE + width / 2;
+        const valY = (pt.y - center.y) * TILE_SIZE + height / 2;
+
+        if (first) {
+          ctx.moveTo(valX, valY);
+          first = false;
+        } else {
+          ctx.lineTo(valX, valY);
+        }
+      }
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset
+    }
+
     // Draw Entities
     renderEntities.forEach((ent: any) => {
       // Only if on same Z level
       if (ent.position.z !== viewZ) return;
 
-      const dx = ent.position.x - center.x;
-      const dy = ent.position.y - center.y;
-
-      const screenX = width / 2 + dx * TILE_SIZE;
-      const screenY = height / 2 + dy * TILE_SIZE;
+      const screenX = (ent.position.x - center.x) * TILE_SIZE + width / 2;
+      const screenY = (ent.position.y - center.y) * TILE_SIZE + height / 2;
 
       ctx.fillStyle = ent.color;
       ctx.beginPath();
@@ -146,9 +203,9 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
     });
-  }, [width, height, center, viewZ, scale, chunkProvider, visibleTiles, exploredTiles, renderEntities]);
+  }, [width, height, center, viewZ, scale, chunkProvider, visibleTiles, exploredTiles, renderEntities, previewPath]);
 
-  const getTileCoords = (e: React.MouseEvent) => {
+  const getTileCoords = (e: React.MouseEvent): Coordinates => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -160,13 +217,75 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
     return { x: tileX, y: tileY, z: viewZ as ZLevel };
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    onTileClick(getTileCoords(e));
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDownRef.current = true;
+    isPanningRef.current = false;
+    lastPosRef.current = { x: e.clientX, y: e.clientY };
+    startPosRef.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    isDownRef.current = false;
+    // Don't need to do anything else, handleClick uses isPanningRef
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (onTileHover) {
+    if (isDownRef.current) {
+      const dx = e.clientX - lastPosRef.current.x;
+      const dy = e.clientY - lastPosRef.current.y;
+
+      // Check threshold if not yet panning
+      if (!isPanningRef.current) {
+        const dist = Math.sqrt(
+          Math.pow(e.clientX - startPosRef.current.x, 2) + Math.pow(e.clientY - startPosRef.current.y, 2)
+        );
+        if (dist > 5) {
+          isPanningRef.current = true;
+        }
+      }
+
+      if (isPanningRef.current) {
+        onPan?.(dx, dy);
+        lastPosRef.current = { x: e.clientX, y: e.clientY };
+        return; // Skip hover updates while panning
+      }
+    }
+
+    if (onTileHover && !isPanningRef.current) {
       onTileHover(getTileCoords(e));
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // If we were panning, ignore click
+    if (isPanningRef.current) {
+      isPanningRef.current = false;
+      return;
+    }
+
+    // Determine single or double click
+    const coords = getTileCoords(e);
+
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+      onTileDoubleClick?.(coords);
+    } else {
+      clickTimeoutRef.current = setTimeout(() => {
+        onTileClick(coords, e);
+        clickTimeoutRef.current = null;
+      }, 250); // 250ms delay to wait for potential double click
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (onZoom) {
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      // Simple normalizing of delta
+      const delta = Math.sign(e.deltaY);
+      onZoom(delta, x, y);
     }
   };
 
@@ -175,10 +294,16 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
       ref={canvasRef}
       width={width}
       height={height}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onClick={handleClick}
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => onTileHover?.(null)}
-      className="block touch-none cursor-crosshair"
+      onMouseLeave={(e) => {
+        isDownRef.current = false;
+        onTileHover?.(null);
+      }}
+      onWheel={handleWheel}
+      className={`block touch-none ${isDownRef.current ? 'cursor-grabbing' : 'cursor-crosshair'}`}
     />
   );
 };

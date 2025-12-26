@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useCharacterFormState } from '../useCharacterFormState';
 import { useEquipmentLogic } from './useEquipmentLogic';
 import { useAvatarGeneration } from './useAvatarGeneration';
-import { useAuth } from '../../../../hooks/useAuth';
+import useAuth from '../../../../hooks/useAuth';
 import { useI18n } from '../../../../i18n';
 import { useAlignments, useRaces, useClasses } from '../../../../hooks/useGameData';
 import { calculateTotalPoints } from '../validation';

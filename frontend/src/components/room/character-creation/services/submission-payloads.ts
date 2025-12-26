@@ -1,4 +1,4 @@
-import { addCharacter } from '../../../services/api';
+import { addCharacter } from '../../../../services/api';
 import { buildCharacterSheetAsset } from '../characterSheetAsset';
 
 export const createCharacterPayload = (
