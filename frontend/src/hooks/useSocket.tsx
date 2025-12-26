@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { initSocket, disconnectSocket, getSocket, type ToolCall } from '../services/socket';
 import type { Room, Player, Message, Creature } from '@daicer/engine';
+import { initSocket, disconnectSocket, getSocket, type ToolCall } from '../services/socket';
 
 /**
  * Socket state
@@ -60,7 +60,7 @@ export default function useSocket(roomId?: string, userId?: string) {
                 (socket && timeSinceLastJoin > REJOIN_DEBOUNCE_MS) || (socket && userChanged && userId);
 
               if (shouldJoin) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 socket.emit('room:join', { roomId, userId });
                 lastJoinTimestampRef.current = now;
                 lastJoinUserIdRef.current = userId;

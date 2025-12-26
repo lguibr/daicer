@@ -7,11 +7,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { Swords, Flame, Puzzle, Ship, FlaskConical } from 'lucide-react';
+import type { WorldSettings, CharacterSheet, Attribute } from '@daicer/engine';
 import { createRoom, updateRoomSettings, addCharacter } from '../services/api';
 import { setReady } from '../services/socket';
 import { PrivateLayout } from '../components/layout';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
-import type { WorldSettings, CharacterSheet, Attribute } from '@daicer/engine';
 import { useI18n } from '../i18n';
 
 interface TestScenario {

@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client/react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Check } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { LIST_CHARACTERS_QUERY, LIST_MONSTERS_QUERY } from '@/graphql/queries';
 import type { ListCharactersQuery, ListMonstersQuery } from '@/gql/graphql';

@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "codegen": "graphql-codegen",
+    "codegen": "node scripts/codegen-safe.js",
     "test": "vitest",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",

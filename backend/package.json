@@ -11,7 +11,8 @@
     "strapi": "strapi",
     "deploy": "strapi deploy",
     "test": "exit 0",
-    "lint": "exit 0",
+    "lint": "eslint .",
+    "codegen": "strapi ts:generate-types",
     "typecheck": "tsc --noEmit",
     "seed": "ts-node src/scripts/seed.ts"
   },

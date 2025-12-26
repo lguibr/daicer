@@ -71,7 +71,7 @@ export function WizardProvider({
 
   const [settings, setSettingsState] = useState<WorldSettings & Partial<WorldConfig>>({
     ...initialSettingsBase,
-    seed: 'daicer-' + Math.random().toString(36).substring(7),
+    seed: `daicer-${  Math.random().toString(36).substring(7)}`,
     language: 'en', // Default hardcoded or from hook? Hook might not be ready.
     ...initialValues,
   } as WorldSettings & Partial<WorldConfig>);

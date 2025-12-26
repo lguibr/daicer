@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import type { WorldSettings, DMStyle, ScaleLevel } from '@daicer/engine';
 import { useI18n } from '@/i18n';
 import DiscreteSlider, { type SliderMark } from '@/components/forms/DiscreteSlider';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { WorldConfigForm } from '@/features/debug/components/WorldConfigForm';
-import { WorldPreview } from './WorldPreview';
 import {
   WIZARD_GROUPS,
   type WizardGroup,
@@ -25,8 +25,8 @@ import {
   WORLD_SIZE_VALUES,
   WORLD_SIZE_FALLBACK,
 } from '@/pages/create-room/constants';
-import type { WorldSettings, DMStyle, ScaleLevel } from '@daicer/engine';
 import type { WorldConfig } from '@/features/debug/utils/types';
+import { WorldPreview } from './WorldPreview';
 
 interface CampaignWizardProps {
   initialSettings?: Partial<WorldSettings>;
@@ -166,7 +166,7 @@ export function CampaignWizard({
 
   // Initial State
   const [settings, setSettings] = useState<WorldSettings>({
-    seed: 'daicer-' + Math.random().toString(36).substring(7),
+    seed: `daicer-${  Math.random().toString(36).substring(7)}`,
     worldType: 'terra',
     worldSize: 'small',
     theme: 'High Fantasy',
@@ -528,7 +528,7 @@ export function CampaignWizard({
                 <section className="card p-6 border border-midnight-700/50 bg-midnight-900/40 backdrop-blur-sm h-full">
                   <WorldConfigForm
                     config={config}
-                    isActive={true}
+                    isActive
                     onConfigChange={handleWorldConfigChange}
                     onRegenerate={() => {
                       handleWorldConfigChange({

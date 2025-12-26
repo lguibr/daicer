@@ -1,5 +1,5 @@
-import { useWindowSize, useDebounce, useLocalStorage, useMediaQuery } from '@/hooks';
 import { useState } from 'react';
+import { useWindowSize, useDebounce, useLocalStorage, useMediaQuery } from '@/hooks';
 
 /**
  * Example component demonstrating usage of @uidotdev/usehooks

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { initSocket, disconnectSocket, getSocket, type ToolCall, type PresenceData } from '../services/socket';
 import type { Room, Player, Message, Creature } from '@daicer/engine';
 import { GamePhase } from '@daicer/engine';
+import { initSocket, disconnectSocket, getSocket, type ToolCall, type PresenceData } from '../services/socket';
 
 /**
  * Socket state with streaming support

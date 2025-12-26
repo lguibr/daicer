@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import type { WorldSettings } from '@daicer/engine';
 import PrivateLayout from '../components/layout/PrivateLayout';
 import { createRoom } from '../services/api';
-import type { WorldSettings } from '@daicer/engine';
 
 import { CampaignWizard } from '../features/create-room/components/CampaignWizard';
 
@@ -28,7 +28,7 @@ export default function CreateRoomPage() {
       });
     } catch (err) {
       console.error(err);
-      alert('Failed to create room: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert(`Failed to create room: ${  err instanceof Error ? err.message : 'Unknown error'}`);
       setLoading(false);
     }
   };

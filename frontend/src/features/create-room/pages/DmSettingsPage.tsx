@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { useI18n } from '@/i18n';
 import DiscreteSlider, { type SliderMark } from '@/components/forms/DiscreteSlider';
-import { useWizard } from '../context/WizardContext';
 import {
   VERBOSITY_MARK_KEYS,
   VERBOSITY_FALLBACK,
@@ -22,6 +21,7 @@ import {
   WORLD_SIZE_VALUES,
   WORLD_SIZE_FALLBACK,
 } from '@/pages/create-room/constants';
+import { useWizard } from '../context/WizardContext';
 
 type ScaleLevel = number;
 

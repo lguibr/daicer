@@ -27,6 +27,7 @@ export const TurnResponseSchema = z.object({
       suggestedActions: z.array(z.string()).nullable().describe('Suggested next actions for players (null if none)'),
     })
     .nullable(),
+  commands: z.any().optional().describe('Structured commands to execute (Move, Attack, etc.)'), // Using z.any() for now to avoid deep type issues, should be ZodSchema
 });
 
 export type TurnResponse = z.infer<typeof TurnResponseSchema>;

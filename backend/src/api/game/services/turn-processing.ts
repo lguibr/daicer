@@ -57,7 +57,7 @@ export default ({ strapi }) => ({
       .join('\n');
 
     const creatureSummaries = creatures.map((c) => `- ${c.name}, HP: ${c.hp}/${c.maxHp}`).join('\n');
-    let worldConditionsText = ''; // stub
+    const worldConditionsText = ''; // stub
 
     // Style Instructions
     let dynamicStyleInstructions = 'Standard DM Style';
@@ -241,6 +241,17 @@ Respond entirely in ${languageName}.`;
     if (roomWithSheets.documentId !== roomWithSheets.roomId) {
       streamManager.broadcast(roomWithSheets.documentId, 'turn:complete', turnPayload);
     }
+
+    // 7. Dispatch Deterministic Commands (God Mode Integration)
+    if (
+      (response as any).commands &&
+      Array.isArray((response as any).commands) &&
+      (response as any).commands.length > 0
+    ) {
+      strapi.log.info(`[God Mode] Dispatching ${(response as any).commands.length} commands`);
+      const actionEngine = strapi.service('api::game.action-engine');
+      await actionEngine.dispatch(roomId, (response as any).commands);
+    } // End Command Dispatch
 
     return {
       ...response,

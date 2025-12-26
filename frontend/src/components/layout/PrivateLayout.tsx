@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import type { Room, Player } from '@daicer/engine';
 import cn from '@/lib/utils';
 
 import LanguageSelector from '../ui/LanguageSelector';
@@ -7,7 +8,6 @@ import BaseLayout from './BaseLayout';
 import Navbar from './Navbar';
 import AppBreadcrumb from './AppBreadcrumb';
 import RoomInfoBar from './RoomInfoBar';
-import type { Room, Player } from '@daicer/engine';
 
 interface PrivateLayoutProps {
   children: ReactNode;

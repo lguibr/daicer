@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WorldConfigForm } from '@/features/debug/components/WorldConfigForm';
-import { WorldPreview } from '../components/WorldPreview';
-import { useWizard } from '../context/WizardContext';
 import type { WorldConfig } from '@/features/debug/utils/types';
 import { createRoom } from '@/services/api';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { useWizard } from '../context/WizardContext';
+import { WorldPreview } from '../components/WorldPreview';
 
 export default function WorldConfigPage() {
   const { settings, setSettings } = useWizard();
@@ -51,7 +51,7 @@ export default function WorldConfigPage() {
       });
     } catch (err) {
       console.error(err);
-      alert('Failed to create room: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert(`Failed to create room: ${  err instanceof Error ? err.message : 'Unknown error'}`);
       setIsSubmitting(false);
     }
   };
@@ -76,7 +76,7 @@ export default function WorldConfigPage() {
           <section className="card p-6 border border-midnight-700/50 bg-midnight-900/40 backdrop-blur-sm h-full max-h-[500px] overflow-y-auto">
             <WorldConfigForm
               config={config}
-              isActive={true}
+              isActive
               onConfigChange={handleConfigChange}
               onRegenerate={() => {
                 handleConfigChange({

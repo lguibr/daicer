@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import clsx from 'clsx';
+import useSocket from '@/hooks/useSocket';
+import { useChunkLoader } from '@/hooks/useChunkLoader';
 import type { WorldConfig as OldWorldConfig, Coordinates, Chunk } from '../utils/types';
 import { MapRenderer } from './MapRenderer';
 import { GodModeChat, type GodModeMessage } from './GodModeChat'; // New Chat Component
-import useSocket from '@/hooks/useSocket';
-import { useChunkLoader } from '@/hooks/useChunkLoader';
-import clsx from 'clsx';
 
 // Default config
 const DEFAULT_CONFIG: OldWorldConfig = {
@@ -186,10 +186,10 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   // Chunk Provider for Renderer
   const chunkProvider = useMemo(
     () => ({
-      getChunk: (x: number, y: number) => {
+      getChunk: (x: number, y: number) => 
         // God mode tends to want to see everything requested, so we just pass through
-        return getChunk(x, y);
-      },
+         getChunk(x, y)
+      ,
     }),
     [getChunk]
   );
@@ -255,7 +255,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
 
       if (totalCost > maxDist) {
         // Truncate logic
-        let validPath = path.filter((p) => p.cost <= maxDist);
+        const validPath = path.filter((p) => p.cost <= maxDist);
         if (validPath.length === 0) return;
         const finalStep = validPath[validPath.length - 1];
         if (!finalStep) return;

@@ -6,9 +6,9 @@
 
 import { useState, useMemo } from 'react';
 
+import type { Player, CharacterSheet } from '@daicer/engine';
 import { useCombat } from '../../hooks/useCombat';
 import type { Position } from '../../types/combat';
-import type { Player, CharacterSheet } from '@daicer/engine';
 import { ResizablePanelGroup, ResizablePanel } from '../ui/resizable';
 
 import { CombatGrid } from '../combat/CombatGrid';

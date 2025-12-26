@@ -46,6 +46,9 @@
     "maxHp": {
       "type": "integer"
     },
+    "speed": {
+      "type": "json"
+    },
     "level": {
       "type": "integer",
       "default": 1

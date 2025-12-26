@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
+import clsx from 'clsx';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/i18n';
-import clsx from 'clsx';
 import {
   Conversation,
   ConversationContent,

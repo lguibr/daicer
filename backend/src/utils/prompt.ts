@@ -6,7 +6,7 @@
 import type { Core } from '@strapi/strapi';
 import type { Language } from '@daicer/engine';
 
-declare var strapi: Core.Strapi;
+declare let strapi: Core.Strapi;
 
 /**
  * Get a prompt by key and locale

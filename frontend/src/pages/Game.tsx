@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { DoorOpen, User } from 'lucide-react';
 import clsx from 'clsx';
 import type { Player } from '@daicer/engine';
-type RoomMembership = any;
 import { listRooms } from '../services/api';
 import { PrivateLayout } from '../components/layout';
 import { Button } from '../components/ui/button';
 import { useI18n } from '../i18n';
+
+type RoomMembership = any;
 
 interface GameEntry {
   roomId: string;

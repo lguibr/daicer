@@ -70,7 +70,7 @@ export function useChunkLoader({ config, endpoint = 'http://localhost:1337/graph
           query,
           variables: {
             chunks: chunksToFetch,
-            config: config,
+            config,
           },
         }),
       });

@@ -185,3 +185,25 @@ export interface WorldCondition {
   description: string;
   effect: string;
 }
+
+// === Command Types ===
+
+import {
+  CommandSchema,
+  MoveCommandSchema,
+  AttackCommandSchema,
+  SkillCheckCommandSchema,
+  CastSpellCommandSchema,
+  InteractCommandSchema,
+  EndTurnCommandSchema,
+} from '../schemas';
+
+export type Command = z.infer<typeof CommandSchema>;
+export type MoveCommand = z.infer<typeof MoveCommandSchema>;
+export type AttackCommand = z.infer<typeof AttackCommandSchema>;
+export type SkillCheckCommand = z.infer<typeof SkillCheckCommandSchema>;
+export type CastSpellCommand = z.infer<typeof CastSpellCommandSchema>;
+export type InteractCommand = z.infer<typeof InteractCommandSchema>;
+export type EndTurnCommand = z.infer<typeof EndTurnCommandSchema>;
+
+export * from './engine';

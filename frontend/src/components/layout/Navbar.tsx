@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { Compass, DoorOpen, Layers, Users, Sparkles, Bug } from 'lucide-react';
 
+import type { Room } from '@daicer/engine';
 import cn from '@/lib/utils';
 import {
   Menubar,
@@ -16,7 +17,6 @@ import {
 import useAuth from '../../hooks/useAuth';
 import LanguageSelector from '../ui/LanguageSelector';
 import Logo from '../ui/Logo';
-import type { Room } from '@daicer/engine';
 import { useI18n } from '../../i18n';
 
 type NavbarAuthUser = {

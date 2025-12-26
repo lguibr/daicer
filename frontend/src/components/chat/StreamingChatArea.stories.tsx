@@ -3,8 +3,8 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import StreamingChatArea from './StreamingChatArea';
 import type { Message } from '@daicer/engine';
+import StreamingChatArea from './StreamingChatArea';
 
 const meta: Meta<typeof StreamingChatArea> = {
   title: 'Chat/StreamingChatArea',

@@ -1,9 +1,8 @@
-import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { Outlet, Navigate, useLocation , Link } from 'react-router-dom';
+import clsx from 'clsx';
 import { WizardProvider } from '../context/WizardContext';
 // import { StepsHeader } from '../components/StepsHeader'; // We will create this or inline it
 import PrivateLayout from '../../../components/layout/PrivateLayout';
-import clsx from 'clsx';
-import { Link } from 'react-router-dom';
 
 const STEPS = [
   { path: 'dm-settings', label: 'DM & Scope' },

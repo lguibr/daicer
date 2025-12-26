@@ -2,6 +2,7 @@ import { getMutationResolvers } from './mutation-resolvers';
 
 export const registerGraphQLExtension = (strapi) => {
   const extensionService = strapi.plugin('graphql').service('extension');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { typeDefs } = require('./type-defs');
 
   extensionService.use({

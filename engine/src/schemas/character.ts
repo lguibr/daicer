@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SpeedSchema } from '@daicer/shared';
 
 export const AttributeSchema = z.enum(['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma']);
 
@@ -76,7 +77,7 @@ export const CharacterSheetSchema = z.object({
   }),
   armorClass: z.number(),
   initiative: z.number(),
-  speed: z.number(),
+  speed: SpeedSchema,
   proficiencyBonus: z.number(),
   inspiration: z.boolean(),
   attributes: z.record(AttributeSchema, z.number()),

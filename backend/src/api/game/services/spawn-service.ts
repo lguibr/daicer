@@ -3,6 +3,8 @@
  * Handles instantiation of Characters and Monsters into the game world.
  */
 
+import { CharacterDeriver } from '@daicer/engine';
+
 export default ({ strapi }) => ({
   /**
    * Spawn a monster into a room by creating a CharacterSheet
@@ -55,6 +57,7 @@ export default ({ strapi }) => ({
         position: position,
         // Stats component can be populated from monster.stats if structures match
         stats: monster.stats,
+        speed: monster.speed, // Populate speed directly from monster (which is now JSON)
         // We can add appearance/inventory stubs
       },
       status: 'published',
@@ -83,20 +86,45 @@ export default ({ strapi }) => ({
     });
     if (!room) throw new Error('Room not found');
 
+    // Parse Hit Die from Class (e.g., "1d8" -> 8)
+    let hitDie = 8;
+    if (character.class?.hit_die) {
+      const parts = character.class.hit_die.split('d');
+      if (parts.length === 2) {
+        hitDie = parseInt(parts[1], 10);
+      }
+    }
+
+    // Prepare Derivation Context
+    const attributes = character.baseStats; // Assuming structure matches { str: 10, ... }
+
+    // Calculate Stats
+    const derived = CharacterDeriver.derive({
+      attributes: attributes,
+      level: 1,
+      proficiencyBonus: 2, // Level 1 default
+      equipment: character.equipment || [],
+      hitDie: hitDie,
+      race: {
+        speed: character.race?.speed,
+      },
+    });
+
     const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
       data: {
         name: character.name,
         type: 'player', // or 'npc' if spawned by DM
         character: character.documentId,
         room: room.documentId,
-        currentHp: character.baseStats?.hp || 10,
-        maxHp: character.baseStats?.maxHp || 10,
+        currentHp: derived.hp,
+        maxHp: derived.maxHp,
         level: 1,
         experience: 0,
         position: position,
         stats: character.baseStats,
         race: character.race?.documentId,
         class: character.class?.documentId,
+        speed: derived.speed,
         appearance: character.appearance,
         backstory: character.backstory,
         inventory: character.equipment || [],

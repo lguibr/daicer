@@ -2,7 +2,6 @@
  * API client for backend GraphQL endpoints
  */
 
-import { apolloClient } from '../lib/apollo';
 import type {
   Room,
   WorldSettings,
@@ -15,6 +14,7 @@ import type {
   WorldCondition,
   CharacterSheet,
 } from '@daicer/engine';
+import { apolloClient } from '../lib/apollo';
 import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse } from '../types/assets';
 import {
   CREATE_ROOM_MUTATION,

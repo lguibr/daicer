@@ -3,7 +3,7 @@
  * @description Spell data service for frontend
  */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
+ 
 import spellsData from '../data/spells.json';
 import type { SpellData } from '../types/spells';
 

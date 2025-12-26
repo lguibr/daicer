@@ -6,3 +6,7 @@ export * from './rules/narrator';
 export * from './rules/dice';
 export * from './schemas';
 export * from './voxel/utils/math';
+export * from './engine/action-dispatcher';
+export * from './utils/movement';
+export { CharacterDeriver } from './derivation';
+export type { DerivationContext, Equipment } from './derivation';

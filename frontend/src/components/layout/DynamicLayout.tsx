@@ -4,6 +4,7 @@
  */
 
 import type { ReactNode } from 'react';
+import type { Room, Player } from '@daicer/engine';
 import cn from '@/lib/utils';
 import BaseLayout from './BaseLayout';
 import Navbar from './Navbar';
@@ -12,7 +13,6 @@ import AppBreadcrumb from './AppBreadcrumb';
 import RoomInfoBar from './RoomInfoBar';
 import LanguageSelector from '../ui/LanguageSelector';
 import useAuth from '../../hooks/useAuth';
-import type { Room, Player } from '@daicer/engine';
 
 interface DynamicLayoutProps {
   children: ReactNode;

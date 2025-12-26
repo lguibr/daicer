@@ -118,7 +118,7 @@ export class CivilizationGenerator {
 
     const brushSize = 1; // Radius 1 = 3x3 width roughly
 
-    // eslint-disable-next-line no-constant-condition
+     
     while (true) {
       // Draw Brush (3x3) around point
       for (let by = -brushSize; by <= brushSize; by++) {

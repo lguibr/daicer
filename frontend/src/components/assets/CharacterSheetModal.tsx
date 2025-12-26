@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
+import type { CharacterSheet } from '@daicer/engine';
+import { getMovementModes } from '@daicer/engine';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { CharacterSheet } from '@daicer/engine';
 
 interface CharacterSheetModalProps {
   character: CharacterSheet;
@@ -108,7 +109,11 @@ export function CharacterSheetModal({ character, isOpen, onClose, onDelete }: Ch
               </div>
               <div className="p-3 bg-parchment-medium/20 dark:bg-obsidian-light/20 rounded">
                 <div className="text-sm font-semibold text-ink-secondary dark:text-parchment-medium">Speed</div>
-                <div className="text-xl font-bold text-ink-primary dark:text-parchment-light">{character.speed} ft</div>
+                <div className="text-xl font-bold text-ink-primary dark:text-parchment-light">
+                  {Object.entries(getMovementModes(character.speed))
+                    .map(([mode, val]) => (mode === 'walk' ? `${val}ft` : `${mode} ${val}ft`))
+                    .join(', ')}
+                </div>
               </div>
             </div>
           </div>

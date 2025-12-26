@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
-import { MapRenderer } from '../../debug/components/MapRenderer';
-import type { WorldConfig, Coordinates } from '../../debug/utils/types';
 import { cn } from '@/lib/utils';
 import { useChunkLoader } from '@/hooks/useChunkLoader';
+import { MapRenderer } from '../../debug/components/MapRenderer';
+import type { WorldConfig, Coordinates } from '../../debug/utils/types';
 
 interface WorldPreviewProps {
   config: WorldConfig;

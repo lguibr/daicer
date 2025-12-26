@@ -5,6 +5,11 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import Label from '../ui/label';
+import { Slider } from '../ui/slider';
+
 export interface GenerationParams {
   structureMinDistance: number;
   maxStructures: number;
@@ -23,13 +28,9 @@ export interface GenerationParams {
   featureMinDistance: number;
   featureAttempts: number;
 }
-import { Button } from '../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import Label from '../ui/label';
-import { Slider } from '../ui/slider';
 // import { SeedControl } from '../world-gen-debug/SeedControl';
-const SeedControl = ({ seed, onSeedChange, label }: any) => (
-  <div className="flex flex-col space-y-2">
+function SeedControl({ seed, onSeedChange, label }: any) {
+  return <div className="flex flex-col space-y-2">
     <Label>{label}</Label>
     <div className="flex space-x-2">
       <input
@@ -48,7 +49,7 @@ const SeedControl = ({ seed, onSeedChange, label }: any) => (
       </Button>
     </div>
   </div>
-);
+}
 
 interface WorldGenParametersPanelProps {
   seed: string;

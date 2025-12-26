@@ -4,10 +4,10 @@
  */
 
 import { Settings } from 'lucide-react';
+import type { Room } from '@daicer/engine';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import type { Room } from '@daicer/engine';
 
 interface RoomSettingsTabProps {
   room: Room;

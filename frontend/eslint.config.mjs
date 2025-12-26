@@ -40,6 +40,13 @@ export default tseslint.config(
         tsconfigRootDir: __dirname,
       },
     },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
+    },
   },
   {
     plugins: {

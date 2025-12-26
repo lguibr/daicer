@@ -4,8 +4,8 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import PlayerSidebar from './PlayerSidebar';
 import type { Player } from '@daicer/engine';
+import PlayerSidebar from './PlayerSidebar';
 
 const createPlayer = (overrides: Partial<Player>): Player =>
   ({
@@ -67,7 +67,7 @@ export const MultiplePlayersNoActions: Story = {
     players: [
       createPlayer({
         id: 'p1',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         character: {
           ...createPlayer({}).character,
           name: 'Elara',
@@ -83,7 +83,7 @@ export const MultiplePlayersNoActions: Story = {
       }),
       createPlayer({
         id: 'p3',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         character: {
           ...createPlayer({}).character,
           name: 'Luna',
@@ -143,7 +143,7 @@ export const FullPartyWithEnemies: Story = {
     players: [
       createPlayer({
         id: 'p1',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         character: {
           ...createPlayer({}).character,
           name: 'Elara',
@@ -157,7 +157,7 @@ export const FullPartyWithEnemies: Story = {
       }),
       createPlayer({
         id: 'p2',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         character: {
           ...createPlayer({}).character,
           name: 'Thrain',
@@ -171,7 +171,7 @@ export const FullPartyWithEnemies: Story = {
       }),
       createPlayer({
         id: 'p3',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         character: {
           ...createPlayer({}).character,
           name: 'Luna',

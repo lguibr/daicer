@@ -1,6 +1,6 @@
 import React from 'react';
-import type { WorldConfig } from '../utils/types';
 import { RefreshCw, RotateCcw } from 'lucide-react';
+import type { WorldConfig } from '../utils/types';
 
 interface WorldConfigProps {
   config: WorldConfig;

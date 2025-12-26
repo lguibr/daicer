@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import type { WorldSettings } from '@daicer/engine';
 import Navbar from '../components/layout/Navbar';
 import {
   Breadcrumb,
@@ -9,7 +11,6 @@ import {
   BreadcrumbSeparator,
 } from '../components/ui/breadcrumb';
 import { Button } from '../components/ui/button';
-import { Loader2 } from 'lucide-react';
 
 import { RoomSelection } from '../features/debug/components/RoomSelection';
 // Replaced DMSetup with CampaignWizard
@@ -17,7 +18,6 @@ import { CampaignWizard } from '../features/create-room/components/CampaignWizar
 import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
 import { GameDebugView } from '../features/debug/components/GameDebugView';
 import { createRoom } from '../services/api'; // Use API service
-import type { WorldSettings } from '@daicer/engine';
 
 type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
 
@@ -28,7 +28,7 @@ export default function DebugPage() {
 
   // World Config State for the 'world' stage
   const [worldConfig, setWorldConfig] = useState<any>({
-    seed: 'new-campaign-' + Math.random().toString(36).substring(7),
+    seed: `new-campaign-${  Math.random().toString(36).substring(7)}`,
     chunkSize: 32,
     globalScale: 0.01,
     seaLevel: 0,
@@ -64,7 +64,7 @@ export default function DebugPage() {
       setStage('world');
     } catch (err) {
       console.error('Failed to create room:', err);
-      alert('Failed to create room: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      alert(`Failed to create room: ${  err instanceof Error ? err.message : 'Unknown error'}`);
       // Stay on same stage so user can retry
     } finally {
       setIsCreating(false);
@@ -158,7 +158,7 @@ export default function DebugPage() {
               <WorldConfigForm
                 config={worldConfig}
                 onConfigChange={setWorldConfig}
-                isActive={true}
+                isActive
                 onRegenerate={() => {}} // No-op in this preview view
               />
 

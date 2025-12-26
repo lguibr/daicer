@@ -3,8 +3,8 @@
  */
 
 import { useContext } from 'react';
-import { RoleContext } from '../contexts/RoleContext';
 import type { Role } from '@daicer/engine';
+import { RoleContext } from '../contexts/RoleContext';
 
 interface UseRoleReturn {
   role: Role;

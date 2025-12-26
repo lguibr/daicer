@@ -31,9 +31,7 @@ export const findPath = (
   const openList: TileNode[] = [];
   const closedList: Set<string> = new Set();
 
-  const heuristic = (a: Coordinates, b: Coordinates) => {
-    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
-  };
+  const heuristic = (a: Coordinates, b: Coordinates) => Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2);
 
   const startNode: TileNode = {
     ...start,

@@ -6,6 +6,9 @@
  * 3. Updating Room History and State
  */
 
+import { generateStructured } from '../../../utils/llm/structured';
+import { DMTurnSchema } from '../../../schemas/dm-turn';
+
 interface TurnAction {
   playerId: string | number;
   characterId: string | number;
@@ -35,7 +38,7 @@ export default ({ strapi }) => ({
     }
 
     // Initialize turnData if missing
-    let turnData: TurnData = room.turnData || {
+    const turnData: TurnData = room.turnData || {
       phase: 'idle',
       startTime: Date.now(),
       actions: [],
@@ -120,9 +123,6 @@ STATS: SPD ${cs.stats?.speed}
    * RESOLVE TURN WITH LLM
    */
   async resolveTurnWithLLM(room: any, turnData: TurnData) {
-    const { generateStructured } = require('../../../utils/llm/structured');
-    const { DMTurnSchema } = require('../../../schemas/dm-turn');
-
     const context = await this.buildTurnContext(room, turnData);
 
     const systemPrompt = `You are the Dungeon Master.

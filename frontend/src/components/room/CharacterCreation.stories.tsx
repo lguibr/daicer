@@ -4,9 +4,9 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
+import { GamePhase } from '@daicer/engine';
 import CharacterCreation from './CharacterCreation';
 
-import { GamePhase } from '@daicer/engine';
 
 const meta = {
   title: 'Forms/CharacterCreation',

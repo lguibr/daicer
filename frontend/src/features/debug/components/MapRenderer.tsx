@@ -26,7 +26,7 @@ interface MapRendererProps {
   onPan?: (dx: number, dy: number) => void;
 }
 
-export const MapRenderer = ({
+export function MapRenderer({
   width,
   height,
   center,
@@ -45,7 +45,7 @@ export const MapRenderer = ({
   previewPath,
   onZoom,
   onPan,
-}: MapRendererProps) => {
+}: MapRendererProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Timer for single/double click differentiation
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -272,7 +272,7 @@ export const MapRenderer = ({
       // Check threshold if not yet panning
       if (!isPanningRef.current) {
         const dist = Math.sqrt(
-          Math.pow(e.clientX - startPosRef.current.x, 2) + Math.pow(e.clientY - startPosRef.current.y, 2)
+          (e.clientX - startPosRef.current.x)**2 + (e.clientY - startPosRef.current.y)**2
         );
         if (dist > 5) {
           isPanningRef.current = true;
@@ -341,4 +341,4 @@ export const MapRenderer = ({
       className={`block touch-none ${isDownRef.current ? 'cursor-grabbing' : 'cursor-crosshair'}`}
     />
   );
-};
+}

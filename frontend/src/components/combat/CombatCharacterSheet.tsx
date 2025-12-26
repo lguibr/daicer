@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { CombatCharacter } from '../../types/combat';
 import type { CharacterSheet, SkillDetail } from '@daicer/engine';
+import type { CombatCharacter } from '../../types/combat';
 
 type AbilityKey = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma';
 type PortraitView = 'portrait' | 'upperBody' | 'fullBody';

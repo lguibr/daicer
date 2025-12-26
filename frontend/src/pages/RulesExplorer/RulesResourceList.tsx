@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
+import { Loader2, Search, SlidersHorizontal, Image as ImageIcon } from 'lucide-react';
 import Input from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,6 @@ import {
   EXPLORER_GET_TRAITS,
   EXPLORER_GET_WEAPON_PROPERTIES,
 } from '@/models/rules/queries';
-import { Loader2, Search, SlidersHorizontal, Image as ImageIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const CATEGORY_CONFIG: Record<string, { query: any; dataKey: string }> = {

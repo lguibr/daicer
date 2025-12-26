@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
 import type { Player, Room } from '@daicer/engine';
-type RoomMembership = any;
+import useAuth from '../hooks/useAuth';
 import { listRooms, leaveRoom } from '../services/api';
 import { PrivateLayout } from '../components/layout';
 import { Button } from '../components/ui/button';
 import { useI18n } from '../i18n';
 import CharacterSheetPanel from '../components/game/CharacterSheetPanel';
 import { DiceLoader } from '../components/ui/dice-loader';
+
+type RoomMembership = any;
 
 interface MembershipState {
   items: RoomMembership[];
