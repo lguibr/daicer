@@ -19,6 +19,7 @@ import NotFoundPage from './pages/NotFound';
 import ErrorPage from './pages/Error';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AssetsProvider } from './state/assetsStore';
+import DebugPage from './pages/DebugPage';
 
 import AuthEventHandler from './components/auth/AuthEventHandler';
 
@@ -148,6 +149,7 @@ export default function App() {
           }
         />
         <Route path="/error" element={<ErrorPage />} />
+        <Route path="/debug" element={<DebugPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

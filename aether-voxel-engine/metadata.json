@@ -1,5 +1,0 @@
-{
-  "name": "Aether Voxel Engine",
-  "description": "A framework-agnostic, deterministic procedural world generator with infinite XY scrolling, Z-level layering (-3 to +3), fog of war, and entity management.",
-  "requestFramePermissions": []
-}
