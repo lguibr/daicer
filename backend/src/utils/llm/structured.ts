@@ -106,7 +106,7 @@ export async function generateStructured<T extends z.ZodType>(
   console.log(`[LLM Structured] Using Gemini model: ${geminiModelToken}`);
 
   const baseModel = getGeminiModel(geminiModelToken, config);
-  const structuredModel = baseModel.withStructuredOutput(schema);
+  const structuredModel = baseModel.withStructuredOutput(schema as any);
 
   try {
     const response = await structuredModel.invoke(messages, runnableConfig);
