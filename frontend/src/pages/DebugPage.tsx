@@ -9,13 +9,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../components/ui/breadcrumb';
-import { RoomSelection } from '../features/debug/components/RoomSelection';
-import { DMSetup } from '../features/debug/components/DMSetup';
+
+import RoomSelection from '../features/debug/components/RoomSelection';
+// Replaced DMSetup with CampaignWizard
+import { CampaignWizard } from '../features/create-room/components/CampaignWizard';
+import WorldConfigForm from '../features/debug/components/WorldConfigForm';
 import { GameDebugView } from '../features/debug/components/GameDebugView';
-import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
+import { createRoom } from '../services/api'; // Use API service
+import type { WorldSettings } from '../types/models';
 import { Button } from '../components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { CREATE_ROOM_MUTATION, CREATE_DM_SETTING_MUTATION } from '../graphql/mutations';
+// Removed CREATE_ROOM_MUTATION, CREATE_DM_SETTING_MUTATION as they are no longer used.
 
 type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
 
