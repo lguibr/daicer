@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@daicer/shared": "*",
+    "@daicer/engine": "*",
     "@google/genai": "^1.32.0",
     "@langchain/core": "^1.1.4",
     "@langchain/google-genai": "^2.0.4",

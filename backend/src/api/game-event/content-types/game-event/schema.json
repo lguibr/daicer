@@ -1,0 +1,42 @@
+{
+    "kind": "collectionType",
+    "collectionName": "game_events",
+    "info": {
+        "singularName": "game-event",
+        "pluralName": "game-events",
+        "displayName": "Game Event",
+        "description": "Immutable log of game actions for Time Machine functionality"
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "room": {
+            "type": "relation",
+            "relation": "manyToOne",
+            "target": "api::room.room",
+            "inversedBy": "events"
+        },
+        "type": {
+            "type": "string",
+            "required": true
+        },
+        "turnNumber": {
+            "type": "integer",
+            "default": 0,
+            "index": true
+        },
+        "timestamp": {
+            "type": "biginteger",
+            "required": true
+        },
+        "payload": {
+            "type": "json",
+            "required": true
+        },
+        "actorId": {
+            "type": "string"
+        }
+    }
+}

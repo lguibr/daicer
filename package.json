@@ -6,9 +6,7 @@
   "workspaces": [
     "backend",
     "frontend",
-    "infra",
-    "shared",
-    "backend/src/plugins/terrain-explorer"
+    "engine"
   ],
   "scripts": {
     "dev": "echo '🎮 Starting Daicer environment...' && concurrently -n \"backend,frontend\" -c \"blue,green\" \"yarn dev:backend\" \"yarn dev:frontend\"",

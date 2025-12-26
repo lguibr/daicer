@@ -11,3 +11,9 @@ export * from './character/index';
 export * from './room/index';
 export * from './player/index';
 export * from './user/index';
+
+// Re-export engine modules
+export * from './voxel/index';
+export * from './render/index';
+export * as Voxel from './voxel/index';
+export * as Render from './render/index';
