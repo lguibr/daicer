@@ -39,48 +39,109 @@ export function WorldPreview({ config, className }: WorldPreviewProps) {
     return () => observer.disconnect();
   }, []);
 
-  // Fetch Logic
+  // --- Fetch Logic (Batched GraphQL) ---
+
+  const batchQueue = useRef<Set<string>>(new Set());
+  const batchTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const getChunkId = (cx: number, cy: number) => `${cx},${cy}`;
 
-  const fetchChunk = async (cx: number, cy: number, cfg: WorldConfig) => {
-    const id = getChunkId(cx, cy);
-    if (loadingChunks.has(id)) return;
-    // Note: We don't check cache here if we want to force refresh on config change
-    // But usually we clear cache on config change.
+  const processBatch = async () => {
+    if (batchQueue.current.size === 0) return;
+
+    const queuedIds = Array.from(batchQueue.current);
+    batchQueue.current.clear();
+    batchTimeout.current = null;
+
+    const chunksToFetch = queuedIds
+      .map((id) => {
+        const [x, y] = id.split(',').map(Number);
+        if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) return null;
+        return { x, y };
+      })
+      .filter((c): c is { x: number; y: number } => c !== null);
 
     try {
-      setLoadingChunks((prev) => new Set(prev).add(id));
-      const res = await fetch('http://localhost:1337/api/voxel-engine/preview', {
+      const query = `
+        query VoxelPreview($chunks: [ChunkRequestInput]!, $config: WorldConfigInput!) {
+          voxelPreview(chunks: $chunks, config: $config)
+        }
+      `;
+
+      const response = await fetch('http://localhost:1337/graphql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ x: cx, y: cy, config: cfg }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('jwt') || ''}`,
+        },
+        body: JSON.stringify({
+          query,
+          variables: {
+            chunks: chunksToFetch,
+            config: internalConfig,
+          },
+        }),
       });
-      if (!res.ok) throw new Error('Failed to fetch chunk');
-      const chunk = await res.json();
-      setChunkCache((prev) => ({ ...prev, [id]: chunk }));
+
+      const json = await response.json();
+
+      if (json.errors) {
+        throw new Error(json.errors[0].message);
+      }
+
+      const results = json.data?.voxelPreview;
+
+      if (Array.isArray(results)) {
+        setChunkCache((prev) => {
+          const next = { ...prev };
+          results.forEach((chunk: Chunk, index: number) => {
+            const req = chunksToFetch[index];
+            if (req) {
+              next[getChunkId(req.x, req.y)] = chunk;
+            }
+          });
+          return next;
+        });
+      }
     } catch (e) {
-      console.error('Preview fetch error:', e);
+      console.error('Batch Preview Fetch Failed:', e);
     } finally {
       setLoadingChunks((prev) => {
         const next = new Set(prev);
-        next.delete(id);
+        queuedIds.forEach((id) => next.delete(id));
         return next;
       });
-      setIsRegenerating(false);
+      // If queue is empty, we are done regenerating
+      if (batchQueue.current.size === 0) {
+        setIsRegenerating(false);
+      }
     }
+  };
+
+  const fetchChunk = (cx: number, cy: number) => {
+    const id = getChunkId(cx, cy);
+    if (loadingChunks.has(id) || chunkCache[id]) return;
+
+    setLoadingChunks((prev) => new Set(prev).add(id));
+    batchQueue.current.add(id);
+
+    if (batchTimeout.current) {
+      clearTimeout(batchTimeout.current);
+    }
+    batchTimeout.current = setTimeout(processBatch, 50);
   };
 
   // Regeneration Trigger
   useEffect(() => {
-    // When config prop changes, we reset cache and refetch
-    // Debounce could be handled by parent, or we just react to prop updates
     setInternalConfig(config);
     setChunkCache({});
-    setIsRegenerating(true);
-    fetchChunk(0, 0, config);
-    // Reset camera? Maybe not, user might want to compare same spot
+    setIsRegenerating(true); // Will be cleared when batches finish or manually if logic needs refinement
+    // Note: With batching, isRegenerating might flap if we don't track active batches carefully.
+    // For simple UI spinner, keeping it true until first batch works or maybe just checking loadingChunks.
+
+    // Trigger initial fetch
+    fetchChunk(0, 0);
   }, [config.seed, config.globalScale, config.seaLevel, config.moistureScale, config.temperatureOffset]);
-  // Add other deps if needed, or just deep compare. For now, key params.
 
   // Chunk Provider
   const chunkProvider = useMemo(
@@ -90,12 +151,11 @@ export function WorldPreview({ config, className }: WorldPreviewProps) {
         const chunk = chunkCache[id];
         if (chunk) return chunk;
 
-        // Trigger fetch
-        fetchChunk(x, y, internalConfig);
-        return null;
+        fetchChunk(x, y);
+        return null; // Return null while loading
       },
     }),
-    [chunkCache, internalConfig]
+    [chunkCache, internalConfig] // Re-enable if config changes affects ID (it doesn't, but changes cache)
   );
 
   return (
