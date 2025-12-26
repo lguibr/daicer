@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import type { Attribute } from '../@daicer/engine';
+import type { Attribute } from '@daicer/engine';
 import Label from '../../ui/label';
 import NumericStepper from '../../ui/NumericStepper';
 import { useI18n } from '../../../i18n';
@@ -42,7 +42,7 @@ export function AttributesSection({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {ATTRIBUTES.map((attr) => {
-          const score = attributes[attr];
+          const score = attributes?.[attr] ?? 10;
           const modifier = Math.floor((score - 10) / 2);
           const cost = getPointCost(score);
           const nextCost = score >= 15 ? cost : getPointCost(score + 1);

@@ -35,6 +35,7 @@ interface DiceRollData {
 interface StreamingMessage extends Message {
   isStreaming?: boolean;
   streamContent?: string;
+  content?: string; // Legacy compatibility
   diceRolls?: DiceRollData[];
   toolCalls?: SocketToolCall[];
 }

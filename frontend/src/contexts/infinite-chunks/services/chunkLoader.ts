@@ -111,6 +111,8 @@ export async function loadChunk(
     const chunk: TerrainChunk = {
       chunkX,
       chunkY,
+      x: chunkX,
+      y: chunkY,
       worldOffsetX: worldX,
       worldOffsetY: worldY,
       tiles,
@@ -124,7 +126,7 @@ export async function loadChunk(
       isStartingArea: chunkX === 0 && chunkY === 0,
       seed: roomId,
       z: 0,
-      grid: chunkData.tiles, // Pass 3D grid (typed as any to satisfy legacy interface if needed, or update TerrainChunk)
+      // grid: chunkData.tiles,
     };
 
     return chunk;

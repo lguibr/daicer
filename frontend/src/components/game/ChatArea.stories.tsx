@@ -35,7 +35,6 @@ const createMessage = (overrides: Partial<Message>): Message => ({
   id: `msg-${Date.now()}`,
   sender: 'DM',
   text: 'Message content',
-  content: 'Message content',
   timestamp: Date.now(),
   ...overrides,
 });

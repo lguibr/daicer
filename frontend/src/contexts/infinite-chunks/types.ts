@@ -5,13 +5,23 @@
 
 import type { ChunkDTO, Tile } from '@daicer/engine';
 
-export type TerrainChunk = Omit<GridChunk, 'tiles' | 'biomes'> & {
+export type TerrainChunk = Omit<ChunkDTO, 'tiles'> & {
   tiles: Tile[][];
   biomes: string[][];
+  structures: unknown[];
+  features: unknown[];
+  // Legacy flags
+  hasCave: boolean;
+  hasStructure: boolean;
+  generated: boolean;
+  isStartingArea: boolean;
+  seed: string;
+  z: number;
+  // grid?: ChunkDTO['grid']; // 3D Grid support
+  chunkX: number;
+  chunkY: number;
   worldOffsetX: number;
   worldOffsetY: number;
-  structures: unknown[];
-  grid?: ChunkDTO['grid']; // 3D Grid support (Lightweight DTO format)
 };
 
 export interface ChunkGenerator {

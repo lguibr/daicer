@@ -10,6 +10,7 @@ import { DiceLoader } from '../ui/dice-loader';
 interface StreamingMessage extends Message {
   isStreaming?: boolean;
   streamContent?: string;
+  content?: string; // Legacy compatibility
 }
 
 interface StreamingChatAreaProps {

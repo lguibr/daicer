@@ -23,7 +23,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
     loadRadius = 5,
     enabled = true,
     chunkGenerator,
-    placementMap,
+    // placementMap,
     layer = 0,
     token,
   } = options;
@@ -45,7 +45,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
       loadRadius,
       enabled,
       chunkGeneratorChanged: !!chunkGenerator,
-      placementMapChanged: !!placementMap,
+      // placementMapChanged: !!placementMap,
       layer,
     });
 
@@ -63,14 +63,14 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
           token,
         },
         chunkGenerator,
-        placementMap,
+        // placementMap,
       },
     });
 
     console.log(
       `[InfiniteChunks] Initialized for room ${roomId} (mode: ${chunkGenerator ? 'generator' : 'backend'}, layer: ${layer})`
     );
-  }, [roomId, initialGrid, chunkSize, loadRadius, enabled, chunkGenerator, placementMap, layer]);
+  }, [roomId, initialGrid, chunkSize, loadRadius, enabled, chunkGenerator, /* placementMap, */ layer]);
 
   // Internal chunk loading logic
   const checkChunkLoadingInternal = useCallback(
@@ -133,7 +133,14 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
           });
       }
     },
-    [enabled, state.initialized, state.config, state.chunks, state.loading, state.chunkGenerator, state.placementMap]
+    [
+      enabled,
+      state.initialized,
+      state.config,
+      state.chunks,
+      state.loading,
+      state.chunkGenerator /* state.placementMap */,
+    ]
   );
 
   // Force initial chunk loading for empty grids

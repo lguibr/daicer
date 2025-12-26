@@ -42,8 +42,9 @@ const textureCache: Record<string, THREE.CanvasTexture> = {};
 
 function createNumberTexture(number: string): THREE.CanvasTexture {
   const cacheKey = number;
-  if (textureCache[cacheKey]) {
-    return textureCache[cacheKey];
+  const cached = textureCache[cacheKey];
+  if (cached) {
+    return cached;
   }
 
   const canvas = document.createElement('canvas');

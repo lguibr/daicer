@@ -1,5 +1,5 @@
 import type { AvatarGenerationPayload, AvatarPreviewImage, ReferenceImagePayload } from '../../../types/assets';
-import type { Room } from '../@daicer/engine';
+import type { Room } from '@daicer/engine';
 import type { CharacterFormState } from './types';
 import {
   MAX_PREVIEW_DIMENSION,

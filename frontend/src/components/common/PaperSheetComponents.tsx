@@ -1,4 +1,3 @@
-import React from 'react';
 import type { SkillDetail } from '@daicer/engine';
 
 // Paper Theme Styles

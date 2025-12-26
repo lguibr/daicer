@@ -35,7 +35,7 @@ export function createInitialState(): InfiniteChunksState {
 export function infiniteChunksReducer(state: InfiniteChunksState, action: InfiniteChunksAction): InfiniteChunksState {
   switch (action.type) {
     case 'INITIALIZE': {
-      const { initialGrid, config, chunkGenerator, placementMap } = action.payload;
+      const { initialGrid, config, chunkGenerator /* placementMap */ } = action.payload;
 
       // Determine mode based on presence of generator
       const mode: 'backend' | 'generator' = chunkGenerator ? 'generator' : 'backend';
@@ -47,7 +47,7 @@ export function infiniteChunksReducer(state: InfiniteChunksState, action: Infini
         gridWorldOffset: { x: 0, y: 0 },
         config: { ...config, mode },
         chunkGenerator,
-        placementMap,
+        // placementMap,
         initialized: true,
       };
     }

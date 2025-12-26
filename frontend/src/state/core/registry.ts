@@ -52,7 +52,7 @@ export function mergeWithRegistry<TState extends Record<string, any>>(
 
     if (typeof update === 'undefined') return;
 
-    (next as any)[key] = reducer(current, update);
+    (next as any)[key] = reducer(current, update as any);
   });
 
   return next;
