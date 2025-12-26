@@ -1,6 +1,6 @@
 import { generateStructured } from '../../../utils/llm/structured';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
-import type { WorldSettings, Language } from '../../../types/index';
+import type { WorldSettings, Language } from '@daicer/engine';
 
 // Helper to format DM style into a readable summary for the LLM
 // Duplicated here to avoid circular dep, or could be moved to shared utils

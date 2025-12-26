@@ -31,7 +31,8 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@daicer/engine": ["../engine/src/index.ts"]
     },
     "allowSyntheticDefaultImports": true
   },

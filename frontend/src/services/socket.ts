@@ -187,7 +187,7 @@ export function joinRoom(roomId: string, userId?: string): void {
     return;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  socket.emit('room:join', { roomId, userId } as any);
+  socket.emit('room:join', { roomId, userId });
 }
 
 /**

@@ -25,10 +25,8 @@ import {
   WORLD_SIZE_VALUES,
   WORLD_SIZE_FALLBACK,
 } from '@/pages/create-room/constants';
-import type { WorldSettings, DMStyle } from '@/types/models';
+import type { WorldSettings, DMStyle, ScaleLevel } from '@daicer/engine';
 import type { WorldConfig } from '@/features/debug/utils/types';
-
-type ScaleLevel = number;
 
 interface CampaignWizardProps {
   initialSettings?: Partial<WorldSettings>;

@@ -1,22 +1,18 @@
 import { generateStructured } from '../../../utils/llm/structured';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
 import { streamManager } from '../../../utils/llm/stream-manager';
-import type { WorldSettings, Player, Creature, Message, Language } from '../../../types/index';
+import { createCharacterSnapshot, formatDmInstruction } from '@daicer/engine';
+import type { WorldSettings, Player, Creature, Message, Language } from '@daicer/engine';
 
 // Helper to create character snapshots
 const createSnapshot = (characterSheets: any[]) => {
   const snapshot: Record<string, any> = {};
   for (const sheet of characterSheets) {
     if (sheet && sheet.documentId) {
-      snapshot[sheet.documentId] = {
-        hp: sheet.currentHp,
-        maxHp: sheet.maxHp,
-        stats: sheet.stats,
-        inventory: sheet.inventory,
-        level: sheet.level,
-        experience: sheet.experience,
-        position: sheet.position,
-      };
+      const snap = createCharacterSnapshot(sheet);
+      if (snap) {
+        snapshot[sheet.documentId] = snap;
+      }
     }
   }
   return snapshot;
@@ -25,26 +21,6 @@ const createSnapshot = (characterSheets: any[]) => {
 // Stub for RAG
 async function getRuleContext(): Promise<string> {
   return '';
-}
-
-// Helper to format DM style
-function formatDmStyle(style) {
-  if (!style) return 'Standard DM Style';
-  const verbosityMap = ['Whisper (Minimal)', 'Terse', 'Measured', 'Storied', 'Lyrical', 'Epic', 'Operatic (Grand)'];
-  const detailMap = ['Minimal', 'Lean', 'Focused', 'Balanced', 'Textured', 'Immersive', 'Cinematic'];
-  const engagementMap = ['Observer', 'Facilitator', 'Guide', 'Collaborator', 'Showrunner', 'Auteur', 'Oracle'];
-  const narrativeMap = ['Sandbox', 'Reactive', 'Responsive', 'Structured', 'Plotted', 'Storied', 'Authored'];
-
-  return [
-    `- Verbosity: ${verbosityMap[style.verbosity] || 'Normal'}`,
-    `- Detail: ${detailMap[style.detail] || 'Normal'}`,
-    `- Engagement: ${engagementMap[style.engagement] || 'Normal'}`,
-    `- Narrative Control: ${narrativeMap[style.narrative] || 'Normal'}`,
-    style.specialMode ? `- Performance Mode: ${style.specialMode}` : null,
-    style.customDirectives ? `- Custom Directives: "${style.customDirectives}"` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
 }
 
 export default ({ strapi }) => ({
@@ -86,7 +62,8 @@ export default ({ strapi }) => ({
     // Style Instructions
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {
-      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${formatDmStyle(settings.dmStyle)}`;
+      const instruction = formatDmInstruction(settings.dmStyle);
+      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${instruction}`;
     }
 
     const systemPromptDefault = `You are the Dungeon Master (DM) for a D&D 5e adventure.

@@ -3,7 +3,7 @@
  * Delegating logic to specialized services
  */
 
-import type { WorldSettings, Player, Creature, Message, Language } from '../../../types/index';
+import type { WorldSettings, Player, Creature, Message, Language } from '@daicer/engine';
 // import { getRuleContext } from '../../../utils/rag'; // TODO: precise path if implemented
 
 export default ({ strapi }) => ({

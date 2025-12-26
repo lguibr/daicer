@@ -17,7 +17,7 @@ import { CampaignWizard } from '../features/create-room/components/CampaignWizar
 import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
 import { GameDebugView } from '../features/debug/components/GameDebugView';
 import { createRoom } from '../services/api'; // Use API service
-import type { WorldSettings } from '../types/models';
+import type { WorldSettings } from '@daicer/engine';
 
 type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
 

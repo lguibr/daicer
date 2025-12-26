@@ -7,7 +7,7 @@ import BaseLayout from './BaseLayout';
 import Navbar from './Navbar';
 import AppBreadcrumb from './AppBreadcrumb';
 import RoomInfoBar from './RoomInfoBar';
-import type { Room, Player } from '../../types/models';
+import type { Room, Player } from '@daicer/engine';
 
 interface PrivateLayoutProps {
   children: ReactNode;

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen } from 'lucide-react';
 
-import type { Room, Player } from '../../types/models';
+import type { Room, Player } from '@daicer/engine';
 // Let's verify compatibility.
 
 import useStreamingSocket from '../../hooks/useStreamingSocket';

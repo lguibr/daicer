@@ -3,6 +3,7 @@ import type { WorldConfig as OldWorldConfig, Coordinates, Chunk } from '../utils
 import { MapRenderer } from './MapRenderer';
 import { GodModeChat, type GodModeMessage } from './GodModeChat'; // New Chat Component
 import useSocket from '@/hooks/useSocket';
+import { useChunkLoader } from '@/hooks/useChunkLoader';
 import clsx from 'clsx';
 
 // Default config
@@ -158,9 +159,11 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   // Pathfinding State
   // const [pathDistance] = useState<number | null>(null);
 
-  // Chunk Cache
-  const [chunkCache, setChunkCache] = useState<Record<string, Chunk>>({});
-  const [loadingChunks, setLoadingChunks] = useState<Set<string>>(new Set());
+  // Chunk Loader
+  const { chunkCache, getChunk, isLoading } = useChunkLoader({ config });
+
+  // Helper
+  const getChunkId = (cx: number, cy: number) => `${cx},${cy}`;
 
   // Active Entity Visibility (Derived)
   const visibleTiles = useMemo(() => {
@@ -180,125 +183,15 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
     return visible;
   }, [activeEntity?.position, activeEntity?.visionRadius]);
 
-  // --- Effects ---
-
-  // Batching Refs
-  const batchQueue = useRef<Set<string>>(new Set());
-  const batchTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  // Helper to get raw tile data - modified to fetch if missing
-  const getChunkId = (cx: number, cy: number) => `${cx},${cy}`;
-
-  const processBatch = async () => {
-    if (batchQueue.current.size === 0) return;
-
-    // Snapshot queue
-    const queuedIds = Array.from(batchQueue.current);
-    batchQueue.current.clear();
-    batchTimeout.current = null;
-
-    const chunksToFetch = queuedIds
-      .map((id) => {
-        const [x, y] = id.split(',').map(Number);
-        if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) return null;
-        return { x, y };
-      })
-      .filter((c): c is { x: number; y: number } => c !== null);
-
-    try {
-      // GraphQL Query
-      const query = `
-        query VoxelPreview($chunks: [ChunkRequestInput]!, $config: WorldConfigInput!) {
-          voxelPreview(chunks: $chunks, config: $config)
-        }
-      `;
-
-      const response = await fetch('http://localhost:1337/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('jwt') || ''}`, // Pass auth if needed, though resolver is public
-        },
-        body: JSON.stringify({
-          query,
-          variables: {
-            chunks: chunksToFetch,
-            config: config,
-          },
-        }),
-      });
-
-      const json = await response.json();
-
-      if (json.errors) {
-        throw new Error(json.errors[0].message);
-      }
-
-      const results = json.data?.voxelPreview;
-
-      if (Array.isArray(results)) {
-        setChunkCache((prev) => {
-          const next = { ...prev };
-          results.forEach((chunk: Chunk, index: number) => {
-            const req = chunksToFetch[index];
-            if (req) {
-              next[getChunkId(req.x, req.y)] = chunk;
-            }
-          });
-          return next;
-        });
-      }
-    } catch (e) {
-      console.error('Batch Fetch Failed', e);
-      // Remove from loading so they can be retried?
-      // Or keep them as loading to prevent flood loop on error?
-      // For now, allow retry after some time or just log.
-    } finally {
-      // Clear loading status
-      setLoadingChunks((prev) => {
-        const next = new Set(prev);
-        queuedIds.forEach((id) => next.delete(id));
-        return next;
-      });
-    }
-  };
-
-  const fetchChunk = (cx: number, cy: number) => {
-    const id = getChunkId(cx, cy);
-    if (loadingChunks.has(id) || chunkCache[id]) return;
-
-    // Add to loading immediately to prevent duplicate queueing
-    setLoadingChunks((prev) => new Set(prev).add(id));
-
-    // Add to batch queue
-    batchQueue.current.add(id);
-
-    // Debounce
-    if (batchTimeout.current) {
-      clearTimeout(batchTimeout.current);
-    }
-    batchTimeout.current = setTimeout(processBatch, 50); // 50ms batch window
-  };
-
-  // Initial load
-  useEffect(() => {
-    setChunkCache({});
-    fetchChunk(0, 0); // Reload on seed change
-  }, [config.seed]);
-
   // Chunk Provider for Renderer
   const chunkProvider = useMemo(
     () => ({
       getChunk: (x: number, y: number) => {
-        const chunk = chunkCache[getChunkId(x, y)];
-        if (chunk) return chunk;
-
-        // Trigger fetch if not found and not loading
-        fetchChunk(x, y);
-        return null; // Return null while loading
+        // God mode tends to want to see everything requested, so we just pass through
+        return getChunk(x, y);
       },
     }),
-    [chunkCache, config, loadingChunks]
+    [getChunk]
   );
 
   const getTileAt = (x: number, y: number, z: number) => {

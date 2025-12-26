@@ -1,0 +1,15 @@
+export const DEFAULT_GENERATION_PARAMS = {
+  chunkSize: 16,
+  globalScale: 0.02,
+  seaLevel: 0.0,
+  elevationScale: 0.5,
+  roughness: 0.5,
+  detail: 4,
+  moistureScale: 0.015,
+  temperatureOffset: 0.0,
+  structureChance: 0.1,
+  structureSpacing: 3,
+  structureSizeAvg: 10,
+  roadDensity: 0.2,
+  fogRadius: 15,
+};

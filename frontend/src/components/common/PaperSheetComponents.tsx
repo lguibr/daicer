@@ -1,4 +1,5 @@
-import type { SkillDetail } from '../../types/models';
+import { calculateModifier } from '@daicer/engine';
+import type { SkillDetail } from '@daicer/engine';
 
 // Paper Theme Styles
 export const paperStyles = {
@@ -39,7 +40,7 @@ interface AttributeBoxProps {
 }
 
 export function AttributeBox({ label, score }: AttributeBoxProps) {
-  const mod = Math.floor((score - 10) / 2);
+  const mod = calculateModifier(score);
   return (
     <div className="flex flex-col items-center">
       <div className="font-display font-bold text-sm text-shadow-700 uppercase tracking-widest mb-1">

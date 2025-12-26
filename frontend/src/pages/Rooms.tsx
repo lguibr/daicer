@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
-import type { Player, Room } from '../types/models';
+import type { Player, Room } from '@daicer/engine';
 type RoomMembership = any;
 import { listRooms, leaveRoom } from '../services/api';
 import { PrivateLayout } from '../components/layout';

@@ -3,7 +3,8 @@
  * Mirror of backend types for type-safe client
  */
 
-import type { ChunkDTO as GridChunk, Entity, Room, Player, Message, Creature } from './models';
+import type { ChunkDTO as GridChunk, Entity, Room, Player, Message, Creature } from '@daicer/engine';
+import type { RoomJoinPayload, TurnProcessPayload, PlayerActionPayload } from '@daicer/shared';
 
 /**
  * Events received from server (matches backend ServerToClientEvents)
@@ -13,28 +14,28 @@ export interface ServerToClientEvents {
   connect: () => void;
   disconnect: (reason: string) => void;
 
-  // Game state - actual structure from backend
+  // Game state
   'game:state': (data: { room: Room; players: Player[]; messages: Message[]; creatures: Creature[] }) => void;
 
-  // Room - actual structure from backend
+  // Room
   'room:updated': (data: { type: string; userId: string; action?: string | null }) => void;
   'room:all_ready': (data: { roomId: string }) => void;
   'room:phase_changed': (data: { roomId: string; phase: string }) => void;
 
-  // Player - actual structures from backend
+  // Player
   'player:joined': (data: { userId: string }) => void;
   'player:left': (data: { userId: string }) => void;
   'player:created': (data: { player: Player }) => void;
   'player:ready_updated': (data: { userId: string; isReady: boolean }) => void;
 
-  // Turn - actual structures from backend
+  // Turn
   'turn:processing': () => void;
   'turn:complete': () => void;
 
-  // Tools - actual structure from backend
+  // Tools
   'tool:calls': (toolCalls: any[]) => void;
 
-  // Messages - actual structure from backend
+  // Messages
   'message:new': (message: Message) => void;
   'game:start': (data: { room: Room; text: string; sender: string; timestamp: number }) => void;
   'message:stream:start': (data: { streamId: string; messageId: string; sender: string; timestamp: number }) => void;
@@ -56,7 +57,7 @@ export interface ServerToClientEvents {
   // Presence
   'presence:update': (data: { roomId: string; presence: any[] }) => void;
 
-  // World chunks (Legacy/REST mostly, but typed here)
+  // World chunks
   'world:chunk:data': (data: {
     worldId: string;
     chunkX: number;
@@ -74,7 +75,7 @@ export interface ServerToClientEvents {
   'world:chunk:error': (data: { error: string; details?: string }) => void;
   'world:chunks:complete': (data: { worldId: string; count: number; failed?: number }) => void;
 
-  // Map View (Centralized)
+  // Map View
   'map:view:result': (data: {
     roomId: string;
     center: { x: number; y: number; z: number };
@@ -92,19 +93,19 @@ export interface ServerToClientEvents {
  */
 export interface ClientToServerEvents {
   // Room
-  'room:join': (data: { roomId: string }) => void;
+  'room:join': (data: RoomJoinPayload) => void;
   'room:leave': (data: { roomId: string }) => void;
   'room:create': (data: { name: string; config?: any }, callback?: (error: Error | null, room?: Room) => void) => void;
 
   // Player
   'player:ready': (data: { roomId: string; isReady: boolean }) => void;
-  'player:action': (data: { roomId: string; action: string }) => void;
+  'player:action': (data: PlayerActionPayload) => void;
   'player:move': (data: { roomId: string; position: { x: number; y: number; z: number } }) => void;
 
   // Game
   'game:start': (data: { roomId: string }) => void;
   'game:submit_turn': (data: { roomId: string; actions: any[] }) => void;
-  'turn:process': (data: { roomId: string; language?: string }) => void;
+  'turn:process': (data: TurnProcessPayload) => void;
 
   // Combat
   'combat:action': (data: any) => void;
@@ -119,7 +120,7 @@ export interface ClientToServerEvents {
   'presence:typing': (data: { roomId: string; userName: string; isTyping: boolean }) => void;
   'presence:heartbeat': (data: { roomId: string; userName: string }) => void;
 
-  // World chunks (Legacy)
+  // World chunks
   'world:chunk:request': (
     data: { worldId: string; chunkX: number; chunkY: number; chunkZ: number },
     callback?: (error: { error: string } | null) => void
@@ -132,7 +133,7 @@ export interface ClientToServerEvents {
     callback?: (error: { error: string } | null) => void
   ) => void;
 
-  // Map View (Centralized)
+  // Map View
   'map:view:query': (data: {
     roomId: string;
     x: number;

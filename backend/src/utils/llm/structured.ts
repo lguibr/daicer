@@ -5,7 +5,7 @@
 
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
-import type { Language } from '../../types/index';
+import type { Language } from '@daicer/engine';
 import { extractErrorDetails, getGeminiModel } from './gemini';
 import { type TextGenConfig, GeminiModel } from './types';
 import { getPrompt, formatPrompt } from '../prompt';

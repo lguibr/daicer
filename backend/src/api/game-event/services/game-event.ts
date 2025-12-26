@@ -78,7 +78,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     const physics = new PhysicsEngine(gen);
 
     // @ts-ignore
-    const isWalkable = physics.isWalkable({ x: to.x, y: to.y, z: to.z as any });
+    const isWalkable = await physics.isWalkable({ x: to.x, y: to.y, z: to.z as any });
 
     return {
       valid: isWalkable,
@@ -129,7 +129,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     const chunkY = Math.floor(y / chunkSize);
 
     // Get the chunk
-    const chunk = gen.getChunk(chunkX, chunkY);
+    const chunk = await gen.getChunk(chunkX, chunkY);
 
     // Find tile in chunk
     const localX = ((x % chunkSize) + chunkSize) % chunkSize;
@@ -138,8 +138,8 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     const z = 0;
 
     // Helper to safe get
-    const safeGet = (cx: number, cy: number, lx: number, ly: number) => {
-      const c = gen.getChunk(cx, cy);
+    const safeGet = async (cx: number, cy: number, lx: number, ly: number) => {
+      const c = await gen.getChunk(cx, cy);
       // @ts-ignore
       if (c && c.tiles && c.tiles[z] && c.tiles[z][lx] && c.tiles[z][lx][ly]) {
         // @ts-ignore
@@ -148,7 +148,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
       return null;
     };
 
-    const tile = safeGet(chunkX, chunkY, localX, localY);
+    const tile = await safeGet(chunkX, chunkY, localX, localY);
 
     if (!tile) return `Void at ${x},${y}`;
     return `Terrain: ${tile.biome} (${tile.block})`;

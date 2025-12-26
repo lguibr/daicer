@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import PrivateLayout from '../components/layout/PrivateLayout';
 import { createRoom } from '../services/api';
-import type { WorldSettings } from '../types/models';
+import type { WorldSettings } from '@daicer/engine';
 
 import { CampaignWizard } from '../features/create-room/components/CampaignWizard';
 

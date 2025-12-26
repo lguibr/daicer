@@ -1,42 +1,20 @@
 import { generateText } from '../../../utils/llm';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
 import { uploadBase64Image } from '../../../utils/upload';
-import type { WorldSettings, Player, CharacterSheet, Language } from '../../../types/index';
+import { createCharacterSnapshot, formatDmInstruction } from '@daicer/engine';
+import type { WorldSettings, Player, CharacterSheet, Language } from '@daicer/engine';
 
 // Helper to format DM style
-function formatDmStyle(style) {
-  if (!style) return 'Standard DM Style';
-  const verbosityMap = ['Whisper (Minimal)', 'Terse', 'Measured', 'Storied', 'Lyrical', 'Epic', 'Operatic (Grand)'];
-  const detailMap = ['Minimal', 'Lean', 'Focused', 'Balanced', 'Textured', 'Immersive', 'Cinematic'];
-  const engagementMap = ['Observer', 'Facilitator', 'Guide', 'Collaborator', 'Showrunner', 'Auteur', 'Oracle'];
-  const narrativeMap = ['Sandbox', 'Reactive', 'Responsive', 'Structured', 'Plotted', 'Storied', 'Authored'];
-
-  return [
-    `- Verbosity: ${verbosityMap[style.verbosity] || 'Normal'}`,
-    `- Detail: ${detailMap[style.detail] || 'Normal'}`,
-    `- Engagement: ${engagementMap[style.engagement] || 'Normal'}`,
-    `- Narrative Control: ${narrativeMap[style.narrative] || 'Normal'}`,
-    style.specialMode ? `- Performance Mode: ${style.specialMode}` : null,
-    style.customDirectives ? `- Custom Directives: "${style.customDirectives}"` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
 
 export default ({ strapi }) => ({
   createSnapshot(characterSheets: any[]) {
     const snapshot: Record<string, any> = {};
     for (const sheet of characterSheets) {
       if (sheet && sheet.documentId) {
-        snapshot[sheet.documentId] = {
-          hp: sheet.currentHp,
-          maxHp: sheet.maxHp,
-          stats: sheet.stats,
-          inventory: sheet.inventory,
-          level: sheet.level,
-          experience: sheet.experience,
-          position: sheet.position,
-        };
+        const snap = createCharacterSnapshot(sheet);
+        if (snap) {
+          snapshot[sheet.documentId] = snap;
+        }
       }
     }
     return snapshot;
@@ -170,7 +148,8 @@ export default ({ strapi }) => ({
   ): Promise<string> {
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {
-      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${formatDmStyle(settings.dmStyle)}`;
+      const instruction = formatDmInstruction(settings.dmStyle);
+      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${instruction}`;
     }
 
     const c = character as any;
@@ -238,7 +217,8 @@ Start with ### Through ${character.name}'s Eyes`;
   ): Promise<string> {
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {
-      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${formatDmStyle(settings.dmStyle)}`;
+      const instruction = formatDmInstruction(settings.dmStyle);
+      dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${instruction}`;
     }
 
     const partyContext =

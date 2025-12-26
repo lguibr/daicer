@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { generateAvatarPortrait, generateAvatarUpperBody, generateAvatarFullBody } from '../../../../services/api';
 import { buildAvatarPayload, appendReference, downscalePreviewImage } from '../avatarHelpers';
-import { GamePhase } from '../../../../types/models';
+import { GamePhase } from '../../@daicer/engine';
 
 export function useAvatarGeneration(
   formData: any,

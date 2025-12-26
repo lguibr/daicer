@@ -1,6 +1,8 @@
+import { StrapiWithServer, RoomJoinPayload } from '../types';
+
 export const handleRoomJoin =
-  (strapi) =>
-  async (socket, { roomId, userId }) => {
+  (strapi: StrapiWithServer) =>
+  async (socket: any, { roomId, userId }: RoomJoinPayload) => {
     try {
       strapi.log.info(`Socket ${socket.id} joining room ${roomId} as user ${userId}`);
       socket.join(roomId);
@@ -46,13 +48,13 @@ export const handleRoomJoin =
         room: {
           id: room.documentId,
           roomId: room.roomId,
-          name: room.settings?.name || 'Adventure',
+          name: (room.settings as any)?.name || 'Adventure',
           phase: room.phase,
           worldDescription: room.worldDescription,
         },
         players: room.players,
         messages: mappedMessages,
-        creatures: room.creatures || [],
+        creatures: (room as any).creatures || [],
         isProcessing: false,
       };
 

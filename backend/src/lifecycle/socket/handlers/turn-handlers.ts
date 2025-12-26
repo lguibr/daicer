@@ -1,8 +1,9 @@
 import { streamManager } from '../../../utils/llm/stream-manager';
+import { StrapiWithServer, TurnProcessPayload, PlayerActionPayload } from '../types';
 
 export const handleTurnProcess =
-  (strapi) =>
-  async (socket, { roomId, language }) => {
+  (strapi: StrapiWithServer) =>
+  async (socket: any, { roomId, language }: TurnProcessPayload) => {
     strapi.log.info(`[Socket] Processing turn for room ${roomId}`);
     try {
       streamManager.broadcast(roomId, 'turn:processing', { roomId });
@@ -43,7 +44,7 @@ export const handleTurnProcess =
           [],
           language || 'en',
           room.settings,
-          room.worldConditions
+          (room as any).worldConditions
         );
 
       streamManager.broadcast(roomId, 'turn:complete', { roomId });
@@ -55,7 +56,7 @@ export const handleTurnProcess =
   };
 
 export const handlePlayerAction =
-  (strapi) =>
-  async (socket, { roomId, action }) => {
+  (strapi: StrapiWithServer) =>
+  async (socket: any, { roomId, action }: PlayerActionPayload) => {
     strapi.log.info(`[Socket] Player action in room ${roomId}: ${action}`);
   };

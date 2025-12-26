@@ -45,7 +45,7 @@ export default function CharactersPage() {
       const characters: CharacterWithRoom[] = [];
 
       for (const membership of memberships) {
-        if (membership.player) {
+        if (membership.player && membership.room) {
           characters.push({
             character: membership.player.character!, // Filter ensures this? Actually no, need to be safe
             player: membership.player,

@@ -12,7 +12,7 @@ import AppBreadcrumb from './AppBreadcrumb';
 import RoomInfoBar from './RoomInfoBar';
 import LanguageSelector from '../ui/LanguageSelector';
 import useAuth from '../../hooks/useAuth';
-import type { Room, Player } from '../../types/models';
+import type { Room, Player } from '@daicer/engine';
 
 interface DynamicLayoutProps {
   children: ReactNode;

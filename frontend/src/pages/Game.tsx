@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DoorOpen, User } from 'lucide-react';
 import clsx from 'clsx';
-import type { Player } from '../types/models';
+import type { Player } from '@daicer/engine';
 type RoomMembership = any;
 import { listRooms } from '../services/api';
 import { PrivateLayout } from '../components/layout';

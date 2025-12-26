@@ -61,7 +61,7 @@ export default function useSocket(roomId?: string, userId?: string) {
 
               if (shouldJoin) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                socket.emit('room:join', { roomId, userId } as any);
+                socket.emit('room:join', { roomId, userId });
                 lastJoinTimestampRef.current = now;
                 lastJoinUserIdRef.current = userId;
               }

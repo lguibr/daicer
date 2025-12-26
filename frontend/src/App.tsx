@@ -1,7 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/Landing';
 import GoogleAuthCallback from './pages/GoogleAuthCallback';
-import CreateRoomPage from './pages/CreateRoom';
 import GameRoomPage from './pages/GameRoom';
 import RoomsPage from './pages/Rooms';
 import GamePage from './pages/Game';
@@ -20,8 +19,14 @@ import ErrorPage from './pages/Error';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AssetsProvider } from './state/assetsStore';
 import DebugPage from './pages/DebugPage';
+import DebugRoomPage from './pages/DebugRoomPage';
 
 import AuthEventHandler from './components/auth/AuthEventHandler';
+
+// New Create Room Flow
+import CreateRoomLayout from './features/create-room/layout/CreateRoomLayout';
+import DmSettingsPage from './features/create-room/pages/DmSettingsPage';
+import WorldConfigPage from './features/create-room/pages/WorldConfigPage';
 
 export default function App() {
   return (
@@ -35,14 +40,21 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/connect/google/redirect" element={<GoogleAuthCallback />} />
+
+        {/* Create Room Wizard Flow */}
         <Route
           path="/create"
           element={
             <ProtectedRoute>
-              <CreateRoomPage />
+              <CreateRoomLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="dm-settings" replace />} />
+          <Route path="dm-settings" element={<DmSettingsPage />} />
+          <Route path="world-generation" element={<WorldConfigPage />} />
+        </Route>
+
         <Route
           path="/room"
           element={
@@ -59,14 +71,30 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Play Route (Canonical Game View) */}
         <Route
-          path="/room/:roomId"
+          path="/play/:roomId"
           element={
             <ProtectedRoute>
               <GameRoomPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Legacy redirect or alias */}
+        <Route path="/room/:roomId" element={<Navigate to="/play/:roomId" />} />
+
+        {/* Debug Room Route */}
+        <Route
+          path="/debug/:roomId"
+          element={
+            <ProtectedRoute>
+              <DebugRoomPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/test-setup"
           element={
@@ -85,7 +113,6 @@ export default function App() {
         >
           <Route index element={<RulesDashboard />} />
           <Route path=":category" element={<RulesCategoryPage />} />
-          {/* Detail route is handled via modal in list for now, or we can add :category/:id later */}
         </Route>
         <Route
           path="/assets"

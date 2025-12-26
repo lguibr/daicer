@@ -1,5 +1,5 @@
 import { WorldGenerator } from './world-generator-logic';
-import { WorldConfig } from './utils/types';
+import { WorldConfig } from '@daicer/engine';
 
 export default () => ({
   async getChunk(x: number, y: number, config: WorldConfig) {

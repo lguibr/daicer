@@ -20,7 +20,7 @@ import ToolCallCard from '../components/chat/ToolCallCard';
 import { auth } from '../services/firebase';
 // import { useI18n } from '../i18n';
 
-import { Room, Player, GamePhase } from '../types/models';
+import { Room, Player, GamePhase } from '@daicer/engine';
 
 import type { ToolCall } from '../services/socket';
 

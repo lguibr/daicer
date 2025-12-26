@@ -23,7 +23,7 @@ import ToolCallCard from '../components/chat/ToolCallCard';
 import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
-import { Room as SharedRoom, Player, GamePhase } from '../types/models';
+import { Room as SharedRoom, Player, GamePhase } from '@daicer/engine';
 import { TimeFrameProvider } from '../contexts/TimeFrameContext';
 
 import { useI18n } from '../i18n';
@@ -386,7 +386,7 @@ export default function GameRoomPage() {
     const handleReadyToggle = async (isReady: boolean) => {
       if (!room?.id) return;
       try {
-        await setReady(room.documentId || room.roomId, isReady);
+        await setReady(room.documentId || room.roomId || room.id, isReady);
       } catch (err) {
         console.error('Failed to toggle ready:', err);
       }
@@ -398,12 +398,14 @@ export default function GameRoomPage() {
         setLoading(true);
         const streamId = crypto.randomUUID();
         console.log('GameRoom DEBUG: Calling startGame...');
-        await startGame(room.documentId || room.roomId, room.settings?.language || 'en', streamId);
+        await startGame(room.documentId || room.roomId || room.id, room.settings?.language || 'en', streamId);
         console.log('GameRoom DEBUG: startGame returned.');
 
         // Force refresh room state to ensure phase change is reflected immediately
         // This handles cases where socket event might be delayed or missed
-        const updatedRoom = (await getRoomState(room.documentId || room.roomId)) as SharedRoom & { players: Player[] };
+        const updatedRoom = (await getRoomState(room.documentId || room.roomId || room.id)) as SharedRoom & {
+          players: Player[];
+        };
         console.log('GameRoom DEBUG: Refetched room phase:', updatedRoom.phase);
         setRoom(updatedRoom);
       } catch (err) {

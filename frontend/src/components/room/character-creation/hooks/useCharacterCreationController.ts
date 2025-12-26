@@ -9,7 +9,7 @@ import { calculateTotalPoints } from '../validation';
 import { loadPlaceholderReferences } from '../avatarHelpers';
 import { createCharacterPayload, submitCharacter } from '../services/submission-payloads';
 import { generateRandomCharacter } from '../../../../services/characterGenerator';
-import type { Attribute } from '../../../../types/models';
+import type { Attribute } from '../../@daicer/engine';
 
 export function useCharacterCreationController(props: any) {
   const { room, players = [], assetMode = false, settings, onAssetCreated, onCharacterCreated } = props;

@@ -1,4 +1,4 @@
-import { Coordinates, BlockType } from './types';
+import { Coordinates, BlockType } from '@daicer/engine';
 import { WorldGenerator } from '../world-generator-logic';
 
 export class PhysicsEngine {
@@ -8,10 +8,10 @@ export class PhysicsEngine {
     this.generator = generator;
   }
 
-  public isWalkable(pos: Coordinates): boolean {
+  public async isWalkable(pos: Coordinates): Promise<boolean> {
     const chunkX = Math.floor(pos.x / 32);
     const chunkY = Math.floor(pos.y / 32);
-    const chunk = this.generator.getChunk(chunkX, chunkY);
+    const chunk = await this.generator.getChunk(chunkX, chunkY);
 
     const localX = ((pos.x % 32) + 32) % 32;
     const localY = ((pos.y % 32) + 32) % 32;
@@ -26,10 +26,10 @@ export class PhysicsEngine {
   /**
    * Check if position contains stairs
    */
-  public checkStaircase(pos: Coordinates): 'up' | 'down' | null {
+  public async checkStaircase(pos: Coordinates): Promise<'up' | 'down' | null> {
     const chunkX = Math.floor(pos.x / 32);
     const chunkY = Math.floor(pos.y / 32);
-    const chunk = this.generator.getChunk(chunkX, chunkY);
+    const chunk = await this.generator.getChunk(chunkX, chunkY);
     const localX = ((pos.x % 32) + 32) % 32;
     const localY = ((pos.y % 32) + 32) % 32;
     // @ts-ignore
@@ -45,14 +45,33 @@ export class PhysicsEngine {
    * Standard Recursive Shadowcasting
    * Calculates visible tiles within radius, blocked by non-transparent tiles.
    */
-  public calculateFieldOfView(origin: Coordinates, radius: number): Set<string> {
+  public async calculateFieldOfView(origin: Coordinates, radius: number): Promise<Set<string>> {
     const visiblePoints = new Set<string>();
     visiblePoints.add(`${origin.x},${origin.y}`);
+
+    // We need to preload chunks for the area to convert isBlocking to sync or handle async inside algorithm
+    // Shadowcasting is recursive/iterative. Making the callback async is hard.
+    // Better strategy: Identify all chunks needed for radius, preload them, then run algo synchronously using a local cache.
+
+    const minChunkX = Math.floor((origin.x - radius) / 32);
+    const maxChunkX = Math.floor((origin.x + radius) / 32);
+    const minChunkY = Math.floor((origin.y - radius) / 32);
+    const maxChunkY = Math.floor((origin.y + radius) / 32);
+
+    const chunkCache = new Map<string, any>();
+    const promises = [];
+
+    for (let cy = minChunkY; cy <= maxChunkY; cy++) {
+      for (let cx = minChunkX; cx <= maxChunkX; cx++) {
+        promises.push(this.generator.getChunk(cx, cy).then((c) => chunkCache.set(`${cx},${cy}`, c)));
+      }
+    }
+    await Promise.all(promises);
 
     const isBlocking = (x: number, y: number) => {
       const chunkX = Math.floor(x / 32);
       const chunkY = Math.floor(y / 32);
-      const chunk = this.generator.getChunk(chunkX, chunkY);
+      const chunk = chunkCache.get(`${chunkX},${chunkY}`);
       const lx = ((x % 32) + 32) % 32;
       const ly = ((y % 32) + 32) % 32;
       // @ts-ignore
@@ -135,7 +154,7 @@ export class PhysicsEngine {
   /**
    * A* Pathfinding
    */
-  public findPath(start: Coordinates, end: Coordinates): Coordinates[] | null {
+  public async findPath(start: Coordinates, end: Coordinates): Promise<Coordinates[] | null> {
     const h = (a: Coordinates, b: Coordinates) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     const k = (p: Coordinates) => `${p.x},${p.y},${p.z}`;
 
@@ -165,7 +184,7 @@ export class PhysicsEngine {
 
       for (const neighbor of neighbors) {
         // @ts-ignore
-        if (!this.isWalkable(neighbor)) continue;
+        if (!(await this.isWalkable(neighbor))) continue;
 
         const tentativeG = (gScore.get(k(current)) ?? Infinity) + 1;
         // @ts-ignore

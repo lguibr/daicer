@@ -2,7 +2,7 @@
  * Shared types and configurations for LLM services
  */
 
-import type { Language } from '../../types/index';
+import type { Language } from '@daicer/engine';
 
 /**
  * Gemini model identifiers
