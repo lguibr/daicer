@@ -104,6 +104,20 @@ export interface WorldSettings {
   enableRoads?: boolean;
   roadQuality?: string;
   terrainComplexity?: number;
+  // WorldConfig properties
+  chunkSize?: number;
+  globalScale?: number;
+  seaLevel?: number;
+  elevationScale?: number;
+  roughness?: number;
+  detail?: number;
+  moistureScale?: number;
+  temperatureOffset?: number;
+  structureChance?: number;
+  structureSpacing?: number;
+  structureSizeAvg?: number;
+  roadDensity?: number;
+  fogRadius?: number;
 }
 
 export interface TimeFrame {

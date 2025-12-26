@@ -27,9 +27,9 @@ export const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {
  * Step 2: Terrain Builder - All worldgen controls + live exploration
  */
 
-// Wizard flow (2 steps only)
-export type WizardGroup = 'dmAndScope';
-export const WIZARD_GROUPS: WizardGroup[] = ['dmAndScope'];
+// Wizard flow (Unified 2 steps)
+export type WizardGroup = 'dmSettings' | 'worldConfig';
+export const WIZARD_GROUPS: WizardGroup[] = ['dmSettings', 'worldConfig'];
 
 // Verbosity scale (0-6)
 export const VERBOSITY_MARK_KEYS = [

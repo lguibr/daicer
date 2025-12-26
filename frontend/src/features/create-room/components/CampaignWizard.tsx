@@ -3,9 +3,8 @@ import clsx from 'clsx';
 import { useI18n } from '@/i18n';
 import DiscreteSlider, { type SliderMark } from '@/components/forms/DiscreteSlider';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
-import { WORLD_ARCHETYPES } from '@/constants/worldArchetypes';
+import { WorldConfigForm } from '@/features/debug/components/WorldConfigForm';
 import {
-  ARCHETYPE_SIGILS,
   WIZARD_GROUPS,
   type WizardGroup,
   VERBOSITY_MARK_KEYS,
@@ -26,8 +25,8 @@ import {
   WORLD_SIZE_FALLBACK,
 } from '@/pages/create-room/constants';
 import type { WorldSettings, DMStyle } from '@/types/models';
+import type { WorldConfig } from '@/features/debug/utils/types';
 
-type WorldType = string;
 type ScaleLevel = number;
 
 interface CampaignWizardProps {
@@ -42,7 +41,7 @@ export function CampaignWizard({
   initialSettings,
   onSubmit,
   onCancel,
-  submitLabel = 'Create Room',
+  submitLabel = 'Forging World',
   isSubmitting = false,
 }: CampaignWizardProps) {
   const { t, language } = useI18n();
@@ -52,21 +51,13 @@ export function CampaignWizard({
   const [currentGroup, setCurrentGroup] = useState(0);
   const [completedGroups, setCompletedGroups] = useState<Set<number>>(new Set());
 
-  // ... (Identical logic to CreateRoomPage for marks/options memoization)
+  // Slider Marks Memoization (Identical to previous)
   const verbosityMarks = useMemo<SliderMark[]>(
     () =>
       VERBOSITY_MARK_KEYS.map(({ value, key }) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.marks.verbosity.${key}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (VERBOSITY_FALLBACK[key]?.label ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.marks.verbosity.${key}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (VERBOSITY_FALLBACK[key]?.description ?? '') : translated;
-        })(),
+        label: VERBOSITY_FALLBACK[key]?.label ?? '',
+        description: VERBOSITY_FALLBACK[key]?.description ?? '',
       })),
     [t]
   );
@@ -75,16 +66,8 @@ export function CampaignWizard({
     () =>
       DETAIL_MARK_KEYS.map(({ value, key }) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.marks.detail.${key}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (DETAIL_FALLBACK[key]?.label ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.marks.detail.${key}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (DETAIL_FALLBACK[key]?.description ?? '') : translated;
-        })(),
+        label: DETAIL_FALLBACK[key]?.label ?? '',
+        description: DETAIL_FALLBACK[key]?.description ?? '',
       })),
     [t]
   );
@@ -93,16 +76,8 @@ export function CampaignWizard({
     () =>
       ENGAGEMENT_MARK_KEYS.map(({ value, key }) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.marks.engagement.${key}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (ENGAGEMENT_FALLBACK[key]?.label ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.marks.engagement.${key}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (ENGAGEMENT_FALLBACK[key]?.description ?? '') : translated;
-        })(),
+        label: ENGAGEMENT_FALLBACK[key]?.label ?? '',
+        description: ENGAGEMENT_FALLBACK[key]?.description ?? '',
       })),
     [t]
   );
@@ -111,16 +86,8 @@ export function CampaignWizard({
     () =>
       NARRATIVE_MARK_KEYS.map(({ value, key }) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.marks.narrative.${key}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (NARRATIVE_FALLBACK[key]?.label ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.marks.narrative.${key}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (NARRATIVE_FALLBACK[key]?.description ?? '') : translated;
-        })(),
+        label: NARRATIVE_FALLBACK[key]?.label ?? '',
+        description: NARRATIVE_FALLBACK[key]?.description ?? '',
       })),
     [t]
   );
@@ -129,16 +96,8 @@ export function CampaignWizard({
     () =>
       SPECIAL_MODE_KEYS.map(({ id, key }) => ({
         id,
-        label: (() => {
-          const labelKey = `createWizard.specialModes.${key}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (SPECIAL_MODE_FALLBACK[key]?.label ?? key) : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.specialModes.${key}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (SPECIAL_MODE_FALLBACK[key]?.description ?? '') : translated;
-        })(),
+        label: SPECIAL_MODE_FALLBACK[key]?.label ?? key,
+        description: SPECIAL_MODE_FALLBACK[key]?.description ?? '',
       })),
     [t]
   );
@@ -147,21 +106,9 @@ export function CampaignWizard({
     () =>
       ADVENTURE_LENGTH_VALUES.map((value) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.adventureLength.${value}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (ADVENTURE_LENGTH_FALLBACK[value]?.label ?? '') : translated;
-        })(),
-        detail: (() => {
-          const detailKey = `createWizard.adventureLength.${value}.detail`;
-          const translated = t(detailKey);
-          return translated === detailKey ? (ADVENTURE_LENGTH_FALLBACK[value]?.detail ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.adventureLength.${value}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (ADVENTURE_LENGTH_FALLBACK[value]?.description ?? '') : translated;
-        })(),
+        label: ADVENTURE_LENGTH_FALLBACK[value]?.label ?? '',
+        detail: ADVENTURE_LENGTH_FALLBACK[value]?.detail ?? '',
+        description: ADVENTURE_LENGTH_FALLBACK[value]?.description ?? '',
       })),
     [t]
   );
@@ -170,21 +117,9 @@ export function CampaignWizard({
     () =>
       DIFFICULTY_VALUES.map((value) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.difficulty.${value}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (DIFFICULTY_FALLBACK[value]?.label ?? '') : translated;
-        })(),
-        detail: (() => {
-          const detailKey = `createWizard.difficulty.${value}.detail`;
-          const translated = t(detailKey);
-          return translated === detailKey ? (DIFFICULTY_FALLBACK[value]?.detail ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.difficulty.${value}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (DIFFICULTY_FALLBACK[value]?.description ?? '') : translated;
-        })(),
+        label: DIFFICULTY_FALLBACK[value]?.label ?? '',
+        detail: DIFFICULTY_FALLBACK[value]?.detail ?? '',
+        description: DIFFICULTY_FALLBACK[value]?.description ?? '',
       })),
     [t]
   );
@@ -193,21 +128,9 @@ export function CampaignWizard({
     () =>
       WORLD_SIZE_VALUES.map((value) => ({
         value,
-        label: (() => {
-          const labelKey = `createWizard.worldSize.${value}.label`;
-          const translated = t(labelKey);
-          return translated === labelKey ? (WORLD_SIZE_FALLBACK[value]?.label ?? '') : translated;
-        })(),
-        detail: (() => {
-          const detailKey = `createWizard.worldSize.${value}.detail`;
-          const translated = t(detailKey);
-          return translated === detailKey ? (WORLD_SIZE_FALLBACK[value]?.detail ?? '') : translated;
-        })(),
-        description: (() => {
-          const descriptionKey = `createWizard.worldSize.${value}.description`;
-          const translated = t(descriptionKey);
-          return translated === descriptionKey ? (WORLD_SIZE_FALLBACK[value]?.description ?? '') : translated;
-        })(),
+        label: WORLD_SIZE_FALLBACK[value]?.label ?? '',
+        detail: WORLD_SIZE_FALLBACK[value]?.detail ?? '',
+        description: WORLD_SIZE_FALLBACK[value]?.description ?? '',
       })),
     [t]
   );
@@ -242,35 +165,15 @@ export function CampaignWizard({
     [difficultyOptions]
   );
 
-  const defaultArchetype = WORLD_ARCHETYPES.terra;
-  const getArchetypeDefaults = (type: WorldType) => {
-    const archetype = WORLD_ARCHETYPES[type];
-    const key = archetype?.translationKey ?? 'archetypes.terra';
-    const resolve = (suffix: string, fallbackValue: string) => {
-      const translated = t(`${key}.${suffix}`);
-      return translated === `${key}.${suffix}` ? fallbackValue : translated;
-    };
-
-    return {
-      theme: resolve('theme', archetype?.theme ?? 'High Fantasy'),
-      setting: resolve('setting', archetype?.setting ?? 'Medieval Kingdom'),
-      tone: resolve('tone', archetype?.tone ?? 'Heroic'),
-      background: resolve('background', archetype?.background ?? ''),
-    };
-  };
-
-  const defaultArchetypeDefaults = getArchetypeDefaults(
-    initialSettings?.worldType ?? defaultArchetype?.type ?? 'terra'
-  );
-
+  // Initial State
   const [settings, setSettings] = useState<WorldSettings>({
-    seed: 'daicer-world',
+    seed: 'daicer-' + Math.random().toString(36).substring(7),
     worldType: 'terra',
     worldSize: 'small',
-    theme: defaultArchetypeDefaults.theme,
-    setting: defaultArchetypeDefaults.setting,
-    tone: defaultArchetypeDefaults.tone,
-    worldBackground: defaultArchetypeDefaults.background,
+    theme: 'High Fantasy',
+    setting: 'Medieval Kingdom',
+    tone: 'Heroic',
+    worldBackground: '',
     dmStyle: {
       verbosity: 1,
       detail: 1,
@@ -286,18 +189,29 @@ export function CampaignWizard({
     startingLevel: 1,
     attributePointBudget: 27,
     language,
+    // Default WorldConfig params
+    globalScale: 0.01,
+    seaLevel: 0,
+    elevationScale: 1,
+    roughness: 0.5,
+    detail: 4,
+    moistureScale: 1,
+    temperatureOffset: 0,
+    structureChance: 0.1,
+    structureSpacing: 10,
+    structureSizeAvg: 10,
+    roadDensity: 0.5,
+    fogRadius: 10,
     ...initialSettings,
   });
-
-  // Load from local storage draft if available (optional optimization, I'll keep it simple for now or implement if needed)
-  // For reuse, maybe we don't want global local storage key conflict?
-  // User asked to "update it and its flow".
 
   const validateGroup = (groupIndex: number): boolean => {
     const groupName = WIZARD_GROUPS[groupIndex];
     switch (groupName) {
-      case 'dmAndScope':
+      case 'dmSettings':
         return !!settings.theme && !!settings.tone && !!settings.setting;
+      case 'worldConfig':
+        return true; // Config always has defaults
       default:
         return false;
     }
@@ -334,22 +248,19 @@ export function CampaignWizard({
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleArchetypeChange = (newType: WorldType) => {
-    const defaults = getArchetypeDefaults(newType);
-    setSettings((prev) => ({
-      ...prev,
-      worldType: newType,
-      theme: defaults.theme,
-      setting: defaults.setting,
-      tone: defaults.tone,
-      worldBackground: defaults.background || prev.worldBackground,
-    }));
-  };
-
   const updateDMStyle = <K extends keyof DMStyle>(key: K, value: DMStyle[K]) => {
     setSettings((prev) => ({
       ...prev,
       dmStyle: { ...prev.dmStyle, [key]: value },
+    }));
+  };
+
+  // WorldConfigForm Handler
+  const handleWorldConfigChange = (newConfig: WorldConfig) => {
+    // Merge WorldConfig back into WorldSettings (treating flattened structure)
+    setSettings((prev) => ({
+      ...prev,
+      ...newConfig,
     }));
   };
 
@@ -362,7 +273,6 @@ export function CampaignWizard({
       return;
     }
 
-    // Pass settings to parent
     try {
       await onSubmit(settings);
     } catch (err) {
@@ -372,7 +282,7 @@ export function CampaignWizard({
 
   const renderGroupContent = () => {
     switch (WIZARD_GROUPS[currentGroup]) {
-      case 'dmAndScope': {
+      case 'dmSettings': {
         const worldSizeIndex = Math.max(
           0,
           worldSizeOptions.findIndex((option) => option.value === settings.worldSize)
@@ -457,119 +367,13 @@ export function CampaignWizard({
               </div>
             </section>
 
-            {/* Section 2: Scope & Characters */}
-            <section
-              className="card space-y-8 p-8 border border-midnight-700/50 bg-midnight-900/40"
-              data-testid="wizard-group-scope"
-            >
+            {/* Theme, Tone, Setting inputs */}
+            <section className="card space-y-8 p-8 border border-midnight-700/50 bg-midnight-900/40 backdrop-blur-sm">
               <div className="space-y-2">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">
-                  Campaign Scope & Characters
-                </h2>
-                <p className="text-sm text-shadow-300">Set the scale of your adventure and party details</p>
+                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Setting & Scope</h2>
+                <p className="text-sm text-shadow-300">Define the theme and scale of the adventure</p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
-                <DiscreteSlider
-                  id="world-size-slider"
-                  label="World Size"
-                  value={worldSizeIndex}
-                  onChange={(index) => {
-                    const option = worldSizeOptions[index];
-                    if (option) updateSetting('worldSize', option.value);
-                  }}
-                  marks={worldSizeMarks}
-                />
-                <DiscreteSlider
-                  id="adventure-length-slider"
-                  label="Adventure Length"
-                  value={adventureLengthIndex}
-                  onChange={(index) => {
-                    const option = adventureLengthOptions[index];
-                    if (option) updateSetting('adventureLength', option.value);
-                  }}
-                  marks={adventureLengthMarks}
-                />
-                <DiscreteSlider
-                  id="difficulty-slider"
-                  label="Difficulty"
-                  value={difficultyIndex}
-                  onChange={(index) => {
-                    const option = difficultyOptions[index];
-                    if (option) updateSetting('difficulty', option.value);
-                  }}
-                  marks={difficultyMarks}
-                />
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2 pt-4 border-t border-midnight-500/50">
-                <DiscreteSlider
-                  id="party-size-slider"
-                  label="Party Size"
-                  value={settings.playerCount}
-                  onChange={(value) => updateSetting('playerCount', Math.max(1, Math.min(value, 8)))}
-                  marks={[
-                    { value: 1, label: '1' },
-                    { value: 4, label: '4' },
-                    { value: 8, label: '8' },
-                  ]}
-                />
-                <DiscreteSlider
-                  id="starting-level-slider"
-                  label="Starting Level"
-                  value={settings.startingLevel}
-                  onChange={(value) => updateSetting('startingLevel', Math.max(1, Math.min(value, 20)))}
-                  marks={[
-                    { value: 1, label: '1' },
-                    { value: 5, label: '5' },
-                    { value: 10, label: '10' },
-                    { value: 20, label: '20' },
-                  ]}
-                />
-              </div>
-            </section>
-
-            {/* Section 3: Story Frame */}
-            <section
-              className="card space-y-8 p-8 border border-midnight-700/50 bg-midnight-900/40"
-              data-testid="wizard-group-story"
-            >
-              <div className="space-y-2">
-                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">Story Frame</h2>
-                <p className="text-sm text-shadow-300">Choose the genre and setting for your world</p>
-              </div>
-
-              {/* World Archetype Selector */}
-              <div className="mb-6 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {(Object.keys(WORLD_ARCHETYPES) as WorldType[]).map((type) => {
-                  const archetype = WORLD_ARCHETYPES[type];
-                  const isActive = settings.worldType === type;
-                  const Sigil = ARCHETYPE_SIGILS[archetype?.sigil ?? 'mountain'];
-
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => handleArchetypeChange(type)}
-                      className={clsx(
-                        'flex flex-col gap-2 overflow-hidden rounded-xl border px-4 py-3 text-left transition-all duration-200',
-                        isActive
-                          ? 'border-aurora-500/60 bg-aurora-500/15 shadow-[0_20px_35px_rgba(211,143,31,0.25)]'
-                          : 'border-midnight-500/60 bg-midnight-500/30 hover:border-aurora-400/40 hover:bg-midnight-400/40'
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        {Sigil && <Sigil className="h-5 w-5 text-aurora-300" aria-hidden />}
-                        <span className="text-sm font-semibold uppercase tracking-[0.2em] text-shadow-300">
-                          {archetype?.type ?? type}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Theme, Tone, Setting inputs */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label
@@ -620,6 +424,113 @@ export function CampaignWizard({
                   placeholder="Medieval Kingdom"
                 />
               </div>
+
+              {/* Scope Sliders */}
+              <div className="grid gap-6 md:grid-cols-2 pt-6">
+                <DiscreteSlider
+                  id="world-size-slider"
+                  label="World Size"
+                  value={worldSizeIndex}
+                  onChange={(index) => {
+                    const option = worldSizeOptions[index];
+                    if (option) updateSetting('worldSize', option.value);
+                  }}
+                  marks={worldSizeMarks}
+                />
+                <DiscreteSlider
+                  id="adventure-length-slider"
+                  label="Adventure Length"
+                  value={adventureLengthIndex}
+                  onChange={(index) => {
+                    const option = adventureLengthOptions[index];
+                    if (option) updateSetting('adventureLength', option.value);
+                  }}
+                  marks={adventureLengthMarks}
+                />
+                <DiscreteSlider
+                  id="difficulty-slider"
+                  label="Difficulty"
+                  value={difficultyIndex}
+                  onChange={(index) => {
+                    const option = difficultyOptions[index];
+                    if (option) updateSetting('difficulty', option.value);
+                  }}
+                  marks={difficultyMarks}
+                />
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 pt-4 border-t border-midnight-500/50">
+                <DiscreteSlider
+                  id="party-size-slider"
+                  label="Party Size"
+                  value={settings.playerCount}
+                  onChange={(value) => updateSetting('playerCount', Math.max(1, Math.min(value, 8)))}
+                  marks={[
+                    { value: 1, label: '1' },
+                    { value: 4, label: '4' },
+                    { value: 8, label: '8' },
+                  ]}
+                />
+                <DiscreteSlider
+                  id="starting-level-slider"
+                  label="Starting Level"
+                  value={settings.startingLevel}
+                  onChange={(value) => updateSetting('startingLevel', Math.max(1, Math.min(value, 20)))}
+                  marks={[
+                    { value: 1, label: '1' },
+                    { value: 5, label: '5' },
+                    { value: 10, label: '10' },
+                    { value: 20, label: '20' },
+                  ]}
+                />
+              </div>
+            </section>
+          </div>
+        );
+      }
+      case 'worldConfig': {
+        // Flatten settings to match WorldConfig shape if possible
+        // WorldConfig expects: seed, globalScale, etc.
+        // WorldSettings has these merged in.
+        const config: WorldConfig = {
+          seed: settings.seed,
+          chunkSize: settings.chunkSize ?? 32,
+          // Map WorldSettings arbitrary keys to WorldConfig known keys
+          globalScale: settings.globalScale ?? 0.01,
+          seaLevel: settings.seaLevel ?? 0,
+          elevationScale: settings.elevationScale ?? 1,
+          roughness: settings.roughness ?? 0.5,
+          detail: settings.detail ?? 4,
+          moistureScale: settings.moistureScale ?? 1,
+          temperatureOffset: settings.temperatureOffset ?? 0,
+          structureChance: settings.structureChance ?? 0.1,
+          structureSpacing: settings.structureSpacing ?? 10,
+          structureSizeAvg: settings.structureSizeAvg ?? 10,
+          roadDensity: settings.roadDensity ?? 0.5,
+          fogRadius: settings.fogRadius ?? 10,
+        };
+
+        return (
+          <div className="space-y-8 animate-in fade-in duration-500">
+            <section className="card p-8 border border-midnight-700/50 bg-midnight-900/40 backdrop-blur-sm">
+              <div className="space-y-2 mb-6">
+                <h2 className="font-display text-lg uppercase tracking-[0.35em] text-aurora-300">
+                  World Configuration
+                </h2>
+                <p className="text-sm text-shadow-300">Fine-tune the physical parameters of the world generation</p>
+              </div>
+
+              <WorldConfigForm
+                config={config}
+                isActive={true}
+                onConfigChange={handleWorldConfigChange}
+                onRegenerate={() => {
+                  // Regenerate just updates seed usually
+                  handleWorldConfigChange({
+                    ...config,
+                    seed: Math.random().toString(36).substr(2, 6),
+                  });
+                }}
+              />
             </section>
           </div>
         );
@@ -630,8 +541,10 @@ export function CampaignWizard({
 
   const getGroupLabel = (group: WizardGroup): string => {
     switch (group) {
-      case 'dmAndScope':
+      case 'dmSettings':
         return 'DM & Scope';
+      case 'worldConfig':
+        return 'World Config';
       default:
         return group;
     }
@@ -732,7 +645,7 @@ export function CampaignWizard({
               disabled={isSubmitting || !validateGroup(currentGroup)}
               className="btn-primary sm:min-w-[170px]"
             >
-              {currentGroup === WIZARD_GROUPS.length - 1 ? (isSubmitting ? 'Creating...' : submitLabel) : 'Next'}
+              {currentGroup === WIZARD_GROUPS.length - 1 ? (isSubmitting ? submitLabel : 'Next') : 'Next'}
             </button>
           </div>
         </div>

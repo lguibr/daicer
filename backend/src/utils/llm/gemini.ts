@@ -70,15 +70,3 @@ export function getFlashModel(config?: GeminiConfig): ChatGoogleGenerativeAI {
 export function getProModel(config?: GeminiConfig): ChatGoogleGenerativeAI {
   return getGeminiModel(GeminiModel.PRO, config);
 }
-
-export function getProPreview3Model(config?: GeminiConfig): ChatGoogleGenerativeAI {
-  return getGeminiModel(GeminiModel.PRO_PREVIEW_3, config);
-}
-
-export function getFlashLatestModel(config?: GeminiConfig): ChatGoogleGenerativeAI {
-  return getGeminiModel(GeminiModel.FLASH_LATEST, config);
-}
-
-export function getFlashLiteLatestModel(config?: GeminiConfig): ChatGoogleGenerativeAI {
-  return getGeminiModel(GeminiModel.FLASH_LITE_LATEST, config);
-}

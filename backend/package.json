@@ -12,7 +12,8 @@
     "deploy": "strapi deploy",
     "test": "exit 0",
     "lint": "exit 0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "ts-node src/scripts/seed.ts"
   },
   "dependencies": {
     "@google/genai": "^1.32.0",

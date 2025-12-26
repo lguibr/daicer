@@ -4,7 +4,7 @@ import { Eye, Loader2, AlertCircle } from 'lucide-react';
 import { MapRenderer } from './MapRenderer';
 import { WorldConfigForm } from './WorldConfigForm';
 import { TileInspector } from './TileInspector';
-import { EntitySpawner } from './EntitySpawner';
+import { GodModeChat, type GodModeMessage } from './GodModeChat'; // New Chat Component
 import { executeEngineAction } from '@/services/api';
 import useSocket from '@/hooks/useSocket';
 
@@ -55,6 +55,18 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
 
   const { socket } = useSocket(roomId, 'debug-user');
 
+  // God Mode Chat State
+  const [chatMessages, setChatMessages] = useState<GodModeMessage[]>([
+    {
+      id: 'system-welcome',
+      role: 'system',
+      content: 'God Mode Initialized. You have omnipotent control over this world.',
+      timestamp: Date.now(),
+    },
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
   // Socket Integration
   useEffect(() => {
     if (!socket) return;
@@ -77,9 +89,27 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
         return next;
       });
     };
+
+    // Also listen for God Mode responses
+    const handleGodModeResponse = (data: { message: string }) => {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `sys-${Date.now()}`,
+          role: 'assistant',
+          content: data.message,
+          timestamp: Date.now(),
+        },
+      ]);
+      setIsProcessing(false);
+    };
+
     socket.on('entities:update', handleEntitiesUpdate);
+    socket.on('godmode:response', handleGodModeResponse); // Hypothetical event
+
     return () => {
       socket.off('entities:update', handleEntitiesUpdate);
+      socket.off('godmode:response', handleGodModeResponse);
     };
   }, [socket]);
 
@@ -89,42 +119,17 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   // Map & View State
   const [cameraPosition, setCameraPosition] = useState<Coordinates>({ x: 0, y: 0, z: 0 });
 
-  // Pending Actions
-  const [pendingSpawns, setPendingSpawns] = useState<any[]>([]);
-  const [placementMode, setPlacementMode] = useState<{
-    type: 'character' | 'monster';
-    id: string;
-    name: string;
-    details?: string;
-  } | null>(null);
-
   // Handle Interactions
-  const handleSpawn = (target: Coordinates) => {
-    if (!roomId || !placementMode) return;
-
-    // Queue Spawn (Ghost)
-    const ghostId = `ghost-${Date.now()}-${Math.random()}`;
-    const newSpawn = {
-      type: placementMode.type,
-      id: placementMode.id,
-      name: `(Pending) ${placementMode.name}`,
-      position: target,
-      ghostId,
-      color: placementMode.type === 'monster' ? '#ef4444' : '#3b82f6', // Red/Blue
-      details: placementMode.details,
-    };
-
-    setPendingSpawns((prev) => [...prev, newSpawn]);
-  };
-
   const handleTileSingleClick = (target: Coordinates) => {
-    // If in placement mode, spawn entity
-    if (placementMode) {
-      handleSpawn(target);
-      return;
-    }
+    // Append coordinates to chat input
+    const coordString = `(${target.x}, ${target.y}, ${target.z})`;
+    setChatInput((prev) => {
+      const separator = prev.endsWith(' ') ? '' : ' ';
+      return prev + separator + coordString;
+    });
 
-    // Open Context Menu
+    // Open Context Menu (Still optional, but maybe user wants it?)
+    // For now, let's keep context menu logic effectively disabled or minimal if God Mode is primary
     setContextMenu(null);
   };
 
@@ -284,7 +289,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
     }
   }, [visibleTiles, activeEntityId, activeEntity]);
 
-  // Turn Logic
+  // Turn Logic (Movement only via Plan Move context menu for debug)
   const handlePlanMove = (target: Coordinates) => {
     setContextMenu(null);
     if (!activeEntity) return;
@@ -333,25 +338,17 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
           ];
         });
 
-      const spawnActions = pendingSpawns.map((s) => ({
-        type: 'spawn',
-        payload: {
-          entityType: s.type,
-          id: s.id,
-          position: s.position,
-        },
-      }));
+      // Removed spawnActions from here as they are now handled via Chat/GodMode
 
-      const actions = [...moveActions, ...spawnActions];
+      const actions = [...moveActions];
 
       if (actions.length === 0) return;
 
       try {
         await executeEngineAction(roomId, actions);
         setErrorMsg('Turn Executed (Backend)');
-        // Clear pending paths & spawns
+        // Clear pending paths
         setEntities((prev) => prev.map((e) => ({ ...e, pendingPath: undefined })));
-        setPendingSpawns([]);
       } catch (e) {
         console.error(e);
         setErrorMsg('Failed to execute turn: ' + (e instanceof Error ? e.message : 'Unknown error'));
@@ -372,6 +369,50 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
 
     const tile = getTileAt(coords.x, coords.y, coords.z);
     setHoveredTile(tile || null);
+  };
+
+  // Chat Handler
+  const handleGodModeCommand = async (message: string) => {
+    // Optimistic UI
+    const userMsg: GodModeMessage = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content: message,
+      timestamp: Date.now(),
+    };
+    setChatMessages((prev) => [...prev, userMsg]);
+    setIsProcessing(true);
+
+    try {
+      // Placeholder for backend call
+      // In real implementation: await api.sendGodModeCommand(roomId, message);
+      console.warn('God Mode Command Sent (Mock):', message);
+
+      // Mock response for now if socket doesn't reply immediately
+      setTimeout(() => {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            role: 'assistant',
+            content: `I heard you say "${message}". (Backend service pending implementation)`,
+            timestamp: Date.now(),
+          },
+        ]);
+        setIsProcessing(false);
+      }, 1000);
+    } catch (err) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: 'system',
+          content: `Error: ${err instanceof Error ? err.message : 'Unknown'}`,
+          timestamp: Date.now(),
+        },
+      ]);
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -398,6 +439,17 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
               {errorMsg}
             </div>
           )}
+
+          {/* 0. GOD MODE CHAT */}
+          <div className="h-[300px] flex flex-col">
+            <GodModeChat
+              messages={chatMessages}
+              onSendMessage={handleGodModeCommand}
+              isProcessing={isProcessing}
+              inputValue={chatInput}
+              onInputChange={setChatInput}
+            />
+          </div>
 
           {/* 1. World Gen */}
           <WorldConfigForm
@@ -497,29 +549,6 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
             </div>
           </div>
 
-          {/* Spawner */}
-          <div className="bg-midnight-800/30 rounded-xl border border-midnight-700/30 overflow-hidden min-h-[300px] flex flex-col">
-            <EntitySpawner
-              onSelectEntity={(type, entity) => {
-                const id = entity.documentId || entity.id; // Support both v4/v5 ids
-                if (placementMode?.id === id) {
-                  setPlacementMode(null); // Toggle off
-                } else {
-                  setPlacementMode({
-                    type,
-                    id,
-                    name: entity.name,
-                    details:
-                      type === 'monster'
-                        ? `CR ${entity.challenge_rating}`
-                        : `${entity.race?.name} ${entity.class?.name}`,
-                  });
-                }
-              }}
-              selectedEntity={placementMode}
-            />
-          </div>
-
           {/* Turn Controls */}
           <div className="bg-midnight-800/50 p-4 rounded-xl border border-midnight-700/50">
             <h2 className="text-xs font-bold text-aurora-400 uppercase tracking-wider mb-2">Turn Controls</h2>
@@ -590,7 +619,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
             visibleTiles={visibleTiles}
             exploredTiles={activeEntity?.exploredTiles || new Set()}
             entities={entities}
-            ghostEntities={pendingSpawns}
+            ghostEntities={[]} // No visual ghosts anymore
             previewPath={activeEntity?.pendingPath}
             // @ts-ignore
             onTileClick={handleTileSingleClick}

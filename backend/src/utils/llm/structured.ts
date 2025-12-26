@@ -7,9 +7,7 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import type { Language } from '../../types/index';
 import { extractErrorDetails, getGeminiModel } from './gemini';
-import { getGPT51Model, getGPT5MiniModel, getGPT5NanoModel, getGPT5ProModel } from './openai';
-import { OpenAIModel, type TextGenConfig, GeminiModel } from './types';
-import { streamManager } from './stream-manager';
+import { type TextGenConfig, GeminiModel } from './types';
 import { getPrompt, formatPrompt } from '../prompt';
 
 /**
@@ -47,28 +45,11 @@ CORRECT approach:
 ✅ Start directly with ### Header or narrative text`;
 
   const rulesTemplate = await getPrompt('structured_output_rules', language, defaultRules);
-  // Check if template (fetched or default) needs formatting
-  // The default one above is already interpolated via template literal variables,
-  // but if we get it from DB it will have {{languageName}}.
-  // If we fall back to defaultRules, it's already a string with languageName.
-  // We can just try formatting it. formatPrompt handles missing keys gracefully (leaves them or replaces).
-  // Actually, my formatPrompt leaves {{key}} if missing.
-  // The logic:
-  // 1. Fetch prompt.
-  // 2. Format it with variables.
 
   if (rulesTemplate.includes('{{languageName}}')) {
     const rules = formatPrompt(rulesTemplate, { languageName });
     return `${basePrompt}${rules}`;
   }
-
-  // If it's the fallback defaultRules (which doesn't have {{}} but is constructed), or a DB string without {{}} for some reason.
-  // Note: My seed has {{languageName}}.
-  // The Default Fallback has to be carefully managed.
-  // If getPrompt returns defaultRules, it is already formatted.
-  // If getPrompt returns DB string, it has {{languageName}}.
-
-  // To be safe: I will make the seed default also use {{languageName}} and format it.
 
   return `${basePrompt}${rulesTemplate}`;
 }
@@ -107,142 +88,32 @@ export async function generateStructured<T extends z.ZodType>(
 
   console.log('[LLM Structured] Generation requested', {
     language,
-    model: config.model || 'flash-with-fallback',
+    model: config.model || 'gemini-default',
     userId: config.userId,
     schema: schema.description || 'unnamed',
     tags: runnableConfig.tags,
   });
 
-  // If explicit model specified, use it without fallback
-  // If explicit model specified, use it without fallback
+  // Default to FLASH if not specified or arbitrary string provided
+  let geminiModelToken = GeminiModel.FLASH;
+
   if (config.model) {
-    let baseModel;
-    const modelStr = config.model as string;
-    const isGemini = modelStr.toLowerCase().includes('gemini') || modelStr.includes('flash');
-
-    if (isGemini) {
-      // Handle Gemini Models
-      console.log(`[LLM Structured] Using Gemini model: ${config.model}`);
-
-      // Map 'flash-with-fallback' or similar to a valid GeminiModel enum if needed,
-      // or rely on getGeminiModel handling strings nicely or casting.
-      // For now, if it contains 'flash', default to FLASH if exact match fails, or pass exact string.
-      let geminiModelToken = config.model as GeminiModel;
-
-      if ((config.model as string) === 'flash-with-fallback') {
-        geminiModelToken = GeminiModel.FLASH;
-      }
-
-      baseModel = getGeminiModel(geminiModelToken, config);
-
-      // Gemini Structured Output
-      // LangChain's ChatGoogleGenerativeAI supports .withStructuredOutput(zodSchema) directly.
-      // We do NOT pass OpenAI specific options like method: 'jsonSchema'.
-      const structuredModel = baseModel.withStructuredOutput(schema);
-
-      try {
-        const response = await structuredModel.invoke(messages, runnableConfig);
-        console.debug('[LLM Structured] Response received');
-        return response as z.infer<T>;
-      } catch (error) {
-        console.error(`[LLM Structured] Gemini ${config.model} failed:`, extractErrorDetails(error));
-        throw error;
-      }
-    } else {
-      // OpenAI GPT-5 models (with strict JSON mode)
-      if (config.model === OpenAIModel.GPT_5_1) {
-        baseModel = getGPT51Model(config);
-      } else if (config.model === OpenAIModel.GPT_5_MINI) {
-        baseModel = getGPT5MiniModel(config);
-      } else if (config.model === OpenAIModel.GPT_5_NANO) {
-        baseModel = getGPT5NanoModel(config);
-      } else if (config.model === OpenAIModel.GPT_5_PRO) {
-        baseModel = getGPT5ProModel(config);
-      } else {
-        // Default to GPT-5 mini if unknown OpenAI model
-        baseModel = getGPT5MiniModel(config);
-      }
-
-      // Use Structured Outputs with strict: true for OpenAI models
-      const structuredModel = baseModel.withStructuredOutput(schema as any, {
-        method: 'jsonSchema',
-        strict: true,
-        includeRaw: false,
-      });
-
-      try {
-        let response;
-        const streamId = config.metadata?.streamId as string | undefined;
-
-        if (streamId) {
-          const stream = await structuredModel.streamEvents(messages, {
-            ...runnableConfig,
-            version: 'v2',
-          });
-
-          let rootRunId: string | undefined;
-
-          for await (const event of stream) {
-            if (!rootRunId && event.event === 'on_chain_start') {
-              rootRunId = event.run_id;
-            }
-
-            if (event.event === 'on_chat_model_stream') {
-              const chunk = event.data.chunk;
-              if (chunk.content) {
-                streamManager.emitText(streamId, chunk.content.toString());
-              } else if (chunk.tool_call_chunks && chunk.tool_call_chunks.length > 0) {
-                const args = chunk.tool_call_chunks[0].args;
-                if (args) streamManager.emitText(streamId, args);
-              }
-            }
-
-            if (event.event === 'on_chain_end' && event.run_id === rootRunId) {
-              response = event.data.output;
-            }
-          }
-
-          if (!response) {
-            throw new Error('Stream ended without output');
-          }
-        } else {
-          response = await structuredModel.invoke(messages, runnableConfig);
-        }
-
-        console.debug('[LLM Structured] Response received');
-        return response as z.infer<T>;
-      } catch (error) {
-        console.error(`[LLM Structured] ${config.model} failed:`, extractErrorDetails(error));
-        throw error;
-      }
+    if (Object.values(GeminiModel).includes(config.model as GeminiModel)) {
+      geminiModelToken = config.model as GeminiModel;
     }
   }
 
-  // GPT-5 mini ONLY - fastest and cheapest that works well
-  // We removed fallback logic for simplicity in CMS port for now, defaulting to OpenAI GPT-5 Mini
-  // But we can add fallback if we implement Gemini structured later (Gemini structured works differently in LangChain)
+  console.log(`[LLM Structured] Using Gemini model: ${geminiModelToken}`);
 
-  // For Gemini, structured output support changes.
-  // The original code had fallback logic. I will simplify to just use GPT-5 Mini (OpenAI) as default since backend seemed to rely on it heavily for structured.
-  // Actually, wait. Does backend use Gemini for structured?
-  // `getFlashModel` doesn't support `withStructuredOutput` in the same way for all providers easily.
-  // Original code logic:
-  // const modelFactories = [{ name: 'GPT-5 Mini', factory: () => getGPT5MiniModel(config) }];
-
-  // So it defaults to GPT-5 Mini. I'll stick to that.
-
-  const baseModel = getGPT5MiniModel(config);
-  const structuredModel = baseModel.withStructuredOutput(schema as any, {
-    method: 'jsonSchema',
-    strict: true,
-    includeRaw: false,
-  });
+  const baseModel = getGeminiModel(geminiModelToken, config);
+  const structuredModel = baseModel.withStructuredOutput(schema);
 
   try {
-    const response = await structuredModel.invoke(messages, runnableConfig); // TODO: Add streaming support here if needed
+    const response = await structuredModel.invoke(messages, runnableConfig);
+    console.debug('[LLM Structured] Response received');
     return response as z.infer<T>;
-  } catch (e) {
-    console.error('LLM Structured failed', e);
-    throw e;
+  } catch (error) {
+    console.error(`[LLM Structured] Gemini ${geminiModelToken} failed:`, extractErrorDetails(error));
+    throw error;
   }
 }

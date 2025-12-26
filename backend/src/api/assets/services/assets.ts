@@ -5,7 +5,7 @@
 import { Core } from '@strapi/strapi';
 import { generateImageGemini } from '../../../utils/llm/image';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
-import { getFlashLiteLatestModel } from '../../../utils/llm/gemini';
+import { getFlashModel } from '../../../utils/llm/gemini';
 import { HumanMessage } from '@langchain/core/messages';
 
 export default () => ({
@@ -33,7 +33,7 @@ export default () => ({
       // Instead, we pass the image data directly to the model.
 
       // 2. Construct Master Prompt using Gemini Flash Lite (Nano replacement)
-      const model = getFlashLiteLatestModel();
+      const model = getFlashModel();
       const defaultConstruction = `
       Create a highly detailed image generation prompt for a fantasy RPG character portrait.
       Target Model: Imagen 3 / Gemini Image Generation.

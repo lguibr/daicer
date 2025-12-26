@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
 import Navbar from '../components/layout/Navbar';
 import {
   Breadcrumb,
@@ -9,23 +8,23 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../components/ui/breadcrumb';
+import { Button } from '../components/ui/button';
+import { Loader2 } from 'lucide-react';
 
-import RoomSelection from '../features/debug/components/RoomSelection';
+import { RoomSelection } from '../features/debug/components/RoomSelection';
 // Replaced DMSetup with CampaignWizard
 import { CampaignWizard } from '../features/create-room/components/CampaignWizard';
-import WorldConfigForm from '../features/debug/components/WorldConfigForm';
+import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
 import { GameDebugView } from '../features/debug/components/GameDebugView';
 import { createRoom } from '../services/api'; // Use API service
 import type { WorldSettings } from '../types/models';
-import { Button } from '../components/ui/button';
-import { Loader2 } from 'lucide-react';
-// Removed CREATE_ROOM_MUTATION, CREATE_DM_SETTING_MUTATION as they are no longer used.
 
 type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
 
 export default function DebugPage() {
   const [stage, setStage] = useState<Stage>('selection');
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   // World Config State for the 'world' stage
   const [worldConfig, setWorldConfig] = useState<any>({
@@ -45,69 +44,28 @@ export default function DebugPage() {
     fogRadius: 10,
   });
 
-  const [createDmSetting] = useMutation(CREATE_DM_SETTING_MUTATION);
-  const [createRoom] = useMutation(CREATE_ROOM_MUTATION);
-  const [isCreating, setIsCreating] = useState(false);
-
   // Handlers
   const handleRoomSelect = (roomId: string) => {
     setActiveRoomId(roomId);
     setStage('debug'); // Jump straight to debug for existing rooms
   };
 
-  const handleCreateCampaign = async (dmData: any) => {
+  const handleDetailedWizardSubmit = async (settings: WorldSettings) => {
     setIsCreating(true);
     try {
-      // 1. Create DM Setting
-      // Map frontend style 0-6 to schema if needed, but schema uses component.
-      // DMSettingInput usually expects { data: { ... } }
-      // The component `game.dm-style` fields match `dmData.style` (verbosity, etc.)
-
-      const dmRes = await createDmSetting({
-        variables: {
-          data: {
-            theme: dmData.theme,
-            setting: dmData.setting,
-            tone: dmData.tone,
-            worldSize: dmData.worldSize,
-            adventureLength: dmData.adventureLength,
-            difficulty: dmData.difficulty,
-            style: {
-              verbosity: dmData.style.verbosity,
-              detail: dmData.style.detail,
-              engagement: dmData.style.engagement,
-              narrative: dmData.style.narrative,
-              specialMode: dmData.style.specialMode,
-              customDirectives: dmData.style.customDirectives,
-            },
-          },
-        },
+      // Use the API service which handles standard mapping
+      const room = await createRoom({
+        settings,
+        structures: [],
       });
 
-      const dmSettingId = dmRes.data?.createDmSetting?.documentId;
-
-      if (!dmSettingId) throw new Error('Failed to create DM settings');
-
-      // 2. Create Room
-      const roomRes = await createRoom({
-        variables: {
-          data: {
-            phase: 'setup',
-            dmSetting: dmSettingId, // Link relation
-            // Default world config could be stored here if we had fields,
-            // but we'll set it in the next step (backend usually generates on demand)
-          },
-        },
-      });
-
-      const newRoomId = roomRes.data?.createRoom?.documentId;
-      if (!newRoomId) throw new Error('Failed to create room');
-
-      setActiveRoomId(newRoomId);
-      setStage('world'); // Go to world gen
-    } catch (e) {
-      console.error(e);
-      alert('Failed to create campaign. See console.');
+      setActiveRoomId(room.documentId || room.id);
+      // Move to world generation stage
+      setStage('world');
+    } catch (err) {
+      console.error('Failed to create room:', err);
+      alert('Failed to create room: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      // Stay on same stage so user can retry
     } finally {
       setIsCreating(false);
     }
@@ -127,8 +85,14 @@ export default function DebugPage() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/" onClick={() => setStage('selection')}>
-                Home
+              <BreadcrumbLink
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setStage('selection');
+                }}
+              >
+                Debug
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -140,6 +104,16 @@ export default function DebugPage() {
                 {stage === 'debug' && 'Engine Debugger'}
               </BreadcrumbPage>
             </BreadcrumbItem>
+            {activeRoomId && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-mono text-xs text-muted-foreground">
+                    {activeRoomId.slice(0, 8)}...
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            )}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
@@ -155,14 +129,21 @@ export default function DebugPage() {
         )}
 
         {stage === 'selection' && (
-          <div className="h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto p-6">
             <RoomSelection onSelect={handleRoomSelect} onCreate={() => setStage('dm-setup')} />
           </div>
         )}
 
         {stage === 'dm-setup' && (
-          <div className="h-full overflow-y-auto">
-            <DMSetup onCreate={handleCreateCampaign} onCancel={() => setStage('selection')} />
+          <div className="h-full overflow-y-auto bg-midnight-950 p-6">
+            <div className="max-w-6xl mx-auto">
+              <CampaignWizard
+                onSubmit={handleDetailedWizardSubmit}
+                onCancel={() => setStage('selection')}
+                isSubmitting={isCreating}
+                submitLabel="Create & Proceed to World"
+              />
+            </div>
           </div>
         )}
 
@@ -178,7 +159,7 @@ export default function DebugPage() {
                 config={worldConfig}
                 onConfigChange={setWorldConfig}
                 isActive={true}
-                onRegenerate={() => {}} // No-op in this preview view, or we could trigger preview
+                onRegenerate={() => {}} // No-op in this preview view
               />
 
               <div className="mt-8">
