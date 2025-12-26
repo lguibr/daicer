@@ -37,6 +37,12 @@
         },
         "actorId": {
             "type": "string"
+        },
+        "timeFrames": {
+            "type": "relation",
+            "relation": "manyToMany",
+            "target": "api::time-frame.time-frame",
+            "inversedBy": "events"
         }
     }
 }

@@ -9,7 +9,7 @@
     "engine"
   ],
   "scripts": {
-    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"yarn workspace @daicer/backend develop\" \"yarn workspace @daicer/frontend dev\"",
+    "dev": "concurrently -n \"backend,frontend\" -c \"#4285F4,#0F9D58\" \"yarn workspace @daicer/backend develop\" \"yarn workspace @daicer/frontend dev\"",
     "build": "yarn workspaces run build",
     "start": "concurrently \"yarn workspace @daicer/backend start\" \"yarn workspace @daicer/frontend start\"",
     "lint": "yarn workspaces run lint",

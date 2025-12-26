@@ -1,5 +1,7 @@
 export enum GamePhase {
+  Lobby = 'lobby',
   LOBBY = 'lobby',
+  SETUP = 'setup',
   CHARACTER_CREATION = 'character_creation',
   GAMEPLAY = 'gameplay',
   COMBAT = 'combat',
@@ -27,6 +29,10 @@ export interface Room {
   config: any;
   createdAt: string;
   updatedAt: string;
+  // New architecture relationships
+  timeFrames?: TimeFrame[];
+  currentTimeFrame?: TimeFrame;
+  [key: string]: any;
 }
 
 export interface Message {
@@ -66,7 +72,48 @@ export interface ChunkDTO {
 export type GridChunk = ChunkDTO;
 
 // Other types often used
+export interface DMStyle {
+  verbosity: number;
+  detail: number;
+  engagement: number;
+  narrative: number;
+  specialMode: string | null;
+  customDirectives: string;
+}
+
 export interface WorldSettings {
   seed: string;
-  // ... add more as discovered
+  worldType: string;
+  worldSize: string;
+  theme: string;
+  setting: string;
+  tone: string;
+  worldBackground: string;
+  dmStyle: DMStyle;
+  dmSystemPrompt: string;
+  playerCount: number;
+  adventureLength: string;
+  difficulty: string;
+  startingLevel: number;
+  attributePointBudget: number;
+  language: string;
+  // Advanced generation settings
+  historyDepth?: number;
+  eraCount?: number;
+  structureDensity?: number;
+  enableRoads?: boolean;
+  roadQuality?: string;
+  terrainComplexity?: number;
+}
+
+export interface TimeFrame {
+  id: string;
+  turnNumber: number;
+  timestamp: string; // ISO string from Strapi
+  gameState: {
+    world: any; // generated world data
+    entities: Entity[];
+    settings: WorldSettings; // Snapshot of settings at this time
+    mapConfig: any; // Snapshot of map config
+  };
 }

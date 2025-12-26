@@ -177,6 +177,7 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
           isProcessing={socket.isProcessing}
           presence={socket.presence}
           currentUserId={(currentPlayer as any)?.user?.documentId || user?.uid}
+          currentUserCharacter={currentPlayer?.character}
         />
       </div>
 

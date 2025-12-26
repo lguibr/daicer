@@ -8,12 +8,10 @@ import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import PrivateLayout from '../components/layout/PrivateLayout';
 import { createRoom } from '../services/api';
 
-// import type { WorldSettings, WorldType, DMStyle, ScaleLevel } from '@daicer/engine';
-// TODO: Define these types locally if strict typing is needed.
-import type { WorldSettings } from '../types/models';
-type WorldType = any;
-type DMStyle = any;
-type ScaleLevel = any;
+import type { WorldSettings, DMStyle } from '../types/models';
+type WorldType = string;
+type ScaleLevel = number;
+
 import { WORLD_ARCHETYPES } from '../constants/worldArchetypes';
 import {
   ARCHETYPE_SIGILS,
@@ -58,12 +56,12 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.marks.verbosity.${key}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? VERBOSITY_FALLBACK[key].label : translated;
+          return translated === labelKey ? (VERBOSITY_FALLBACK[key]?.label ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.marks.verbosity.${key}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? VERBOSITY_FALLBACK[key].description : translated;
+          return translated === descriptionKey ? (VERBOSITY_FALLBACK[key]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -76,12 +74,12 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.marks.detail.${key}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? DETAIL_FALLBACK[key].label : translated;
+          return translated === labelKey ? (DETAIL_FALLBACK[key]?.label ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.marks.detail.${key}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? DETAIL_FALLBACK[key].description : translated;
+          return translated === descriptionKey ? (DETAIL_FALLBACK[key]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -94,12 +92,12 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.marks.engagement.${key}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? ENGAGEMENT_FALLBACK[key].label : translated;
+          return translated === labelKey ? (ENGAGEMENT_FALLBACK[key]?.label ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.marks.engagement.${key}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? ENGAGEMENT_FALLBACK[key].description : translated;
+          return translated === descriptionKey ? (ENGAGEMENT_FALLBACK[key]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -112,12 +110,12 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.marks.narrative.${key}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? NARRATIVE_FALLBACK[key].label : translated;
+          return translated === labelKey ? (NARRATIVE_FALLBACK[key]?.label ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.marks.narrative.${key}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? NARRATIVE_FALLBACK[key].description : translated;
+          return translated === descriptionKey ? (NARRATIVE_FALLBACK[key]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -148,17 +146,17 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.adventureLength.${value}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? ADVENTURE_LENGTH_FALLBACK[value].label : translated;
+          return translated === labelKey ? (ADVENTURE_LENGTH_FALLBACK[value]?.label ?? '') : translated;
         })(),
         detail: (() => {
           const detailKey = `createWizard.adventureLength.${value}.detail`;
           const translated = t(detailKey);
-          return translated === detailKey ? ADVENTURE_LENGTH_FALLBACK[value].detail : translated;
+          return translated === detailKey ? (ADVENTURE_LENGTH_FALLBACK[value]?.detail ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.adventureLength.${value}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? ADVENTURE_LENGTH_FALLBACK[value].description : translated;
+          return translated === descriptionKey ? (ADVENTURE_LENGTH_FALLBACK[value]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -171,17 +169,17 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.difficulty.${value}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? DIFFICULTY_FALLBACK[value].label : translated;
+          return translated === labelKey ? (DIFFICULTY_FALLBACK[value]?.label ?? '') : translated;
         })(),
         detail: (() => {
           const detailKey = `createWizard.difficulty.${value}.detail`;
           const translated = t(detailKey);
-          return translated === detailKey ? DIFFICULTY_FALLBACK[value].detail : translated;
+          return translated === detailKey ? (DIFFICULTY_FALLBACK[value]?.detail ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.difficulty.${value}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? DIFFICULTY_FALLBACK[value].description : translated;
+          return translated === descriptionKey ? (DIFFICULTY_FALLBACK[value]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -194,17 +192,17 @@ export default function CreateRoomPage() {
         label: (() => {
           const labelKey = `createWizard.worldSize.${value}.label`;
           const translated = t(labelKey);
-          return translated === labelKey ? WORLD_SIZE_FALLBACK[value].label : translated;
+          return translated === labelKey ? (WORLD_SIZE_FALLBACK[value]?.label ?? '') : translated;
         })(),
         detail: (() => {
           const detailKey = `createWizard.worldSize.${value}.detail`;
           const translated = t(detailKey);
-          return translated === detailKey ? WORLD_SIZE_FALLBACK[value].detail : translated;
+          return translated === detailKey ? (WORLD_SIZE_FALLBACK[value]?.detail ?? '') : translated;
         })(),
         description: (() => {
           const descriptionKey = `createWizard.worldSize.${value}.description`;
           const translated = t(descriptionKey);
-          return translated === descriptionKey ? WORLD_SIZE_FALLBACK[value].description : translated;
+          return translated === descriptionKey ? (WORLD_SIZE_FALLBACK[value]?.description ?? '') : translated;
         })(),
       })),
     [t]
@@ -243,23 +241,24 @@ export default function CreateRoomPage() {
   const defaultArchetype = WORLD_ARCHETYPES.terra;
   const getArchetypeDefaults = (type: WorldType) => {
     const archetype = WORLD_ARCHETYPES[type];
-    const key = archetype.translationKey;
+    const key = archetype?.translationKey ?? 'archetypes.terra'; // Fallback key
     const resolve = (suffix: string, fallbackValue: string) => {
       const translated = t(`${key}.${suffix}`);
       return translated === `${key}.${suffix}` ? fallbackValue : translated;
     };
 
     return {
-      theme: resolve('theme', archetype.theme),
-      setting: resolve('setting', archetype.setting),
-      tone: resolve('tone', archetype.tone),
-      background: resolve('background', archetype.background ?? ''),
+      theme: resolve('theme', archetype?.theme ?? 'High Fantasy'),
+      setting: resolve('setting', archetype?.setting ?? 'Medieval Kingdom'),
+      tone: resolve('tone', archetype?.tone ?? 'Heroic'),
+      background: resolve('background', archetype?.background ?? ''),
     };
   };
 
-  const defaultArchetypeDefaults = getArchetypeDefaults(defaultArchetype.type);
+  const defaultArchetypeDefaults = getArchetypeDefaults(defaultArchetype?.type ?? 'terra');
 
   const [settings, setSettings] = useState<WorldSettings>({
+    seed,
     worldType: 'terra',
     worldSize: 'small',
     theme: defaultArchetypeDefaults.theme,
@@ -385,7 +384,6 @@ export default function CreateRoomPage() {
       const room = await createRoom({
         settings: {
           ...settings,
-
           seed,
         },
         structures,
@@ -395,7 +393,6 @@ export default function CreateRoomPage() {
       navigate(`/room/${room.documentId}`, {
         state: {
           initialSeed: seed,
-
           initialStructures: structures,
           initialSettings: settings, // including worldType for preset inference
         },
@@ -572,7 +569,7 @@ export default function CreateRoomPage() {
                 {(Object.keys(WORLD_ARCHETYPES) as WorldType[]).map((type) => {
                   const archetype = WORLD_ARCHETYPES[type];
                   const isActive = settings.worldType === type;
-                  const Sigil = ARCHETYPE_SIGILS[archetype.sigil];
+                  const Sigil = ARCHETYPE_SIGILS[archetype?.sigil ?? 'mountain'];
 
                   return (
                     <button
@@ -589,7 +586,7 @@ export default function CreateRoomPage() {
                       <div className="flex items-center gap-2">
                         {Sigil && <Sigil className="h-5 w-5 text-aurora-300" aria-hidden />}
                         <span className="text-sm font-semibold uppercase tracking-[0.2em] text-shadow-300">
-                          {archetype.type}
+                          {archetype?.type ?? type}
                         </span>
                       </div>
                     </button>

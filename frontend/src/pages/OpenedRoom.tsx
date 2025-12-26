@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { getRoomState } from '../services/api';
-import { joinRoom as joinSocketRoom } from '../services/socket';
+import useAuth from '../hooks/useAuth';
 import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
 import { PrivateLayout } from '../components/layout';
@@ -15,11 +15,12 @@ import { Card } from '../components/ui/card';
 import { DiceLoader } from '../components/ui/dice-loader';
 
 import ToolCallCard from '../components/chat/ToolCallCard';
+
 // eslint-disable-next-line import/no-unresolved
 import { auth } from '../services/firebase';
 // import { useI18n } from '../i18n';
 
-import type { Room, Player } from '../types/models';
+import { Room, Player, GamePhase } from '../types/models';
 
 import type { ToolCall } from '../services/socket';
 
@@ -36,7 +37,8 @@ export default function OpenedRoomPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const socket = useSocket(roomId);
+  const { user } = useAuth();
+  const socket = useSocket(roomId, user?.uid);
 
   const [streamEvents, setStreamEvents] = useState<
     Array<{
@@ -72,11 +74,6 @@ export default function OpenedRoomPage() {
         const data = await getRoomState(roomId);
         setRoom(data);
         setPlayers((data as Room & { players: Player[] }).players || []);
-
-        // Join socket room
-        setTimeout(() => {
-          joinSocketRoom(roomId);
-        }, 100);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load room');
       } finally {
@@ -98,7 +95,7 @@ export default function OpenedRoomPage() {
       }
 
       // Auto-navigate to gameplay when room phase changes to GAMEPLAY
-      if (socket.room.phase === 'GAMEPLAY') {
+      if (socket.room.phase === GamePhase.GAMEPLAY) {
         navigate(`/room/${roomId}`);
       }
     }
@@ -108,13 +105,13 @@ export default function OpenedRoomPage() {
   }, [socket.room, socket.players, roomId, navigate]);
 
   // Monitor world generation if room is in SETUP phase
-  const isWorldGenerating = room && room.phase === 'SETUP' && !room.worldDescription;
+  const isWorldGenerating = room && room.phase === GamePhase.SETUP && !room.worldDescription;
   const roomPhase = room?.phase;
   const hasWorldDescription = room?.worldDescription;
 
   useEffect(() => {
     // Only run if room is in SETUP phase and has no worldDescription
-    if (!roomId || roomPhase !== 'SETUP' || hasWorldDescription) {
+    if (!roomId || roomPhase !== GamePhase.SETUP || hasWorldDescription) {
       return;
     }
 

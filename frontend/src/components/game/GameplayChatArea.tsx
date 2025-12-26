@@ -38,6 +38,9 @@ interface StreamingMessage extends Message {
   content?: string; // Legacy compatibility
   diceRolls?: DiceRollData[];
   toolCalls?: SocketToolCall[];
+  recipientId?: string;
+  targetPlayer?: string;
+  images?: string[];
 }
 
 interface GameplayChatAreaProps {
@@ -47,6 +50,7 @@ interface GameplayChatAreaProps {
   isProcessing: boolean;
   presence: PresenceData[];
   currentUserId?: string; // Strapi Document ID of the current user
+  currentUserCharacter?: any; // To be typed properly if Character definition is shared
 }
 
 /**
@@ -63,6 +67,7 @@ export default function GameplayChatArea({
   isProcessing,
   presence,
   currentUserId,
+  currentUserCharacter,
 }: GameplayChatAreaProps) {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -140,111 +145,141 @@ export default function GameplayChatArea({
           const isPrivate = !!(msg.recipientId || msg.targetPlayer);
           const content = msg.isStreaming && msg.streamContent ? msg.streamContent : msg.content || msg.text;
 
+          // Private DM Logic: "Your Perspective"
+          const senderName = isPrivate ? 'Your Perspective' : msg.sender;
+          // Use user's character avatar for private perspective if available, otherwise DM or dicebear
+          const avatarSrc =
+            isPrivate && currentUserCharacter?.portraitUrl
+              ? currentUserCharacter.portraitUrl
+              : isPrivate
+                ? undefined // Fallback to initial if no portrait
+                : isDM
+                  ? undefined
+                  : `https://api.dicebear.com/8.x/lorelei/svg?seed=${msg.sender}`;
+
           return (
-            <div key={msg.id} className={cn('group flex w-full', isDM ? 'justify-start' : 'justify-end')}>
+            <div
+              key={msg.id}
+              className={cn('group flex w-full', isPrivate ? 'justify-center' : isDM ? 'justify-start' : 'justify-end')}
+            >
               <AIMessage
                 from={isDM ? 'assistant' : 'user'}
                 className={cn(
-                  'w-full max-w-4xl transition-all duration-300',
+                  'w-full max-w-4xl transition-all duration-300 relative overflow-hidden',
                   isPrivate &&
-                    'border-2 border-nebula-500/60 bg-gradient-to-br from-nebula-900/80 to-midnight-900/90 shadow-[0_0_30px_rgba(139,92,246,0.15)]'
+                    'border-2 border-nebula-500/60 bg-gradient-to-br from-nebula-900/90 to-midnight-950/90 shadow-[0_0_40px_rgba(139,92,246,0.2)]'
                 )}
               >
-                <MessageHeader>
-                  <div className="flex items-center gap-3">
-                    <MessageAvatar
-                      name={msg.sender}
-                      src={isDM ? undefined : `https://api.dicebear.com/8.x/lorelei/svg?seed=${msg.sender}`}
-                    />
-                    <MessageSender isDM={isDM}>{msg.sender}</MessageSender>
-                    {isPrivate && <MessageBadge variant="private">🔒 {t('gameplay.privatePerspective')}</MessageBadge>}
-                    {msg.isStreaming && <MessageBadge variant="streaming">Streaming...</MessageBadge>}
-                  </div>
+                {/* Logo Watermark for Private Messages */}
+                {isPrivate && (
+                  <div
+                    className="absolute inset-0 z-0 bg-[url('/logo.png')] bg-no-repeat bg-center bg-contain opacity-5 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
 
-                  <div className="flex items-center gap-3">
-                    <MessageTime timestamp={msg.timestamp} />
-                    <Actions>
-                      {content && <ActionCopy text={content} />}
-                      {isDM && msg.id && (
-                        <>
-                          <ActionRegenerate messageId={msg.id} />
-                          <ActionDelete messageId={msg.id} />
-                        </>
+                <div className="relative z-10 flex flex-col gap-3">
+                  <MessageHeader>
+                    <div className="flex items-center gap-3">
+                      <MessageAvatar
+                        name={isPrivate && currentUserCharacter?.name ? currentUserCharacter.name : senderName}
+                        src={avatarSrc}
+                        className={isPrivate ? 'border-nebula-400 ring-2 ring-nebula-500/20' : undefined}
+                      />
+                      <MessageSender isDM={isDM} className={isPrivate ? 'text-nebula-200' : undefined}>
+                        {senderName}
+                      </MessageSender>
+                      {isPrivate && (
+                        <MessageBadge variant="private">🔒 {t('gameplay.privatePerspective')}</MessageBadge>
                       )}
-                    </Actions>
-                  </div>
-                </MessageHeader>
-
-                <MessageContent>
-                  {/* Render DM messages with markdown, player messages as plain text */}
-                  {isDM ? (
-                    <Response parseIncompleteMarkdown={msg.isStreaming}>{content}</Response>
-                  ) : (
-                    <p className="whitespace-pre-wrap leading-relaxed break-words text-shadow-50">{content}</p>
-                  )}
-
-                  {/* Metadata / Thought Process */}
-                  {isDM && msg.metadata && (
-                    <div className="mt-4 rounded-lg border border-midnight-700 bg-midnight-900/50 p-3">
-                      <details className="group/details">
-                        <summary className="flex cursor-pointer items-center gap-2 text-xs font-medium text-shadow-400 hover:text-shadow-200">
-                          <span className="transition-transform group-open/details:rotate-90">▶</span>
-                          <span>Thinking Process & Context</span>
-                        </summary>
-                        <div className="mt-3 space-y-4 text-xs text-shadow-300">
-                          {msg.metadata.ragContext && (
-                            <div>
-                              <h4 className="mb-2 flex items-center gap-2 font-bold text-aurora-300">
-                                <span className="text-lg">📚</span> Relevant Rules (RAG)
-                              </h4>
-                              <RAGContextViewer text={msg.metadata.ragContext} />
-                            </div>
-                          )}
-                          {msg.metadata.toolCalls && (
-                            <div>
-                              <h4 className="mb-2 flex items-center gap-2 font-bold text-nebula-300">
-                                <span className="text-lg">🛠️</span> Tool Calls
-                              </h4>
-                              <ToolCallsViewer toolCalls={msg.metadata.toolCalls} />
-                            </div>
-                          )}
-                        </div>
-                      </details>
+                      {msg.isStreaming && <MessageBadge variant="streaming">Streaming...</MessageBadge>}
                     </div>
-                  )}
 
-                  {/* Dice Rolls - MANDATORY FEATURE */}
-                  {msg.diceRolls && msg.diceRolls.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      {msg.diceRolls.map((roll: DiceRollData, idx: number) => (
-                        <DiceRollCard key={`${msg.id}-dice-${idx}`} roll={roll} animate />
-                      ))}
+                    <div className="flex items-center gap-3">
+                      <MessageTime timestamp={msg.timestamp} />
+                      <Actions>
+                        {content && <ActionCopy text={content} />}
+                        {isDM && msg.id && (
+                          <>
+                            <ActionRegenerate messageId={msg.id} />
+                            <ActionDelete messageId={msg.id} />
+                          </>
+                        )}
+                      </Actions>
                     </div>
-                  )}
+                  </MessageHeader>
 
-                  {/* Tool Calls */}
-                  {msg.toolCalls && msg.toolCalls.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      {msg.toolCalls.map((toolCall: SocketToolCall, idx: number) => (
-                        <ToolCallCard key={`${msg.id}-tool-${idx}`} toolCall={toolCall} status="complete" />
-                      ))}
-                    </div>
-                  )}
+                  <MessageContent>
+                    {/* Render DM messages with markdown, player messages as plain text */}
+                    {isDM ? (
+                      <Response parseIncompleteMarkdown={msg.isStreaming}>{content}</Response>
+                    ) : (
+                      <p className="whitespace-pre-wrap leading-relaxed break-words text-shadow-50">{content}</p>
+                    )}
 
-                  {/* Generated Images */}
-                  {msg.images && msg.images.length > 0 && (
-                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                      {msg.images.map((img) => (
-                        <img
-                          key={img.slice(0, 16)}
-                          src={`data:image/png;base64,${img}`}
-                          className="h-full w-full rounded-2xl border border-midnight-600/60 object-cover object-center shadow-lg"
-                          alt="Generated scene"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </MessageContent>
+                    {/* Metadata / Thought Process */}
+                    {isDM && msg.metadata && (
+                      <div className="mt-4 rounded-lg border border-midnight-700 bg-midnight-900/50 p-3">
+                        <details className="group/details">
+                          <summary className="flex cursor-pointer items-center gap-2 text-xs font-medium text-shadow-400 hover:text-shadow-200">
+                            <span className="transition-transform group-open/details:rotate-90">▶</span>
+                            <span>Thinking Process & Context</span>
+                          </summary>
+                          <div className="mt-3 space-y-4 text-xs text-shadow-300">
+                            {msg.metadata.ragContext && (
+                              <div>
+                                <h4 className="mb-2 flex items-center gap-2 font-bold text-aurora-300">
+                                  <span className="text-lg">📚</span> Relevant Rules (RAG)
+                                </h4>
+                                <RAGContextViewer text={msg.metadata.ragContext} />
+                              </div>
+                            )}
+                            {msg.metadata.toolCalls && (
+                              <div>
+                                <h4 className="mb-2 flex items-center gap-2 font-bold text-nebula-300">
+                                  <span className="text-lg">🛠️</span> Tool Calls
+                                </h4>
+                                <ToolCallsViewer toolCalls={msg.metadata.toolCalls} />
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      </div>
+                    )}
+
+                    {/* Dice Rolls - MANDATORY FEATURE */}
+                    {msg.diceRolls && msg.diceRolls.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        {msg.diceRolls.map((roll: DiceRollData, idx: number) => (
+                          <DiceRollCard key={`${msg.id}-dice-${idx}`} roll={roll} animate />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Tool Calls */}
+                    {msg.toolCalls && msg.toolCalls.length > 0 && (
+                      <div className="mt-4 space-y-3">
+                        {msg.toolCalls.map((toolCall: SocketToolCall, idx: number) => (
+                          <ToolCallCard key={`${msg.id}-tool-${idx}`} toolCall={toolCall} status="complete" />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Generated Images */}
+                    {msg.images && msg.images.length > 0 && (
+                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                        {msg.images.map((img) => (
+                          <img
+                            key={img.slice(0, 16)}
+                            src={`data:image/png;base64,${img}`}
+                            className="h-full w-full rounded-2xl border border-midnight-600/60 object-cover object-center shadow-lg"
+                            alt="Generated scene"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </MessageContent>
+                </div>
               </AIMessage>
             </div>
           );

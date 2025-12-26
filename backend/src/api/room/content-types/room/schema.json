@@ -140,6 +140,17 @@
       "type": "component",
       "repeatable": false,
       "component": "game.dm-style"
+    },
+    "timeFrames": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::time-frame.time-frame",
+      "mappedBy": "room"
+    },
+    "currentTimeFrame": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::time-frame.time-frame"
     }
   }
 }

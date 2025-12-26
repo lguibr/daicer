@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { getRoomState, startGame } from '../services/api';
-import { joinRoom as joinSocketRoom, setReady } from '../services/socket';
+import { setReady } from '../services/socket';
 import useSocket from '../hooks/useSocket';
 import CharacterCreation from '../components/room/CharacterCreation';
 import { LobbyScreen } from '../components/room/LobbyScreen';
@@ -24,6 +24,7 @@ import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
 import { Room as SharedRoom, Player, GamePhase } from '../types/models';
+import { TimeFrameProvider } from '../contexts/TimeFrameContext';
 
 import { useI18n } from '../i18n';
 
@@ -45,7 +46,7 @@ export default function GameRoomPage() {
   const [isCreatingCharacter, setIsCreatingCharacter] = useState(false);
   const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
 
-  const socket = useSocket(roomId);
+  const socket = useSocket(roomId, user?.uid);
 
   // Listen to all streams in the room
   const streams = useLLMStream(undefined, socket.socket);
@@ -56,7 +57,7 @@ export default function GameRoomPage() {
   useEffect(() => {
     if (!loading && players.length > 0 && user?.uid) {
       // Only redirect if we are in the correct phase
-      if (room?.phase === 'CHARACTER_CREATION' || room?.phase === 'SETUP') {
+      if (room?.phase === GamePhase.CHARACTER_CREATION || room?.phase === GamePhase.SETUP) {
         const me = players.find((p) => p.userId === user.uid);
         if (me) {
           if (!me.character && !hasAutoRedirected) {
@@ -118,37 +119,6 @@ export default function GameRoomPage() {
         });
         setRoom(roomData);
         setPlayers(roomData.players || []);
-
-        // Give socket time to initialize before joining
-        setTimeout(() => {
-          console.log('[GameRoom] Joining socket room...');
-          // user (from useAuth) might be null initially, but we are in loadRoom.
-          // loadRoom is called on mount. user might load async.
-          // But useAuth runs on mount too.
-          // We can try to use the user from closure if available, or get it from auth state.
-          // Actually, 'user' is from useAuth, which is stateful.
-          // Inside this closure 'user' might be stale? No, it's a dependency of useEffect?
-          // useEffect dependency is `[roomId, navigate]`. `user` is missing!
-          // If we add `user` to dependency, it re-runs when user loads.
-          // Which is good!
-
-          // But let's look at the joinSocketRoom call.
-          // We need to pass user?.uid.
-          // Since this is inside useEffect[roomId], 'user' is captured from render scope.
-          // But if user loads LATER, this effect won't re-run.
-          // So we might join as undefined, then never update?
-
-          // Better: Separate useEffect for joining room when user/roomId changes?
-          // Or just fix the call here and rely on user being loaded (since it's fast usually).
-          // But useAuth has loading state.
-
-          // Let's pass user?.uid if available.
-          // But strict dependency rule suggests separating logic.
-
-          // For now, I'll access the current value if possible, or trigger a re-join if user changes?
-          // Existing code:
-          joinSocketRoom(roomId, user?.uid);
-        }, 100);
       } catch (err) {
         console.error('[GameRoom] Load failed:', err);
         setError(err instanceof Error ? err.message : t('gameRoom.errors.loadFailed'));
@@ -167,7 +137,7 @@ export default function GameRoomPage() {
       setRoom(socket.room);
 
       // If room has generation events, restore them to streamEvents
-      if (socket.room.generationEvents && streamEvents.length === 0 && socket.room.phase === 'SETUP') {
+      if (socket.room.generationEvents && streamEvents.length === 0 && socket.room.phase === GamePhase.SETUP) {
         setStreamEvents(socket.room.generationEvents);
       }
     }
@@ -184,7 +154,7 @@ export default function GameRoomPage() {
 
   useEffect(() => {
     // Only run if room is in SETUP phase and has no worldDescription
-    if (!roomId || roomPhase !== 'SETUP' || hasWorldDescription) {
+    if (!roomId || roomPhase !== GamePhase.SETUP || hasWorldDescription) {
       return;
     }
 
@@ -406,11 +376,7 @@ export default function GameRoomPage() {
   // Also show this for SETUP phase to skip the streaming intro
   // PHASE 3: CHARACTER_CREATION - Lobby and Character Creation
   // Also show this for SETUP phase to skip the streaming intro
-  if (
-    room.phase === GamePhase.CHARACTER_CREATION ||
-    room.phase === GamePhase.SETUP ||
-    (room.phase as string) === 'lobby'
-  ) {
+  if (room.phase === GamePhase.CHARACTER_CREATION || room.phase === GamePhase.SETUP || room.phase === GamePhase.LOBBY) {
     // If user has no character, default to creation mode (optional, can be just lobby)
     // But let's start in Lobby to see everyone
 
@@ -496,7 +462,7 @@ export default function GameRoomPage() {
   }
 
   // PHASE 4: COMBAT - Tactical combat grid
-  if (room.phase === 'COMBAT') {
+  if (room.phase === GamePhase.COMBAT) {
     return (
       <DynamicLayout showRoomInfo>
         <CombatScreen roomId={roomId!} />
@@ -508,18 +474,20 @@ export default function GameRoomPage() {
   // PHASE 5: GAMEPLAY - Active gameplay with chat, turns, etc.
   return (
     <DynamicLayout showRoomInfo className="h-dvh overflow-hidden" mainClassName="min-h-0">
-      <GameplayScreen
-        room={room}
-        players={players}
-        onRefresh={() => {
-          if (roomId) {
-            getRoomState(roomId).then((roomData) => {
-              setRoom(roomData as SharedRoom & { players: Player[] });
-              setPlayers((roomData as SharedRoom & { players: Player[] }).players || []);
-            });
-          }
-        }}
-      />
+      <TimeFrameProvider room={room}>
+        <GameplayScreen
+          room={room}
+          players={players}
+          onRefresh={() => {
+            if (roomId) {
+              getRoomState(roomId).then((roomData) => {
+                setRoom(roomData as SharedRoom & { players: Player[] });
+                setPlayers((roomData as SharedRoom & { players: Player[] }).players || []);
+              });
+            }
+          }}
+        />
+      </TimeFrameProvider>
       {activeStream && activeStream.status === 'active' && (
         <div className="fixed bottom-20 right-6 z-50 w-96 rounded-lg border border-aurora-500/30 bg-midnight-900/95 p-4 shadow-xl backdrop-blur-md">
           <div className="mb-2 flex items-center justify-between">

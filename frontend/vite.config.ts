@@ -1,9 +1,8 @@
 import { defineConfig, loadEnv } from 'vite';
 import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
-import tailwindcss from 'tailwindcss';
-import autoprefixer from 'autoprefixer';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,24 +28,18 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     worker: {
       format: 'es',
       plugins: () => [
         react({
           jsxRuntime: 'automatic',
-          // Disable fast refresh for workers
-          fastRefresh: false,
         }),
       ],
     },
     envDir: '..', // Load .env files from root directory
-    css: {
-      postcss: {
-        plugins: [tailwindcss, autoprefixer],
-      },
-    },
     resolve: {
+      dedupe: ['react', 'react-dom'],
       alias: [
         { find: '@', replacement: path.resolve(__dirname, './src') },
         { find: '@daicer/engine', replacement: path.resolve(__dirname, '../engine/src/index.ts') },

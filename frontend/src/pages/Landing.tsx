@@ -11,7 +11,7 @@ import { joinRoom } from '../services/api';
 import { useI18n } from '../i18n';
 import { DynamicLayout } from '../components/layout';
 import Logo from '../components/ui/Logo';
-import LanguageSelector from '../components/ui/LanguageSelector';
+
 import { SpotlightCarousel } from '../components/ui';
 import { JoinHeroSlide } from '../components/lobby/JoinHeroSlide';
 import { useJoinSlides } from '../features/lobby/joinSlides';
@@ -60,11 +60,6 @@ export default function LandingPage() {
   if (!user) {
     return (
       <DynamicLayout showNavbar showLanguageSelector={false}>
-        {/* Language selector in top-right corner */}
-        <div className="fixed top-4 right-4 z-50">
-          <LanguageSelector variant="compact" />
-        </div>
-
         <div className={gildedTokens.pageShell}>
           <div className={gildedTokens.gradientBackdrop} />
 

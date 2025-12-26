@@ -21,7 +21,7 @@ interface SocketState {
  * @param roomId - Room ID to join
  * @returns Socket state and utilities
  */
-export default function useSocket(roomId?: string) {
+export default function useSocket(roomId?: string, userId?: string) {
   const [state, setState] = useState<SocketState>({
     connected: false,
     error: null,
@@ -39,6 +39,7 @@ export default function useSocket(roomId?: string) {
 
   // Debounce room join to prevent duplicate logs on reconnect
   const lastJoinTimestampRef = useRef<number>(0);
+  const lastJoinUserIdRef = useRef<string | undefined>(undefined);
   const REJOIN_DEBOUNCE_MS = 5000; // 5 second debounce
 
   useEffect(() => {
@@ -47,16 +48,22 @@ export default function useSocket(roomId?: string) {
         await initSocket({
           onConnect: () => {
             updateState({ connected: true, error: null });
-            // Rejoin room if we have a roomId (with debounce)
+            // Rejoin room if we have a roomId
             if (roomId) {
               const socket = getSocket();
               const now = Date.now();
               const timeSinceLastJoin = now - lastJoinTimestampRef.current;
 
-              // Only rejoin if enough time has passed (prevents duplicate logs)
-              if (socket && timeSinceLastJoin > REJOIN_DEBOUNCE_MS) {
-                socket.emit('room:join', { roomId });
+              // Determine if we should force a join (e.g., if we now have a userId but didn't before)
+              const userChanged = userId !== lastJoinUserIdRef.current;
+              const shouldJoin =
+                (socket && timeSinceLastJoin > REJOIN_DEBOUNCE_MS) || (socket && userChanged && userId);
+
+              if (shouldJoin) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                socket.emit('room:join', { roomId, userId } as any);
                 lastJoinTimestampRef.current = now;
+                lastJoinUserIdRef.current = userId;
               }
             }
           },
@@ -206,7 +213,7 @@ export default function useSocket(roomId?: string) {
     return () => {
       disconnectSocket();
     };
-  }, [updateState, roomId]);
+  }, [updateState, roomId, userId]);
 
   return {
     connected: state.connected,

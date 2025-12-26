@@ -691,6 +691,7 @@ export interface ApiGameEventGameEvent extends Struct.CollectionTypeSchema {
     payload: Schema.Attribute.JSON & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    timeFrames: Schema.Attribute.Relation<'manyToMany', 'api::time-frame.time-frame'>;
     timestamp: Schema.Attribute.BigInteger & Schema.Attribute.Required;
     turnNumber: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     type: Schema.Attribute.String & Schema.Attribute.Required;
@@ -1072,6 +1073,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     code: Schema.Attribute.String & Schema.Attribute.Unique;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    currentTimeFrame: Schema.Attribute.Relation<'oneToOne', 'api::time-frame.time-frame'>;
     difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
       Schema.Attribute.DefaultTo<'easy'>;
     dmStyle: Schema.Attribute.Component<'game.dm-style', false>;
@@ -1094,6 +1096,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     settings: Schema.Attribute.JSON;
     startingLevel: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     theme: Schema.Attribute.String;
+    timeFrames: Schema.Attribute.Relation<'oneToMany', 'api::time-frame.time-frame'>;
     tone: Schema.Attribute.String;
     turnData: Schema.Attribute.JSON;
     turns: Schema.Attribute.Relation<'oneToMany', 'api::turn.turn'>;
@@ -1198,6 +1201,33 @@ export interface ApiSubclassSubclass extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTimeFrameTimeFrame extends Struct.CollectionTypeSchema {
+  collectionName: 'time_frames';
+  info: {
+    description: 'Snapshot of game state at a specific point in time';
+    displayName: 'Time Frame';
+    pluralName: 'time-frames';
+    singularName: 'time-frame';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    events: Schema.Attribute.Relation<'manyToMany', 'api::game-event.game-event'>;
+    gameState: Schema.Attribute.JSON & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::time-frame.time-frame'> & Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    timestamp: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    turnNumber: Schema.Attribute.Integer & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
   };
@@ -1751,6 +1781,7 @@ declare module '@strapi/strapi' {
       'api::room.room': ApiRoomRoom;
       'api::spell.spell': ApiSpellSpell;
       'api::subclass.subclass': ApiSubclassSubclass;
+      'api::time-frame.time-frame': ApiTimeFrameTimeFrame;
       'api::trait.trait': ApiTraitTrait;
       'api::turn.turn': ApiTurnTurn;
       'api::weapon-property.weapon-property': ApiWeaponPropertyWeaponProperty;

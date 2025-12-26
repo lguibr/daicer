@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { Compass, DoorOpen, Layers, Users, Sparkles } from 'lucide-react';
+import { Compass, DoorOpen, Layers, Users, Sparkles, Bug } from 'lucide-react';
 
 import cn from '@/lib/utils';
 import {
@@ -75,6 +75,12 @@ const navLinks: NavLink[] = [
     label: 'navbar.links.assets',
     path: '/assets',
     icon: Layers,
+  },
+  {
+    id: 'debug',
+    label: 'Debug',
+    path: '/debug',
+    icon: Bug,
   },
 ];
 

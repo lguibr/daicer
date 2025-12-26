@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+import animate from 'tailwindcss-animate';
 
 const midnight = {
   50: '#09060a',
@@ -53,12 +53,8 @@ const nebula = {
 };
 
 const config = {
-    darkMode: ["class"],
-    content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./App.tsx",
-  ],
+  darkMode: ['class'],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}', './App.tsx'],
   safelist: [
     {
       pattern:
@@ -70,147 +66,146 @@ const config = {
     },
   ],
   theme: {
-  	extend: {
-  		colors: {
-  			midnight,
-  			shadow,
-  			aurora,
-  			nebula,
-  			obsidian: midnight,
-  			ash: shadow,
-  			ember: aurora,
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
-  			},
-  			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
-  			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
-  			},
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			}
-  		},
-  		fontFamily: {
-  			display: ['Cinzel', 'serif'],
-  			body: ['Spectral', 'Georgia', 'serif']
-  		},
-  		animation: {
-  			'aurora-wave': 'auroraWave 12s ease-in-out infinite alternate',
-  			'aurora-pulse': 'auroraPulse 8s ease-in-out infinite',
-  			'stars-twinkle': 'starsTwinkle 6s linear infinite',
-  			'veil-shift': 'veilShift 24s ease-in-out infinite alternate',
-  			'ember-pulse': 'emberPulse 14s ease-in-out infinite',
-  			'spark-drift': 'sparkDrift 18s linear infinite'
-  		},
-  		keyframes: {
-  			auroraWave: {
-  				'0%': {
-  					transform: 'translateX(-20%) skewX(-6deg)'
-  				},
-  				'50%': {
-  					transform: 'translateX(10%) skewX(4deg)'
-  				},
-  				'100%': {
-  					transform: 'translateX(30%) skewX(-2deg)'
-  				}
-  			},
-  			auroraPulse: {
-  				'0%, 100%': {
-  					opacity: '0.45',
-  					filter: 'blur(12px)'
-  				},
-  				'50%': {
-  					opacity: '0.7',
-  					filter: 'blur(16px)'
-  				}
-  			},
-  			starsTwinkle: {
-  				'0%, 100%': {
-  					opacity: '0.35'
-  				},
-  				'50%': {
-  					opacity: '0.8'
-  				}
-  			},
-  			veilShift: {
-  				'0%': {
-  					transform: 'translate3d(-4%, -2%, 0) scale(1.05)',
-  					opacity: '0.55'
-  				},
-  				'50%': {
-  					transform: 'translate3d(3%, 2%, 0) scale(1.08)',
-  					opacity: '0.75'
-  				},
-  				'100%': {
-  					transform: 'translate3d(6%, 4%, 0) scale(1.12)',
-  					opacity: '0.6'
-  				}
-  			},
-  			emberPulse: {
-  				'0%, 100%': {
-  					opacity: '0.15',
-  					filter: 'blur(18px)'
-  				},
-  				'40%': {
-  					opacity: '0.35',
-  					filter: 'blur(16px)'
-  				},
-  				'70%': {
-  					opacity: '0.25',
-  					filter: 'blur(22px)'
-  				}
-  			},
-  			sparkDrift: {
-  				'0%': {
-  					transform: 'translate3d(-10%, -12%, 0)'
-  				},
-  				'50%': {
-  					transform: 'translate3d(6%, 8%, 0)'
-  				},
-  				'100%': {
-  					transform: 'translate3d(14%, 16%, 0)'
-  				}
-  			}
-  		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		}
-  	}
+    extend: {
+      colors: {
+        midnight,
+        shadow,
+        aurora,
+        nebula,
+        obsidian: midnight,
+        ash: shadow,
+        ember: aurora,
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        chart: {
+          1: 'hsl(var(--chart-1))',
+          2: 'hsl(var(--chart-2))',
+          3: 'hsl(var(--chart-3))',
+          4: 'hsl(var(--chart-4))',
+          5: 'hsl(var(--chart-5))',
+        },
+      },
+      fontFamily: {
+        display: ['Cinzel', 'serif'],
+        body: ['Spectral', 'Georgia', 'serif'],
+      },
+      animation: {
+        'aurora-wave': 'auroraWave 12s ease-in-out infinite alternate',
+        'aurora-pulse': 'auroraPulse 8s ease-in-out infinite',
+        'stars-twinkle': 'starsTwinkle 6s linear infinite',
+        'veil-shift': 'veilShift 24s ease-in-out infinite alternate',
+        'ember-pulse': 'emberPulse 14s ease-in-out infinite',
+        'spark-drift': 'sparkDrift 18s linear infinite',
+      },
+      keyframes: {
+        auroraWave: {
+          '0%': {
+            transform: 'translateX(-20%) skewX(-6deg)',
+          },
+          '50%': {
+            transform: 'translateX(10%) skewX(4deg)',
+          },
+          '100%': {
+            transform: 'translateX(30%) skewX(-2deg)',
+          },
+        },
+        auroraPulse: {
+          '0%, 100%': {
+            opacity: '0.45',
+            filter: 'blur(12px)',
+          },
+          '50%': {
+            opacity: '0.7',
+            filter: 'blur(16px)',
+          },
+        },
+        starsTwinkle: {
+          '0%, 100%': {
+            opacity: '0.35',
+          },
+          '50%': {
+            opacity: '0.8',
+          },
+        },
+        veilShift: {
+          '0%': {
+            transform: 'translate3d(-4%, -2%, 0) scale(1.05)',
+            opacity: '0.55',
+          },
+          '50%': {
+            transform: 'translate3d(3%, 2%, 0) scale(1.08)',
+            opacity: '0.75',
+          },
+          '100%': {
+            transform: 'translate3d(6%, 4%, 0) scale(1.12)',
+            opacity: '0.6',
+          },
+        },
+        emberPulse: {
+          '0%, 100%': {
+            opacity: '0.15',
+            filter: 'blur(18px)',
+          },
+          '40%': {
+            opacity: '0.35',
+            filter: 'blur(16px)',
+          },
+          '70%': {
+            opacity: '0.25',
+            filter: 'blur(22px)',
+          },
+        },
+        sparkDrift: {
+          '0%': {
+            transform: 'translate3d(-10%, -12%, 0)',
+          },
+          '50%': {
+            transform: 'translate3d(6%, 8%, 0)',
+          },
+          '100%': {
+            transform: 'translate3d(14%, 16%, 0)',
+          },
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+    },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animate],
 };
 
 export default config;
-

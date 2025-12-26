@@ -17,6 +17,8 @@ interface MapRendererProps {
   entities: any[];
   onTileClick: (coords: Coordinates) => void;
   onTileHover?: (coords: Coordinates | null) => void;
+  isLive?: boolean;
+  currentTimeFrame?: any;
 }
 
 export const MapRenderer: React.FC<MapRendererProps> = ({
@@ -31,8 +33,18 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
   entities,
   onTileClick,
   onTileHover,
+  isLive = true,
+  currentTimeFrame = null,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Use provided entities if live, or timeFrame entities if in history
+  const renderEntities = !isLive && currentTimeFrame ? currentTimeFrame.gameState.entities : entities;
+
+  // Note: For map tiles, we ideally want to fetch 'historical chunks' but that's expensive.
+  // For now, we assume the map terrain is static and only entities move,
+  // OR we rely on the parent to provide the correct chunkProvider based on time.
+  // We'll stick to static terrain + dynamic entities for MVP.
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -75,8 +87,9 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         // @ts-ignore
         const lz = viewZ + 3; // map -3..3 to 0..6
 
-        if (!chunk || !chunk.tiles[lz]) continue;
+        if (!chunk || !chunk.tiles[lz] || !chunk.tiles[lz][ly]) continue;
         const tile = chunk.tiles[lz][ly][lx];
+        if (!tile) continue;
 
         // Draw Tile
         let color = '#222';
@@ -113,7 +126,7 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
     }
 
     // Draw Entities
-    entities.forEach((ent) => {
+    renderEntities.forEach((ent: any) => {
       // Only if on same Z level
       if (ent.position.z !== viewZ) return;
 
@@ -133,7 +146,7 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
     });
-  }, [width, height, center, viewZ, scale, chunkProvider, visibleTiles, exploredTiles, entities]);
+  }, [width, height, center, viewZ, scale, chunkProvider, visibleTiles, exploredTiles, renderEntities]);
 
   const getTileCoords = (e: React.MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
