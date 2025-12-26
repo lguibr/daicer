@@ -1,4 +1,4 @@
-import type { SkillDetail } from '@daicer/engine';
+import type { SkillDetail } from '../../types/models';
 
 // Paper Theme Styles
 export const paperStyles = {

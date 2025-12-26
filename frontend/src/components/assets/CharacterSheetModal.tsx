@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { CharacterSheet } from '@daicer/engine';
+import type { CharacterSheet } from '../../types/models';
 
 interface CharacterSheetModalProps {
   character: CharacterSheet;

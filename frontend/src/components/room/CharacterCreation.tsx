@@ -2,8 +2,8 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Package, ShoppingCart, Backpack, Shield, Check } from 'lucide-react';
 import clsx from 'clsx';
 import type { AvatarPreviewResponse, ReferenceImagePayload } from '../../types/assets';
-import type { Room, Attribute } from '@daicer/engine';
-import { GamePhase } from '@daicer/engine';
+import type { Room, Attribute } from '../../types/models';
+import { GamePhase } from '../../types/models';
 import {
   addCharacter,
   generateAvatarPortrait,

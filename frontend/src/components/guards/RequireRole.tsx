@@ -23,7 +23,7 @@
 
 import type { ReactNode } from 'react';
 import { useRole } from '../../hooks/useRole';
-import type { Role } from '@daicer/engine';
+import type { Role } from '../../types/models';
 
 interface RequireRoleProps {
   /** Roles that are allowed to see the content */

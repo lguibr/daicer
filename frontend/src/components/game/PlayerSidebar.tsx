@@ -1,5 +1,5 @@
 import { useI18n } from '../../i18n';
-import type { Player, Creature } from '@daicer/engine';
+import type { Player, Creature } from '../../types/models';
 
 interface PlayerSidebarProps {
   players: Player[];

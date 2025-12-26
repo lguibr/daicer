@@ -23,7 +23,7 @@ import ToolCallCard from '../components/chat/ToolCallCard';
 import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
-import { Room as SharedRoom, Player, GamePhase } from '@daicer/engine';
+import { Room as SharedRoom, Player, GamePhase } from '../types/models';
 
 import { useI18n } from '../i18n';
 

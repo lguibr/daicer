@@ -1,5 +1,5 @@
 import { Card } from '@/components/ui/card';
-import type { CharacterSheet } from '@daicer/engine';
+import type { CharacterSheet } from '../../types/models';
 
 interface CharacterSheetCardProps {
   character: CharacterSheet;

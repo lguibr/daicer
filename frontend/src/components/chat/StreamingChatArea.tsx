@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Message } from '@daicer/engine';
+import type { Message } from '../../types/models';
 import type { PresenceData } from '../../services/socket';
 import MarkdownMessage from '../game/MarkdownMessage';
 import useAuth from '../../hooks/useAuth';

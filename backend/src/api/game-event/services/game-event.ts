@@ -3,7 +3,8 @@
  */
 
 import { factories } from '@strapi/strapi';
-import { Voxel } from '@daicer/engine';
+import { WorldGenerator } from '../../voxel-engine/services/world-generator-logic';
+import { PhysicsEngine } from '../../voxel-engine/services/utils/physics';
 
 const getWorldGenerator = async (strapi: any, roomId: number) => {
   // @ts-ignore
@@ -30,7 +31,7 @@ const getWorldGenerator = async (strapi: any, roomId: number) => {
     fogRadius: 10,
   };
 
-  return new Voxel.WorldGenerator(config);
+  return new WorldGenerator(config);
 };
 
 // @ts-ignore
@@ -74,7 +75,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     to: { x: number; y: number; z: number }
   ) {
     const gen = await getWorldGenerator(strapi, roomId);
-    const physics = new Voxel.PhysicsEngine(gen);
+    const physics = new PhysicsEngine(gen);
 
     // @ts-ignore
     const isWalkable = physics.isWalkable({ x: to.x, y: to.y, z: to.z as any });
@@ -105,7 +106,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     const eventList = (Array.isArray(events) ? events : [events]) as any[];
     for (const event of eventList) {
       if (event.type === 'MOVE') {
-        const p = event.payload as Voxel.MoveEventPayload;
+        const p = event.payload as any; // was Voxel.MoveEventPayload
         if (p.entityId && p.to) {
           state.entities[p.entityId] = p.to;
         }

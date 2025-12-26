@@ -16,7 +16,7 @@ import {
 import useAuth from '../../hooks/useAuth';
 import LanguageSelector from '../ui/LanguageSelector';
 import Logo from '../ui/Logo';
-import type { Room } from '@daicer/engine';
+import type { Room } from '../../types/models';
 import { useI18n } from '../../i18n';
 
 type NavbarAuthUser = {

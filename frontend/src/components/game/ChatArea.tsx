@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type { Message } from '@daicer/engine';
+import type { Message } from '../../types/models';
 import MarkdownMessage from './MarkdownMessage';
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
