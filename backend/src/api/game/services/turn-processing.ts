@@ -273,6 +273,133 @@ Respond entirely in ${languageName}.`;
     };
   },
 
+  async executeDeterministicTurn(roomId: string, actions: any[], user: any) {
+    const { streamManager } = await import('../../../utils/llm/stream-manager');
+
+    // 1. Fetch Room
+    const room = await strapi.documents('api::room.room').findOne({
+      documentId: roomId,
+      populate: ['character_sheets'],
+    });
+
+    if (!room) throw new Error('Room not found');
+
+    // 2. Process Actions
+    const processedActions = [];
+    const movedEntityIds = new Set<string>();
+
+    for (const action of actions) {
+      if (action.type === 'move') {
+        // payload: { x, y, z }
+        // entityId: character sheet documentId or ID
+        const sheet = room.character_sheets?.find(
+          (s: any) => s.documentId === action.entityId || s.id === action.entityId
+        );
+
+        if (sheet) {
+          // Update Character Sheet Position
+          // Using documentId for update
+          await strapi.documents('api::character-sheet.character-sheet').update({
+            documentId: sheet.documentId,
+            data: {
+              position: {
+                x: action.payload.x,
+                y: action.payload.y,
+                z: action.payload.z,
+              },
+            },
+          });
+          movedEntityIds.add(sheet.documentId);
+          processedActions.push(action);
+        }
+      } else if (action.type === 'spawn') {
+        const spawnService = strapi.service('api::game.spawn-service');
+        try {
+          if (action.payload.entityType === 'monster') {
+            await spawnService.spawnMonster(roomId, action.payload.id, action.payload.position);
+          } else if (action.payload.entityType === 'character') {
+            await spawnService.spawnCharacter(roomId, action.payload.id, action.payload.position);
+          }
+          processedActions.push(action);
+        } catch (err) {
+          strapi.log.error('Failed to process spawn action', err);
+        }
+      }
+    }
+
+    // 3. Re-fetch Room to get updated sheets for snapshot
+    const updatedRoom = await strapi.documents('api::room.room').findOne({
+      documentId: roomId,
+      populate: ['character_sheets', 'players'],
+    });
+
+    const snapshot = createSnapshot(updatedRoom.character_sheets || []);
+
+    // 4. Create Turn
+    const turnCount = await strapi.documents('api::turn.turn').count({
+      filters: { room: { documentId: updatedRoom.documentId } },
+    });
+
+    const newTurn = await strapi.documents('api::turn.turn').create({
+      data: {
+        turnNumber: turnCount,
+        room: updatedRoom.documentId,
+        narrative: `Deterministic Turn: ${processedActions.length} actions executed.`,
+        status: 'complete',
+        type: 'engine',
+        actions: processedActions,
+        characterSnapshots: snapshot,
+        metadata: {
+          model: 'engine',
+        },
+      },
+      status: 'published',
+    });
+
+    // 5. Broadcast Updates
+    // Update players list logic if needed? Not for movement usually, but let's sync "players" if their character position changed?
+    // Frontend likely uses "room" or "character_sheets" to render.
+    // If frontend renders "players" derived from room, we might not need to update `room.players` JSON if the source of truth is `character_sheets`.
+    // BUT `game-room` often relies on `room.players` which contains merged character data.
+    // We should probably update `room.players` to reflect new positions if that's what frontend uses.
+    // Current `processTurn` updates `room.players` to clear actions.
+    // Let's check `room.players` structure. It usually has `character` relation.
+    // Strapi `populate` in `getRoom` usually hydrates `players.character`.
+    // If `character-sheet` updated, `character` might not implicitly have position if position is on sheet.
+    // The `CharacterSheet` has position. `Player` points to `Character`.
+    // `GameRoom` uses `players` state.
+    // We should broadcast `game:update` with updated entities.
+
+    // Broadcast Turn Complete
+    const turnPayload = {
+      roomId: updatedRoom.roomId,
+      turn: {
+        id: newTurn.documentId,
+        number: newTurn.turnNumber,
+        narrative: newTurn.narrative,
+        snapshots: snapshot,
+        type: 'engine',
+      },
+    };
+
+    streamManager.broadcast(updatedRoom.roomId, 'turn:complete', turnPayload);
+    // Also broadcast generic game update for live view
+    // We can send the full room or just sheets.
+    // Let's send a simplified 'entities:update' event? or generic 'game:update'.
+    // `game:update` usually expects partial room data.
+
+    // Let's construct a list of updated entities for the frontend to merge
+    const updatedEntities = updatedRoom.character_sheets.map((cs) => ({
+      id: cs.documentId,
+      position: cs.position,
+      currentHp: cs.currentHp, // etc
+    }));
+
+    streamManager.broadcast(updatedRoom.roomId, 'entities:update', { entities: updatedEntities });
+
+    return { success: true, turnId: newTurn.documentId };
+  },
+
   async submitAction(roomId: string, action: string, user: any) {
     // 1. Fetch Room and Player
     const rooms = await strapi.documents('api::room.room').findMany({

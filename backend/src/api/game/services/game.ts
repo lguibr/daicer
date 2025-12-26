@@ -255,4 +255,7 @@ export default ({ strapi }) => ({
     });
     return rooms[0];
   },
+  async executeEngineAction(roomId: string, actions: any[], user: any) {
+    return strapi.service('api::game.turn-processing').executeDeterministicTurn(roomId, actions, user);
+  },
 });

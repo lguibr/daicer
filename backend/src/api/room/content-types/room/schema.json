@@ -147,6 +147,12 @@
       "target": "api::time-frame.time-frame",
       "mappedBy": "room"
     },
+    "dmSetting": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::dm-setting.dm-setting",
+      "mappedBy": "room"
+    },
     "currentTimeFrame": {
       "type": "relation",
       "relation": "oneToOne",

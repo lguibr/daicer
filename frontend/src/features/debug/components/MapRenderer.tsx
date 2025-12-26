@@ -15,6 +15,7 @@ interface MapRendererProps {
   visibleTiles: Set<string>;
   exploredTiles: Set<string>;
   entities: any[];
+  ghostEntities?: any[];
   onTileClick: (coords: Coordinates, e: React.MouseEvent) => void;
   onTileDoubleClick?: (coords: Coordinates) => void;
   onTileHover: (coords: Coordinates | null) => void;
@@ -35,6 +36,7 @@ export const MapRenderer = ({
   visibleTiles,
   exploredTiles,
   entities,
+  ghostEntities = [],
   onTileClick,
   onTileDoubleClick,
   onTileHover,
@@ -203,7 +205,40 @@ export const MapRenderer = ({
       ctx.lineWidth = 2;
       ctx.stroke();
     });
-  }, [width, height, center, viewZ, scale, chunkProvider, visibleTiles, exploredTiles, renderEntities, previewPath]);
+
+    // Draw Ghost Entities
+    ghostEntities.forEach((ent: any) => {
+      if (ent.position.z !== viewZ) return;
+
+      const screenX = (ent.position.x - center.x) * TILE_SIZE + width / 2;
+      const screenY = (ent.position.y - center.y) * TILE_SIZE + height / 2;
+
+      ctx.save();
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = ent.color || '#eab308';
+      ctx.beginPath();
+      ctx.arc(screenX, screenY, TILE_SIZE * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }, [
+    width,
+    height,
+    center,
+    viewZ,
+    scale,
+    chunkProvider,
+    visibleTiles,
+    exploredTiles,
+    renderEntities,
+    ghostEntities,
+    previewPath,
+  ]);
 
   const getTileCoords = (e: React.MouseEvent): Coordinates => {
     const rect = canvasRef.current!.getBoundingClientRect();

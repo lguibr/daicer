@@ -91,35 +91,54 @@ export const GET_ROOM_QUERY = gql`
 `;
 
 export const LIST_ROOMS_QUERY = gql`
-  query ListRooms($filters: RoomFiltersInput) {
-    rooms(filters: $filters) {
+  query ListRooms($sort: [String] = ["createdAt:desc"]) {
+    rooms(sort: $sort, pagination: { limit: 50 }) {
       documentId
       roomId
       code
+      createdAt
       phase
-      phase
-      owner {
+      dmSetting {
+        theme
+        setting
+        difficulty
+      }
+      character_sheets {
         documentId
-        username
       }
       players {
         id
-        name
-        isReady
-        isOnline
-        joinedAt
-        user {
-          documentId
-          username
-        }
-        character {
-          documentId
-          name
-          portrait {
-            url
-          }
-        }
       }
+    }
+  }
+`;
+
+export const LIST_CHARACTERS_QUERY = gql`
+  query ListCharacters {
+    characters(sort: "name:asc", pagination: { limit: 1000 }) {
+      documentId
+      name
+      race {
+        name
+      }
+      class {
+        name
+      }
+    }
+  }
+`;
+
+export const LIST_MONSTERS_QUERY = gql`
+  query ListMonsters {
+    monsters(sort: "name:asc", pagination: { limit: 1000 }) {
+      documentId
+      name
+      type
+      size
+      hp
+      ac
+      xp
+      challenge_rating
     }
   }
 `;

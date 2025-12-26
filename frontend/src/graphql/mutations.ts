@@ -26,6 +26,14 @@ export const CREATE_ROOM_MUTATION = gql`
   }
 `;
 
+export const CREATE_DM_SETTING_MUTATION = gql`
+  mutation CreateDMSetting($data: DmSettingInput!) {
+    createDmSetting(data: $data) {
+      documentId
+    }
+  }
+`;
+
 export const JOIN_ROOM_MUTATION = gql`
   mutation JoinRoom($code: String!) {
     joinRoom(code: $code) {

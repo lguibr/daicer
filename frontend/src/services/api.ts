@@ -449,3 +449,36 @@ export async function processTurn(roomId: string, language = 'en'): Promise<void
     throw new Error('Failed to process turn');
   }
 }
+
+/**
+ * Execute a deterministic engine action (bypass LLM)
+ * @param roomId - Room ID
+ * @param actions - Array of actions to execute
+ * @returns Result of execution
+ */
+export async function executeEngineAction(
+  roomId: string,
+  actions: any[]
+): Promise<{ success: boolean; turnId: string }> {
+  const token = localStorage.getItem('strapi_jwt');
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
+
+  console.log(`[api.ts] Executing engine actions for room ${roomId}:`, actions);
+
+  const response = await fetch(`${API_URL}/api/game/engine/execute`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ roomId, actions }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to execute engine action: ${errorText}`);
+  }
+  const result = await response.json();
+  console.log('[api.ts] executeEngineAction Result:', result);
+  return result;
+}

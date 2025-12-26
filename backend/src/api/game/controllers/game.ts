@@ -151,4 +151,19 @@ export default ({ strapi }) => ({
       return ctx.internalServerError('Failed to submit action');
     }
   },
+  async executeEngineAction(ctx) {
+    try {
+      const { roomId, actions } = ctx.request.body;
+
+      if (!roomId) return ctx.badRequest('Room ID required');
+      if (!actions || !Array.isArray(actions)) return ctx.badRequest('Actions array required');
+
+      const result = await strapi.service('api::game.game').executeEngineAction(roomId, actions, ctx.state.user);
+
+      return ctx.send(result);
+    } catch (error) {
+      strapi.log.error('executeEngineAction error:', error);
+      return ctx.internalServerError('Failed to execute engine action');
+    }
+  },
 });

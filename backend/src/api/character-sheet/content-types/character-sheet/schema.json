@@ -12,6 +12,23 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "player",
+        "monster",
+        "npc"
+      ],
+      "default": "player"
+    },
+    "monster": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::monster.monster"
+    },
     "character": {
       "type": "relation",
       "relation": "manyToOne",

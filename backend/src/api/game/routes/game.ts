@@ -50,6 +50,15 @@ export default {
       },
     },
     {
+      method: 'POST',
+      path: '/game/engine/execute',
+      handler: 'game.executeEngineAction',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
       method: 'GET',
       path: '/game/:roomId',
       handler: 'game.getRoom',

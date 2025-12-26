@@ -401,11 +401,14 @@ export interface ApiCharacterSheetCharacterSheet extends Struct.CollectionTypeSc
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::character-sheet.character-sheet'> &
       Schema.Attribute.Private;
     maxHp: Schema.Attribute.Integer;
+    monster: Schema.Attribute.Relation<'manyToOne', 'api::monster.monster'>;
+    name: Schema.Attribute.String;
     position: Schema.Attribute.Component<'game.position', false>;
     publishedAt: Schema.Attribute.DateTime;
     race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
     room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
     stats: Schema.Attribute.Component<'game.stats', false>;
+    type: Schema.Attribute.Enumeration<['player', 'monster', 'npc']> & Schema.Attribute.DefaultTo<'player'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
   };
@@ -528,6 +531,39 @@ export interface ApiDamageTypeDamageType extends Struct.CollectionTypeSchema {
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiDmSettingDmSetting extends Struct.CollectionTypeSchema {
+  collectionName: 'dm_settings';
+  info: {
+    description: 'Configuration for the AI Dungeon Master';
+    displayName: 'DM Setting';
+    pluralName: 'dm-settings';
+    singularName: 'dm-setting';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    adventureLength: Schema.Attribute.Enumeration<['flash', 'short', 'medium', 'long', 'epic', 'legendary']> &
+      Schema.Attribute.DefaultTo<'short'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
+      Schema.Attribute.DefaultTo<'easy'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::dm-setting.dm-setting'> & Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    room: Schema.Attribute.Relation<'oneToOne', 'api::room.room'>;
+    setting: Schema.Attribute.String;
+    style: Schema.Attribute.Component<'game.dm-style', false>;
+    theme: Schema.Attribute.String;
+    tone: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    worldSize: Schema.Attribute.Enumeration<['intimate', 'small', 'medium', 'large', 'vast', 'epic']> &
+      Schema.Attribute.DefaultTo<'small'>;
   };
 }
 
@@ -1076,6 +1112,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     currentTimeFrame: Schema.Attribute.Relation<'oneToOne', 'api::time-frame.time-frame'>;
     difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
       Schema.Attribute.DefaultTo<'easy'>;
+    dmSetting: Schema.Attribute.Relation<'oneToOne', 'api::dm-setting.dm-setting'>;
     dmStyle: Schema.Attribute.Component<'game.dm-style', false>;
     events: Schema.Attribute.Relation<'oneToMany', 'api::game-event.game-event'>;
     history: Schema.Attribute.JSON;
@@ -1766,6 +1803,7 @@ declare module '@strapi/strapi' {
       'api::character.character': ApiCharacterCharacter;
       'api::class.class': ApiClassClass;
       'api::damage-type.damage-type': ApiDamageTypeDamageType;
+      'api::dm-setting.dm-setting': ApiDmSettingDmSetting;
       'api::equipment-category.equipment-category': ApiEquipmentCategoryEquipmentCategory;
       'api::equipment.equipment': ApiEquipmentEquipment;
       'api::feature.feature': ApiFeatureFeature;
