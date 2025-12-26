@@ -1,4 +1,4 @@
-import { Player, Message, WorldSettings, Creature, Language } from '../types/shared';
+import { Player, Message, WorldSettings, Creature, Language } from '@daicer/engine';
 
 export const ActionType = {
   // Language

@@ -54,6 +54,8 @@ export interface Chunk {
   tiles: Tile[][][]; // [z_index][y][x] mapped from -3..3 to 0..6
 }
 
+export type ChunkDTO = Chunk;
+
 export interface Entity {
   id: string;
   type: 'player' | 'npc' | 'monster' | 'object';

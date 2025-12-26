@@ -3,8 +3,7 @@
  * Mirror of backend types for type-safe client
  */
 
-import type { GridChunk, Entity } from '@daicer/shared';
-import type { Room, Player, Message, Creature } from './shared';
+import type { ChunkDTO as GridChunk, Entity, Room, Player, Message, Creature } from '@daicer/engine';
 
 /**
  * Events received from server (matches backend ServerToClientEvents)

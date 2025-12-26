@@ -11,7 +11,7 @@ import { createRoom, updateRoomSettings, addCharacter } from '../services/api';
 import { setReady } from '../services/socket';
 import { PrivateLayout } from '../components/layout';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
-import type { WorldSettings, CharacterSheet, Attribute } from '../types/shared';
+import type { WorldSettings, CharacterSheet, Attribute } from '@daicer/engine';
 import { useI18n } from '../i18n';
 
 interface TestScenario {

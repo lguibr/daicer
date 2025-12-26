@@ -3,7 +3,7 @@ import { render, screen } from '../../../test/test-utils';
 import userEvent from '@testing-library/user-event';
 import GameplayScreen from '../GameplayScreen';
 import { MemoryRouter } from 'react-router-dom';
-import type { Room, Player } from '@daicer/shared';
+import type { Room, Player } from '@daicer/engine';
 
 // Mock components
 vi.mock('../../terrain/TerrainExplorer', () => ({

@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen } from 'lucide-react';
 
-import type { Room, Player } from '../../types/shared';
-// import { Player, Creature } from '@daicer/shared'; // Note: GameplayScreen uses local types/shared, need to alignment check.
-// GameplayScreen seems to use local types. TerrainExplorer uses @daicer/shared.
+import type { Room, Player } from '@daicer/engine';
+// import { Player, Creature } from '@daicer/engine'; // Note: GameplayScreen uses local types/shared, need to alignment check.
+// GameplayScreen seems to use local types. TerrainExplorer uses @daicer/engine.
 // Let's verify compatibility.
 
 import useStreamingSocket from '../../hooks/useStreamingSocket';

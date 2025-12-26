@@ -31,9 +31,7 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@daicer/shared": ["../shared/src/index.ts"],
-      "@daicer/shared/*": ["../shared/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src", "e2e", "vite.config.d.ts", "codegen.ts"],

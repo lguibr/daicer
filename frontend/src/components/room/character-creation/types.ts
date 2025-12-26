@@ -1,15 +1,15 @@
-import type { Attribute, CharacterSheet, ResourcePool, Talent } from '../../../types/shared';
+import type { Attribute, CharacterSheet, ResourcePool, Talent } from '../@daicer/engine';
 
 export interface CharacterCreationProps {
-  room?: import('../../../types/shared').Room;
-  players?: import('../../../types/shared').Player[];
+  room?: import('../@daicer/engine').Room;
+  players?: import('../@daicer/engine').Player[];
   assetMode?: boolean;
   settings?: {
     startingLevel: number;
     attributeBudget: number;
   };
   onAssetCreated?: (asset: any) => void;
-  onCharacterCreated?: (player?: import('../../../types/shared').Player) => void;
+  onCharacterCreated?: (player?: import('../@daicer/engine').Player) => void;
 }
 
 export type CharacterFormState = {

@@ -4,7 +4,7 @@
 
 import { io, Socket } from 'socket.io-client';
 // import { auth } from './firebase';
-import type { Room, Player, Message, Creature } from '../types/shared';
+import type { Room, Player, Message, Creature } from '@daicer/engine';
 import type { ServerToClientEvents, ClientToServerEvents } from '../types/socket';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';

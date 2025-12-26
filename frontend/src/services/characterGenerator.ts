@@ -106,8 +106,12 @@ export const generateRandomCharacter = (
   // Primary (Highest)
   priority.primary.forEach((stat) => {
     if (!assigned.has(stat) && pool.length > 0) {
-      cleanAttributes[stat] = Math.max(...pool);
-      pool.splice(pool.indexOf(cleanAttributes[stat]), 1);
+      const val = Math.max(...pool);
+      cleanAttributes[stat] = val;
+      const idx = pool.indexOf(val);
+      if (idx !== -1) {
+        pool.splice(idx, 1);
+      }
       assigned.add(stat);
     }
   });
@@ -115,8 +119,12 @@ export const generateRandomCharacter = (
   // Secondary
   priority.secondary.forEach((stat) => {
     if (!assigned.has(stat) && pool.length > 0) {
-      cleanAttributes[stat] = Math.max(...pool);
-      pool.splice(pool.indexOf(cleanAttributes[stat]), 1);
+      const val = Math.max(...pool);
+      cleanAttributes[stat] = val;
+      const idx = pool.indexOf(val);
+      if (idx !== -1) {
+        pool.splice(idx, 1);
+      }
       assigned.add(stat);
     }
   });

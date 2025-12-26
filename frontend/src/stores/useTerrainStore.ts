@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ChunkDTO } from '@daicer/shared';
+import type { ChunkDTO } from '@daicer/engine';
 
 // Type definition for a tile update (delta)
 export interface TileUpdate {
@@ -57,7 +57,7 @@ export const useTerrainStore = create<TerrainState>((set, get) => ({
     if (chunk) {
       const floor = z + 3;
       // Safe access
-      const floorGrid = chunk.grid[floor];
+      const floorGrid = chunk.tiles[floor];
       if (floorGrid) {
         const row = floorGrid[localY];
         if (row) {
@@ -68,8 +68,8 @@ export const useTerrainStore = create<TerrainState>((set, get) => ({
             const newChunk = { ...chunk };
 
             // Mutate tile directly (performance tradeoff vs immutability)
-            if (update.b) tile.b = update.b;
-            if (update.t) tile.t = update.t;
+            if (update.b) tile.biome = update.b as any;
+            if (update.t) tile.block = update.t as any;
 
             newChunks.set(chunkKey, newChunk);
             set({ chunks: newChunks });

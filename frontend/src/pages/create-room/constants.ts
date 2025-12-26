@@ -5,7 +5,7 @@
 
 import type { LucideIcon } from 'lucide-react';
 import { Mountain, Waves, Sun, Snowflake, Flame, Trees, Cloud, Gem, Sparkles } from 'lucide-react';
-import type { AdventureLength, Difficulty, DMPerformanceMode, WorldSize } from '../../types/shared';
+import type { AdventureLength, Difficulty, DMPerformanceMode, WorldSize } from '@daicer/engine';
 import type { ArchetypeSigil } from '../../constants/worldArchetypes';
 
 export const ARCHETYPE_SIGILS: Record<ArchetypeSigil, LucideIcon> = {

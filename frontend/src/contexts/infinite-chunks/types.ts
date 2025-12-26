@@ -3,10 +3,10 @@
  * All interfaces and types for the infinite chunk system
  */
 
-import type { GlobalPlacementMap, GridChunk, GridTile, ChunkDTO } from '@daicer/shared';
+import type { ChunkDTO, Tile } from '@daicer/engine';
 
 export type TerrainChunk = Omit<GridChunk, 'tiles' | 'biomes'> & {
-  tiles: GridTile[][];
+  tiles: Tile[][];
   biomes: string[][];
   worldOffsetX: number;
   worldOffsetY: number;
@@ -35,12 +35,12 @@ export interface InfiniteChunksConfig {
 
 export interface InfiniteChunksOptions {
   roomId: string;
-  initialGrid: (GridTile | null)[][];
+  initialGrid: (Tile | null)[][];
   chunkSize?: number;
   loadRadius?: number;
   enabled?: boolean;
   chunkGenerator?: ChunkGenerator;
-  placementMap?: GlobalPlacementMap | null;
+  // placementMap?: GlobalPlacementMap | null;
   layer?: number;
   token?: string;
 }
@@ -52,7 +52,7 @@ export interface InfiniteChunksOptions {
 export interface InfiniteChunksState {
   // Core data
   chunks: Map<string, TerrainChunk>;
-  expandedGrid: (GridTile | null)[][];
+  expandedGrid: (Tile | null)[][];
   gridWorldOffset: { x: number; y: number };
 
   // Loading state
@@ -64,7 +64,7 @@ export interface InfiniteChunksState {
 
   // Optional generator (debug mode)
   chunkGenerator?: ChunkGenerator;
-  placementMap?: GlobalPlacementMap | null;
+  // placementMap?: GlobalPlacementMap | null;
 }
 
 // ============================================================================
@@ -75,10 +75,10 @@ export type InfiniteChunksAction =
   | {
       type: 'INITIALIZE';
       payload: {
-        initialGrid: (GridTile | null)[][];
+        initialGrid: (Tile | null)[][];
         config: InfiniteChunksConfig;
         chunkGenerator?: ChunkGenerator;
-        placementMap?: GlobalPlacementMap | null;
+        // placementMap?: GlobalPlacementMap | null;
       };
     }
   | { type: 'CHUNK_LOAD_START'; payload: { chunkKey: string } }
@@ -102,7 +102,7 @@ export interface InfiniteChunksContextValue {
 // ============================================================================
 
 export interface InfiniteChunksView {
-  expandedGrid: (GridTile | null)[][];
+  expandedGrid: (Tile | null)[][];
   isLoading: boolean;
   gridWorldOffset: { x: number; y: number };
   loadRadius: number;

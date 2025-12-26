@@ -4,7 +4,7 @@
  * Enables page refresh recovery and backward navigation
  */
 
-import type { HistoricalPeriod, WorldCondition, Structure, Road, CharacterSheet } from '@daicer/shared';
+import type { HistoricalPeriod, WorldCondition, Structure, Road, CharacterSheet } from '@daicer/engine';
 
 const CACHE_KEYS = {
   section1: (roomId: string) => `daice-graph-section-1-${roomId}`,

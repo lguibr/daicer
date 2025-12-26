@@ -1,4 +1,4 @@
-import { GamePhase, WorldSettings, Player, Message, Creature, Language } from '../types/shared';
+import { GamePhase, WorldSettings, Player, Message, Creature, Language } from '@daicer/engine';
 
 export interface AppState {
   language: Language;

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import type { Attribute } from '../../../types/shared';
+import type { Attribute } from '../@daicer/engine';
 import Label from '../../ui/label';
 import NumericStepper from '../../ui/NumericStepper';
 import { useI18n } from '../../../i18n';

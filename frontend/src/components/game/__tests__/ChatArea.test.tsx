@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '../../../test/test-utils';
 import ChatArea from '../ChatArea';
-import type { Message } from '../../../types/shared';
+import type { Message } from '../@daicer/engine';
 
 // Mock useAuth
 vi.mock('../../../hooks/useAuth', () => ({

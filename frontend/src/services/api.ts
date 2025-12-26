@@ -14,7 +14,7 @@ import type {
   HistoricalPeriod,
   WorldCondition,
   CharacterSheet,
-} from '../types/shared';
+} from '@daicer/engine';
 import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse } from '../types/assets';
 import {
   CREATE_ROOM_MUTATION,

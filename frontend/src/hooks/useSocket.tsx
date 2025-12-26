@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { initSocket, disconnectSocket, getSocket, type ToolCall } from '../services/socket';
-import type { Room, Player, Message, Creature } from '../types/shared';
+import type { Room, Player, Message, Creature } from '@daicer/engine';
 
 /**
  * Socket state

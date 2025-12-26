@@ -116,7 +116,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
         });
 
         // Load chunk asynchronously
-        loadChunk(chunkX, chunkY, state.config, state.chunkGenerator, state.placementMap)
+        loadChunk(chunkX, chunkY, state.config)
           .then((chunk) => {
             loadingRequestsRef.current.delete(chunkKey);
             dispatch({

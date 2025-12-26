@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useTerrainStore } from './useTerrainStore';
-import type { ChunkDTO } from '@daicer/shared';
+import type { ChunkDTO } from '@daicer/engine';
 
 describe('useTerrainStore', () => {
   beforeEach(() => {

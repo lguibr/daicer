@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import type { WorldSettings, DMStyle } from '../types/shared';
+import type { WorldSettings, DMStyle } from '@daicer/engine';
 import { useI18n } from '../i18n';
 import {
   VERBOSITY_MARK_KEYS,

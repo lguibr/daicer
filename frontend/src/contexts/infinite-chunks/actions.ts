@@ -65,7 +65,7 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
         });
 
         // Load chunk asynchronously
-        loadChunk(chunkX, chunkY, state.config, state.chunkGenerator, state.placementMap)
+        loadChunk(chunkX, chunkY, state.config)
           .then((chunk) => {
             loadingRequestsRef.current.delete(chunkKey);
             dispatch({
@@ -90,7 +90,7 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
       state.chunks,
       state.loading,
       state.chunkGenerator,
-      state.placementMap,
+      // state.placementMap,
       dispatch,
     ]
   );

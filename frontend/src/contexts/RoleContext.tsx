@@ -4,7 +4,7 @@
  */
 
 import { createContext, useMemo, type ReactNode } from 'react';
-import type { Role } from '../types/shared';
+import type { Role } from '@daicer/engine';
 
 interface RoleContextValue {
   role: Role;

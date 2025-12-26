@@ -2,8 +2,8 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Package, ShoppingCart, Backpack, Shield, Check } from 'lucide-react';
 import clsx from 'clsx';
 import type { AvatarPreviewResponse, ReferenceImagePayload } from '../../types/assets';
-import type { Room, Attribute } from '../../types/shared';
-import { GamePhase } from '../../types/shared';
+import type { Room, Attribute } from '@daicer/engine';
+import { GamePhase } from '@daicer/engine';
 import {
   addCharacter,
   generateAvatarPortrait,
@@ -395,7 +395,7 @@ export default function CharacterCreation({
         const currentTotal = calculateTotalPoints(prev.attributes);
         const nextTotal =
           currentTotal -
-          (prev.attributes[attr] ? calculateTotalPoints({ [attr]: prev.attributes[attr] }) : 0) +
+          (prev.attributes?.[attr] ? calculateTotalPoints({ [attr]: prev.attributes[attr]! }) : 0) +
           calculateTotalPoints({ [attr]: clamped });
         if (nextTotal > attributeBudget) return prev;
 
@@ -650,8 +650,8 @@ export default function CharacterCreation({
       setLoading(true);
       setError(null);
 
-      const conModifier = Math.floor((formData.attributes.Constitution - 10) / 2);
-      const dexModifier = Math.floor((formData.attributes.Dexterity - 10) / 2);
+      const conModifier = Math.floor(((formData.attributes?.Constitution ?? 10) - 10) / 2);
+      const dexModifier = Math.floor(((formData.attributes?.Dexterity ?? 10) - 10) / 2);
       const armorClass = 10 + dexModifier;
       const proficiencyBonus = 2;
 
@@ -672,7 +672,7 @@ export default function CharacterCreation({
         savingThrows: {
           fortitude: conModifier,
           reflex: dexModifier,
-          will: Math.floor((formData.attributes.Wisdom - 10) / 2),
+          will: Math.floor(((formData.attributes?.Wisdom ?? 10) - 10) / 2),
         },
         skills: formData.skills ?? {},
         baseAttackBonus: proficiencyBonus,

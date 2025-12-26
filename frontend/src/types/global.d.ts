@@ -1,9 +1,9 @@
-import type { GridTile } from '@daicer/shared';
+import type { Tile } from '@daicer/engine';
 
 export {};
 
 declare global {
   interface Window {
-    __TERRAIN_GRID__: GridTile[][] | (GridTile | null)[][];
+    __TERRAIN_GRID__: Tile[][] | (Tile | null)[][];
   }
 }

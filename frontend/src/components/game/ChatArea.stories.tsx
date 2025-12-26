@@ -5,7 +5,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import ChatArea from './ChatArea';
-import type { Message } from '../../types/shared';
+import type { Message } from '@daicer/engine';
 
 const meta = {
   title: 'Game/ChatArea',

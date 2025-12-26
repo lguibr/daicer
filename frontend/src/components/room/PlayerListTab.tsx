@@ -7,7 +7,7 @@ import { Users } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import type { Player } from '../../types/shared';
+import type { Player } from '@daicer/engine';
 
 interface PlayerListTabProps {
   players: Player[];

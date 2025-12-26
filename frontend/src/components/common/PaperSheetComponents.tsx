@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SkillDetail } from '../../types/shared';
+import type { SkillDetail } from '@daicer/engine';
 
 // Paper Theme Styles
 export const paperStyles = {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { Player } from '@daicer/shared';
+import type { Player } from '@daicer/engine';
 import {
   PaperBackground,
   StatBox,

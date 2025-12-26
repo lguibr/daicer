@@ -5,12 +5,50 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { GenerationParams } from '@/hooks/useWorldGeneration';
+export interface GenerationParams {
+  structureMinDistance: number;
+  maxStructures: number;
+  generateRoads: boolean;
+  elevationScale: number;
+  elevationOctaves: number;
+  elevationPersistence: number;
+  moistureScale: number;
+  moistureOctaves: number;
+  moisturePersistence: number;
+  caveFillPercentage: number;
+  caveIterations: number;
+  bspSize: number;
+  bspMinRoomSize: number;
+  bspMaxRoomSize: number;
+  featureMinDistance: number;
+  featureAttempts: number;
+}
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import Label from '../ui/label';
 import { Slider } from '../ui/slider';
-import { SeedControl } from '../world-gen-debug/SeedControl';
+// import { SeedControl } from '../world-gen-debug/SeedControl';
+const SeedControl = ({ seed, onSeedChange, label }: any) => (
+  <div className="flex flex-col space-y-2">
+    <Label>{label}</Label>
+    <div className="flex space-x-2">
+      <input
+        type="text"
+        value={seed}
+        onChange={(e) => onSeedChange(e.target.value)}
+        className="flex-1 bg-black/20 border border-accent/20 rounded px-3 py-1 text-sm"
+      />
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onSeedChange(Math.random().toString(36).substring(7))}
+        title="Randomize"
+      >
+        🎲
+      </Button>
+    </div>
+  </div>
+);
 
 interface WorldGenParametersPanelProps {
   seed: string;

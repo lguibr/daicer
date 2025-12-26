@@ -3,7 +3,7 @@
  * @description Pre-defined world types with default settings
  */
 
-import type { WorldType } from '../types/shared';
+import type { WorldType } from '@daicer/engine';
 
 export type ArchetypeSigil = 'mountain' | 'tide' | 'dune' | 'frost' | 'ember' | 'grove' | 'sky' | 'abyss' | 'custom';
 

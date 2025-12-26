@@ -4,7 +4,7 @@
 
 import { useContext } from 'react';
 import { RoleContext } from '../contexts/RoleContext';
-import type { Role } from '../types/shared';
+import type { Role } from '@daicer/engine';
 
 interface UseRoleReturn {
   role: Role;

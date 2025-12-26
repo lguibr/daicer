@@ -5,7 +5,7 @@ import { createDie } from './createDie';
 import type { DiceLoaderProps, DieType, DieVisualStyle } from './types';
 import { AVAILABLE_DIE_TYPES, generateRandomDieColor, generateRandomDieType, generateRandomVisualStyle } from './utils';
 import { useI18n } from '../../../i18n';
-import type { Language } from '../../../types/shared';
+import type { Language } from '@daicer/engine';
 
 interface DieInstance {
   group: THREE.Group;

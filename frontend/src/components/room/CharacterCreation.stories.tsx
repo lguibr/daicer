@@ -6,7 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import CharacterCreation from './CharacterCreation';
 
-import { GamePhase } from '../../types/shared';
+import { GamePhase } from '@daicer/engine';
 
 const meta = {
   title: 'Forms/CharacterCreation',

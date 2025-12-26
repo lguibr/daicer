@@ -1,4 +1,4 @@
-import { createUnifiedTerrainGenerator, DEFAULT_GENERATION_PARAMS } from '@daicer/shared';
+import { createUnifiedTerrainGenerator, DEFAULT_GENERATION_PARAMS } from '@daicer/engine';
 
 // Cache generators
 const generators = new Map<string, ReturnType<typeof createUnifiedTerrainGenerator>>();

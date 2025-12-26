@@ -2,7 +2,7 @@
  * Game component type definitions
  */
 
-import type { Message, Player } from '../../types/shared';
+import type { Message, Player } from '@daicer/engine';
 
 /**
  * Chat area props

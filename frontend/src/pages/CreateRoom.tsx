@@ -8,7 +8,7 @@ import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 import PrivateLayout from '../components/layout/PrivateLayout';
 import { createRoom } from '../services/api';
 
-import type { WorldSettings, WorldType, DMStyle, ScaleLevel } from '../types/shared';
+import type { WorldSettings, WorldType, DMStyle, ScaleLevel } from '@daicer/engine';
 import { WORLD_ARCHETYPES } from '../constants/worldArchetypes';
 import {
   ARCHETYPE_SIGILS,

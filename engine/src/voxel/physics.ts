@@ -85,13 +85,13 @@ export class PhysicsEngine {
       let blocked = false;
 
       for (let distance = row; distance <= radius && !blocked; distance++) {
-        let deltaY = -distance;
+        const deltaY = -distance;
         for (let deltaX = -distance; deltaX <= 0; deltaX++) {
-          let currentX = cx + (deltaX * transform.xx + deltaY * transform.xy);
-          let currentY = cy + (deltaX * transform.yx + deltaY * transform.yy);
+          const currentX = cx + (deltaX * transform.xx + deltaY * transform.xy);
+          const currentY = cy + (deltaX * transform.yx + deltaY * transform.yy);
 
-          let leftSlope = (deltaX - 0.5) / (deltaY + 0.5);
-          let rightSlope = (deltaX + 0.5) / (deltaY - 0.5);
+          const leftSlope = (deltaX - 0.5) / (deltaY + 0.5);
+          const rightSlope = (deltaX + 0.5) / (deltaY - 0.5);
 
           if (!(currentX === cx && currentY === cy)) {
             if (start < rightSlope) continue;

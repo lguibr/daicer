@@ -5,8 +5,8 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
 import GameplayScreen from './GameplayScreen';
-import type { Player, Room, CharacterSheet } from '../../types/shared';
-import { GamePhase } from '../../types/shared';
+import type { Player, Room, CharacterSheet } from '@daicer/engine';
+import { GamePhase } from '@daicer/engine';
 import { NEW_CHARACTER_TEMPLATE } from '../../constants';
 
 const meta = {

@@ -2,7 +2,7 @@
  * CreateRoom Wizard Types
  */
 
-import type { WorldSettings } from '../../types/shared';
+import type { WorldSettings } from '@daicer/engine';
 
 export type WizardGroup = 'dmAndScope' | 'worldConfig' | 'characters' | 'inRoomConfig';
 

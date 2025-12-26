@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { initSocket, disconnectSocket, getSocket, type ToolCall, type PresenceData } from '../services/socket';
-import type { Room, Player, Message, Creature } from '../types/shared';
-import { GamePhase } from '../types/shared';
+import type { Room, Player, Message, Creature } from '@daicer/engine';
+import { GamePhase } from '@daicer/engine';
 
 /**
  * Socket state with streaming support
@@ -128,13 +128,14 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
           onGameState: (data) => {
             recordSSEEvent();
             // Map incoming messages to ensure content/text compat
-            const mappedMessages = ((data.messages as unknown[]) || []).map((m) => {
+            const mappedMessages: Message[] = ((data.messages as unknown[]) || []).map((m) => {
               const msg = m as Record<string, unknown>;
               return {
-                ...msg,
+                id: (msg.id as string) || `msg-${Date.now()}-${Math.random()}`,
                 timestamp: (msg.timestamp as number) || Date.now(),
                 content: (msg.content as string) || (msg.text as string) || '',
-                sender: (msg.sender as string) || (msg.senderName as string),
+                sender: (msg.sender as string) || (msg.senderName as string) || 'Unknown',
+                text: (msg.content as string) || (msg.text as string) || '',
               };
             });
 
@@ -175,7 +176,6 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
                     {
                       id: `player-action-${data.userId}-${Date.now()}`,
                       sender: senderName,
-                      content: data.action, // Use content
                       text: data.action,
                       timestamp: Date.now(),
                     },
@@ -253,7 +253,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
 
               return {
                 ...prev,
-                messages: [...prev.messages, { ...message, content: message.content || message.text || '' }],
+                messages: [...prev.messages, { ...message, text: message.text || (message as any).content || '' }],
               };
             });
           },
@@ -264,7 +264,6 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
             const initialMessage: Message = {
               id: `game-start-${Date.now()}`,
               sender: 'DM',
-              content: data.text,
               text: data.text,
               timestamp: data.timestamp,
             };
@@ -298,7 +297,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
                 return {
                   ...prev,
                   messages: prev.messages.map((msg) =>
-                    msg.id === data.messageId ? { ...msg, content: data.fullText, text: data.fullText } : msg
+                    msg.id === data.messageId ? { ...msg, text: data.fullText } : msg
                   ),
                 };
               }
@@ -311,7 +310,6 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
                   {
                     id: data.messageId,
                     sender: 'DM',
-                    content: data.fullText,
                     text: data.fullText,
                     timestamp: data.timestamp,
                   },

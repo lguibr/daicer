@@ -4,15 +4,14 @@
  * NO WebSocket - simple REST API only
  */
 
-import type { GridTile, ChunkDTO } from '@daicer/shared';
+import type { ChunkDTO } from '@daicer/engine';
 
 import { gql } from '@apollo/client';
 import { apolloClient } from '../../../lib/apollo';
 import type { TerrainChunk, InfiniteChunksConfig } from '../types';
-// import { TerrainAPI } from '../../../api/TerrainAPI'; // Deprecated in favor of GraphQL
 import { useTerrainStore } from '../../../stores/useTerrainStore';
 
-import { getChunkKey } from './gridExpander';
+export const getChunkKey = (x: number, y: number) => `${x},${y}`;
 
 const CHUNK_BOUNDS = 8192; // ±8192 chunks = ~32k tiles radius with 4x4 chunks
 
@@ -69,32 +68,40 @@ export async function loadChunk(
     // SIDE EFFECT: Update the global Zustand store for new components
     useTerrainStore.getState().setChunk(chunkX, chunkY, chunkData);
 
-    // Map ChunkDTO (grid: GridTile[][][]) to TerrainChunk (tiles: GridTile[][], biomes: string[][])
-    // The TerrainExplorer (Legacy) primarily looks at layer 0 (surface?).
-    // In our 3D grid, surface is floor 3 (z=0).
-    // TerrainExplorer expects "tiles" to be 2D array of GridTile.
+    // Map ChunkDTO (tiles: Tile[][][]) to TerrainChunk (tiles: any[][], biomes: string[][])
 
-    // ChunkDTO: grid from shared is [floor][y][x]
-    const grid3D = chunkData.grid;
-    const surfaceLayer = grid3D[3] || []; // Floor 3 is Z=0
+    const tiles3D = chunkData.tiles;
+    // Floor 3 is Z=0 (Surface)
+    const surfaceLayer = tiles3D[3] || [];
 
-    // Safely map surface layer to GridTiles
-    const tiles: GridTile[][] = Array(chunkSize)
+    // Safely map surface layer
+    const tiles = Array(chunkSize)
       .fill(null)
       .map((_row, y) =>
         Array(chunkSize)
           .fill(null)
           .map((_col, x) => {
             const tileRaw = surfaceLayer[y]?.[x];
+            // If tileRaw exists, it's a Tile { block, biome, ... }
+            if (tileRaw) {
+              return {
+                x: tileRaw.x,
+                y: tileRaw.y,
+                z: tileRaw.z,
+                biome: tileRaw.biome,
+                blockType: tileRaw.block,
+                lightLevel: 15,
+              } as any; // Cast to any/Tile
+            }
+            // Fallback
             return {
               x: worldX + x,
               y: worldY + y,
               z: 0,
-              biome: tileRaw?.b || 'plains',
-              blockType: tileRaw?.t || 'grass',
-              // Default light
+              biome: 'plains',
+              blockType: 'grass',
               lightLevel: 15,
-            } as GridTile;
+            } as any;
           })
       );
 
@@ -117,7 +124,7 @@ export async function loadChunk(
       isStartingArea: chunkX === 0 && chunkY === 0,
       seed: roomId,
       z: 0,
-      grid: chunkData.grid, // Pass 3D grid
+      grid: chunkData.tiles, // Pass 3D grid (typed as any to satisfy legacy interface if needed, or update TerrainChunk)
     };
 
     return chunk;

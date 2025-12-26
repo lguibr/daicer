@@ -1,4 +1,4 @@
-import type { ScaleLevel } from '../types/shared';
+import type { ScaleLevel } from '@daicer/engine';
 
 export const VERBOSITY_MARK_KEYS = [
   { value: 0, key: 'whisper' },
@@ -90,7 +90,7 @@ export const NARRATIVE_FALLBACK: Record<
   authored: { label: 'Authored', description: 'Epic saga with foreshadowed climaxes and dramatic framing.' },
 };
 
-export const SPECIAL_MODE_KEYS: Array<{ id: import('../types/shared').DMPerformanceMode | null; key: string }> = [
+export const SPECIAL_MODE_KEYS: Array<{ id: import('@daicer/engine').DMPerformanceMode | null; key: string }> = [
   { id: null, key: 'classic' },
   { id: 'courtly', key: 'courtly' },
   { id: 'grimdark', key: 'grimdark' },

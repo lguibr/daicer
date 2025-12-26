@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '../../../test/test-utils';
 import PlayerSidebar from '../PlayerSidebar';
-import type { Player, Creature } from '../../../types/shared';
+import type { Player, Creature } from '../@daicer/engine';
 
 const mockPlayers: Player[] = [
   {

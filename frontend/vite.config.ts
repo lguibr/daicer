@@ -49,8 +49,12 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         { find: '@', replacement: path.resolve(__dirname, './src') },
+        { find: '@daicer/engine', replacement: path.resolve(__dirname, '../engine/src/index.ts') },
         { find: 'daicer', replacement: path.resolve(__dirname, '..') },
       ],
+    },
+    optimizeDeps: {
+      exclude: ['@daicer/engine'],
     },
     test: {
       globals: true,

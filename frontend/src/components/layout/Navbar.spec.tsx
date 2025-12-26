@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GamePhase, type Room } from '../../types/shared';
+import { GamePhase, type Room } from '@daicer/engine';
 import Navbar from './Navbar';
 
 const mockNavigate = vi.fn();

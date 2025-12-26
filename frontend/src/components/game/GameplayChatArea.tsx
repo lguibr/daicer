@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Message } from '../../types/shared';
+import type { Message } from '@daicer/engine';
 import type { PresenceData, ToolCall as SocketToolCall } from '../../services/socket';
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';

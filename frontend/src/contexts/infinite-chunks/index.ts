@@ -24,11 +24,3 @@ export type {
 
 // Services (for advanced usage)
 export { loadChunk, getChunksToLoad } from './services/chunkLoader';
-export { mergeChunkIntoGrid, expandGrid, getChunkKey, parseChunkKey } from './services/gridExpander';
-export {
-  generateStructure,
-  getStructuresForChunk,
-  stampStructureOnChunk,
-  clearStructureCache,
-  getStructureCacheSize,
-} from './services/structureGenerator';
