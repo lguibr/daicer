@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coordinates } from '@daicer/engine';
+import type { Coordinates } from '@daicer/engine';
 
 interface TileInspectorProps {
   coords: Coordinates | null;

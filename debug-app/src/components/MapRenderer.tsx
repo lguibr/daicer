@@ -12,6 +12,7 @@ interface MapRendererProps {
   exploredTiles: Set<string>;
   entities: any[];
   onTileClick: (coords: Coordinates) => void;
+  onTileHover?: (coords: Coordinates | null) => void;
 }
 
 export const MapRenderer: React.FC<MapRendererProps> = ({
@@ -25,6 +26,7 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
   exploredTiles,
   entities,
   onTileClick,
+  onTileHover,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -63,13 +65,12 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         const chunkX = Math.floor(wx / 32);
         const chunkY = Math.floor(wy / 32);
         const chunk = generator.getChunk(chunkX, chunkY);
-        // Safely handle if chunk not ready? (sync gen so ok)
 
         const lx = ((wx % 32) + 32) % 32;
         const ly = ((wy % 32) + 32) % 32;
         const lz = viewZ + 3; // map -3..3 to 0..6
 
-        if (!chunk.tiles[lz]) continue;
+        if (!chunk || !chunk.tiles[lz]) continue;
         const tile = chunk.tiles[lz][ly][lx];
 
         // Draw Tile
@@ -99,7 +100,7 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
         }
 
         // Grid
-        ctx.strokeStyle = '#rgba(255,255,255,0.05)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
         ctx.strokeRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
       }
     }
@@ -127,29 +128,37 @@ export const MapRenderer: React.FC<MapRendererProps> = ({
     });
   }, [width, height, center, viewZ, scale, generator, visibleTiles, exploredTiles, entities]);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const getTileCoords = (e: React.MouseEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Reverse project
     const TILE_SIZE = 32 * scale;
-    const dx = (x - width / 2) / TILE_SIZE;
-    const dy = (y - height / 2) / TILE_SIZE;
-
-    // Adjust to nearest tile
-    // Adjust to nearest tile
-    // Actually the logic above is a bit fuzzy with "center tile", let's be precise
-    // screenX = width/2 + (tileX - centerX) * TILE_SIZE
-    // x = w/2 + (tx - cx) * S
-    // (x - w/2) / S = tx - cx
-    // tx = cx + (x - w/2) / S
-
     const tileX = Math.floor(center.x + (x - width / 2) / TILE_SIZE + 0.5);
     const tileY = Math.floor(center.y + (y - height / 2) / TILE_SIZE + 0.5);
 
-    onTileClick({ x: tileX, y: tileY, z: viewZ as ZLevel });
+    return { x: tileX, y: tileY, z: viewZ as ZLevel };
   };
 
-  return <canvas ref={canvasRef} width={width} height={height} onClick={handleClick} className="block touch-none" />;
+  const handleClick = (e: React.MouseEvent) => {
+    onTileClick(getTileCoords(e));
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (onTileHover) {
+      onTileHover(getTileCoords(e));
+    }
+  };
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => onTileHover?.(null)}
+      className="block touch-none cursor-crosshair"
+    />
+  );
 };

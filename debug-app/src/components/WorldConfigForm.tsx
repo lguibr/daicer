@@ -1,5 +1,5 @@
 import React from 'react';
-import { WorldConfig } from '@daicer/engine';
+import type { WorldConfig } from '@daicer/engine';
 import { RefreshCw, RotateCcw } from 'lucide-react';
 
 interface WorldConfigProps {

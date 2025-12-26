@@ -1,13 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import {
-  WorldGenerator,
-  PhysicsEngine,
-  type WorldConfig,
-  type Coordinates,
-  type Tile,
-  parseSpeed,
-} from '@daicer/engine';
-import { RefreshCw, Eye } from 'lucide-react';
+import { WorldGenerator, PhysicsEngine, type WorldConfig, type Coordinates, type Tile } from '@daicer/engine';
+import { Eye } from 'lucide-react';
 import clsx from 'clsx';
 import { MapRenderer } from './components/MapRenderer';
 import { WorldConfigForm } from './components/WorldConfigForm';
