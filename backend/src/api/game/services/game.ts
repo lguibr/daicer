@@ -112,7 +112,7 @@ export default ({ strapi }) => ({
   // --- Orchestration ---
 
   async startGame(roomId: string, language: Language = 'en') {
-    const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
+    const filters: any[] = [{ documentId: roomId }, { roomId: roomId }, { code: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
     }
@@ -266,7 +266,7 @@ export default ({ strapi }) => ({
   // Proxy for getRoom if needed, or remove if unused outside
   async getRoom(roomId: string) {
     const rooms = await strapi.documents('api::room.room').findMany({
-      filters: { $or: [{ roomId }, { documentId: roomId }] },
+      filters: { $or: [{ roomId }, { documentId: roomId }, { code: roomId }] },
       populate: ['players', 'players.character'],
     });
     return rooms[0];

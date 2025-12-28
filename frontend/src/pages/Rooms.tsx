@@ -182,8 +182,7 @@ export default function RoomsPage() {
           <div className="grid gap-6">
             {sortedMemberships.map((membership) => {
               const { room, player, isOwner } = membership;
-              // Cast room to access documentId
-              const roomWithId = room as Room & { documentId: string };
+
               const isProcessing = processingRoomId === room.id;
               const phaseKey = `rooms.phases.${room.phase}`;
               const phaseLabel = t(phaseKey);
@@ -226,11 +225,7 @@ export default function RoomsPage() {
                     </div>
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <Button
-                        type="button"
-                        variant="default"
-                        onClick={() => navigate(`/room/${roomWithId.documentId}`)}
-                      >
+                      <Button type="button" variant="default" onClick={() => navigate(`/play/${room.code}`)}>
                         {t('rooms.actions.open')}
                       </Button>
                       {player?.character ? (
@@ -273,15 +268,18 @@ export default function RoomsPage() {
                             {t('rooms.character.identity')}
                           </span>
                           <span className="font-semibold text-shadow-50">
-                            {player.character.race} • {player.character.characterClass}
+                            {/* @ts-ignore */}
+                            {player.character.race?.name || 'Unknown Race'} • {/* @ts-ignore */}
+                            {player.character.class?.name || 'Unknown Class'}
                           </span>
                         </div>
-                        <div>
+                        {/* Level removed from Character schema, hiding for now or defaulted */}
+                        {/* <div>
                           <span className="block text-xs uppercase tracking-[0.35em] text-shadow-500">
                             {t('rooms.character.level')}
                           </span>
-                          <span className="font-semibold text-shadow-50">{player.character.level}</span>
-                        </div>
+                          <span className="font-semibold text-shadow-50">{player.character.level || 1}</span>
+                        </div> */}
                       </div>
                     ) : isOwner ? (
                       <p className="text-sm text-shadow-300">{t('rooms.status.ownerNoCharacter')}</p>

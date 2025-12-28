@@ -133,6 +133,19 @@ export const LIST_ROOMS_QUERY = gql`
       }
       players {
         id
+        user {
+          documentId
+        }
+        character {
+          documentId
+          name
+          race {
+            name
+          }
+          class {
+            name
+          }
+        }
       }
     }
   }
@@ -143,11 +156,15 @@ export const LIST_CHARACTERS_QUERY = gql`
     characters(sort: "name:asc", pagination: { limit: 1000 }) {
       documentId
       name
+      backstory
       race {
         name
       }
       class {
         name
+      }
+      portrait {
+        url
       }
     }
   }

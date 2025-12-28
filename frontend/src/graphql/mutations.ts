@@ -203,3 +203,12 @@ export const GENERATE_TERRAIN_CHUNK_MUTATION = gql`
     generateTerrainChunk(roomId: $roomId, chunkX: $chunkX, chunkY: $chunkY, chunkSize: $chunkSize)
   }
 `;
+
+export const CREATE_CHARACTER_SHEET_MUTATION = gql`
+  mutation CreateCharacterSheet($data: CharacterSheetInput!) {
+    createCharacterSheet(data: $data) {
+      documentId
+      name
+    }
+  }
+`;

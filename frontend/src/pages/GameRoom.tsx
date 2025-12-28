@@ -112,6 +112,11 @@ export default function GameRoomPage() {
       console.log('[GameRoom] Loading room:', roomId);
       try {
         const roomData = (await getRoomState(roomId)) as SharedRoom & { players: Player[] };
+
+        if (!roomData) {
+          throw new Error(t('gameRoom.errors.notFound'));
+        }
+
         console.log('[GameRoom] Loaded room data:', {
           id: roomData.id,
           phase: roomData.phase,

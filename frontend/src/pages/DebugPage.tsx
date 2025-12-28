@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import type { WorldSettings } from '@daicer/engine';
+// import { Loader2 } from 'lucide-react'; // Loader2 was used in the pending state overlay I removed? No I removed the overlay logic? Let me check line 121 in view.
+// Wait, I didn't remove the overlay logic in JSX, just the isCreating state set calls.
+// If I remove isCreating state, I need to remove the overlay JSX too.
+// Let's remove lines 121-128 in the file as well.
 import Navbar from '../components/layout/Navbar';
 import {
   Breadcrumb,
@@ -15,7 +17,7 @@ import { Button } from '../components/ui/button';
 import { RoomSelection } from '../features/debug/components/RoomSelection';
 import { GameDebugView } from '../features/debug/components/GameDebugView';
 import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
-import { createRoom } from '../services/api';
+
 import type { WorldConfig } from '../features/debug/utils/types';
 
 type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
@@ -23,7 +25,6 @@ type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
 export default function DebugPage() {
   const [stage, setStage] = useState<Stage>('selection');
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
 
   // World Config State for the 'world' stage
   const [worldConfig, setWorldConfig] = useState<WorldConfig>({
@@ -47,27 +48,6 @@ export default function DebugPage() {
   const handleRoomSelect = (roomId: string) => {
     setActiveRoomId(roomId);
     setStage('debug'); // Jump straight to debug for existing rooms
-  };
-
-  const handleDetailedWizardSubmit = async (settings: WorldSettings) => {
-    setIsCreating(true);
-    try {
-      // Use the API service which handles standard mapping
-      const room = await createRoom({
-        settings,
-        structures: [],
-      });
-
-      setActiveRoomId(room.documentId || room.id);
-      // Move to world generation stage
-      setStage('world');
-    } catch (err) {
-      console.error('Failed to create room:', err);
-      alert(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      // Stay on same stage so user can retry
-    } finally {
-      setIsCreating(false);
-    }
   };
 
   const handleLaunchGame = async () => {
@@ -118,15 +98,6 @@ export default function DebugPage() {
       </div>
 
       <div className="flex-1 overflow-hidden relative">
-        {isCreating && (
-          <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-12 h-12 text-aurora-500 animate-spin" />
-              <p className="text-xl font-bold text-shadow-200">Forging World...</p>
-            </div>
-          </div>
-        )}
-
         {stage === 'selection' && (
           <div className="h-full overflow-y-auto p-6">
             <RoomSelection

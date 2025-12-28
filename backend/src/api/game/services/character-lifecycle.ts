@@ -69,54 +69,74 @@ export default ({ strapi }) => ({
       }
     }
 
-    // 3. Create Character Entity
-    let raceId = null;
-    if (characterData.race) {
-      const races = await strapi.documents('api::race.race').findMany({
-        filters: { name: characterData.race },
+    // 3. Create OR Link Character Entity
+    let createdCharacter: { documentId: string } | null = null;
+
+    // Check if we are linking an existing character
+    if (characterData.documentId) {
+      // Validate it exists
+      const existing = await strapi.documents('api::character.character').findOne({
+        documentId: characterData.documentId,
       });
-      if (races && races.length > 0) {
-        raceId = races[0].documentId;
+
+      if (existing) {
+        strapi.log.info(`Linking player to existing character: ${existing.name} (${existing.documentId})`);
+        createdCharacter = existing;
+      } else {
+        strapi.log.warn(`Linked character ${characterData.documentId} not found, falling back to creation.`);
       }
     }
 
-    let classId = null;
-    const className = characterData.characterClass || characterData.class;
-    if (className) {
-      const classes = await strapi.documents('api::class.class').findMany({
-        filters: { name: className },
-      });
-      if (classes && classes.length > 0) {
-        classId = classes[0].documentId;
+    // If not linking or not found, create new
+    if (!createdCharacter) {
+      let raceId = null;
+      if (characterData.race) {
+        const races = await strapi.documents('api::race.race').findMany({
+          filters: { name: characterData.race },
+        });
+        if (races && races.length > 0) {
+          raceId = races[0].documentId;
+        }
       }
+
+      let classId = null;
+      const className = characterData.characterClass || characterData.class;
+      if (className) {
+        const classes = await strapi.documents('api::class.class').findMany({
+          filters: { name: className },
+        });
+        if (classes && classes.length > 0) {
+          classId = classes[0].documentId;
+        }
+      }
+
+      const rawStats = characterData.baseStats || characterData.attributes || {};
+      const baseStats = {
+        strength: Number(rawStats.Strength || rawStats.strength || 10),
+        dexterity: Number(rawStats.Dexterity || rawStats.dexterity || 10),
+        constitution: Number(rawStats.Constitution || rawStats.constitution || 10),
+        intelligence: Number(rawStats.Intelligence || rawStats.intelligence || 10),
+        wisdom: Number(rawStats.Wisdom || rawStats.wisdom || 10),
+        charisma: Number(rawStats.Charisma || rawStats.charisma || 10),
+      };
+
+      createdCharacter = await strapi.documents('api::character.character').create({
+        data: {
+          name: characterData.name,
+          race: raceId,
+          class: classId,
+          backstory: characterData.backstory || characterData.background,
+          appearance: characterData.appearance,
+          equipment: characterData.equipment,
+          user: user.documentId,
+          baseStats: baseStats,
+          portrait: processedAvatarPreview?.portrait?.id,
+          upperBody: processedAvatarPreview?.upperBody?.id,
+          fullBody: processedAvatarPreview?.fullBody?.id,
+        },
+        status: 'published',
+      });
     }
-
-    const rawStats = characterData.baseStats || characterData.attributes || {};
-    const baseStats = {
-      strength: Number(rawStats.Strength || rawStats.strength || 10),
-      dexterity: Number(rawStats.Dexterity || rawStats.dexterity || 10),
-      constitution: Number(rawStats.Constitution || rawStats.constitution || 10),
-      intelligence: Number(rawStats.Intelligence || rawStats.intelligence || 10),
-      wisdom: Number(rawStats.Wisdom || rawStats.wisdom || 10),
-      charisma: Number(rawStats.Charisma || rawStats.charisma || 10),
-    };
-
-    const createdCharacter = await strapi.documents('api::character.character').create({
-      data: {
-        name: characterData.name,
-        race: raceId,
-        class: classId,
-        backstory: characterData.backstory || characterData.background,
-        appearance: characterData.appearance,
-        equipment: characterData.equipment,
-        user: user.documentId,
-        baseStats: baseStats,
-        portrait: processedAvatarPreview?.portrait?.id,
-        upperBody: processedAvatarPreview?.upperBody?.id,
-        fullBody: processedAvatarPreview?.fullBody?.id,
-      },
-      status: 'published',
-    });
 
     // 4. Update Room Player Component
     const playerIndex = players.findIndex((p: any) => p.user?.documentId === user.documentId || p.user?.id === user.id);

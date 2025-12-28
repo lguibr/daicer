@@ -47,10 +47,10 @@ export default function WorldConfigPage() {
       const isDebug = searchParams.get('target') === 'debug';
 
       if (isDebug) {
-        navigate(`/debug/${room.documentId || room.id}`);
+        navigate(`/debug/${room.code || room.documentId || room.id}`);
       } else {
         // Proceed to Character Selection
-        navigate(`/create/character-selection/${room.documentId || room.id}`, {
+        navigate(`/create/character-selection/${room.code || room.documentId || room.id}`, {
           state: {
             initialSeed: settings.seed,
             initialStructures: [],

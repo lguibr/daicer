@@ -241,6 +241,7 @@ export async function generateWorld(roomId: string, language: string): Promise<R
  * @returns Created player
  */
 export type CreateCharacterPayload = Partial<Player['character']> & {
+  documentId?: string;
   avatarPreview?: AvatarPreviewResponse;
 };
 

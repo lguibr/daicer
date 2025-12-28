@@ -58,24 +58,14 @@ const navLinks: NavLink[] = [
     path: '/room',
     icon: DoorOpen,
   },
-  {
-    id: 'game',
-    label: 'navbar.links.game',
-    path: '/game',
-    icon: Users,
-  },
+
   {
     id: 'explore',
     label: 'navbar.links.explore',
     path: '/rules',
     icon: Compass,
   },
-  {
-    id: 'assets',
-    label: 'navbar.links.assets',
-    path: '/assets',
-    icon: Layers,
-  },
+
   {
     id: 'debug',
     label: 'Debug',

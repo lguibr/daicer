@@ -1,5 +1,4 @@
 import { addCharacter } from '../../../../services/api';
-import { buildCharacterSheetAsset } from '../characterSheetAsset';
 
 export const createCharacterPayload = (
   formData: any,
@@ -86,17 +85,14 @@ export const submitCharacter = async (
   onCharacterCreated: any,
   effectiveLevel: number
 ) => {
+  // if (assetMode) { ... } logic removed as we no longer create assets this way.
+  // The 'assetMode' generally referred to creating a standalone JSON asset.
+  // We now either instantiate in room OR create a Strapi Character Sheet.
+
+  // If we are merely returning the payload for the caller to handle (e.g. creating a sheet):
   if (assetMode) {
-    const asset = buildCharacterSheetAsset({
-      form: payload, // Payload has correct shape? Or needs original form data?
-      // buildCharacterSheetAsset expects FormState, but Payload is flattened.
-      // Ideally we reuse the utility from creating payload
-      level: effectiveLevel,
-      avatarPreview,
-      demo: false,
-      originRoomId: room?.id,
-    });
-    onAssetCreated?.(asset);
+    // Return the payload directly so the caller (CharacterCreation) can pass it to its onAssetCreated handler
+    onAssetCreated?.(payload);
     return;
   }
 

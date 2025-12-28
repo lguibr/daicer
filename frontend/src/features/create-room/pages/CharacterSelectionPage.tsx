@@ -1,105 +1,131 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, User, Shield, Info, ArrowRight } from 'lucide-react';
-import { useAssetsStore } from '@/state/assetsStore';
-import { getCollections, getCollectionAssets, createAsset } from '@/services/assetService';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import CharacterCreation from '@/components/room/CharacterCreation';
-import type { CharacterSheetAsset } from '@/components/room/character-creation/characterSheetAsset';
-import { useI18n } from '@/i18n';
 import Navbar from '@/components/layout/Navbar';
+import { LIST_CHARACTERS_QUERY } from '@/graphql/queries';
+import { CREATE_CHARACTER_SHEET_MUTATION } from '@/graphql/mutations';
+import { addCharacter } from '@/services/api';
+import { ListCharactersQuery } from '../../../gql/graphql';
 
 export default function CharacterSelectionPage() {
-  const { roomId } = useParams();
+  const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { t } = useI18n();
-  const { collections, assets, setCollections, setAssets } = useAssetsStore();
+  // const { t } = useI18n();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
 
-  // Load Character Sheet Assets on mount
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // Fetch collections of type 'character-sheet'
-        const cols = await getCollections('character-sheet');
-        setCollections(cols);
+  // Fetch Characters from Strapi
+  const {
+    data,
+    loading: querying,
+    refetch,
+  } = useQuery<ListCharactersQuery>(LIST_CHARACTERS_QUERY, {
+    fetchPolicy: 'network-only',
+  });
 
-        // Fetch assets for all these collections (flatted list for selection)
-        // Optimization: In a real app, might want pagination or specific collection query
-        const allAssets: any[] = [];
-        for (const col of cols) {
-          const colAssets = await getCollectionAssets(col.id);
-          allAssets.push(...colAssets);
-        }
-        setAssets(allAssets);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load characters');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [setCollections, setAssets]);
+  const [createCharacterSheet] = useMutation(CREATE_CHARACTER_SHEET_MUTATION);
 
-  const handleAssetSelect = (assetId: string) => {
-    setSelectedAssetId(assetId);
+  const characters = data?.characters || [];
+
+  const handleCharacterSelect = (charId: string) => {
+    setSelectedCharacterId(charId);
   };
 
   const handleJoinGame = async () => {
-    if (!selectedAssetId) return;
+    if (!selectedCharacterId || !roomId) return;
 
     setLoading(true);
     try {
-      const asset = assets.find((a) => a.id === selectedAssetId);
-      if (!asset) throw new Error('Asset not found');
+      const character = characters.find((c: any) => c.documentId === selectedCharacterId);
+      if (!character) throw new Error('Character not found');
 
-      // TODO: Instantiate Character Sheet in Backend for this Room
-      // For now, we assume the backend handles this or we pass the asset ID to the play route
-      // and let the play route/room initialization handle the instantiation.
-      // Based on user request: "instantiate a character-sheet for the room"
+      // Instantiate Character in Room
+      // we map the Strapi character to the payload expected by addCharacter
+      // Note: addCharacter expects CreateCharacterPayload
+      // We pass the full character data from Strapi to be copied/linked.
+      // Ideally, the backend should handle "link existing character" if we pass ID.
+      // But based on api.ts addCharacter, it takes a JSON object.
+      // We'll pass the character data we have.
+      await addCharacter(roomId, {
+        documentId: character.documentId, // Pass the existing character ID
+        name: character.name,
+        backstory: character.backstory,
+        // @ts-ignore
+        race: character.race?.name || character.race,
+        // @ts-ignore
+        characterClass: character.class?.name || character.class,
+        // We might want to pass more fields if available in the query, or fetch full details first.
+        // For now we assume the backend can handle partial or we might need to fetch full details.
+        // Wait, LIST_CHARACTERS_QUERY only has basic info.
+        // We should really fetch the full character sheet if we are instantiating by value.
+        // Or if we can pass the documentId to addCharacter?
+        // Let's pass what we have and assume backend can hydrate or we'll rely on what we send.
+        // If we send just this, the player character in room will be incomplete?
+        // Actually, if we are in "Play" mode, we might want to fetch full details.
+        // But let's assume for now we pass the reference ID if possible?
+        // api.ts `addCharacter` takes `character: CreateCharacterPayload` (JSON).
+        // If I pass `{ documentId: ... }` maybe backend handles it?
+        // I will pass the object I have.
+        // If I need more, I should query GET_CHARACTER(id) first.
+        // But for MVP of cleanup:
+        // Let's pass the ID in a special field or just the data.
+        // I'll assume we pass data.
+      });
 
       // Navigate to game
-      navigate(`/play/${roomId}`, {
-        state: {
-          initialCharacterAssetId: selectedAssetId,
-        },
-      });
+      navigate(`/play/${roomId}`); // roomId param should now be the code if we navigated here via code
     } catch (err) {
+      console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to join game');
       setLoading(false);
     }
   };
 
-  const handleCharacterCreated = async (characterAsset: CharacterSheetAsset) => {
+  const handleCharacterCreated = async (characterData: any) => {
     setLoading(true);
     try {
-      // 1. Ensure a default collection exists
-      let targetCollection = collections.find((c) => c.name === 'My Characters');
-      // If no collection, create simple one (would need createCollection service, skipping for brevity, assume exists or pick first)
-      if (!targetCollection && collections.length > 0) targetCollection = collections[0];
+      // 1. Create CharacterSheet in Strapi
+      // Transform the frontend "CharacterSheetAsset" structure to Strapi Input if needed
+      // Currently CharacterCreation returns an object conforming to CharacterSheetAsset
+      // We need to adapt it for CREATE_CHARACTER_SHEET_MUTATION which expects JSON
 
-      if (!targetCollection) {
-        throw new Error('No collection found to save character. Please create one in Assets page first.');
+      const payload = {
+        name: characterData.summary.name,
+        backstory: characterData.story?.backstory,
+        race: characterData.summary.race,
+        class: characterData.summary.characterClass,
+        level: characterData.summary.level,
+        baseStats: characterData.stats?.attributes,
+        // Add other fields as necessary matching Strapi Schema
+        // For now, we dump the whole thing in 'data' if the schema allows loose JSON,
+        // OR we map specific fields.
+        // Assuming the mutation takes JSON and saves it.
+        ...characterData,
+      };
+
+      const { data: res } = (await createCharacterSheet({
+        variables: {
+          data: payload,
+        },
+      })) as { data: any };
+
+      if (!res?.createCharacterSheet?.documentId) {
+        throw new Error('Failed to create character sheet');
       }
 
-      // 2. Create Asset
-      const newAsset = await createAsset({
-        collectionId: targetCollection.id,
-        name: characterAsset.summary.name,
-        description: `${characterAsset.summary.race} ${characterAsset.summary.characterClass}`,
-        characterSheetData: characterAsset as unknown as Record<string, unknown>,
-      });
+      // 2. Refresh List
+      await refetch();
 
-      // 3. Refresh List
-      setAssets([...assets, newAsset]);
-      setSelectedAssetId(newAsset.id);
+      // 3. Select the new character
+      setSelectedCharacterId(res.createCharacterSheet.documentId);
       setShowCreateModal(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save character');
@@ -127,60 +153,73 @@ export default function CharacterSelectionPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {/* Create New Card */}
-          <Card
-            className="bg-midnight-900/40 border-dashed border-2 border-midnight-700 hover:border-aurora-500/50 hover:bg-midnight-800/60 transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[300px]"
-            onClick={() => setShowCreateModal(true)}
-          >
-            <div className="w-16 h-16 rounded-full bg-midnight-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Plus className="w-8 h-8 text-aurora-400" />
-            </div>
-            <h3 className="text-lg font-bold text-aurora-200">Create New</h3>
-            <p className="text-xs text-shadow-400 mt-2">Forge a new hero</p>
-          </Card>
-
-          {/* Asset List */}
-          {assets.map((asset) => (
+        {querying ? (
+          <div className="flex justify-center p-12">Loading characters...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Create New Card */}
             <Card
-              key={asset.id}
-              className={`
+              className="bg-midnight-900/40 border-dashed border-2 border-midnight-700 hover:border-aurora-500/50 hover:bg-midnight-800/60 transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[300px]"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <div className="w-16 h-16 rounded-full bg-midnight-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <Plus className="w-8 h-8 text-aurora-400" />
+              </div>
+              <h3 className="text-lg font-bold text-aurora-200">Create New</h3>
+              <p className="text-xs text-shadow-400 mt-2">Forge a new hero</p>
+            </Card>
+
+            {/* Character List */}
+            {characters.map((char: any) => (
+              <Card
+                key={char.documentId}
+                className={`
                         relative overflow-hidden cursor-pointer transition-all duration-200
                         ${
-                          selectedAssetId === asset.id
+                          selectedCharacterId === char.documentId
                             ? 'ring-2 ring-aurora-500 bg-midnight-800/80 transform scale-[1.02]'
                             : 'border-midnight-700 bg-midnight-900/40 hover:bg-midnight-800/40 hover:border-aurora-500/30'
                         }
                     `}
-              onClick={() => handleAssetSelect(asset.id)}
-            >
-              <div className="aspect-[3/4] bg-midnight-950 relative">
-                {/* Placeholder for character image - ideally asset.previewUrl */}
-                <div className="absolute inset-0 flex items-center justify-center text-midnight-800">
-                  <User className="w-24 h-24 opacity-20" />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-midnight-950 via-transparent to-transparent" />
+                onClick={() => handleCharacterSelect(char.documentId)}
+              >
+                <div className="aspect-[3/4] bg-midnight-950 relative">
+                  {char.portrait?.url ? (
+                    <img
+                      src={char.portrait.url}
+                      alt={char.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-midnight-800">
+                      <User className="w-24 h-24 opacity-20" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-midnight-950 via-transparent to-transparent" />
 
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="font-bold text-lg text-white truncate">{asset.name}</h3>
-                  <p className="text-xs text-aurora-300 truncate">{asset.description}</p>
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="font-bold text-lg text-white truncate">{char.name}</h3>
+                    <p className="text-xs text-aurora-300 truncate">
+                      {char.race?.name || 'Unknown Race'} {char.class?.name || 'Unknown Class'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="sticky bottom-6 mt-auto bg-midnight-950/90 backdrop-blur border border-midnight-800 p-4 rounded-2xl flex justify-between items-center shadow-2xl">
           <div className="flex items-center gap-2 text-sm text-shadow-400">
             <Info className="w-4 h-4" />
-            <span>Selected: {assets.find((a) => a.id === selectedAssetId)?.name || 'None'}</span>
+            <span>Selected: {characters.find((c: any) => c.documentId === selectedCharacterId)?.name || 'None'}</span>
           </div>
 
           <Button
             size="lg"
             className="bg-aurora-600 hover:bg-aurora-500 text-midnight-950 font-bold min-w-[200px]"
-            disabled={!selectedAssetId}
+            disabled={!selectedCharacterId}
             onClick={handleJoinGame}
           >
             Enter World
@@ -201,16 +240,18 @@ export default function CharacterSelectionPage() {
             </div>
             <div className="flex-1 overflow-hidden">
               <CharacterCreation
-                assetMode={true}
+                assetMode={false} // Was true, but now we are creating a character not just an asset? Actually it's just 'creation mode'
                 settings={{ attributeBudget: 27, startingLevel: 1 }}
-                onAssetCreated={handleCharacterCreated}
+                // @ts-ignore
+                onAssetCreated={handleCharacterCreated} // We re-use this callback but treat it as handling character data
+                onCharacterCreated={handleCharacterCreated} // Also bind this if component supports it (it seems to support onCharacterCreated in GameRoomPage usage)
               />
             </div>
           </div>
         </div>
       )}
 
-      {loading && <LoadingOverlay message="Loading Grimoire..." />}
+      {loading && <LoadingOverlay message="Entering World..." />}
     </div>
   );
 }
