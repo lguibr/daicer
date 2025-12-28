@@ -43,7 +43,7 @@ export default ({ strapi }) => ({
 
   async generateCharacterOpening(
     worldDescription: string,
-    character: any,
+    character: unknown,
     mainContext: string,
     language: Language = 'en',
     settings?: WorldSettings,
@@ -66,15 +66,15 @@ export default ({ strapi }) => ({
       .generateMainOpening(worldDescription, players, language, settings, streamId);
   },
 
-  async addCharacter(roomId: string, characterData: any, user: any) {
+  async addCharacter(roomId: string, characterData: unknown, user: unknown) {
     return strapi.service('api::game.character-lifecycle').addCharacter(roomId, characterData, user);
   },
 
-  async submitAction(roomId: string, action: string, user: any) {
+  async submitAction(roomId: string, action: string, user: unknown) {
     return strapi.service('api::game.turn-processing').submitAction(roomId, action, user);
   },
 
-  async spawnCreature(roomId: string, creatureData: any) {
+  async spawnCreature(roomId: string, creatureData: Partial<Creature>) {
     // Stub or move to separate creature service if large, but straightforward enough to keep or delegate if needed.
     // Actually, logic for spawning was fairly simple in original file (not shown in snippet but assumed).
     // If it was just DB create, we can keep or move.
@@ -104,7 +104,7 @@ export default ({ strapi }) => ({
     const updatedCreatures = [...(room.creatures || []), newCreature];
     await strapi.documents('api::room.room').update({
       documentId: room.documentId,
-      data: { creatures: updatedCreatures } as any,
+      data: { creatures: updatedCreatures } as unknown,
     });
     return newCreature;
   },
@@ -123,10 +123,16 @@ export default ({ strapi }) => ({
     });
 
     if (!rooms || rooms.length === 0) {
-      console.error('Room not found for identifier: ' + roomId);
+      strapi.log.error('Room not found for identifier: ' + roomId);
       throw new Error('Room not found');
     }
-    const room = rooms[0] as any;
+    const room = rooms[0] as unknown as {
+      worldDescription: string;
+      players: Player[];
+      settings: WorldSettings;
+      documentId: string;
+      roomId: string;
+    };
 
     // 1. Generate Main Opening
     const mainOpening = await this.generateMainOpening(
@@ -144,7 +150,15 @@ export default ({ strapi }) => ({
     for (let i = 0; i < players.length; i++) {
       const p = players[i];
       if (p.character && p.character.documentId) {
-        const char = p.character as any;
+        const char = p.character as unknown as {
+          documentId: string;
+          baseStats?: any;
+          race?: any;
+          class?: any;
+          appearance?: string;
+          backstory?: string;
+          equipment?: any[];
+        };
         const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
           data: {
             character: char.documentId,
@@ -166,7 +180,7 @@ export default ({ strapi }) => ({
         if (updatedPlayers[i]) {
           updatedPlayers[i] = {
             ...updatedPlayers[i],
-            characterSheet: newSheet.documentId,
+            character: newSheet.documentId,
           };
           playersUpdated = true;
         }
@@ -176,7 +190,7 @@ export default ({ strapi }) => ({
     if (playersUpdated) {
       await strapi.documents('api::room.room').update({
         documentId: room.documentId,
-        data: { players: updatedPlayers } as any,
+        data: { players: updatedPlayers } as unknown,
       });
     }
 
@@ -227,7 +241,7 @@ export default ({ strapi }) => ({
       data: {
         phase: 'game',
         isActive: true,
-      } as any,
+      } as unknown,
     });
 
     // 6. Broadcast
@@ -255,7 +269,7 @@ export default ({ strapi }) => ({
     });
     return rooms[0];
   },
-  async executeEngineAction(roomId: string, actions: any[], user: any) {
+  async executeEngineAction(roomId: string, actions: unknown[], user: unknown) {
     return strapi.service('api::game.turn-processing').executeDeterministicTurn(roomId, actions, user);
   },
 });

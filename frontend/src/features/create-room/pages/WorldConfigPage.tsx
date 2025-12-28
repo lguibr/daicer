@@ -13,7 +13,7 @@ export default function WorldConfigPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const config: WorldConfig = {
-    seed: settings.seed,
+    seed: settings.seed || 'default-seed',
     chunkSize: settings.chunkSize ?? 32,
     globalScale: settings.globalScale ?? 0.01,
     seaLevel: settings.seaLevel ?? 0,
@@ -51,7 +51,7 @@ export default function WorldConfigPage() {
       });
     } catch (err) {
       console.error(err);
-      alert(`Failed to create room: ${  err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setIsSubmitting(false);
     }
   };

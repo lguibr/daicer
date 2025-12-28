@@ -17,10 +17,8 @@ import { DiceLoader } from '../components/ui/dice-loader';
 
 import ToolCallCard from '../components/chat/ToolCallCard';
 
- 
 import { auth } from '../services/firebase';
 // import { useI18n } from '../i18n';
-
 
 import type { ToolCall } from '../services/socket';
 

@@ -37,7 +37,15 @@ export async function generateImageGemini(
   const model = 'gemini-3-pro-image-preview';
 
   try {
-    const parts: any[] = [{ text: options.prompt }];
+    // Basic Part interface based on usage
+    interface Part {
+      text?: string;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
+    }
+    const parts: Part[] = [{ text: options.prompt }];
 
     if (options.referenceImages && options.referenceImages.length > 0) {
       options.referenceImages.forEach((img) => {
@@ -60,12 +68,14 @@ export async function generateImageGemini(
         },
       ],
       config: {
-        // @ts-ignore - responseModalities might not be in the strict types yet for all versions but is in docs
+        // responseModalities might not be in the strict types yet for all versions but is in docs
+        // @ts-ignore
         // responseModalities: ['IMAGE'], // Commenting out as mixed Text/Image input might require different output handling or defaults.
         // Actually, if we want an image, we should probably hint it, but default usually works for 'generate-image' models.
         // Let's keep it if it was working for txt2img.
         responseModalities: ['IMAGE'],
-        // @ts-ignore - imageConfig might be experimental in some SDK versions
+        // imageConfig might be experimental in some SDK versions
+        // @ts-ignore
         imageConfig: {
           aspectRatio: options.aspectRatio || '1:1',
         },
@@ -102,9 +112,10 @@ export async function generateImageGemini(
     console.error('Gemini Image Gen - No inlineData found. Candidate parts:', JSON.stringify(responseParts, null, 2));
     console.error('Full Candidate:', JSON.stringify(firstCandidate, null, 2));
     throw new Error('No image data found in Gemini response');
-  } catch (error: any) {
+  } catch (error) {
     console.error('Gemini Image Generation Error:', error);
-    throw new Error(`Gemini Image Gen failed: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Gemini Image Gen failed: ${message}`);
   }
 }
 
@@ -142,8 +153,9 @@ export async function describeImageGemini(options: ImageAnalysisOptions): Promis
 
     const textPart = response.candidates?.[0]?.content?.parts?.find((p) => p.text);
     return textPart?.text || 'No description generated.';
-  } catch (error: any) {
+  } catch (error) {
     console.error('Gemini Vision Error:', error);
-    throw new Error(`Gemini Vision failed: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Gemini Vision failed: ${message}`);
   }
 }

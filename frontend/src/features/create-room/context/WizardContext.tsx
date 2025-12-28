@@ -8,9 +8,9 @@ interface WizardContextType {
     key: K,
     value: (WorldSettings & WorldConfig)[K]
   ) => void;
-  updateDMStyle: <K extends keyof typeof initialSettings.dmStyle>(
+  updateDMStyle: <K extends keyof typeof initialSettingsBase.dmStyle>(
     key: K,
-    value: (typeof initialSettings.dmStyle)[K]
+    value: (typeof initialSettingsBase.dmStyle)[K]
   ) => void;
   setSettings: (settings: WorldSettings & Partial<WorldConfig>) => void;
 }
@@ -71,8 +71,8 @@ export function WizardProvider({
 
   const [settings, setSettingsState] = useState<WorldSettings & Partial<WorldConfig>>({
     ...initialSettingsBase,
-    seed: `daicer-${  Math.random().toString(36).substring(7)}`,
-    language: 'en', // Default hardcoded or from hook? Hook might not be ready.
+    seed: `daicer-${Math.random().toString(36).substring(7)}`,
+    language: language || 'en',
     ...initialValues,
   } as WorldSettings & Partial<WorldConfig>);
 

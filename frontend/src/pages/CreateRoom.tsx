@@ -28,7 +28,7 @@ export default function CreateRoomPage() {
       });
     } catch (err) {
       console.error(err);
-      alert(`Failed to create room: ${  err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setLoading(false);
     }
   };

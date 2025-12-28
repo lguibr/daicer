@@ -44,7 +44,7 @@ export const typeDefs = `
     seed: String
     chunkSize: Int
     globalScale: Float
-    seaLevel: Int
+    seaLevel: Float
     elevationScale: Float
     roughness: Float
     detail: Float

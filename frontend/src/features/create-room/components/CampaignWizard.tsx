@@ -166,7 +166,7 @@ export function CampaignWizard({
 
   // Initial State
   const [settings, setSettings] = useState<WorldSettings>({
-    seed: `daicer-${  Math.random().toString(36).substring(7)}`,
+    seed: `daicer-${Math.random().toString(36).substring(7)}`,
     worldType: 'terra',
     worldSize: 'small',
     theme: 'High Fantasy',

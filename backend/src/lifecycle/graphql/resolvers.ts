@@ -14,9 +14,9 @@ export const registerGraphQLExtension = (strapi) => {
           const { documentId } = parent;
           const user = context.state.user;
 
-          const filters: any = {
+          const filters = {
             room: { documentId: documentId },
-            $or: [{ recipient: { $null: true } }],
+            $or: [{ recipient: { $null: true } }] as unknown[],
           };
 
           if (user) {
@@ -109,6 +109,11 @@ export const registerGraphQLExtension = (strapi) => {
     resolversConfig: {
       'Room.messages': { auth: false },
       'Room.turns': { auth: false },
+      'Query.voxelPreview': {
+        auth: {
+          scope: ['api::voxel-engine.voxel-engine.voxelPreview'],
+        },
+      },
     },
   });
 };

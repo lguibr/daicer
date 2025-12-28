@@ -1,4 +1,4 @@
-import { Coordinates, BlockType } from '@daicer/engine';
+import { Coordinates, BlockType, PHYSICS_CONSTANTS } from '@daicer/engine';
 import { WorldGenerator } from '../world-generator-logic';
 
 export class PhysicsEngine {
@@ -9,13 +9,14 @@ export class PhysicsEngine {
   }
 
   public async isWalkable(pos: Coordinates): Promise<boolean> {
-    const chunkX = Math.floor(pos.x / 32);
-    const chunkY = Math.floor(pos.y / 32);
+    const chunkX = Math.floor(pos.x / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    const chunkY = Math.floor(pos.y / PHYSICS_CONSTANTS.CHUNK_SIZE);
     const chunk = await this.generator.getChunk(chunkX, chunkY);
 
-    const localX = ((pos.x % 32) + 32) % 32;
-    const localY = ((pos.y % 32) + 32) % 32;
-    // @ts-ignore
+    const localX =
+      ((pos.x % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
+    const localY =
+      ((pos.y % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
     const zIndex = pos.z + 3;
 
     if (zIndex < 0 || zIndex > 6) return false;
@@ -27,12 +28,13 @@ export class PhysicsEngine {
    * Check if position contains stairs
    */
   public async checkStaircase(pos: Coordinates): Promise<'up' | 'down' | null> {
-    const chunkX = Math.floor(pos.x / 32);
-    const chunkY = Math.floor(pos.y / 32);
+    const chunkX = Math.floor(pos.x / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    const chunkY = Math.floor(pos.y / PHYSICS_CONSTANTS.CHUNK_SIZE);
     const chunk = await this.generator.getChunk(chunkX, chunkY);
-    const localX = ((pos.x % 32) + 32) % 32;
-    const localY = ((pos.y % 32) + 32) % 32;
-    // @ts-ignore
+    const localX =
+      ((pos.x % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
+    const localY =
+      ((pos.y % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
     const zIndex = pos.z + 3;
 
     const block = chunk.tiles[zIndex][localY][localX].block;
@@ -53,10 +55,10 @@ export class PhysicsEngine {
     // Shadowcasting is recursive/iterative. Making the callback async is hard.
     // Better strategy: Identify all chunks needed for radius, preload them, then run algo synchronously using a local cache.
 
-    const minChunkX = Math.floor((origin.x - radius) / 32);
-    const maxChunkX = Math.floor((origin.x + radius) / 32);
-    const minChunkY = Math.floor((origin.y - radius) / 32);
-    const maxChunkY = Math.floor((origin.y + radius) / 32);
+    const minChunkX = Math.floor((origin.x - radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    const maxChunkX = Math.floor((origin.x + radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    const minChunkY = Math.floor((origin.y - radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    const maxChunkY = Math.floor((origin.y + radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
 
     const chunkCache = new Map<string, any>();
     const promises = [];
@@ -69,12 +71,11 @@ export class PhysicsEngine {
     await Promise.all(promises);
 
     const isBlocking = (x: number, y: number) => {
-      const chunkX = Math.floor(x / 32);
-      const chunkY = Math.floor(y / 32);
+      const chunkX = Math.floor(x / PHYSICS_CONSTANTS.CHUNK_SIZE);
+      const chunkY = Math.floor(y / PHYSICS_CONSTANTS.CHUNK_SIZE);
       const chunk = chunkCache.get(`${chunkX},${chunkY}`);
-      const lx = ((x % 32) + 32) % 32;
-      const ly = ((y % 32) + 32) % 32;
-      // @ts-ignore
+      const lx = ((x % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
+      const ly = ((y % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
       const zIndex = origin.z + 3;
       // If chunk is not ready (shouldn't happen with sync gen), treat as blocking
       if (!chunk) return true;
@@ -183,21 +184,14 @@ export class PhysicsEngine {
       ];
 
       for (const neighbor of neighbors) {
-        // @ts-ignore
         if (!(await this.isWalkable(neighbor))) continue;
 
         const tentativeG = (gScore.get(k(current)) ?? Infinity) + 1;
-        // @ts-ignore
         if (tentativeG < (gScore.get(k(neighbor)) ?? Infinity)) {
-          // @ts-ignore
           cameFrom.set(k(neighbor), current);
-          // @ts-ignore
           gScore.set(k(neighbor), tentativeG);
-          // @ts-ignore
           fScore.set(k(neighbor), tentativeG + h(neighbor, end));
-          // @ts-ignore
           if (!openSet.some((n) => n.x === neighbor.x && n.y === neighbor.y)) {
-            // @ts-ignore
             openSet.push(neighbor);
           }
         }

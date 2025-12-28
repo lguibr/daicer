@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:clean": "vite build --watch & vite preview --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",

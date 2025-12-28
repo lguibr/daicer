@@ -7,13 +7,14 @@ import type { WorldSettings, Player, CharacterSheet, Language } from '@daicer/en
 // Helper to format DM style
 
 export default ({ strapi }) => ({
-  createSnapshot(characterSheets: any[]) {
+  createSnapshot(characterSheets: unknown[]) {
     const snapshot: Record<string, any> = {};
     for (const sheet of characterSheets) {
-      if (sheet && sheet.documentId) {
-        const snap = createCharacterSnapshot(sheet);
+      const s = sheet as { documentId: string; [key: string]: any };
+      if (s && s.documentId) {
+        const snap = createCharacterSnapshot(s);
         if (snap) {
-          snapshot[sheet.documentId] = snap;
+          snapshot[s.documentId] = snap;
         }
       }
     }
@@ -21,6 +22,7 @@ export default ({ strapi }) => ({
   },
 
   async addCharacter(roomId: string, characterData: any, user: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // 1. Fetch Room with populated players
     const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
     if (!isNaN(Number(roomId))) {
@@ -35,7 +37,10 @@ export default ({ strapi }) => ({
     if (!rooms || rooms.length === 0) {
       throw new Error('Room not found');
     }
-    const room = rooms[0] as any;
+    const room = rooms[0] as unknown as {
+      players: Player[];
+      documentId: string;
+    };
     const players = room.players || [];
 
     // 2. Process Avatar Uploads
@@ -46,7 +51,7 @@ export default ({ strapi }) => ({
       for (const slot of avatarSlots) {
         if (processedAvatarPreview[slot] && processedAvatarPreview[slot].data) {
           try {
-            console.log(`Processing avatar upload for slot: ${slot}`);
+            strapi.log.info(`Processing avatar upload for slot: ${slot}`);
             const base64 = `data:${processedAvatarPreview[slot].mimeType};base64,${processedAvatarPreview[slot].data}`;
             const filename = `avatar-${user.id}-${slot}-${Date.now()}`;
             const uploadResult = await uploadBase64Image(base64, filename);
@@ -55,10 +60,10 @@ export default ({ strapi }) => ({
                 id: uploadResult.id,
                 url: uploadResult.url,
               };
-              console.log(`Avatar ${slot} uploaded successfully: ${uploadResult.id}`);
+              strapi.log.info(`Avatar ${slot} uploaded successfully: ${uploadResult.id}`);
             }
           } catch (err) {
-            console.error(`Failed to upload ${slot} avatar:`, err);
+            strapi.log.error(`Failed to upload ${slot} avatar:`, err);
           }
         }
       }

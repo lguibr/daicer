@@ -49,15 +49,19 @@ export const TileInspector: React.FC<TileInspectorProps> = ({ coords, tileData, 
 };
 
 function InfoBox({ label, value, color }: { label: string; value: string; color: string }) {
-  return <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700">
-    <div className="text-[10px] text-neutral-500 uppercase">{label}</div>
-    <div className={`font-mono font-bold capitalize ${color}`}>{value?.replace('_', ' ')}</div>
-  </div>
+  return (
+    <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700">
+      <div className="text-[10px] text-neutral-500 uppercase">{label}</div>
+      <div className={`font-mono font-bold capitalize ${color}`}>{value?.replace('_', ' ')}</div>
+    </div>
+  );
 }
 
 function StatusBox({ label, status }: { label: string; status: boolean }) {
-  return <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700 flex justify-between items-center">
-    <span className="text-[10px] text-neutral-500 uppercase">{label}</span>
-    <span className={status ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{status ? 'YES' : 'NO'}</span>
-  </div>
+  return (
+    <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700 flex justify-between items-center">
+      <span className="text-[10px] text-neutral-500 uppercase">{label}</span>
+      <span className={status ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{status ? 'YES' : 'NO'}</span>
+    </div>
+  );
 }

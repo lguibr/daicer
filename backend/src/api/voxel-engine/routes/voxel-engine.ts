@@ -3,9 +3,10 @@ export default {
     {
       method: 'POST',
       path: '/voxel-engine/preview',
-      handler: 'voxel-engine.previewWorld',
+      handler: 'voxel-engine.voxelPreview',
       config: {
-        auth: false,
+        policies: [],
+        middlewares: [],
       },
     },
   ],

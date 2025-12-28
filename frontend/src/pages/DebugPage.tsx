@@ -28,7 +28,7 @@ export default function DebugPage() {
 
   // World Config State for the 'world' stage
   const [worldConfig, setWorldConfig] = useState<any>({
-    seed: `new-campaign-${  Math.random().toString(36).substring(7)}`,
+    seed: `new-campaign-${Math.random().toString(36).substring(7)}`,
     chunkSize: 32,
     globalScale: 0.01,
     seaLevel: 0,
@@ -64,7 +64,7 @@ export default function DebugPage() {
       setStage('world');
     } catch (err) {
       console.error('Failed to create room:', err);
-      alert(`Failed to create room: ${  err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // Stay on same stage so user can retry
     } finally {
       setIsCreating(false);

@@ -30,25 +30,27 @@ export interface GenerationParams {
 }
 // import { SeedControl } from '../world-gen-debug/SeedControl';
 function SeedControl({ seed, onSeedChange, label }: any) {
-  return <div className="flex flex-col space-y-2">
-    <Label>{label}</Label>
-    <div className="flex space-x-2">
-      <input
-        type="text"
-        value={seed}
-        onChange={(e) => onSeedChange(e.target.value)}
-        className="flex-1 bg-black/20 border border-accent/20 rounded px-3 py-1 text-sm"
-      />
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onSeedChange(Math.random().toString(36).substring(7))}
-        title="Randomize"
-      >
-        🎲
-      </Button>
+  return (
+    <div className="flex flex-col space-y-2">
+      <Label>{label}</Label>
+      <div className="flex space-x-2">
+        <input
+          type="text"
+          value={seed}
+          onChange={(e) => onSeedChange(e.target.value)}
+          className="flex-1 bg-black/20 border border-accent/20 rounded px-3 py-1 text-sm"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onSeedChange(Math.random().toString(36).substring(7))}
+          title="Randomize"
+        >
+          🎲
+        </Button>
+      </div>
     </div>
-  </div>
+  );
 }
 
 interface WorldGenParametersPanelProps {

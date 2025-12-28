@@ -12,7 +12,7 @@ export class ChunkManager {
     this.pending = new Map();
     this.cache = new Map();
 
-    const workerPath = path.join(__dirname, 'chunk-worker-loader.js');
+    const workerPath = path.resolve(process.cwd(), 'src/api/voxel-engine/services/chunk-worker-loader.js');
     this.worker = new Worker(workerPath);
 
     this.worker.on('message', (msg: any) => {

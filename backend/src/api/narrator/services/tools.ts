@@ -16,7 +16,7 @@ const inspectSchema = z.object({
 
 export const createGameTools = (strapi, roomId) => {
   return [
-    // @ts-ignore
+    // @ts-expect-error - Langchain tool typing mismatch
     new DynamicStructuredTool({
       name: 'move_entity',
       description: 'Moves an entity (player/npc) to a new coordinate. Returns success or failure.',
@@ -44,7 +44,7 @@ export const createGameTools = (strapi, roomId) => {
         }
       },
     }),
-    // @ts-ignore
+    // @ts-expect-error - Langchain tool typing mismatch
     new DynamicStructuredTool({
       name: 'inspect_map',
       description: 'Inspects the terrain at a specific location.',

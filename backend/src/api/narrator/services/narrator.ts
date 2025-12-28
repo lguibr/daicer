@@ -3,16 +3,36 @@
  */
 
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { SystemMessage, HumanMessage } from '@langchain/core/messages';
+import { SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage } from '@langchain/core/messages';
 import { createGameTools } from './tools';
-
 import { streamManager } from '../../../utils/llm/stream-manager';
 
-export default ({ strapi }) => ({
-  async processAction({ roomId, input, mode, userId }) {
+interface NarratorInput {
+  roomId: string; // DocumentID
+  input: string;
+  mode?: 'debug' | 'game';
+  userId?: string; // DocumentID
+}
+
+interface Strapi {
+  documents: (uid: string) => {
+    findOne: (params: unknown) => Promise<any>;
+    findMany: (params: unknown) => Promise<any[]>;
+    create: (params: unknown) => Promise<any>;
+    update: (params: unknown) => Promise<any>;
+  };
+  log: {
+    info: (msg: string) => void;
+    warn: (msg: string, ...args: any[]) => void;
+    error: (msg: string, ...args: any[]) => void;
+  };
+}
+
+export default ({ strapi }: { strapi: Strapi }) => ({
+  async processAction({ roomId, input, mode, userId }: NarratorInput) {
     // Determine user via userId if provided (passed from controller)
     let senderName = 'Player';
-    let userDocumentId = null;
+    // let userDocumentId = null;
 
     if (userId) {
       // Attempt to fetch user to get name
@@ -20,7 +40,7 @@ export default ({ strapi }) => ({
         const user = await strapi.documents('plugin::users-permissions.user').findOne({ documentId: userId });
         if (user) {
           senderName = user.username || 'Player';
-          userDocumentId = user.documentId;
+          // userDocumentId = user.documentId;
         }
       } catch (e) {
         console.warn('Failed to fetch user for narrator action', e);
@@ -62,7 +82,7 @@ export default ({ strapi }) => ({
 
     // 3. Setup Tools
     const tools = createGameTools(strapi, roomId);
-    // @ts-ignore
+    // Explicitly bind tools. Langchain's bindTools returns a Runnable.
     const llmWithTools = llm.bindTools(tools);
 
     // 4. Construct Context
@@ -76,29 +96,30 @@ export default ({ strapi }) => ({
          3. Narrate the outcome based on the tool result.
          4. Be immersive but concise.`;
 
-    const messages = [new SystemMessage(systemPrompt), new HumanMessage(input)];
+    const messages: BaseMessage[] = [new SystemMessage(systemPrompt), new HumanMessage(input)];
 
     // 5. Run Agent Loop
-    const response = await llmWithTools.invoke(messages);
+    const response = (await llmWithTools.invoke(messages)) as AIMessage;
 
     // 6. Handle Tool Calls
     let finalContent = response.content;
 
-    // @ts-ignore
     if (response.tool_calls && response.tool_calls.length > 0) {
-      // @ts-ignore
+      // Add the AI's response (with tool calls) to history
+      messages.push(response);
+
       for (const toolCall of response.tool_calls) {
         const tool = tools.find((t) => t.name === toolCall.name);
         if (tool) {
-          console.log(`[Narrator] Executing Tool: ${tool.name}`);
+          strapi.log.info(`[Narrator] Executing Tool: ${tool.name}`);
           const toolResult = await tool.invoke(toolCall.args);
 
-          // Append result and ask LLM for final response
-          // @ts-ignore
-          messages.push(response);
+          // Add tool result to history
           messages.push(
-            new HumanMessage({
-              content: `Tool ${tool.name} returned: ${toolResult}`,
+            new ToolMessage({
+              content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult),
+              tool_call_id: toolCall.id!,
+              name: toolCall.name,
             })
           );
         }

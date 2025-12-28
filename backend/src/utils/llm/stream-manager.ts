@@ -10,7 +10,7 @@ export interface StreamEvent {
   roomId: string;
   type: 'text' | 'tool_start' | 'tool_end' | 'reasoning' | 'error' | 'done';
   content?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -32,7 +32,7 @@ class StreamManager {
     this.io = io;
   }
 
-  public broadcast(roomId: string, event: string, payload: any) {
+  public broadcast(roomId: string, event: string, payload: unknown) {
     if (this.io) {
       this.io.to(roomId).emit(event, payload);
     }
@@ -76,7 +76,7 @@ class StreamManager {
     }
   }
 
-  public emitToolStart(streamId: string, toolName: string, input: any) {
+  public emitToolStart(streamId: string, toolName: string, input: unknown) {
     const stream = this.activeStreams.get(streamId);
     if (stream) {
       this.emitEvent({
@@ -89,7 +89,7 @@ class StreamManager {
     }
   }
 
-  public emitToolEnd(streamId: string, toolName: string, output: any) {
+  public emitToolEnd(streamId: string, toolName: string, output: unknown) {
     const stream = this.activeStreams.get(streamId);
     if (stream) {
       this.emitEvent({

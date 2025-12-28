@@ -44,7 +44,8 @@ export function useEquipmentLogic({ assetMode, formDataClass, initialGold = 0 }:
         const newInv = [...prev];
         newInv[existingIndex].quantity += delta;
         return newInv.filter((i) => i.quantity > 0);
-      } if (delta > 0) {
+      }
+      if (delta > 0) {
         return [...prev, { itemIndex, quantity: delta }];
       }
       return prev;

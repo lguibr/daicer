@@ -259,7 +259,7 @@ export function MapRenderer({
     startPosRef.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = (_e: React.MouseEvent) => {
     isDownRef.current = false;
     // Don't need to do anything else, handleClick uses isPanningRef
   };
@@ -271,9 +271,7 @@ export function MapRenderer({
 
       // Check threshold if not yet panning
       if (!isPanningRef.current) {
-        const dist = Math.sqrt(
-          (e.clientX - startPosRef.current.x)**2 + (e.clientY - startPosRef.current.y)**2
-        );
+        const dist = Math.sqrt((e.clientX - startPosRef.current.x) ** 2 + (e.clientY - startPosRef.current.y) ** 2);
         if (dist > 5) {
           isPanningRef.current = true;
         }
@@ -333,7 +331,7 @@ export function MapRenderer({
       onMouseUp={handleMouseUp}
       onClick={handleClick}
       onMouseMove={handleMouseMove}
-      onMouseLeave={(e) => {
+      onMouseLeave={(_e) => {
         isDownRef.current = false;
         onTileHover?.(null);
       }}

@@ -1,72 +1,51 @@
 {
-    "kind": "collectionType",
-    "collectionName": "dm_settings",
-    "info": {
-        "singularName": "dm-setting",
-        "pluralName": "dm-settings",
-        "displayName": "DM Setting",
-        "description": "Configuration for the AI Dungeon Master"
+  "kind": "collectionType",
+  "collectionName": "dm_settings",
+  "info": {
+    "singularName": "dm-setting",
+    "pluralName": "dm-settings",
+    "displayName": "DM Setting",
+    "description": "Configuration for the AI Dungeon Master"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "room": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::room.room",
+      "inversedBy": "dmSetting"
     },
-    "options": {
-        "draftAndPublish": false
+    "worldSize": {
+      "type": "enumeration",
+      "enum": ["intimate", "small", "medium", "large", "vast", "epic"],
+      "default": "small"
     },
-    "pluginOptions": {},
-    "attributes": {
-        "room": {
-            "type": "relation",
-            "relation": "oneToOne",
-            "target": "api::room.room",
-            "inversedBy": "dmSetting"
-        },
-        "worldSize": {
-            "type": "enumeration",
-            "enum": [
-                "intimate",
-                "small",
-                "medium",
-                "large",
-                "vast",
-                "epic"
-            ],
-            "default": "small"
-        },
-        "adventureLength": {
-            "type": "enumeration",
-            "enum": [
-                "flash",
-                "short",
-                "medium",
-                "long",
-                "epic",
-                "legendary"
-            ],
-            "default": "short"
-        },
-        "difficulty": {
-            "type": "enumeration",
-            "enum": [
-                "storyteller",
-                "easy",
-                "medium",
-                "challenging",
-                "gritty",
-                "deadly"
-            ],
-            "default": "easy"
-        },
-        "style": {
-            "type": "component",
-            "repeatable": false,
-            "component": "game.dm-style"
-        },
-        "theme": {
-            "type": "string"
-        },
-        "setting": {
-            "type": "string"
-        },
-        "tone": {
-            "type": "string"
-        }
+    "adventureLength": {
+      "type": "enumeration",
+      "enum": ["flash", "short", "medium", "long", "epic", "legendary"],
+      "default": "short"
+    },
+    "difficulty": {
+      "type": "enumeration",
+      "enum": ["storyteller", "easy", "medium", "challenging", "gritty", "deadly"],
+      "default": "easy"
+    },
+    "style": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.dm-style"
+    },
+    "theme": {
+      "type": "string"
+    },
+    "setting": {
+      "type": "string"
+    },
+    "tone": {
+      "type": "string"
     }
+  }
 }

@@ -1,8 +1,9 @@
+import { Socket } from 'socket.io'; // Import Socket type
 import { StrapiWithServer, RoomJoinPayload } from '../types';
 
 export const handleRoomJoin =
   (strapi: StrapiWithServer) =>
-  async (socket: any, { roomId, userId }: RoomJoinPayload) => {
+  async (socket: Socket, { roomId, userId }: RoomJoinPayload) => {
     try {
       strapi.log.info(`Socket ${socket.id} joining room ${roomId} as user ${userId}`);
       socket.join(roomId);
@@ -44,17 +45,21 @@ export const handleRoomJoin =
         type: msg.senderType === 'dm' ? 'narration' : 'chat',
       }));
 
+      // Safe access for dynamic properties
+      const settings = room.settings as Record<string, unknown> | null;
+      const creatures = (room as unknown as Record<string, unknown>).creatures || []; // Pending schema update for creatures relation
+
       const gameState = {
         room: {
           id: room.documentId,
           roomId: room.roomId,
-          name: (room.settings as any)?.name || 'Adventure',
+          name: settings?.name || 'Adventure',
           phase: room.phase,
           worldDescription: room.worldDescription,
         },
         players: room.players,
         messages: mappedMessages,
-        creatures: (room as any).creatures || [],
+        creatures,
         isProcessing: false,
       };
 

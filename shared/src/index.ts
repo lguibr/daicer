@@ -1,2 +1,3 @@
-export * from './schemas/index';
-export * from './schemas';
+export * from './schemas/actor';
+export * from './schemas/common';
+export * from './schemas/events';

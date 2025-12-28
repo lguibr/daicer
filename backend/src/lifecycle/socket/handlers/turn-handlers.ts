@@ -1,9 +1,11 @@
 import { streamManager } from '../../../utils/llm/stream-manager';
 import { StrapiWithServer, TurnProcessPayload, PlayerActionPayload } from '../types';
 
+import { Socket } from 'socket.io';
+
 export const handleTurnProcess =
   (strapi: StrapiWithServer) =>
-  async (socket: any, { roomId, language }: TurnProcessPayload) => {
+  async (socket: Socket, { roomId, language }: TurnProcessPayload) => {
     strapi.log.info(`[Socket] Processing turn for room ${roomId}`);
     try {
       streamManager.broadcast(roomId, 'turn:processing', { roomId });
@@ -34,6 +36,9 @@ export const handleTurnProcess =
         timestamp: msg.timestamp,
       }));
 
+      // Safe access until schema is strict
+      const worldConditions = (room as unknown as Record<string, unknown>).worldConditions || [];
+
       await strapi
         .service('api::game.game')
         .processTurn(
@@ -44,7 +49,7 @@ export const handleTurnProcess =
           [],
           language || 'en',
           room.settings,
-          (room as any).worldConditions
+          worldConditions
         );
 
       streamManager.broadcast(roomId, 'turn:complete', { roomId });
@@ -57,6 +62,6 @@ export const handleTurnProcess =
 
 export const handlePlayerAction =
   (strapi: StrapiWithServer) =>
-  async (socket: any, { roomId, action }: PlayerActionPayload) => {
+  async (socket: Socket, { roomId, action }: PlayerActionPayload) => {
     strapi.log.info(`[Socket] Player action in room ${roomId}: ${action}`);
   };

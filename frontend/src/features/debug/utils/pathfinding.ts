@@ -1,4 +1,4 @@
-import { Coordinates, Chunk, ZLevel } from './types';
+import { Coordinates, ZLevel } from './types';
 
 interface TileNode {
   x: number;
@@ -31,7 +31,7 @@ export const findPath = (
   const openList: TileNode[] = [];
   const closedList: Set<string> = new Set();
 
-  const heuristic = (a: Coordinates, b: Coordinates) => Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2);
+  const heuristic = (a: Coordinates, b: Coordinates) => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 
   const startNode: TileNode = {
     ...start,
@@ -128,5 +128,6 @@ export const findPath = (
 
 export const calculatePathLength = (path: PathStep[]): number => {
   if (path.length <= 1) return 0;
-  return path[path.length - 1].cost;
+  const lastStep = path[path.length - 1];
+  return lastStep ? lastStep.cost : 0;
 };

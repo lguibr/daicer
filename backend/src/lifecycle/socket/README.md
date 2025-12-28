@@ -72,14 +72,12 @@ interface StreamEvent {
 Event logic is separated into specific handlers:
 
 - **`handlers/room-join.ts`**:
-
   - Fetches the room by `roomId`, `code`, or `documentId`.
   - Populates deep relations (players, characters, messages).
   - Formats legacy messages into a unified `narration` vs `chat` structure.
   - Emits the initial `gameState`.
 
 - **`handlers/turn-handlers.ts`**:
-
   - Calls `strapi.service('api::game.game').processTurn(...)` (See **[Game API](../../api/game/README.md)**).
   - Manages the `turn:processing` and `turn:complete` lifecycle broadcasts.
 

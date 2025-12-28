@@ -31,7 +31,6 @@ flowchart LR
 The generation process for a single chunk (`16x16` or configured size) follows a strict deterministic pipeline:
 
 1.  **Coordinate Mapping**:
-
     - Global coordinates (`worldX`, `worldY`) are derived from Chunk coordinates.
     - **Z-Levels**: The engine supports a 7-layer vertical slice:
       - `Z= 3` to ` 1`: Sky (Floating islands, tall structures)
@@ -39,13 +38,11 @@ The generation process for a single chunk (`16x16` or configured size) follows a
       - `Z=-1` to `-3`: Underground (Dungeons, caves)
 
 2.  **Terrain Pass (Noise)**:
-
     - Uses **FastNoise** with Fractional Brownian Motion (FBM).
     - **Elevation**: Determines height map and water levels.
     - **Moisture**: Combined with Elevation to determine **Biome**.
 
 3.  **Biome Resolution**:
-
     - `OCEAN` / `BEACH`: Based on sea level threshold.
     - `SNOWY_PEAKS` / `MOUNTAIN`: High elevation.
     - `DESERT` / `FOREST` / `PLAINS`: Derived from Moisture/Heat map.

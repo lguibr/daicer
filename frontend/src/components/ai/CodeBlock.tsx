@@ -36,7 +36,6 @@ function CodeBlockCopyButtonComponent({ code, onCopy, onError, timeout = 2000, c
         setCopied(false);
       }, timeout);
     } catch (error) {
-       
       console.error('Failed to copy code:', error);
       onError?.(error as Error);
     }

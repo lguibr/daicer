@@ -1,12 +1,20 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
-import type { Chunk, WorldConfig, Coordinates } from '../features/debug/utils/types';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useApolloClient } from '@apollo/client/react';
+import { gql } from '@apollo/client';
+import type { Chunk, WorldConfig } from '../features/debug/utils/types';
 
 interface UseChunkLoaderProps {
   config: WorldConfig;
-  endpoint?: string;
 }
 
-export function useChunkLoader({ config, endpoint = 'http://localhost:1337/graphql' }: UseChunkLoaderProps) {
+const VOXEL_PREVIEW_QUERY = gql`
+  query VoxelPreview($chunks: [ChunkRequestInput]!, $config: WorldConfigInput!) {
+    voxelPreview(chunks: $chunks, config: $config)
+  }
+`;
+
+export function useChunkLoader({ config }: UseChunkLoaderProps) {
+  const client = useApolloClient();
   const [chunkCache, setChunkCache] = useState<Record<string, Chunk>>({});
   const [loadingChunks, setLoadingChunks] = useState<Set<string>>(new Set());
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -53,35 +61,16 @@ export function useChunkLoader({ config, endpoint = 'http://localhost:1337/graph
     }
 
     try {
-      // Use logic similar to existing components but standardized
-      const query = `
-        query VoxelPreview($chunks: [ChunkRequestInput]!, $config: WorldConfigInput!) {
-          voxelPreview(chunks: $chunks, config: $config)
-        }
-      `;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('jwt') || ''}`,
+      const { data } = await client.query({
+        query: VOXEL_PREVIEW_QUERY,
+        variables: {
+          chunks: chunksToFetch,
+          config,
         },
-        body: JSON.stringify({
-          query,
-          variables: {
-            chunks: chunksToFetch,
-            config,
-          },
-        }),
+        fetchPolicy: 'network-only',
       });
 
-      const json = await response.json();
-
-      if (json.errors) {
-        throw new Error(json.errors[0].message);
-      }
-
-      const results = json.data?.voxelPreview;
+      const results = data?.voxelPreview;
 
       if (Array.isArray(results)) {
         setChunkCache((prev) => {
@@ -131,7 +120,7 @@ export function useChunkLoader({ config, endpoint = 'http://localhost:1337/graph
       }
       batchTimeout.current = setTimeout(processBatch, 50);
     },
-    [getChunkId, endpoint, config]
+    [getChunkId, config]
   ); // config is dependency because processBatch uses it, and processBatch is recreated or closure...
   // Wait, processBatch is defined inside render, so it closes over config.
   // We need to use ref for processBatch or useCallback with config dependency.

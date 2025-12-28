@@ -29,7 +29,7 @@ export default ({ strapi }) => ({
       if (!roomId) return ctx.badRequest('Room ID required');
 
       // Robust Room Lookup
-      const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
+      const filters: { [key: string]: any }[] = [{ documentId: roomId }, { roomId: roomId }];
       if (!isNaN(Number(roomId))) {
         filters.push({ id: Number(roomId) });
       }
@@ -41,7 +41,7 @@ export default ({ strapi }) => ({
       });
 
       if (!rooms || rooms.length === 0) return ctx.notFound('Room not found');
-      const room = rooms[0] as any;
+      const room: { [key: string]: any } = rooms[0];
 
       // We need "players", "messages", "creatures" to process turn
       // Currently Room schema has "players" as JSON.

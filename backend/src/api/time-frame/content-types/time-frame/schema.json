@@ -1,40 +1,40 @@
 {
-    "kind": "collectionType",
-    "collectionName": "time_frames",
-    "info": {
-        "singularName": "time-frame",
-        "pluralName": "time-frames",
-        "displayName": "Time Frame",
-        "description": "Snapshot of game state at a specific point in time"
+  "kind": "collectionType",
+  "collectionName": "time_frames",
+  "info": {
+    "singularName": "time-frame",
+    "pluralName": "time-frames",
+    "displayName": "Time Frame",
+    "description": "Snapshot of game state at a specific point in time"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "turnNumber": {
+      "type": "integer",
+      "required": true
     },
-    "options": {
-        "draftAndPublish": false
+    "timestamp": {
+      "type": "datetime",
+      "required": true
     },
-    "pluginOptions": {},
-    "attributes": {
-        "turnNumber": {
-            "type": "integer",
-            "required": true
-        },
-        "timestamp": {
-            "type": "datetime",
-            "required": true
-        },
-        "room": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "api::room.room",
-            "inversedBy": "timeFrames"
-        },
-        "gameState": {
-            "type": "json",
-            "required": true
-        },
-        "events": {
-            "type": "relation",
-            "relation": "manyToMany",
-            "target": "api::game-event.game-event",
-            "mappedBy": "timeFrames"
-        }
+    "room": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::room.room",
+      "inversedBy": "timeFrames"
+    },
+    "gameState": {
+      "type": "json",
+      "required": true
+    },
+    "events": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::game-event.game-event",
+      "mappedBy": "timeFrames"
     }
+  }
 }

@@ -3,7 +3,6 @@
  * @description Spell data service for frontend
  */
 
- 
 import spellsData from '../data/spells.json';
 import type { SpellData } from '../types/spells';
 

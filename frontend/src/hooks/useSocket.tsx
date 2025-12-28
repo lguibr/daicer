@@ -60,7 +60,6 @@ export default function useSocket(roomId?: string, userId?: string) {
                 (socket && timeSinceLastJoin > REJOIN_DEBOUNCE_MS) || (socket && userChanged && userId);
 
               if (shouldJoin) {
-                 
                 socket.emit('room:join', { roomId, userId });
                 lastJoinTimestampRef.current = now;
                 lastJoinUserIdRef.current = userId;

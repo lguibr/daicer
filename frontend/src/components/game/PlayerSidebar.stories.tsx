@@ -67,7 +67,7 @@ export const MultiplePlayersNoActions: Story = {
     players: [
       createPlayer({
         id: 'p1',
-         
+
         character: {
           ...createPlayer({}).character,
           name: 'Elara',
@@ -83,7 +83,7 @@ export const MultiplePlayersNoActions: Story = {
       }),
       createPlayer({
         id: 'p3',
-         
+
         character: {
           ...createPlayer({}).character,
           name: 'Luna',
@@ -143,7 +143,7 @@ export const FullPartyWithEnemies: Story = {
     players: [
       createPlayer({
         id: 'p1',
-         
+
         character: {
           ...createPlayer({}).character,
           name: 'Elara',
@@ -157,7 +157,7 @@ export const FullPartyWithEnemies: Story = {
       }),
       createPlayer({
         id: 'p2',
-         
+
         character: {
           ...createPlayer({}).character,
           name: 'Thrain',
@@ -171,7 +171,7 @@ export const FullPartyWithEnemies: Story = {
       }),
       createPlayer({
         id: 'p3',
-         
+
         character: {
           ...createPlayer({}).character,
           name: 'Luna',

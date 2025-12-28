@@ -15,7 +15,6 @@ The `Room` entity is the parent object for all gameplay interactions.
 ## Key Entities
 
 - **Room (`schema.json`)**:
-
   - `phase`: Current state of the game (lobby, combat, etc).
   - `turnData`: Ephemeral state for the current pending turn (actions queue).
   - `history`: Log of past turns and narratives.

@@ -10,3 +10,4 @@ export * from './engine/action-dispatcher';
 export * from './utils/movement';
 export { CharacterDeriver } from './derivation';
 export type { DerivationContext, Equipment } from './derivation';
+export * from './constants/physics';

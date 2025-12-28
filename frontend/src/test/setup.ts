@@ -18,6 +18,12 @@ if (!Element.prototype.hasPointerCapture) {
   Element.prototype.releasePointerCapture = vi.fn();
 }
 
+// Mock useLayoutEffect to avoid "useLayoutEffect does nothing on the server" warnings or null pointer in Radix
+// Radix UI sometimes fails in JSDOM if useLayoutEffect is not consistent
+if (typeof window !== 'undefined') {
+  React.useLayoutEffect = React.useEffect;
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

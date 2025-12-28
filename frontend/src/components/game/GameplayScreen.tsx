@@ -12,7 +12,7 @@ import { processTurn, submitAction } from '../../services/api';
 
 import useAuth from '../../hooks/useAuth';
 import { useI18n } from '../../i18n';
- 
+
 // import { auth } from '../../services/firebase';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
 

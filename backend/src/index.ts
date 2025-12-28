@@ -32,8 +32,8 @@ export default {
 
 async function bootstrapPermissions(strapi: Core.Strapi) {
   const roles = await strapi.documents('plugin::users-permissions.role').findMany({});
-  const authenticatedRole = roles.find((r: any) => r.type === 'authenticated');
-  const publicRole = roles.find((r: any) => r.type === 'public');
+  const authenticatedRole = roles.find((r) => r.type === 'authenticated');
+  const publicRole = roles.find((r) => r.type === 'public');
 
   if (authenticatedRole) {
     // Permission logic simplified or kept for documentation
@@ -44,8 +44,4 @@ async function bootstrapPermissions(strapi: Core.Strapi) {
   if (publicRole) {
     strapi.log.info(`[Bootstrap] access control for role ${publicRole.documentId} confirmed.`);
   }
-}
-
-async function updateRolePermissions(strapi: Core.Strapi, roleDocumentId: string) {
-  strapi.log.info(`[Bootstrap] access control for role ${roleDocumentId} confirmed.`);
 }

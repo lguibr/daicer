@@ -24,14 +24,7 @@
     },
     "phase": {
       "type": "enumeration",
-      "enum": [
-        "lobby",
-        "character_creation",
-        "world_generation",
-        "gameplay",
-        "combat",
-        "ending"
-      ],
+      "enum": ["lobby", "character_creation", "world_generation", "gameplay", "combat", "ending"],
       "default": "lobby"
     },
     "worldDescription": {
@@ -85,38 +78,17 @@
     },
     "worldSize": {
       "type": "enumeration",
-      "enum": [
-        "intimate",
-        "small",
-        "medium",
-        "large",
-        "vast",
-        "epic"
-      ],
+      "enum": ["intimate", "small", "medium", "large", "vast", "epic"],
       "default": "small"
     },
     "adventureLength": {
       "type": "enumeration",
-      "enum": [
-        "flash",
-        "short",
-        "medium",
-        "long",
-        "epic",
-        "legendary"
-      ],
+      "enum": ["flash", "short", "medium", "long", "epic", "legendary"],
       "default": "short"
     },
     "difficulty": {
       "type": "enumeration",
-      "enum": [
-        "storyteller",
-        "easy",
-        "medium",
-        "challenging",
-        "gritty",
-        "deadly"
-      ],
+      "enum": ["storyteller", "easy", "medium", "challenging", "gritty", "deadly"],
       "default": "easy"
     },
     "startingLevel": {

@@ -93,7 +93,6 @@ export function GodModeChat({
                           <MessageAvatar
                             name={isUser ? 'Creator' : 'System'}
                             src={!isUser ? '/logo.png' : undefined}
-                            fallback={isUser ? 'GM' : 'AI'}
                             className={isUser ? 'border-aurora-500/50' : 'border-midnight-500'}
                           />
                           <MessageSender isDM={!isUser}>{isUser ? 'Creator' : 'System'}</MessageSender>

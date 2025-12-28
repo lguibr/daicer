@@ -186,7 +186,7 @@ export function joinRoom(roomId: string, userId?: string): void {
   if (!socket || !socket.connected) {
     return;
   }
-   
+
   socket.emit('room:join', { roomId, userId });
 }
 
