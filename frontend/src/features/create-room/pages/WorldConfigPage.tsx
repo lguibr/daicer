@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { WorldConfigForm } from '@/features/debug/components/WorldConfigForm';
 import type { WorldConfig } from '@/features/debug/utils/types';
 import { createRoom } from '@/services/api';
@@ -10,6 +10,7 @@ import { WorldPreview } from '../components/WorldPreview';
 export default function WorldConfigPage() {
   const { settings, setSettings } = useWizard();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const config: WorldConfig = {
@@ -41,14 +42,22 @@ export default function WorldConfigPage() {
         structures: [],
       });
 
-      // Navigate to Play Route
-      navigate(`/play/${room.documentId || room.id}`, {
-        state: {
-          initialSeed: settings.seed,
-          initialStructures: [],
-          initialSettings: settings,
-        },
-      });
+      // Check for debug target
+      const searchParams = new URLSearchParams(location.search);
+      const isDebug = searchParams.get('target') === 'debug';
+
+      if (isDebug) {
+        navigate(`/debug/${room.documentId || room.id}`);
+      } else {
+        // Proceed to Character Selection
+        navigate(`/create/character-selection/${room.documentId || room.id}`, {
+          state: {
+            initialSeed: settings.seed,
+            initialStructures: [],
+            initialSettings: settings,
+          },
+        });
+      }
     } catch (err) {
       console.error(err);
       alert(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);

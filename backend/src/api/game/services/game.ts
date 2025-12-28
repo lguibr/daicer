@@ -119,7 +119,7 @@ export default ({ strapi }) => ({
 
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: { $or: filters },
-      populate: ['players', 'players.character', 'players.character.baseStats'],
+      populate: ['players', 'players.character', 'players.character.baseStats', 'world', 'dmSettings'],
     });
 
     if (!rooms || rooms.length === 0) {
@@ -127,19 +127,21 @@ export default ({ strapi }) => ({
       throw new Error('Room not found');
     }
     const room = rooms[0] as unknown as {
-      worldDescription: string;
+      world: any;
+      dmSettings: any;
       players: Player[];
-      settings: WorldSettings;
       documentId: string;
       roomId: string;
     };
 
+    const settings = { ...room.world, ...room.dmSettings };
+
     // 1. Generate Main Opening
     const mainOpening = await this.generateMainOpening(
-      room.worldDescription,
+      room.world?.description || 'A mysterious world...',
       room.players || [],
       language,
-      room.settings
+      settings
     );
 
     // 2. Create Character Sheets & Update Players

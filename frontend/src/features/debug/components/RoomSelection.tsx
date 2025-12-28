@@ -73,16 +73,16 @@ export function RoomSelection({ onSelect, onCreate }: RoomSelectionProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Setting Tags */}
-              {room.dmSetting && (
+              {room.dmSettings && (
                 <div className="flex flex-wrap gap-2">
-                  {room.dmSetting.theme && (
+                  {room.dmSettings.theme && (
                     <span className="text-[10px] uppercase tracking-wider bg-midnight-950 px-2 py-0.5 rounded text-aurora-400 border border-aurora-900/30">
-                      {room.dmSetting.theme}
+                      {room.dmSettings.theme}
                     </span>
                   )}
-                  {room.dmSetting.difficulty && (
+                  {room.dmSettings.difficulty && (
                     <span className="text-[10px] uppercase tracking-wider bg-red-950/30 px-2 py-0.5 rounded text-red-400 border border-red-900/30">
-                      {room.dmSetting.difficulty}
+                      {room.dmSettings.difficulty}
                     </span>
                   )}
                 </div>

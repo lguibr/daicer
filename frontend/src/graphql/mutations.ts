@@ -1,35 +1,52 @@
 import { gql } from '@apollo/client';
 
 export const CREATE_ROOM_MUTATION = gql`
-  mutation CreateRoom($data: RoomInput!) {
+  mutation CreateRoom($data: JSON!) {
     createRoom(data: $data) {
       documentId
       roomId
       code
-      worldSize
-      adventureLength
-      difficulty
-      startingLevel
-      playerCount
-      theme
-      setting
-      tone
-      dmStyle {
-        verbosity
+      world {
+        name
+        description
+        seed
+        language
+        chunkSize
         detail
-        engagement
-        narrative
-        specialMode
-        customDirectives
+        fogRadius
+        globalScale
+        seaLevel
+        elevationScale
+        roughness
+        moistureScale
+        temperatureOffset
+        roadDensity
+        structureChance
+        structureSpacing
+        structureSizeAvg
+        worldSize
+        worldType
+        worldBackground
       }
-    }
-  }
-`;
-
-export const CREATE_DM_SETTING_MUTATION = gql`
-  mutation CreateDMSetting($data: DmSettingInput!) {
-    createDmSetting(data: $data) {
-      documentId
+      dmSettings {
+        adventureLength
+        difficulty
+        theme
+        setting
+        tone
+        playerCount
+        startingLevel
+        attributePointBudget
+        dmSystemPrompt
+        dmStyle {
+          verbosity
+          detail
+          engagement
+          narrative
+          specialMode
+          customDirectives
+        }
+      }
     }
   }
 `;
@@ -74,33 +91,55 @@ export const JOIN_ROOM_MUTATION = gql`
         }
       }
       phase
-      settings
-      worldSize
-      adventureLength
-      difficulty
-      startingLevel
-      theme
-      setting
-      tone
-      dmStyle {
-        verbosity
+      world {
+        name
+        description
+        seed
+        language
+        chunkSize
         detail
-        engagement
-        narrative
-        specialMode
-        customDirectives
+        fogRadius
+        globalScale
+        seaLevel
+        elevationScale
+        roughness
+        moistureScale
+        temperatureOffset
+        roadDensity
+        structureChance
+        structureSpacing
+        structureSizeAvg
+        worldSize
+        worldType
+        worldBackground
       }
-      worldDescription
-      history
+      dmSettings {
+        adventureLength
+        difficulty
+        theme
+        setting
+        tone
+        playerCount
+        startingLevel
+        attributePointBudget
+        dmSystemPrompt
+        dmStyle {
+          verbosity
+          detail
+          engagement
+          narrative
+          specialMode
+          customDirectives
+        }
+      }
     }
   }
 `;
 
-export const UPDATE_ROOM_SETTINGS_MUTATION = gql`
+export const UPDATE_ROOM_MUTATION = gql`
   mutation UpdateRoom($documentId: ID!, $data: RoomInput!) {
     updateRoom(documentId: $documentId, data: $data) {
       documentId
-      settings
     }
   }
 `;

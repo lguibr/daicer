@@ -19,7 +19,7 @@ import type { AvatarGenerationPayload, AvatarPreviewImage, AvatarPreviewResponse
 import {
   CREATE_ROOM_MUTATION,
   JOIN_ROOM_MUTATION,
-  UPDATE_ROOM_SETTINGS_MUTATION,
+  UPDATE_ROOM_MUTATION,
   GENERATE_WORLD_MUTATION,
   ADD_CHARACTER_MUTATION,
   START_GAME_MUTATION,
@@ -142,7 +142,7 @@ export async function updateRoomSettings(roomId: string, settings: WorldSettings
   if (!room || !room.documentId) throw new Error('Room not found');
 
   const { data } = await apolloClient.mutate<UpdateRoomMutation>({
-    mutation: UPDATE_ROOM_SETTINGS_MUTATION,
+    mutation: UPDATE_ROOM_MUTATION,
     variables: {
       documentId: room.documentId,
       data: { settings },

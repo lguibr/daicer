@@ -22,6 +22,7 @@ export const handleRoomJoin =
           'players.character.race',
           'players.character.class',
           'messages',
+          'world', // Populate World Relation
         ],
       });
 
@@ -46,16 +47,16 @@ export const handleRoomJoin =
       }));
 
       // Safe access for dynamic properties
-      const settings = room.settings as Record<string, unknown> | null;
+      const world = room.world as Record<string, unknown> | null;
       const creatures = (room as unknown as Record<string, unknown>).creatures || []; // Pending schema update for creatures relation
 
       const gameState = {
         room: {
           id: room.documentId,
           roomId: room.roomId,
-          name: settings?.name || 'Adventure',
+          name: world?.name || 'Adventure',
           phase: room.phase,
-          worldDescription: room.worldDescription,
+          worldDescription: world?.description || '',
         },
         players: room.players,
         messages: mappedMessages,

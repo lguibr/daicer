@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { useI18n } from '@/i18n';
 import DiscreteSlider, { type SliderMark } from '@/components/forms/DiscreteSlider';
@@ -29,6 +29,7 @@ export default function DmSettingsPage() {
   const { settings, updateSetting, updateDMStyle } = useWizard();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Marks Memoization
   const verbosityMarks = useMemo<SliderMark[]>(
@@ -276,7 +277,7 @@ export default function DmSettingsPage() {
 
       <div className="flex justify-end pt-4">
         <button
-          onClick={() => navigate('/create/world-generation')}
+          onClick={() => navigate({ pathname: '/create/world-generation', search: location.search })}
           disabled={!isValid}
           className="btn-primary min-w-[170px]"
         >

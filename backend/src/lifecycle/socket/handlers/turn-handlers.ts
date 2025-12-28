@@ -21,6 +21,7 @@ export const handleTurnProcess =
           'players.character.race',
           'players.character.class',
           'messages',
+          'world',
         ],
       });
 
@@ -29,6 +30,7 @@ export const handleTurnProcess =
         return;
       }
       const room = rooms[0];
+      const world = room.world as Record<string, unknown> | null;
 
       const messages = (room.messages || []).map((msg) => ({
         sender: msg.senderName,
@@ -43,12 +45,12 @@ export const handleTurnProcess =
         .service('api::game.game')
         .processTurn(
           roomId,
-          room.worldDescription,
+          (world?.description as string) || '',
           messages,
           room.players || [],
           [],
           language || 'en',
-          room.settings,
+          world,
           worldConditions
         );
 

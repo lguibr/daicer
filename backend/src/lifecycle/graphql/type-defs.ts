@@ -69,6 +69,7 @@ export const typeDefs = `
   extend type Mutation {
     generateWorld(roomId: ID!, language: String): JSON
     processTurn(roomId: ID!, messages: JSON, language: String): JSON
+    createRoom(data: JSON): Room
     joinRoom(code: String!): Room
     addCharacter(roomId: ID!, character: JSON): JSON
     startGame(roomId: ID!, language: String, streamId: String): JSON

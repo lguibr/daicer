@@ -1,9 +1,8 @@
-import { WorldGenerator } from './world-generator-logic';
-import { WorldConfig } from '@daicer/engine';
+import { Chunk, WorldConfig } from '@daicer/engine';
+import { ChunkManager } from './chunk-manager';
 
 export default ({ strapi }) => ({
-  async getChunk(x: number, y: number, config: WorldConfig) {
-    const generator = new WorldGenerator(config);
-    return generator.getChunk(x, y);
+  async getChunk(x: number, y: number, config: WorldConfig): Promise<Chunk> {
+    return ChunkManager.getInstance().getChunk(x, y, config);
   },
 });

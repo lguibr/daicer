@@ -13,11 +13,10 @@ import {
 import { Button } from '../components/ui/button';
 
 import { RoomSelection } from '../features/debug/components/RoomSelection';
-// Replaced DMSetup with CampaignWizard
-import { CampaignWizard } from '../features/create-room/components/CampaignWizard';
-import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
 import { GameDebugView } from '../features/debug/components/GameDebugView';
-import { createRoom } from '../services/api'; // Use API service
+import { WorldConfigForm } from '../features/debug/components/WorldConfigForm';
+import { createRoom } from '../services/api';
+import type { WorldConfig } from '../features/debug/utils/types';
 
 type Stage = 'selection' | 'dm-setup' | 'world' | 'debug';
 
@@ -27,7 +26,7 @@ export default function DebugPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   // World Config State for the 'world' stage
-  const [worldConfig, setWorldConfig] = useState<any>({
+  const [worldConfig, setWorldConfig] = useState<WorldConfig>({
     seed: `new-campaign-${Math.random().toString(36).substring(7)}`,
     chunkSize: 32,
     globalScale: 0.01,
@@ -130,20 +129,13 @@ export default function DebugPage() {
 
         {stage === 'selection' && (
           <div className="h-full overflow-y-auto p-6">
-            <RoomSelection onSelect={handleRoomSelect} onCreate={() => setStage('dm-setup')} />
-          </div>
-        )}
-
-        {stage === 'dm-setup' && (
-          <div className="h-full overflow-y-auto bg-midnight-950 p-6">
-            <div className="max-w-6xl mx-auto">
-              <CampaignWizard
-                onSubmit={handleDetailedWizardSubmit}
-                onCancel={() => setStage('selection')}
-                isSubmitting={isCreating}
-                submitLabel="Create & Proceed to World"
-              />
-            </div>
+            <RoomSelection
+              onSelect={handleRoomSelect}
+              onCreate={() => {
+                // Redirect to unified wizard with debug target
+                window.location.href = '/create?target=debug';
+              }}
+            />
           </div>
         )}
 

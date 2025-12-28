@@ -42,25 +42,50 @@ export const GET_ROOM_QUERY = gql`
           }
         }
       }
-      settings
-      worldSize
-      adventureLength
-      difficulty
-      startingLevel
-      playerCount
-      theme
-      setting
-      tone
-      dmStyle {
-        verbosity
+      world {
+        documentId
+        name
+        description
+        history
+        worldBackground
+        seed
+        language
+        chunkSize
         detail
-        engagement
-        narrative
-        specialMode
-        customDirectives
+        fogRadius
+        globalScale
+        seaLevel
+        elevationScale
+        roughness
+        moistureScale
+        temperatureOffset
+        roadDensity
+        structureChance
+        structureSpacing
+        structureSizeAvg
+        worldSize
+        worldType
       }
-      worldDescription
-      history # Keeping for legacy support
+      dmSettings {
+        documentId
+        adventureLength
+        difficulty
+        theme
+        setting
+        tone
+        playerCount
+        startingLevel
+        attributePointBudget
+        dmSystemPrompt
+        dmStyle {
+          verbosity
+          detail
+          engagement
+          narrative
+          specialMode
+          customDirectives
+        }
+      }
       messages(sort: "timestamp:asc", pagination: { limit: 100 }) {
         documentId
         content
@@ -98,7 +123,7 @@ export const LIST_ROOMS_QUERY = gql`
       code
       createdAt
       phase
-      dmSetting {
+      dmSettings {
         theme
         setting
         difficulty

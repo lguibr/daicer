@@ -64,10 +64,33 @@ export function MapRenderer({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    if (!ctx) return;
+    console.log(
+      'MapRenderer Debug: Rendering started. Size:',
+      width,
+      'x',
+      height,
+      'center:',
+      center,
+      'viewZ:',
+      viewZ,
+      'scale:',
+      scale
+    );
 
     // Clear
     ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, width, height);
+
+    // DEBUG: Draw giant red cross to verify canvas is viewing
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(width, height);
+    ctx.moveTo(width, 0);
+    ctx.lineTo(0, height);
+    ctx.stroke();
 
     const TILE_SIZE = 32 * scale;
     const VIEW_W = Math.ceil(width / TILE_SIZE);
@@ -98,6 +121,13 @@ export function MapRenderer({
         const chunkX = Math.floor(wx / 32);
         const chunkY = Math.floor(wy / 32);
         const chunk = chunkProvider.getChunk(chunkX, chunkY);
+        // Debug: Log first chunk found to verify structure
+        if (chunk && wx === center.x && wy === center.y) {
+          console.log('MapRenderer Debug: Center Chunk:', chunk);
+          console.log('MapRenderer Debug: Chunk Tiles Z=3:', chunk.tiles[3]);
+        } else if (!chunk && wx === center.x && wy === center.y) {
+          console.log('MapRenderer Debug: MISSING Center Chunk at', chunkX, chunkY);
+        }
 
         const lx = ((wx % 32) + 32) % 32;
         const ly = ((wy % 32) + 32) % 32;
@@ -124,6 +154,10 @@ export function MapRenderer({
         if (tile.block.startsWith('floor')) color = '#57534e';
         if (tile.block.includes('door')) color = '#854d0e';
 
+        if (wx === 0 && wy === 0) {
+          console.log('MapRenderer Debug: Drawing tile 0,0', tile, 'color:', color);
+        }
+
         ctx.fillStyle = color;
         // Calculate screen position based on difference from float center
         // Center of screen corresponds to center.x, center.y
@@ -144,6 +178,10 @@ export function MapRenderer({
 
         const screenX = (wx - center.x) * TILE_SIZE + width / 2 - TILE_SIZE / 2;
         const screenY = (wy - center.y) * TILE_SIZE + height / 2 - TILE_SIZE / 2;
+
+        if (wx === 0 && wy === 0) {
+          console.log('MapRenderer Debug: Tile 0,0 coords:', { screenX, screenY, TILE_SIZE });
+        }
 
         ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
 
@@ -336,7 +374,7 @@ export function MapRenderer({
         onTileHover?.(null);
       }}
       onWheel={handleWheel}
-      className={`block touch-none ${isDownRef.current ? 'cursor-grabbing' : 'cursor-crosshair'}`}
+      className={`block touch-none bg-pink-500 ${isDownRef.current ? 'cursor-grabbing' : 'cursor-crosshair'}`}
     />
   );
 }

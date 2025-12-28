@@ -538,7 +538,7 @@ export interface ApiDamageTypeDamageType extends Struct.CollectionTypeSchema {
 export interface ApiDmSettingDmSetting extends Struct.CollectionTypeSchema {
   collectionName: 'dm_settings';
   info: {
-    description: 'Configuration for the AI Dungeon Master';
+    description: 'Narrative and Game Style settings for the DM AI';
     displayName: 'DM Setting';
     pluralName: 'dm-settings';
     singularName: 'dm-setting';
@@ -549,22 +549,24 @@ export interface ApiDmSettingDmSetting extends Struct.CollectionTypeSchema {
   attributes: {
     adventureLength: Schema.Attribute.Enumeration<['flash', 'short', 'medium', 'long', 'epic', 'legendary']> &
       Schema.Attribute.DefaultTo<'short'>;
+    attributePointBudget: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<27>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
       Schema.Attribute.DefaultTo<'easy'>;
+    dmStyle: Schema.Attribute.Component<'game.dm-style', false>;
+    dmSystemPrompt: Schema.Attribute.Text;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::dm-setting.dm-setting'> & Schema.Attribute.Private;
+    playerCount: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<4>;
     publishedAt: Schema.Attribute.DateTime;
     room: Schema.Attribute.Relation<'oneToOne', 'api::room.room'>;
     setting: Schema.Attribute.String;
-    style: Schema.Attribute.Component<'game.dm-style', false>;
+    startingLevel: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     theme: Schema.Attribute.String;
     tone: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    worldSize: Schema.Attribute.Enumeration<['intimate', 'small', 'medium', 'large', 'vast', 'epic']> &
-      Schema.Attribute.DefaultTo<'small'>;
   };
 }
 
@@ -1104,19 +1106,13 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    adventureLength: Schema.Attribute.Enumeration<['flash', 'short', 'medium', 'long', 'epic', 'legendary']> &
-      Schema.Attribute.DefaultTo<'short'>;
     character_sheets: Schema.Attribute.Relation<'oneToMany', 'api::character-sheet.character-sheet'>;
     code: Schema.Attribute.String & Schema.Attribute.Unique;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     currentTimeFrame: Schema.Attribute.Relation<'oneToOne', 'api::time-frame.time-frame'>;
-    difficulty: Schema.Attribute.Enumeration<['storyteller', 'easy', 'medium', 'challenging', 'gritty', 'deadly']> &
-      Schema.Attribute.DefaultTo<'easy'>;
-    dmSetting: Schema.Attribute.Relation<'oneToOne', 'api::dm-setting.dm-setting'>;
-    dmStyle: Schema.Attribute.Component<'game.dm-style', false>;
+    dmSettings: Schema.Attribute.Relation<'oneToOne', 'api::dm-setting.dm-setting'>;
     events: Schema.Attribute.Relation<'oneToMany', 'api::game-event.game-event'>;
-    history: Schema.Attribute.JSON;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::room.room'> & Schema.Attribute.Private;
@@ -1126,23 +1122,15 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
       ['lobby', 'character_creation', 'world_generation', 'gameplay', 'combat', 'ending']
     > &
       Schema.Attribute.DefaultTo<'lobby'>;
-    playerCount: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<4>;
     players: Schema.Attribute.Component<'game.player', true>;
     publishedAt: Schema.Attribute.DateTime;
     roomId: Schema.Attribute.UID & Schema.Attribute.Unique;
-    setting: Schema.Attribute.String;
-    settings: Schema.Attribute.JSON;
-    startingLevel: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
-    theme: Schema.Attribute.String;
     timeFrames: Schema.Attribute.Relation<'oneToMany', 'api::time-frame.time-frame'>;
-    tone: Schema.Attribute.String;
     turnData: Schema.Attribute.JSON;
     turns: Schema.Attribute.Relation<'oneToMany', 'api::turn.turn'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    worldDescription: Schema.Attribute.RichText;
-    worldSize: Schema.Attribute.Enumeration<['intimate', 'small', 'medium', 'large', 'vast', 'epic']> &
-      Schema.Attribute.DefaultTo<'small'>;
+    world: Schema.Attribute.Relation<'oneToOne', 'api::world.world'>;
   };
 }
 
@@ -1385,6 +1373,53 @@ export interface ApiWeaponPropertyWeaponProperty extends Struct.CollectionTypeSc
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiWorldWorld extends Struct.CollectionTypeSchema {
+  collectionName: 'worlds';
+  info: {
+    description: 'World configuration and generated lore';
+    displayName: 'World';
+    pluralName: 'worlds';
+    singularName: 'world';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    adventureLength: Schema.Attribute.Enumeration<['flash', 'short', 'medium', 'long', 'epic', 'legendary']> &
+      Schema.Attribute.DefaultTo<'short'>;
+    chunkSize: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<32>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    description: Schema.Attribute.RichText;
+    detail: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<4>;
+    elevationScale: Schema.Attribute.Float;
+    fogRadius: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
+    globalScale: Schema.Attribute.Float;
+    history: Schema.Attribute.RichText;
+    language: Schema.Attribute.String & Schema.Attribute.DefaultTo<'en-US'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::world.world'> & Schema.Attribute.Private;
+    moistureScale: Schema.Attribute.Float;
+    name: Schema.Attribute.String & Schema.Attribute.DefaultTo<'New World'>;
+    publishedAt: Schema.Attribute.DateTime;
+    roadDensity: Schema.Attribute.Float;
+    room: Schema.Attribute.Relation<'oneToOne', 'api::room.room'>;
+    roughness: Schema.Attribute.Float;
+    seaLevel: Schema.Attribute.Float;
+    seed: Schema.Attribute.String;
+    structureChance: Schema.Attribute.Float;
+    structureSizeAvg: Schema.Attribute.Integer;
+    structureSpacing: Schema.Attribute.Integer;
+    temperatureOffset: Schema.Attribute.Float;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    worldBackground: Schema.Attribute.RichText;
+    worldSize: Schema.Attribute.Enumeration<['intimate', 'small', 'medium', 'large', 'vast', 'epic']> &
+      Schema.Attribute.DefaultTo<'small'>;
+    worldType: Schema.Attribute.String & Schema.Attribute.DefaultTo<'terra'>;
   };
 }
 
@@ -1824,6 +1859,7 @@ declare module '@strapi/strapi' {
       'api::trait.trait': ApiTraitTrait;
       'api::turn.turn': ApiTurnTurn;
       'api::weapon-property.weapon-property': ApiWeaponPropertyWeaponProperty;
+      'api::world.world': ApiWorldWorld;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

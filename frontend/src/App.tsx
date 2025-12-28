@@ -27,6 +27,7 @@ import AuthEventHandler from './components/auth/AuthEventHandler';
 import CreateRoomLayout from './features/create-room/layout/CreateRoomLayout';
 import DmSettingsPage from './features/create-room/pages/DmSettingsPage';
 import WorldConfigPage from './features/create-room/pages/WorldConfigPage';
+import CharacterSelectionPage from './features/create-room/pages/CharacterSelectionPage';
 
 export default function App() {
   return (
@@ -53,6 +54,14 @@ export default function App() {
           <Route index element={<Navigate to="dm-settings" replace />} />
           <Route path="dm-settings" element={<DmSettingsPage />} />
           <Route path="world-generation" element={<WorldConfigPage />} />
+          <Route
+            path="character-selection/:roomId"
+            element={
+              <AssetsProvider>
+                <CharacterSelectionPage />
+              </AssetsProvider>
+            }
+          />
         </Route>
 
         <Route

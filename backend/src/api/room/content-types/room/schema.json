@@ -24,19 +24,20 @@
     },
     "phase": {
       "type": "enumeration",
-      "enum": ["lobby", "character_creation", "world_generation", "gameplay", "combat", "ending"],
+      "enum": [
+        "lobby",
+        "character_creation",
+        "world_generation",
+        "gameplay",
+        "combat",
+        "ending"
+      ],
       "default": "lobby"
-    },
-    "worldDescription": {
-      "type": "richtext"
     },
     "players": {
       "type": "component",
       "repeatable": true,
       "component": "game.player"
-    },
-    "history": {
-      "type": "json"
     },
     "turnData": {
       "type": "json"
@@ -48,9 +49,6 @@
     "code": {
       "type": "string",
       "unique": true
-    },
-    "settings": {
-      "type": "json"
     },
     "character_sheets": {
       "type": "relation",
@@ -76,59 +74,28 @@
       "target": "api::game-event.game-event",
       "mappedBy": "room"
     },
-    "worldSize": {
-      "type": "enumeration",
-      "enum": ["intimate", "small", "medium", "large", "vast", "epic"],
-      "default": "small"
-    },
-    "adventureLength": {
-      "type": "enumeration",
-      "enum": ["flash", "short", "medium", "long", "epic", "legendary"],
-      "default": "short"
-    },
-    "difficulty": {
-      "type": "enumeration",
-      "enum": ["storyteller", "easy", "medium", "challenging", "gritty", "deadly"],
-      "default": "easy"
-    },
-    "startingLevel": {
-      "type": "integer",
-      "default": 1
-    },
-    "playerCount": {
-      "type": "integer",
-      "default": 4
-    },
-    "theme": {
-      "type": "string"
-    },
-    "setting": {
-      "type": "string"
-    },
-    "tone": {
-      "type": "string"
-    },
-    "dmStyle": {
-      "type": "component",
-      "repeatable": false,
-      "component": "game.dm-style"
-    },
     "timeFrames": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::time-frame.time-frame",
       "mappedBy": "room"
     },
-    "dmSetting": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::dm-setting.dm-setting",
-      "mappedBy": "room"
-    },
     "currentTimeFrame": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::time-frame.time-frame"
+    },
+    "world": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::world.world",
+      "mappedBy": "room"
+    },
+    "dmSettings": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::dm-setting.dm-setting",
+      "mappedBy": "room"
     }
   }
 }

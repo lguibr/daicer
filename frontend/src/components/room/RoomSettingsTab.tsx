@@ -37,42 +37,46 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
         </CardContent>
       </Card>
 
-      {/* World Settings */}
-      {room.settings && (
+      {/* DM Settings */}
+      {room.dmSettings && (
         <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
           <CardHeader>
-            <CardTitle className="text-xl text-white">World Settings</CardTitle>
+            <CardTitle className="text-xl text-white">Campaign Settings</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="space-y-3">
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Theme</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.theme}</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.theme}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Setting</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.setting}</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.setting}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Tone</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.tone}</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.tone}</dd>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Difficulty</dt>
-                  <dd className="mt-1 text-sm capitalize text-white">{room.settings.difficulty}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">World Size</dt>
-                  <dd className="mt-1 text-sm capitalize text-white">{room.settings.worldSize}</dd>
+                  <dd className="mt-1 text-sm capitalize text-white">{room.dmSettings.difficulty}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Party Size</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.playerCount}</dd>
+                  <dd className="mt-1 text-sm text-white">{room.dmSettings.playerCount}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Starting Level</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.startingLevel}</dd>
+                  <dd className="mt-1 text-sm text-white">{room.dmSettings.startingLevel}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Adv Length</dt>
+                  <dd className="mt-1 text-sm capitalize text-white">{room.dmSettings.adventureLength}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Attr Budget</dt>
+                  <dd className="mt-1 text-sm text-white">{room.dmSettings.attributePointBudget}</dd>
                 </div>
               </div>
             </dl>
@@ -80,8 +84,25 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
         </Card>
       )}
 
+      {/* World Configuration */}
+      {room.world && (
+        <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
+          <CardHeader>
+            <CardTitle className="text-xl text-white">World Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">World Size</dt>
+                <dd className="mt-1 text-sm capitalize text-white">{room.world.worldSize}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+      )}
+
       {/* DM Style */}
-      {room.settings?.dmStyle && (
+      {room.dmSettings?.dmStyle && (
         <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
           <CardHeader>
             <CardTitle className="text-xl text-white">DM Personality</CardTitle>
@@ -90,24 +111,24 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
             <dl className="grid gap-3 sm:grid-cols-2">
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Verbosity</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.dmStyle.verbosity + 1}/7</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.dmStyle.verbosity + 1}/7</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Detail</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.dmStyle.detail + 1}/7</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.dmStyle.detail + 1}/7</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Engagement</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.dmStyle.engagement + 1}/7</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.dmStyle.engagement + 1}/7</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Narrative</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.dmStyle.narrative + 1}/7</dd>
+                <dd className="mt-1 text-sm text-white">{room.dmSettings.dmStyle.narrative + 1}/7</dd>
               </div>
-              {room.settings.dmStyle.specialMode && (
+              {room.dmSettings.dmStyle.specialMode && (
                 <div className="sm:col-span-2">
                   <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Special Mode</dt>
-                  <dd className="mt-1 text-sm capitalize text-accent">{room.settings.dmStyle.specialMode}</dd>
+                  <dd className="mt-1 text-sm capitalize text-accent">{room.dmSettings.dmStyle.specialMode}</dd>
                 </div>
               )}
             </dl>
@@ -116,29 +137,38 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
       )}
 
       {/* World Context */}
-      {(room.worldDescription || room.settings?.worldBackground) && (
+      {(room.world?.description ||
+        room.world?.worldBackground ||
+        room.world?.history ||
+        room.dmSettings?.dmSystemPrompt) && (
         <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
           <CardHeader>
             <CardTitle className="text-xl text-white">World Context</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {room.worldDescription && (
+            {room.world?.description && (
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Description</dt>
-                <dd className="mt-1 whitespace-pre-wrap text-sm text-white/90">{room.worldDescription}</dd>
+                <dd className="mt-1 whitespace-pre-wrap text-sm text-white/90">{room.world.description}</dd>
               </div>
             )}
-            {room.settings?.worldBackground && (
+            {room.world?.history && (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">History</dt>
+                <dd className="mt-1 whitespace-pre-wrap text-sm text-white/90">{room.world.history}</dd>
+              </div>
+            )}
+            {room.world?.worldBackground && (
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Background Lore</dt>
-                <dd className="mt-1 whitespace-pre-wrap text-sm text-white/90">{room.settings.worldBackground}</dd>
+                <dd className="mt-1 whitespace-pre-wrap text-sm text-white/90">{room.world.worldBackground}</dd>
               </div>
             )}
-            {room.settings?.dmSystemPrompt && (
+            {room.dmSettings?.dmSystemPrompt && (
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">DM System Prompt</dt>
                 <dd className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap rounded bg-black/20 p-2 text-xs font-mono text-white/70">
-                  {room.settings.dmSystemPrompt}
+                  {room.dmSettings.dmSystemPrompt}
                 </dd>
               </div>
             )}
@@ -147,7 +177,7 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
       )}
 
       {/* Map Config */}
-      {room.mapConfig && (
+      {room.world && (
         <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
           <CardHeader>
             <CardTitle className="text-xl text-white">Map Configuration</CardTitle>
@@ -156,34 +186,25 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
             <dl className="grid gap-3 sm:grid-cols-2">
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Seed</dt>
-                <dd className="mt-1 font-mono text-sm text-accent">{room.mapConfig.seed}</dd>
+                <dd className="mt-1 font-mono text-sm text-accent">{room.world.seed}</dd>
               </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Grid Enabled</dt>
-                <dd className="mt-1 text-sm text-white">{room.mapConfig.gridEnabled ? 'Yes' : 'No'}</dd>
-              </div>
-              {room.mapConfig.globalWaterLevel !== undefined && (
+
+              {room.world.seaLevel !== undefined && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Water Level</dt>
-                  <dd className="mt-1 text-sm text-white">{room.mapConfig.globalWaterLevel.toFixed(2)}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Sea Level</dt>
+                  <dd className="mt-1 text-sm text-white">{room.world.seaLevel.toFixed(2)}</dd>
                 </div>
               )}
-              {room.mapConfig.globalTemperature !== undefined && (
+              {room.world.temperatureOffset !== undefined && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Temperature</dt>
-                  <dd className="mt-1 text-sm text-white">{room.mapConfig.globalTemperature.toFixed(2)}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Temp Offset</dt>
+                  <dd className="mt-1 text-sm text-white">{room.world.temperatureOffset.toFixed(2)}</dd>
                 </div>
               )}
-              {room.mapConfig.renderSettings && (
-                <div className="sm:col-span-2">
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Render Settings</dt>
-                  <dd className="mt-1 text-sm text-white">
-                    <ul className="list-disc pl-4">
-                      <li>Grid: {room.mapConfig.renderSettings.showGrid ? 'On' : 'Off'}</li>
-                      <li>Coords: {room.mapConfig.renderSettings.showCoordinates ? 'On' : 'Off'}</li>
-                      <li>Fog of War: {room.mapConfig.renderSettings.fogOfWar ? 'On' : 'Off'}</li>
-                    </ul>
-                  </dd>
+              {room.world.fogRadius !== undefined && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Fog Radius</dt>
+                  <dd className="mt-1 text-sm text-white">{room.world.fogRadius}</dd>
                 </div>
               )}
             </dl>
@@ -192,59 +213,29 @@ export function RoomSettingsTab({ room, onLeave, asModal = false }: RoomSettings
       )}
 
       {/* Detailed World Settings */}
-      {room.settings && (
+      {room.world && (
         <Card className="border-accent/30 bg-gradient-to-br from-midnight-900/70 via-midnight-800/60 to-midnight-700/60">
           <CardHeader>
             <CardTitle className="text-xl text-white">Advanced Settings</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Language</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.language}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Adventure Length</dt>
-                <dd className="mt-1 text-sm capitalize text-white">{room.settings.adventureLength}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Attribute Budget</dt>
-                <dd className="mt-1 text-sm text-white">{room.settings.attributePointBudget} pts</dd>
-              </div>
-              {room.settings.historyDepth !== undefined && (
+              {room.world.chunkSize !== undefined && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">History Depth</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.historyDepth}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Chunk Size</dt>
+                  <dd className="mt-1 text-sm text-white">{room.world.chunkSize}</dd>
                 </div>
               )}
-              {room.settings.eraCount !== undefined && (
+              {room.world.structureChance !== undefined && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Eras</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.eraCount}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Struct Chance</dt>
+                  <dd className="mt-1 text-sm text-white">{room.world.structureChance}</dd>
                 </div>
               )}
-              {room.settings.structureDensity !== undefined && (
+              {room.world.roadDensity !== undefined && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Structure Density</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.structureDensity.toFixed(2)}</dd>
-                </div>
-              )}
-              {room.settings.enableRoads !== undefined && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Roads</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.enableRoads ? 'Enabled' : 'Disabled'}</dd>
-                </div>
-              )}
-              {room.settings.roadQuality && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Road Quality</dt>
-                  <dd className="mt-1 text-sm capitalize text-white">{room.settings.roadQuality}</dd>
-                </div>
-              )}
-              {room.settings.terrainComplexity !== undefined && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Terrain Complexity</dt>
-                  <dd className="mt-1 text-sm text-white">{room.settings.terrainComplexity}</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-shadow-400">Road Density</dt>
+                  <dd className="mt-1 text-sm text-white">{room.world.roadDensity}</dd>
                 </div>
               )}
             </dl>

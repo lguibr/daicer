@@ -61,6 +61,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
     }
 
     try {
+      console.log('useChunkLoader: Fetching chunks', chunksToFetch, 'config:', config.seed);
       const { data } = await client.query({
         query: VOXEL_PREVIEW_QUERY,
         variables: {
@@ -71,6 +72,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
       });
 
       const results = data?.voxelPreview;
+      console.log('useChunkLoader: Received results', results);
 
       if (Array.isArray(results)) {
         setChunkCache((prev) => {
@@ -78,7 +80,9 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
           results.forEach((chunk: Chunk, index: number) => {
             const req = chunksToFetch[index];
             if (req) {
-              next[getChunkId(req.x, req.y)] = chunk;
+              const id = getChunkId(req.x, req.y);
+              console.log('useChunkLoader: Caching chunk', id, chunk ? 'FOUND' : 'NULL');
+              next[id] = chunk;
             }
           });
           return next;
