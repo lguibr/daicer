@@ -113,7 +113,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
     }
 
     if (sourceData) {
-      setEntities((prev) => {
+      setEntities((_prev) => {
         return sourceData.map((c: any) => ({
           id: c.id || c.documentId,
           name: c.name,

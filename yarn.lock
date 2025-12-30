@@ -5047,7 +5047,7 @@
 
 "@strapi/client@^1.6.0":
   version "1.6.0"
-  resolved "https://registry.npmjs.org/@strapi/client/-/client-1.6.0.tgz"
+  resolved "https://registry.yarnpkg.com/@strapi/client/-/client-1.6.0.tgz#95a1c77514da7744c250c0f7157309b1b6440800"
   integrity sha512-lSJMxF0JuZzZmpBS/Fpzj4ZPKZsB3leVAoQjdeY4IJ57S2FlnFkm/mM35bcHbri5UdbCUhfiL6QtuoA8p8Fp2w==
   dependencies:
     debug "4.4.0"

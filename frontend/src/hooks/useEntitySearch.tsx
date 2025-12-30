@@ -22,23 +22,11 @@ export function useEntitySearch() {
 
       setLoading(true);
       try {
-        let data = [];
-        // TODO: Replace with real API calls once endpoints are exposed
-        // For now, we simulate or use what we have
+        let data: unknown;
         if (type === 'monster') {
-          // data = await searchMonsters(query);
-          console.log('Searching monsters for:', query);
+          data = await searchMonsters(query);
         } else if (type === 'spell') {
-          // data = await searchSpells(query);
-        }
-
-        // Mock data for UI development
-        if (type === 'monster') {
-          data = [
-            { id: 'giant-goat', name: 'Giant Goat', type: 'beast' },
-            { id: 'goat', name: 'Goat', type: 'beast' },
-            { id: 'goblin', name: 'Goblin', type: 'humanoid' },
-          ].filter((m) => m.name.toLowerCase().includes(query.toLowerCase()));
+          data = await searchSpells(query);
         }
 
         setResults(data as SearchResult[]);

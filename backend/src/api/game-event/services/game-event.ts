@@ -18,11 +18,6 @@ interface Strapi {
   };
 }
 
-interface RoomSettings {
-  code?: string;
-  [key: string]: unknown;
-}
-
 const getWorldGenerator = async (strapi: Strapi, roomDocumentId: string) => {
   const room = await strapi.documents('api::room.room').findOne({
     documentId: roomDocumentId,
@@ -31,11 +26,11 @@ const getWorldGenerator = async (strapi: Strapi, roomDocumentId: string) => {
 
   if (!room) throw new Error('Room not found');
 
-  const world = (room as any).world || {};
+  const world = (room as { world: Record<string, unknown> }).world || {};
 
   const config = {
     ...DEFAULT_WORLD_CONFIG,
-    seed: (room as any).code || world.seed || 'default_seed',
+    seed: ((room as { code?: string }).code as string) || (world.seed as string) || 'default_seed',
   };
 
   return new WorldGenerator(config);
@@ -51,7 +46,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
       sort: 'turnNumber:desc',
       limit: 1,
     });
-    const lastEvent = lastEvents.length > 0 ? (lastEvents[0] as any) : null;
+    const lastEvent = lastEvents.length > 0 ? (lastEvents[0] as { turnNumber?: number }) : null;
     const turnNumber = lastEvent ? (lastEvent.turnNumber || 0) + 1 : 1;
 
     return await strapi.documents('api::game-event.game-event').create({
@@ -83,16 +78,15 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     const physics = new PhysicsEngine(gen);
 
     // Shared Coordinates z is number, Engine expects strict union. Validated by runtime check in physics.
-    const isWalkable = await physics.isWalkable(to as any);
+    const isWalkable = await physics.isWalkable(to as { x: number; y: number; z: 0 | 1 | 2 | 3 | -1 | -2 | -3 });
 
     // Also check for entity collision
     const gameState = await this.getGameState(roomDocumentId);
-    const destinationKey = `${to.x},${to.y},${to.z}`;
 
     // Check if any entity is already at the destination (simple collision)
     // In a real system we'd check against entity sizes, but for now 1 tile = 1 entity
     const occupied = Object.values(gameState.entities).some(
-      (pos: any) => pos.x === to.x && pos.y === to.y && pos.z === to.z
+      (pos) => pos.x === to.x && pos.y === to.y && pos.z === to.z
     );
 
     if (occupied) {
@@ -121,7 +115,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
     };
 
     // Replay
-    for (const event of events as any[]) {
+    for (const event of events as { type: string; payload: unknown }[]) {
       if (event.type === 'MOVE') {
         const result = MapMovePayloadSchema.safeParse(event.payload);
         if (result.success) {
@@ -131,7 +125,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
       } else if (event.type === 'SPAWN_ENTITY') {
         // Assume payload has { entityId, position }
         // We need to support this for consistent state
-        const p = event.payload as any;
+        const p = event.payload as { entityId: string; position: Coordinates };
         if (p?.entityId && p?.position) {
           state.entities[String(p.entityId)] = p.position;
         }

@@ -1,25 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// @ts-ignore
-import { strapi } from '@strapi/client';
+import { getStrapiClient } from './utils/strapi-client';
 import fs from 'fs';
 import path from 'path';
 
 // Constants
-const BASE_URL = process.env.STRAPI_URL || 'http://127.0.0.1:1337/api';
-const AUTH_TOKEN = process.env.STRAPI_AUDIT_TOKEN;
-
-console.log({ BASE_URL, AUTH_TOKEN });
-
-if (!AUTH_TOKEN) {
-  console.warn('⚠️ No Auth Token found (STRAPI_AUDIT_TOKEN). Requests might fail if endpoints are protected.');
-}
-
-const client = strapi({
-  baseURL: BASE_URL,
-  auth: AUTH_TOKEN,
-});
+// We still might want BASE_URL for logging if we want, or just rely on the singleton's knowledge
+// But the singleton encapsulates it.
+const client = getStrapiClient();
 
 interface EntityMetrics {
   entity: string;
@@ -90,7 +79,6 @@ async function fetchAll(collectionName: string) {
 
 async function main() {
   console.log(`Starting Content Audit (Client Mode)`);
-  console.log(`Target: ${BASE_URL}`);
 
   try {
     const results: EntityMetrics[] = [];

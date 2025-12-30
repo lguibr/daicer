@@ -322,7 +322,7 @@ export default function GameplayScreen({ room, players, creatures = [], onRefres
       }));
 
     const creatureEntities = creatures.map((c) => ({
-      id: c.documentId || c.id,
+      id: (c as any).documentId || c.id,
       type: (c.type || 'monster') as 'monster' | 'npc', // Fallback
       name: c.name,
       position: c.position || { x: 0, y: 0, z: 0 },

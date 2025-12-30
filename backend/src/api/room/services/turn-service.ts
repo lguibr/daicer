@@ -14,7 +14,7 @@ interface TurnAction {
   characterId: string | number;
   type: 'action' | 'movement' | 'bonus' | 'free';
   intent: string; // The raw description "I attack the goblin"
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -28,7 +28,7 @@ export default ({ strapi }) => ({
   /**
    * Add an action to the pending queue
    */
-  async addAction(roomId: string | number, playerId: string | number, action: any) {
+  async addAction(roomId: string | number, playerId: string | number, action: Record<string, unknown>) {
     const room = await strapi.entityService.findOne('api::room.room', roomId, {
       populate: ['players'],
     });
@@ -54,9 +54,9 @@ export default ({ strapi }) => ({
     const newAction: TurnAction = {
       playerId,
       characterId: player.character?.id,
-      type: action.type || 'action',
-      intent: action.intent,
-      metadata: action.metadata,
+      type: (action.type as 'action' | 'movement' | 'bonus' | 'free') || 'action',
+      intent: action.intent as string,
+      metadata: action.metadata as Record<string, unknown>,
       timestamp: Date.now(),
     };
 
@@ -86,7 +86,7 @@ export default ({ strapi }) => ({
   /**
    * Helper: Build Context for the DM
    */
-  async buildTurnContext(room: any, turnData: TurnData) {
+  async buildTurnContext(room: Record<string, any>, turnData: TurnData) {
     // 1. World Context
     const worldInfo = `
 WORLD SETTING: ${room.setting || 'Generic Fantasy'}
@@ -97,16 +97,23 @@ DESCRIPTION: ${room.worldDescription || ''}
 
     // 2. Character Context (Simplified)
     // Access pre-populated character_sheets from room
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const charContext =
-      room.character_sheets
+      ((room.character_sheets as Record<string, unknown>[]) || [])
         ?.map((cs) => {
-          const char = cs.character; // blueprint
+          const char = cs.character as Record<string, unknown>; // blueprint
+          const race = char?.race as Record<string, unknown>;
+          const charClass = char?.class as Record<string, unknown>;
+          const stats = cs.stats as Record<string, unknown>;
+          const pos = cs.position as Record<string, unknown>;
+
           return `
 ID: ${cs.id}
-NAME: ${char?.name || 'Unknown'} (${char?.race?.name} ${char?.class?.name})
+NAME: ${char?.name || 'Unknown'} (${race?.name} ${charClass?.name})
 STATUS: HP ${cs.currentHp}/${cs.maxHp}
-POSITION: (${cs.position?.x}, ${cs.position?.y})
-STATS: SPD ${cs.stats?.speed}
+POSITION: (${pos?.x}, ${pos?.y})
+STATS: SPD ${stats?.speed}
 `.trim();
         })
         .join('\n\n') || 'No characters found.';
@@ -122,7 +129,7 @@ STATS: SPD ${cs.stats?.speed}
   /**
    * RESOLVE TURN WITH LLM
    */
-  async resolveTurnWithLLM(room: any, turnData: TurnData) {
+  async resolveTurnWithLLM(room: Record<string, unknown>, turnData: TurnData) {
     const context = await this.buildTurnContext(room, turnData);
 
     const systemPrompt = `You are the Dungeon Master.

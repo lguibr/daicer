@@ -28,7 +28,7 @@ export default ({ strapi }) => ({
   ) {
     // 1. Fetch Room with populated players
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
+    const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
     }
@@ -228,9 +228,11 @@ export default ({ strapi }) => ({
       class?: { name?: string };
       baseStats?: Record<string, number>;
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cAny = character as any;
     const charSummary = `Name: ${character.name}
 Race: ${c.race?.name || character.race || 'Unknown'}
-Class: ${c.class?.name || (character as any).characterClass || 'Unknown'}
+Class: ${c.class?.name || cAny.characterClass || 'Unknown'}
 Background: ${character.background || 'Unknown'}
 Backstory Snippet: ${character.backstory ? character.backstory.substring(0, 300) + '...' : 'None provided'}
 Personality: ${character.personality?.traits || ''} ${character.personality?.ideals || ''}

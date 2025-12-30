@@ -178,8 +178,8 @@ export const LIST_CHARACTERS_QUERY = gql`
 `;
 
 export const LIST_MONSTERS_QUERY = gql`
-  query ListMonsters {
-    monsters(sort: "name:asc", pagination: { limit: 1000 }) {
+  query ListMonsters($filters: MonsterFiltersInput) {
+    monsters(filters: $filters, sort: "name:asc", pagination: { limit: 50 }) {
       documentId
       name
       type
@@ -188,6 +188,19 @@ export const LIST_MONSTERS_QUERY = gql`
       ac
       xp
       challenge_rating
+    }
+  }
+`;
+
+export const LIST_SPELLS_QUERY = gql`
+  query ListSpells($filters: SpellFiltersInput) {
+    spells(filters: $filters, sort: "name:asc", pagination: { limit: 50 }) {
+      documentId
+      name
+      level
+      school {
+        name
+      }
     }
   }
 `;

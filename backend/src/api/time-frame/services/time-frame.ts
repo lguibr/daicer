@@ -5,7 +5,7 @@
 import { factories } from '@strapi/strapi';
 
 export default factories.createCoreService('api::time-frame.time-frame', ({ strapi }) => ({
-  async createSnapshot(roomId: string, gameState: any) {
+  async createSnapshot(roomId: string, gameState: unknown) {
     const room = await strapi.entityService.findOne('api::room.room', roomId, {
       populate: ['turns'],
     });
@@ -14,19 +14,20 @@ export default factories.createCoreService('api::time-frame.time-frame', ({ stra
       throw new Error('Room not found');
     }
 
-    const currentTurnNumber = (room as any).turns?.length || 0;
+    const currentTurnNumber = (room as unknown as { turns: unknown[] }).turns?.length || 0;
 
     return await strapi.entityService.create('api::time-frame.time-frame', {
       data: {
         turnNumber: currentTurnNumber,
         timestamp: new Date(),
         room: roomId,
-        gameState: gameState, // Full snapshot of the world/entities/settings at this moment
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        gameState: gameState as any, // Full snapshot of the world/entities/settings at this moment
       },
     });
   },
 
-  async getPOV(timeFrameId: string, playerId: string) {
+  async getPOV(timeFrameId: string, _playerId: string) {
     const timeFrame = await strapi.entityService.findOne('api::time-frame.time-frame', timeFrameId, {
       populate: ['room'],
     });

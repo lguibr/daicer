@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// @ts-expect-error virtual pwa module
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 export function usePWA() {
@@ -7,18 +8,20 @@ export function usePWA() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(r) {
+    onRegistered(_r: any) {
       // console.log('SW Registered: ' + r);
     },
-    onRegisterError(error) {
+    onRegisterError(error: any) {
       console.log('SW registration error', error);
     },
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleBeforeInstallPrompt = (e: any) => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();

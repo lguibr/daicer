@@ -5,24 +5,12 @@
  * usage: npx ts-node scripts/verify-entities-client.ts
  */
 
-const strapiFactory = require('@strapi/client').strapi;
+const { getStrapiClient } = require('./utils/strapi-client');
 
-async function main() {
-  const baseURL = process.env.VITE_API_URL || 'http://localhost:1337';
-  const token = process.env.STRAPI_API_TOKEN;
+async function verifyEntitiesMain() {
+  // console.log(`Connecting to Strapi...`);
 
-  if (!token) {
-    console.warn('Warning: STRAPI_API_TOKEN not found in .env. Requests might fail if auth is required.');
-  }
-
-  // console.log(`Connecting to Strapi at ${baseURL}...`);
-
-  const strapi = strapiFactory({
-    baseURL: baseURL,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const strapi = getStrapiClient();
   console.log('Strapi Client Methods:', Object.keys(strapi));
 
   try {
@@ -60,4 +48,4 @@ async function main() {
   }
 }
 
-main();
+verifyEntitiesMain();

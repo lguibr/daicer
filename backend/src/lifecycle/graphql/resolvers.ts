@@ -53,7 +53,7 @@ export const registerGraphQLExtension = (strapi) => {
             const showAllCharacters = lowerQuery === 'characters' || lowerQuery === 'character';
             const showAllMonsters = lowerQuery === 'monsters' || lowerQuery === 'monster';
 
-            const filters: any = {};
+            const filters: Record<string, unknown> = {};
             if (!showAllMonsters && !showAllCharacters) {
               // Standard fuzzy search
               filters.name = { $contains: query };
@@ -80,12 +80,12 @@ export const registerGraphQLExtension = (strapi) => {
             strapi.log.info(`[Resolver] Found ${monsters.length || 0} monsters, ${characters.length || 0} characters`);
 
             return [
-              ...(monsters || []).map((m: any) => ({
+              ...(monsters || []).map((m: { documentId: string; name: string }) => ({
                 id: m.documentId,
                 name: m.name,
                 type: 'monster',
               })),
-              ...(characters || []).map((c: any) => ({
+              ...(characters || []).map((c: { documentId: string; name: string }) => ({
                 id: c.documentId,
                 name: c.name,
                 type: 'character',

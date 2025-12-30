@@ -9,8 +9,7 @@ export default ({ strapi }) => ({
     creatures: Creature[],
     language: Language = 'en',
     settings?: WorldSettings,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    worldConditions?: any[],
+    worldConditions?: unknown[],
     mapContext?: string,
     streamId?: string,
     chunk?: Chunk
@@ -66,30 +65,26 @@ export default ({ strapi }) => ({
           populate: ['character_sheets', 'creatures'],
         });
 
-        const exploredTiles = new Set<string>(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (roomEntity?.exploredTiles as string[]) || []
-        );
+        const exploredTiles = new Set<string>((roomEntity?.exploredTiles as string[]) || []);
 
         // Calculate center based on first player or default
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const firstPlayerSheet = roomEntity.character_sheets?.[0];
+        const firstPlayerSheet = (roomEntity.character_sheets as any[])?.[0];
         const center = firstPlayerSheet?.position || { x: 0, y: 0, z: 0 };
 
         // Re-construct players list with updated positions for visualization
         // The original 'players' array has the old state. We should use the room entities for the map.
         // We need to map room entities back to minimal Player/Creature objects for the visualizer
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updatedPlayers = (roomEntity.character_sheets || []).map((s: any) => ({
+        const updatedPlayers = ((roomEntity.character_sheets as Record<string, unknown>[]) || []).map((s) => ({
           position: s.position,
         }));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updatedCreatures = (roomEntity.creatures || []).map((c: any) => ({
+        const updatedCreatures = ((roomEntity.creatures as Record<string, unknown>[]) || []).map((c) => ({
           position: c.position,
           hp: c.currentHp || c.hp, // handle schema variance
           maxHp: c.maxHp,
         }));
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapImage = await generateMapImage(chunk, updatedPlayers as any, updatedCreatures as any, exploredTiles, center);
 
         // 4. Upload Map Image to Strapi
@@ -208,8 +203,7 @@ export default ({ strapi }) => ({
     };
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async executeDeterministicTurn(roomId: string, actions: any[]) {
+  async executeDeterministicTurn(roomId: string, actions: unknown[]) {
     const turnPersistence = strapi.service('api::game.turn-persistence');
     const gameBroadcaster = strapi.service('api::game.game-broadcaster');
     const spawnService = strapi.service('api::game.spawn-service');
@@ -237,17 +231,31 @@ export default ({ strapi }) => ({
       })),
     ];
 
-    for (const action of actions) {
+    type AnyAction = {
+      type: string;
+      entityId?: string;
+      payload?: {
+        x?: number;
+        y?: number;
+        z?: number;
+        id?: string;
+        entityType?: string;
+        position?: { x: number; y: number; z: number };
+      };
+    };
+
+    for (const rawAction of actions) {
+      const action = rawAction as AnyAction;
+
       if (action.type === 'move') {
         const sheet = room.character_sheets?.find(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (s: any) => s.documentId === action.entityId || s.id === action.entityId
+          (s: Record<string, unknown>) => s.documentId === action.entityId || s.id === action.entityId
         );
 
         if (sheet) {
           // Collision Check
-          const targetX = Math.round(action.payload.x);
-          const targetY = Math.round(action.payload.y);
+          const targetX = Math.round(action.payload?.x || 0);
+          const targetY = Math.round(action.payload?.y || 0);
           const isOccupied = allEntities.some(
             (e) =>
               e.id !== (sheet.documentId || sheet.id) && // Ignore self
@@ -261,19 +269,21 @@ export default ({ strapi }) => ({
             continue; // Skip invalid move
           }
 
-          await turnPersistence.updateCharacterPosition(
-            sheet.documentId,
-            action.payload.x,
-            action.payload.y,
-            action.payload.z
-          );
+          if (action.payload?.x !== undefined && action.payload?.y !== undefined) {
+            await turnPersistence.updateCharacterPosition(
+              sheet.documentId,
+              action.payload.x,
+              action.payload.y,
+              action.payload.z || 0
+            );
+          }
           movedEntityIds.add(sheet.documentId);
           processedActions.push(action);
 
           // Update local entity list for subsequent checks in same turn
           const entityRef = allEntities.find((e) => e.id === (sheet.documentId || sheet.id));
-          if (entityRef) {
-            entityRef.pos = { x: targetX, y: targetY, z: action.payload.z };
+          if (entityRef && action.payload) {
+            entityRef.pos = { x: targetX, y: targetY, z: action.payload.z || 0 };
           }
 
           // Exploration Update
@@ -314,9 +324,9 @@ export default ({ strapi }) => ({
         }
       } else if (action.type === 'spawn') {
         try {
-          if (action.payload.entityType === 'monster') {
+          if (action.payload?.entityType === 'monster') {
             await spawnService.spawnMonster(roomId, action.payload.id, action.payload.position);
-          } else if (action.payload.entityType === 'character') {
+          } else if (action.payload?.entityType === 'character') {
             await spawnService.spawnCharacter(roomId, action.payload.id, action.payload.position);
           }
           processedActions.push(action);

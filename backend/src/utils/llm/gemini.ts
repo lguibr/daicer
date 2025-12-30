@@ -4,7 +4,6 @@
 
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { GeminiModel, GeminiConfig, DEFAULT_TEXT_CONFIG } from './types';
-import { StructuredOutputMethodParams } from '@langchain/core/language_models/base';
 import { z } from 'zod';
 
 /**
@@ -47,7 +46,7 @@ export function getGeminiModel(
  * Helper to get a model configured for structured output
  */
 export function getStructuredGeminiModel(
-  schema: z.ZodType<any>,
+  schema: z.ZodType,
   model: GeminiModel = GeminiModel.FLASH,
   config: GeminiConfig = {}
 ) {
@@ -59,12 +58,11 @@ export function extractErrorDetails(error: unknown): string {
   if (!error) return 'Unknown error';
 
   if (error instanceof Error) {
-    // @ts-ignore
-    const status = error.status || error.response?.status;
-    // @ts-ignore
-    const code = error.code;
-    // @ts-ignore
-    const details = error.response?.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errAny = error as any;
+    const status = errAny.status || errAny.response?.status;
+    const code = errAny.code;
+    const details = errAny.response?.data;
 
     const parts = [
       error.name,

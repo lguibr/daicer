@@ -37,7 +37,8 @@ export function PushNotificationManager() {
     }
   };
 
-  const subscribeToPush = async () => {
+  /*
+  const _subscribeToPush = async () => {
     // Requires VAPID Key from backend
     // const VAPID_KEY = '...';
     // const ready = await navigator.serviceWorker.ready;
@@ -49,6 +50,7 @@ export function PushNotificationManager() {
     // Send sub to backend...
     console.log('Push subscription logic placeholder');
   };
+*/
 
   if (permission === 'denied') {
     return (

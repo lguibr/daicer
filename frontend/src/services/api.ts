@@ -28,7 +28,13 @@ import {
   GENERATE_FULL_BODY_MUTATION,
   SUBMIT_ACTION_MUTATION,
 } from '../graphql/mutations';
-import { GET_ROOM_QUERY, LIST_ROOMS_QUERY, SEARCH_ENTITIES_QUERY } from '../graphql/queries';
+import {
+  GET_ROOM_QUERY,
+  LIST_ROOMS_QUERY,
+  SEARCH_ENTITIES_QUERY,
+  LIST_MONSTERS_QUERY,
+  LIST_SPELLS_QUERY,
+} from '../graphql/queries';
 import type {
   CreateRoomMutation,
   JoinRoomMutation,
@@ -507,4 +513,62 @@ export async function executeEngineAction(
   const result = await response.json();
   console.log('[api.ts] executeEngineAction Result:', result);
   return result;
+}
+
+/**
+ * Search monsters by name
+ */
+export async function searchMonsters(
+  query: string
+): Promise<{ id: string; name: string; type: string; description: string }[]> {
+  try {
+    const { data } = await apolloClient.query({
+      query: LIST_MONSTERS_QUERY,
+      variables: {
+        filters: {
+          name: { containsi: query },
+        },
+      },
+      fetchPolicy: 'network-only',
+    });
+
+    return ((data as any)?.monsters || []).map((m: any) => ({
+      id: m.documentId,
+      name: m.name,
+      type: 'monster',
+      description: `CR ${m.challenge_rating} ${m.size} ${m.type}`,
+    }));
+  } catch (err) {
+    console.error('Search monsters failed:', err);
+    return [];
+  }
+}
+
+/**
+ * Search spells by name
+ */
+export async function searchSpells(
+  query: string
+): Promise<{ id: string; name: string; type: string; description: string }[]> {
+  try {
+    const { data } = await apolloClient.query({
+      query: LIST_SPELLS_QUERY,
+      variables: {
+        filters: {
+          name: { containsi: query },
+        },
+      },
+      fetchPolicy: 'network-only',
+    });
+
+    return ((data as any)?.spells || []).map((s: any) => ({
+      id: s.documentId,
+      name: s.name,
+      type: 'spell',
+      description: `Level ${s.level} ${s.school?.name}`,
+    }));
+  } catch (err) {
+    console.error('Search spells failed:', err);
+    return [];
+  }
 }

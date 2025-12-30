@@ -43,7 +43,8 @@ export const handleRoomJoin =
           // If recipient matches userId, it's for me.
           // Note: userId passed to room-join is likely documentId based on previous context, or ID string.
           // Need to handle both potentially if types are loose.
-          const recipientId = (msg as any).recipient?.documentId || (msg as any).recipient?.id;
+          const msgRec = (msg as unknown as Record<string, any>).recipient;
+          const recipientId = msgRec?.documentId || msgRec?.id;
           if (!recipientId) return true; // Public
           return String(recipientId) === String(userId);
         })
@@ -56,14 +57,16 @@ export const handleRoomJoin =
           senderType: msg.senderType,
           timestamp: Number(msg.timestamp),
           type: msg.senderType === 'dm' ? 'narration' : 'chat',
-          isPrivate: !!(msg as any).recipient,
+          isPrivate: !!(msg as unknown as Record<string, any>).recipient,
         }));
 
       // Safe access for dynamic properties
       const world = room.world as Record<string, unknown> | null;
 
       // Map character_sheets to creatures (entities) for frontend
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rawSheets = (room as any).character_sheets || [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const creatures = rawSheets.map((cs: any) => ({
         id: cs.documentId,
         name: cs.name,

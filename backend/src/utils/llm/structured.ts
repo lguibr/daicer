@@ -67,7 +67,7 @@ export async function generateStructured<T extends z.ZodType>(
 ): Promise<z.infer<T>> {
   const fullSystemPrompt = await buildSystemPrompt(language, systemPrompt);
 
-  let messageContent: any[] = [{ type: 'text', text: userPrompt }];
+  let messageContent: { type: string; text?: string; image_url?: string }[] = [{ type: 'text', text: userPrompt }];
 
   if (config.images && config.images.length > 0) {
     messageContent = [
@@ -99,15 +99,6 @@ export async function generateStructured<T extends z.ZodType>(
     };
   }
 
-  console.info('[LLM Structured] Generation requested', {
-    language,
-    model: config.model || 'gemini-default',
-    userId: config.userId,
-    schema: schema.description || 'unnamed',
-    tags: runnableConfig.tags,
-    hasImages: !!config.images?.length,
-  });
-
   // Default to FLASH if not specified or arbitrary string provided
   let geminiModelToken = GeminiModel.FLASH;
 
@@ -117,17 +108,15 @@ export async function generateStructured<T extends z.ZodType>(
     }
   }
 
-  console.info(`[LLM Structured] Using Gemini model: ${geminiModelToken}`);
-
   const baseModel = getGeminiModel(geminiModelToken, config);
   // Deep type instantiation with Zod/LangChain
   const structuredModel = baseModel.withStructuredOutput(schema);
 
   try {
     const response = await structuredModel.invoke(messages, runnableConfig);
-    console.debug('[LLM Structured] Response received');
     return response as z.infer<T>;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`[LLM Structured] Gemini ${geminiModelToken} failed:`, extractErrorDetails(error));
     throw error;
   }

@@ -1,34 +1,21 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// @ts-ignore
-import { strapi } from '@strapi/client';
+import { getStrapiClient } from './utils/strapi-client';
 import { generateImageGemini } from '../src/utils/llm/image';
 
 // Constants
-const BASE_URL = process.env.STRAPI_URL || 'http://127.0.0.1:1337/api';
-const AUTH_TOKEN = process.env.STRAPI_AUDIT_TOKEN;
 const MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
 
 console.log(`
-BASE_URL: ${BASE_URL}
-AUTH_TOKEN: ${AUTH_TOKEN}
 MODEL: ${MODEL}
 `);
 
-if (!AUTH_TOKEN) {
-  console.warn('⚠️ No Auth Token found (STRAPI_AUDIT_TOKEN). Operations might fail.');
-}
-
-const client = strapi({
-  baseURL: BASE_URL,
-  auth: AUTH_TOKEN,
-});
+const client = getStrapiClient();
 
 async function main() {
   console.log(`Starting Monster Image Generation (Client Mode)`);
   console.log(`Model: ${MODEL}`);
-  console.log(`Target: ${BASE_URL}`);
 
   try {
     // Parse CLI args for limit

@@ -4,7 +4,16 @@ import type { WorldSettings, Language } from '@daicer/engine';
 
 // Helper to format DM style into a readable summary for the LLM
 // Duplicated here to avoid circular dep, or could be moved to shared utils
-function formatDmStyle(style) {
+interface DmStyle {
+  verbosity: number;
+  detail: number;
+  engagement: number;
+  narrative: number;
+  specialMode?: string;
+  customDirectives?: string;
+}
+
+function formatDmStyle(style: DmStyle) {
   if (!style) return 'Standard DM Style';
 
   const verbosityMap = ['Whisper (Minimal)', 'Terse', 'Measured', 'Storied', 'Lyrical', 'Epic', 'Operatic (Grand)'];
@@ -96,11 +105,11 @@ ${worldData.description}
 
 ## Key Locations
 
-${worldData.keyLocations.map((loc: any) => `**${loc.name}**: ${loc.description}`).join('\n\n')}
+${worldData.keyLocations.map((loc: { name: string; description: string }) => `**${loc.name}**: ${loc.description}`).join('\n\n')}
 
 ## Threats
 
-${worldData.threats.map((threat: any) => `- ${threat}`).join('\n')}
+${worldData.threats.map((threat: string) => `- ${threat}`).join('\n')}
 
 ## Call to Adventure & Stakes
 
@@ -110,7 +119,7 @@ ${worldData.threats.map((threat: any) => `- ${threat}`).join('\n')}
 
 ## Adventure Hooks
 
-${worldData.hooks.map((hook: any, i: number) => `${i + 1}. ${hook}`).join('\n')}`;
+${worldData.hooks.map((hook: string, i: number) => `${i + 1}. ${hook}`).join('\n')}`;
 
     return formattedDescription;
   },

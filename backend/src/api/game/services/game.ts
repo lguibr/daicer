@@ -33,8 +33,10 @@ export default ({ strapi }) => ({
 
     try {
       // Default to first player or 0,0 for chunk context if not specified
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const firstPlayer = players[0] as any;
+      const firstPlayer = players[0] as unknown as {
+        position?: { x: number; y: number };
+        characterSheet?: { position: { x: number; y: number } };
+      };
       const center = firstPlayer?.position || firstPlayer?.characterSheet?.position || { x: 0, y: 0, z: 0 };
       const chunkX = Math.floor(center.x / 32);
       const chunkY = Math.floor(center.y / 32);
@@ -183,7 +185,7 @@ export default ({ strapi }) => ({
 
   async startGame(roomId: string, language: Language = 'en') {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filters: any[] = [{ documentId: roomId }, { roomId: roomId }, { code: roomId }];
+    const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }, { code: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
     }
@@ -214,7 +216,7 @@ export default ({ strapi }) => ({
       roomId: string; // Rune
     };
 
-    const settings: any = { ...(room.world as any), ...(room.dmSettings as any) };
+    const settings: WorldSettings = { ...(room.world as WorldSettings), ...(room.dmSettings as WorldSettings) };
 
     // 0. Verify All Players Ready
     const roomPlayers = room.players || [];

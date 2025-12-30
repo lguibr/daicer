@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, MapPin, Skull, User, Sparkles } from 'lucide-react';
+import { MapPin, Skull, User, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -7,15 +7,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { useEntitySearch } from '@/hooks/useEntitySearch';
+import Input from '@/components/ui/input';
 
 interface GodModePaletteProps {
   onAction: (action: string) => void;
   onSearch: (query: string, type: 'monster' | 'spell' | 'character') => void;
+  searchResults?: { id: string; name: string; type: string; description?: string }[];
+  isLoading?: boolean;
 }
 
-export function GodModePalette({ onAction, onSearch }: GodModePaletteProps) {
+export function GodModePalette({ onAction, onSearch, searchResults = [], isLoading = false }: GodModePaletteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -62,11 +63,43 @@ export function GodModePalette({ onAction, onSearch }: GodModePaletteProps) {
               <Input
                 placeholder={tool.placeholder}
                 className="h-8 bg-midnight-950 border-midnight-800"
-                onChange={(e) => onSearch(e.target.value, 'monster')} // TODO: Map type dynamically
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setSearchTerm(e.target.value);
+                  onSearch(e.target.value, 'monster');
+                }}
               />
             </div>
-            {/* Results would go here */}
-            <DropdownMenuItem onClick={() => onAction(`${tool.actionPrefix} @Goat`)}>Example: Goat</DropdownMenuItem>
+            {/* Results */}
+            {isOpen && (
+              <div className="max-h-60 overflow-y-auto mt-2 space-y-1">
+                {isLoading ? (
+                  <div className="text-xs text-midnight-400 p-2">Searching...</div>
+                ) : searchResults && searchResults.length > 0 ? (
+                  searchResults.map((result) => (
+                    <DropdownMenuItem
+                      key={result.id}
+                      onClick={() => {
+                        // Construct precise tool call
+                        if (tool.actionPrefix === 'summon_entity') {
+                          onAction(`summon_entity(id="${result.id}")`); // Use ID!
+                        } else if (tool.actionPrefix === 'cast_spell') {
+                          onAction(`cast_spell(id="${result.id}")`);
+                        } else {
+                          onAction(`${tool.actionPrefix} @${result.name}`); // Fallback
+                        }
+                        setIsOpen(false);
+                      }}
+                      className="flex flex-col items-start cursor-pointer"
+                    >
+                      <span className="font-medium">{result.name}</span>
+                      {result.description && <span className="text-xs text-midnight-400">{result.description}</span>}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  searchTerm && <div className="text-xs text-midnight-500 p-2">No results found</div>
+                )}
+              </div>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ))}

@@ -25,7 +25,7 @@ export const TimeControls: React.FC = () => {
       goLive();
     } else {
       const frame = history[idx];
-      jumpToFrame((frame as any).documentId || frame.id);
+      jumpToFrame((frame as any)?.documentId || frame?.id);
     }
   };
 
