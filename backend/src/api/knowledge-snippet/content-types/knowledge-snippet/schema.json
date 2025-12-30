@@ -1,35 +1,35 @@
 {
-    "kind": "collectionType",
-    "collectionName": "knowledge_snippets",
-    "info": {
-        "singularName": "knowledge-snippet",
-        "pluralName": "knowledge-snippets",
-        "displayName": "Knowledge Snippet",
-        "description": "A chunk of knowledge derived from a source."
+  "kind": "collectionType",
+  "collectionName": "knowledge_snippets",
+  "info": {
+    "singularName": "knowledge-snippet",
+    "pluralName": "knowledge-snippets",
+    "displayName": "Knowledge Snippet",
+    "description": "A chunk of knowledge derived from a source."
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
     },
-    "options": {
-        "draftAndPublish": false
+    "content": {
+      "type": "richtext",
+      "required": true
     },
-    "pluginOptions": {},
-    "attributes": {
-        "title": {
-            "type": "string",
-            "required": true
-        },
-        "content": {
-            "type": "richtext",
-            "required": true
-        },
-        "source": {
-            "type": "relation",
-            "relation": "manyToOne",
-            "target": "api::knowledge-source.knowledge-source",
-            "inversedBy": "snippets",
-            "onDelete": "CASCADE"
-        },
-        "embedding": {
-            "type": "json",
-            "private": true
-        }
+    "source": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::knowledge-source.knowledge-source",
+      "inversedBy": "snippets",
+      "onDelete": "CASCADE"
+    },
+    "embedding": {
+      "type": "json",
+      "private": true
     }
+  }
 }

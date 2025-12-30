@@ -21,11 +21,7 @@
     },
     "senderType": {
       "type": "enumeration",
-      "enum": [
-        "dm",
-        "player",
-        "system"
-      ],
+      "enum": ["dm", "player", "system"],
       "default": "system"
     },
     "room": {

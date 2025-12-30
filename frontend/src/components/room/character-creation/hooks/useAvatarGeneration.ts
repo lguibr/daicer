@@ -3,7 +3,7 @@ import { GamePhase, type Room } from '@daicer/engine';
 import { generateAvatarPortrait, generateAvatarUpperBody, generateAvatarFullBody } from '../../../../services/api';
 import { buildAvatarPayload, appendReference, downscalePreviewImage } from '../avatarHelpers';
 import type { CharacterFormState } from '../types';
-import type { EquipmentItemData } from "../../../equipment/EquipmentItemCard";
+import type { EquipmentItemData } from '../../../equipment/EquipmentItemCard';
 import type { AvatarPreviewImage } from '../../../../types/assets';
 
 export function useAvatarGeneration(

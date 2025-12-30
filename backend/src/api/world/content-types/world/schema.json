@@ -1,112 +1,98 @@
 {
-    "kind": "collectionType",
-    "collectionName": "worlds",
-    "info": {
-        "singularName": "world",
-        "pluralName": "worlds",
-        "displayName": "World",
-        "description": "World configuration and generated lore"
+  "kind": "collectionType",
+  "collectionName": "worlds",
+  "info": {
+    "singularName": "world",
+    "pluralName": "worlds",
+    "displayName": "World",
+    "description": "World configuration and generated lore"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "room": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::room.room",
+      "inversedBy": "world"
     },
-    "options": {
-        "draftAndPublish": false
+    "name": {
+      "type": "string",
+      "default": "New World"
     },
-    "pluginOptions": {},
-    "attributes": {
-        "room": {
-            "type": "relation",
-            "relation": "oneToOne",
-            "target": "api::room.room",
-            "inversedBy": "world"
-        },
-        "name": {
-            "type": "string",
-            "default": "New World"
-        },
-        "description": {
-            "type": "richtext"
-        },
-        "history": {
-            "type": "richtext"
-        },
-        "worldBackground": {
-            "type": "richtext"
-        },
-        "seed": {
-            "type": "string"
-        },
-        "language": {
-            "type": "string",
-            "default": "en-US"
-        },
-        "chunkSize": {
-            "type": "integer",
-            "default": 32
-        },
-        "detail": {
-            "type": "integer",
-            "default": 4
-        },
-        "fogRadius": {
-            "type": "integer",
-            "default": 10
-        },
-        "globalScale": {
-            "type": "float"
-        },
-        "seaLevel": {
-            "type": "float"
-        },
-        "elevationScale": {
-            "type": "float"
-        },
-        "roughness": {
-            "type": "float"
-        },
-        "moistureScale": {
-            "type": "float"
-        },
-        "temperatureOffset": {
-            "type": "float"
-        },
-        "roadDensity": {
-            "type": "float"
-        },
-        "structureChance": {
-            "type": "float"
-        },
-        "structureSpacing": {
-            "type": "integer"
-        },
-        "structureSizeAvg": {
-            "type": "integer"
-        },
-        "worldSize": {
-            "type": "enumeration",
-            "enum": [
-                "intimate",
-                "small",
-                "medium",
-                "large",
-                "vast",
-                "epic"
-            ],
-            "default": "small"
-        },
-        "worldType": {
-            "type": "string",
-            "default": "terra"
-        },
-        "adventureLength": {
-            "type": "enumeration",
-            "enum": [
-                "flash",
-                "short",
-                "medium",
-                "long",
-                "epic",
-                "legendary"
-            ],
-            "default": "short"
-        },
+    "description": {
+      "type": "richtext"
+    },
+    "history": {
+      "type": "richtext"
+    },
+    "worldBackground": {
+      "type": "richtext"
+    },
+    "seed": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "default": "en-US"
+    },
+    "chunkSize": {
+      "type": "integer",
+      "default": 32
+    },
+    "detail": {
+      "type": "integer",
+      "default": 4
+    },
+    "fogRadius": {
+      "type": "integer",
+      "default": 10
+    },
+    "globalScale": {
+      "type": "float"
+    },
+    "seaLevel": {
+      "type": "float"
+    },
+    "elevationScale": {
+      "type": "float"
+    },
+    "roughness": {
+      "type": "float"
+    },
+    "moistureScale": {
+      "type": "float"
+    },
+    "temperatureOffset": {
+      "type": "float"
+    },
+    "roadDensity": {
+      "type": "float"
+    },
+    "structureChance": {
+      "type": "float"
+    },
+    "structureSpacing": {
+      "type": "integer"
+    },
+    "structureSizeAvg": {
+      "type": "integer"
+    },
+    "worldSize": {
+      "type": "enumeration",
+      "enum": ["intimate", "small", "medium", "large", "vast", "epic"],
+      "default": "small"
+    },
+    "worldType": {
+      "type": "string",
+      "default": "terra"
+    },
+    "adventureLength": {
+      "type": "enumeration",
+      "enum": ["flash", "short", "medium", "long", "epic", "legendary"],
+      "default": "short"
     }
+  }
 }

@@ -1,75 +1,61 @@
 {
-    "kind": "collectionType",
-    "collectionName": "dm_settings",
-    "info": {
-        "singularName": "dm-setting",
-        "pluralName": "dm-settings",
-        "displayName": "DM Setting",
-        "description": "Narrative and Game Style settings for the DM AI"
+  "kind": "collectionType",
+  "collectionName": "dm_settings",
+  "info": {
+    "singularName": "dm-setting",
+    "pluralName": "dm-settings",
+    "displayName": "DM Setting",
+    "description": "Narrative and Game Style settings for the DM AI"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "dmStyle": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.dm-style"
     },
-    "options": {
-        "draftAndPublish": false
+    "dmSystemPrompt": {
+      "type": "text"
     },
-    "pluginOptions": {},
-    "attributes": {
-        "dmStyle": {
-            "type": "component",
-            "repeatable": false,
-            "component": "game.dm-style"
-        },
-        "dmSystemPrompt": {
-            "type": "text"
-        },
-        "difficulty": {
-            "type": "enumeration",
-            "enum": [
-                "storyteller",
-                "easy",
-                "medium",
-                "challenging",
-                "gritty",
-                "deadly"
-            ],
-            "default": "easy"
-        },
-        "adventureLength": {
-            "type": "enumeration",
-            "enum": [
-                "flash",
-                "short",
-                "medium",
-                "long",
-                "epic",
-                "legendary"
-            ],
-            "default": "short"
-        },
-        "theme": {
-            "type": "string"
-        },
-        "setting": {
-            "type": "string"
-        },
-        "tone": {
-            "type": "string"
-        },
-        "playerCount": {
-            "type": "integer",
-            "default": 4
-        },
-        "startingLevel": {
-            "type": "integer",
-            "default": 1
-        },
-        "attributePointBudget": {
-            "type": "integer",
-            "default": 27
-        },
-        "room": {
-            "type": "relation",
-            "relation": "oneToOne",
-            "target": "api::room.room",
-            "inversedBy": "dmSettings"
-        }
+    "difficulty": {
+      "type": "enumeration",
+      "enum": ["storyteller", "easy", "medium", "challenging", "gritty", "deadly"],
+      "default": "easy"
+    },
+    "adventureLength": {
+      "type": "enumeration",
+      "enum": ["flash", "short", "medium", "long", "epic", "legendary"],
+      "default": "short"
+    },
+    "theme": {
+      "type": "string"
+    },
+    "setting": {
+      "type": "string"
+    },
+    "tone": {
+      "type": "string"
+    },
+    "playerCount": {
+      "type": "integer",
+      "default": 4
+    },
+    "startingLevel": {
+      "type": "integer",
+      "default": 1
+    },
+    "attributePointBudget": {
+      "type": "integer",
+      "default": 27
+    },
+    "room": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::room.room",
+      "inversedBy": "dmSettings"
     }
+  }
 }

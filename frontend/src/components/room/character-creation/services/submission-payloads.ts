@@ -84,7 +84,6 @@ export const submitCharacter = async (
   onAssetCreated: any,
   _onCharacterCreated: any,
 
-   
   _effectiveLevel: number
 ) => {
   // if (assetMode) { ... } logic removed as we no longer create assets this way.
