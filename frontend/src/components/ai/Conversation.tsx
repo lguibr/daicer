@@ -149,26 +149,18 @@ export function ConversationScrollButton({ className }: ConversationScrollButton
     <div className={cn('absolute bottom-4 right-4 z-10', className)}>
       <Button
         onClick={handleClick}
-        variant="default"
-        size="sm"
+        variant="outline"
+        size="icon"
         className={cn(
-          'flex items-center gap-2 shadow-lg',
-          'bg-gradient-to-r from-aurora-500 to-nebula-500',
-          'hover:from-aurora-400 hover:to-nebula-400',
-          'border border-aurora-400/30',
-          'backdrop-blur-sm'
+          'h-8 w-8 rounded-full shadow-lg',
+          'bg-midnight-800 border-aurora-500/30 text-aurora-400',
+          'hover:bg-midnight-700 hover:text-aurora-300 hover:border-aurora-400/50',
+          'backdrop-blur-sm transition-all duration-300 animate-in fade-in zoom-in'
         )}
       >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
         </svg>
-        <span className="text-xs font-semibold">New messages</span>
       </Button>
     </div>
   );

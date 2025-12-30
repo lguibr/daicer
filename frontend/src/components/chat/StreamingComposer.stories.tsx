@@ -3,7 +3,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-// eslint-disable-next-line import/no-extraneous-dependencies
+ 
 // @ts-ignore
 import { action } from '@storybook/addon-actions';
 import StreamingComposer from './StreamingComposer';

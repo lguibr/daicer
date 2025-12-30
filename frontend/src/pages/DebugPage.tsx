@@ -57,7 +57,7 @@ export default function DebugPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-midnight-950 text-shadow-100 font-sans">
+    <div className="flex flex-col h-[100dvh] w-full bg-midnight-950 text-shadow-100 font-sans">
       <Navbar />
 
       <div className="flex px-6 py-2 border-b border-midnight-800 bg-midnight-900/50 backdrop-blur">

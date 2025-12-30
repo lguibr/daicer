@@ -2,7 +2,7 @@
  * Game Controller
  */
 
-import { factories } from '@strapi/strapi';
+import type { WorldSettings, Language } from '@daicer/engine';
 
 export default ({ strapi }) => ({
   async generateWorld(ctx) {
@@ -72,7 +72,7 @@ export default ({ strapi }) => ({
       if (!roomId) return ctx.badRequest('Room ID required');
 
       // Robust Room Lookup
-      const filters: { [key: string]: any }[] = [{ documentId: roomId }, { roomId: roomId }];
+      const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }];
       if (!isNaN(Number(roomId))) {
         filters.push({ id: Number(roomId) });
       }
@@ -84,7 +84,7 @@ export default ({ strapi }) => ({
       });
 
       if (!rooms || rooms.length === 0) return ctx.notFound('Room not found');
-      const room: { [key: string]: any } = rooms[0];
+      const room: Record<string, unknown> = rooms[0] as Record<string, unknown>;
 
       // We need "players", "messages", "creatures" to process turn
       // Currently Room schema has "players" as JSON.
@@ -116,9 +116,9 @@ export default ({ strapi }) => ({
         messages || [],
         players,
         creatures,
-        room.settings?.language || 'en',
-        room.settings,
-        room.worldConditions
+        (room.settings as { language: Language })?.language || 'en',
+        room.settings as WorldSettings,
+        room.worldConditions as unknown[]
       );
 
       return ctx.send(result);

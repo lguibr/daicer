@@ -114,6 +114,20 @@ export async function getRoomState(roomId: string): Promise<Room> {
     mappedRoom = {
       ...(r as unknown as Record<string, unknown>), // Cast to avoid strict type mismatch with partial GraphQL response
       players: mappedPlayers,
+      // Map character_sheets (from REST/GraphQL) to generic entities
+      // @ts-ignore
+      entities: (r.character_sheets || []).map((s: any) => ({
+        id: s.documentId,
+        name: s.name,
+        type: s.type || 'monster',
+        position: s.position || { x: 0, y: 0, z: 0 },
+        speed: s.speed || 30,
+        currentHp: s.currentHp,
+        maxHp: s.maxHp,
+        visionRadius: 10, // Default
+        color: s.type === 'player' ? '#4ade80' : '#f87171',
+        exploredTiles: new Set<string>(),
+      })),
     } as unknown as Room;
   }
 

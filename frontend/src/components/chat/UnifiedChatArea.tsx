@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/i18n';
-import { MentionDropdown } from './MentionDropdown';
 import { searchEntities } from '@/services/api';
-import { useState, useRef, useEffect } from 'react';
 import {
   Conversation,
   ConversationContent,
@@ -22,6 +20,7 @@ import {
   ActionRegenerate,
   Response,
 } from '@/components/ai';
+import { MentionDropdown } from './MentionDropdown';
 import DiceRollCard from './DiceRollCard';
 import ToolCallCard from './ToolCallCard';
 
@@ -56,9 +55,24 @@ export function UnifiedChatArea({
   worldDescription,
   dmPresence,
   hideInput = false,
-}: UnifiedChatProps) {
+  hideHeader = false,
+  ...props
+}: UnifiedChatProps & {
+  hideHeader?: boolean;
+  activeCommand?: { label: string; name: string };
+  onClearCommand?: () => void;
+}) {
+  // Start of body
   const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Mention State ... (lines 64-149 preserved implicitly by range, but I need to match StartLine carefully)
+  // Logic: I will only replace the props destructuring and the header render block.
+  // Actually, simpler to just replace the header block if I can access props.
+  // But props are destructured in function signature. I need to update signature too.
+
+  // Let's do partial replacements.
+  // 1. Update Props Interface and Destructuring
 
   // Mention State
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -127,9 +141,10 @@ export function UnifiedChatArea({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isProcessing) return;
+    // @ts-ignore
+    if ((!inputValue.trim() && !props.activeCommand) || isProcessing) return;
     const msg = inputValue.trim();
-    onInputChange('');
+    onInputChange(''); // Clear only text input, command is cleared by parent after send
     await onSendMessage(msg);
   };
 
@@ -147,7 +162,7 @@ export function UnifiedChatArea({
       />
 
       {/* Debug Header */}
-      {isDebugMode && (
+      {isDebugMode && !hideHeader && (
         <div className="p-3 border-b border-aurora-500/20 bg-midnight-900 flex items-center gap-2 shadow-sm z-10 shrink-0">
           <Sparkles className="w-4 h-4 text-aurora-400" />
           <h3 className="text-xs font-bold text-aurora-300 uppercase tracking-wider">God Mode Interface</h3>
@@ -318,25 +333,69 @@ export function UnifiedChatArea({
       </div>
 
       {/* Input Area */}
+      {/* Input Area */}
       {!hideInput && (
         <form
           onSubmit={handleSubmit}
           className="p-3 bg-midnight-900 border-t border-midnight-800 flex gap-2 z-10 shrink-0"
         >
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => handleLocalInputChange(e.target.value)}
-            placeholder={placeholder || (isDebugMode ? 'Command the world...' : t('gameplay.placeholder'))}
-            className="flex-1 bg-midnight-950 border border-midnight-700 rounded-xl px-4 py-3 text-sm text-shadow-100 focus:outline-none focus:border-aurora-500/50 focus:ring-1 focus:ring-aurora-500/20 transition-all placeholder:text-midnight-600"
-            disabled={isProcessing}
-          />
+          <div className="flex-1 flex items-center gap-2 bg-midnight-950 border border-midnight-700 rounded-xl px-4 py-3 focus-within:border-aurora-500/50 focus-within:ring-1 focus-within:ring-aurora-500/20 transition-all">
+            {/* Active Command Tag */}
+            {/* @ts-ignore */}
+            {props.activeCommand && (
+              <div className="flex items-center gap-1.5 bg-aurora-500/10 border border-aurora-500/30 rounded-md pl-2 pr-1 py-0.5 shrink-0 animate-in fade-in zoom-in-95 duration-200">
+                <span className="text-xs font-bold text-aurora-300 uppercase tracking-wide">
+                  {/* @ts-ignore */}
+                  {props.activeCommand.label}:
+                </span>
+                <span className="text-sm font-medium text-aurora-100">
+                  {/* @ts-ignore */}
+                  {props.activeCommand.name}
+                </span>
+                <button
+                  type="button"
+                  // @ts-ignore
+                  onClick={props.onClearCommand}
+                  className="ml-1 p-0.5 rounded-full hover:bg-aurora-500/20 text-aurora-400 hover:text-aurora-200 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => {
+                // If backspace on empty input with active command, clear command?
+                // Hard to detect backspace specifically in onChange without onKeyDown.
+                // Let's keep it simple: input handles text.
+                handleLocalInputChange(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Backspace' && !inputValue && props.activeCommand && props.onClearCommand) {
+                  // @ts-ignore
+                  props.onClearCommand();
+                }
+              }}
+              placeholder={
+                props.activeCommand
+                  ? "Add details (e.g. 'with 50 HP')..."
+                  : placeholder || (isDebugMode ? 'Command the world...' : t('gameplay.placeholder'))
+              }
+              className="flex-1 bg-transparent border-none p-0 text-sm text-shadow-100 focus:outline-none placeholder:text-midnight-600 min-w-[50px]"
+              disabled={isProcessing}
+            />
+          </div>
+
           <Button
             type="submit"
             size="icon"
-            disabled={isProcessing || !inputValue.trim()}
-            className="h-full aspect-square bg-aurora-600 hover:bg-aurora-500 text-white rounded-xl shadow-lg shadow-aurora-900/20 transition-all active:scale-95"
+            disabled={isProcessing || (!inputValue.trim() && !props.activeCommand)}
+            className="h-full aspect-square bg-aurora-600 hover:bg-aurora-500 text-white rounded-xl shadow-lg shadow-aurora-900/20 transition-all active:scale-95 shrink-0"
           >
             <Send className="w-5 h-5" />
           </Button>

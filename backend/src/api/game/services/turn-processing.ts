@@ -47,9 +47,7 @@ export default ({ strapi }) => ({
       })
       .filter((a) => a !== null);
 
-    const actionResult = await strapi
-      .service('api::game.turn-processing')
-      .executeDeterministicTurn(roomId, deterministicActions);
+    await strapi.service('api::game.turn-processing').executeDeterministicTurn(roomId, deterministicActions);
 
     // 3. Generate Map Image with NEW State
     let mapImage: Buffer | undefined;
@@ -221,11 +219,11 @@ export default ({ strapi }) => ({
     const movedEntityIds = new Set<string>();
 
     const allEntities = [
-      ...(room.character_sheets || []).map((s: any) => ({
+      ...(room.character_sheets || []).map((s: Record<string, unknown>) => ({
         id: s.documentId || s.id,
         pos: s.position,
       })),
-      ...(room.creatures || []).map((c: any) => ({
+      ...(room.creatures || []).map((c: Record<string, unknown>) => ({
         id: c.documentId || c.id,
         pos: c.position,
       })),

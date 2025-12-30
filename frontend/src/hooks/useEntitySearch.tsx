@@ -15,18 +15,15 @@ export function useEntitySearch() {
 
   const search = useCallback(
     debounce(async (query: string, type: 'monster' | 'spell' | 'character') => {
-      if (!query.trim()) {
-        setResults([]);
-        return;
-      }
-
+      // If query is empty, we still want to fetch defaults (e.g. recent or popular)
+      // Passing empty string to backend search APIs should return a limited list of defaults
       setLoading(true);
       try {
         let data: unknown;
         if (type === 'monster') {
-          data = await searchMonsters(query);
+          data = await searchMonsters(query || ''); // Ensure backend handles empty string
         } else if (type === 'spell') {
-          data = await searchSpells(query);
+          data = await searchSpells(query || '');
         }
 
         setResults(data as SearchResult[]);

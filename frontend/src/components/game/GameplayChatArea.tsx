@@ -116,7 +116,7 @@ export default function GameplayChatArea({
       mode="game"
       worldDescription={worldDescription}
       dmPresence={dmPresence}
-      hideInput={true}
+      hideInput
     />
   );
 }

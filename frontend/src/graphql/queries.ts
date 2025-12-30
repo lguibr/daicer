@@ -7,6 +7,19 @@ export const GET_ROOM_QUERY = gql`
       roomId
       code
       phase
+      character_sheets {
+        documentId
+        name
+        type
+        position {
+          x
+          y
+          z
+        }
+        currentHp
+        maxHp
+        speed
+      }
       players {
         id
         name
@@ -198,9 +211,7 @@ export const LIST_SPELLS_QUERY = gql`
       documentId
       name
       level
-      school {
-        name
-      }
+      school
     }
   }
 `;

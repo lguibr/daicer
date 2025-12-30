@@ -184,7 +184,6 @@ export default ({ strapi }) => ({
   // --- Orchestration ---
 
   async startGame(roomId: string, language: Language = 'en') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }, { code: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
@@ -386,9 +385,17 @@ export default ({ strapi }) => ({
   async getRoom(roomId: string) {
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: { $or: [{ roomId }, { documentId: roomId }, { code: roomId }] },
-      populate: ['players', 'players.character', 'players.characterSheet'],
+      populate: ['players', 'players.character', 'players.characterSheet', 'character_sheets'],
     });
-    return rooms[0];
+
+    if (!rooms || rooms.length === 0) return null;
+
+    const room = rooms[0];
+
+    // Explicitly format/map if needed, or return raw.
+    // Frontend `getRoomState` in api.ts expects raw and maps it?
+    // If I return raw 'character_sheets', frontend api.ts needs to map it to 'entities'.
+    return room;
   },
   async executeEngineAction(roomId: string, actions: unknown[], user: unknown) {
     return strapi.service('api::game.turn-processing').executeDeterministicTurn(roomId, actions, user);

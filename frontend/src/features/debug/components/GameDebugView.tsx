@@ -2,10 +2,13 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import clsx from 'clsx';
 import useSocket from '@/hooks/useSocket';
 import { useChunkLoader } from '@/hooks/useChunkLoader';
-import type { WorldConfig as OldWorldConfig, Coordinates } from '../utils/types';
 import { TimeFrameProvider, useTimeFrame } from '@/contexts/TimeFrameContext'; // Added Provider
+import { getRoomState } from '@/services/api';
+import type { WorldConfig as OldWorldConfig, Coordinates } from '../utils/types';
 import { GodModeChat, type GodModeMessage } from './GodModeChat'; // New Chat Component
 import { TimeControls } from './TimeControls';
+
+import { MapRenderer } from './MapRenderer';
 
 // Default config
 const DEFAULT_CONFIG: OldWorldConfig = {
@@ -41,9 +44,6 @@ interface DebugEntity {
 interface GameDebugViewProps {
   roomId: string;
 }
-
-import { MapRenderer } from './MapRenderer';
-import { getRoomState } from '@/services/api';
 
 export function GameDebugView({ roomId }: GameDebugViewProps) {
   const [room, setRoom] = useState<any>(null);
@@ -107,14 +107,18 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
     let sourceData: any[] = [];
 
     if (isLive) {
-      sourceData = socketCreatures || [];
+      if (socketCreatures && socketCreatures.length > 0) {
+        sourceData = socketCreatures;
+      } else if (room && room.entities) {
+        sourceData = room.entities;
+      }
     } else if (currentTimeFrame && currentTimeFrame.gameState && (currentTimeFrame.gameState as any).entities) {
       sourceData = (currentTimeFrame.gameState as any).entities;
     }
 
     if (sourceData) {
-      setEntities((_prev) => {
-        return sourceData.map((c: any) => ({
+      setEntities((_prev) =>
+        sourceData.map((c: any) => ({
           id: c.id || c.documentId,
           name: c.name,
           type: c.type || 'monster',
@@ -127,8 +131,8 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
           pendingPath: undefined,
           currentHp: c.currentHp,
           maxHp: c.maxHp,
-        }));
-      });
+        }))
+      );
     }
   }, [socketCreatures, currentTimeFrame, isLive]);
 
@@ -408,15 +412,15 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
 
   // --- 3-COLUMN LAYOUT ---
   return (
-    <div className="flex-1 flex flex-col overflow-hidden h-screen w-full bg-black">
+    <div className="flex-1 flex flex-col overflow-hidden h-full w-full bg-black">
       {/* 2. MAIN 3-COLUMN AREA */}
       <div className="flex-1 flex min-h-0">
-        {/* COLUMN 1: CHAT (Left) - Fixed Width */}
-        <div className="w-[400px] flex-shrink-0 bg-midnight-950 border-r border-midnight-800 flex flex-col z-10 shadow-2xl">
+        {/* COLUMN 1: CHAT (Left) - 1/3 Width */}
+        <div className="flex-1 min-w-0 flex-shrink-0 bg-midnight-950 border-r border-midnight-800 flex flex-col z-10 shadow-2xl">
           <div className="p-3 bg-midnight-900 border-b border-midnight-800 font-bold text-xs uppercase tracking-wider text-shadow-300">
             CHAT / LOG
           </div>
-          <div className="flex-1 min-h-0 p-4">
+          <div className="flex-1 min-h-0 relative">
             <GodModeChat
               messages={chatMessages}
               onSendMessage={handleGodModeCommand}
@@ -427,8 +431,8 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
           </div>
         </div>
 
-        {/* COLUMN 2: INSPECTOR (Middle) - Resizeable or Fixed? Fixed for now */}
-        <div className="w-[300px] flex-shrink-0 bg-midnight-900 border-r border-midnight-800 flex flex-col z-10">
+        {/* COLUMN 2: INSPECTOR (Middle) - 1/3 Width */}
+        <div className="flex-1 min-w-0 flex-shrink-0 bg-midnight-900 border-r border-midnight-800 flex flex-col z-10">
           <div className="p-3 bg-midnight-900 border-b border-midnight-800 font-bold text-xs uppercase tracking-wider text-shadow-300 flex justify-between">
             <span>INSPECTOR ({entities.length})</span>
             {!isLive && <span className="text-cyan-400">HISTORICAL</span>}
@@ -478,8 +482,8 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
           </div>
         </div>
 
-        {/* COLUMN 3: MAP (Right) - Fills remaining space */}
-        <div className="flex-1 relative bg-black flex flex-col min-w-0" ref={mapRef}>
+        {/* COLUMN 3: MAP (Right) - 1/3 Width */}
+        <div className="flex-1 min-w-0 relative bg-black flex flex-col" ref={mapRef}>
           {/* Top Bar Overlays */}
           <div className="absolute top-4 left-4 right-4 flex justify-between z-20 pointer-events-none">
             {/* Left: Turn Info (Placeholder if needed, or just connection status) */}

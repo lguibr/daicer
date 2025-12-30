@@ -11,6 +11,7 @@ interface LogoProps {
   shakeMinInterval?: number;
   shakeMaxInterval?: number;
   shakeDuration?: number;
+  noShadow?: boolean;
 }
 
 const sizeClasses = {
@@ -40,6 +41,7 @@ export default function Logo({
   shakeMinInterval = 8,
   shakeMaxInterval = 25,
   shakeDuration = 600,
+  noShadow = false,
 }: LogoProps) {
   const [isShaking, setIsShaking] = useState(false);
 
@@ -69,7 +71,8 @@ export default function Logo({
   const containerClasses = cn('relative inline-block', sizeClasses[size], onClick && 'cursor-pointer group', className);
 
   const imageClasses = cn(
-    'h-full w-full rounded-full object-cover shadow-[0_10px_25px_rgba(4,7,12,0.45)] transition-transform duration-300',
+    'h-full w-full rounded-full object-cover transition-transform duration-300',
+    !noShadow && 'shadow-[0_10px_25px_rgba(4,7,12,0.45)]',
     onClick && 'group-hover:scale-105',
     isShaking && intensityClasses[shakeIntensity]
   );

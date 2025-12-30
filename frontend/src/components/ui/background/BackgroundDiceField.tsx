@@ -221,7 +221,7 @@ function Scene() {
       <pointLight position={[-10, 0, -10]} intensity={1} color="#7a49d9" />
 
       {diceConfig.map((props, i) => (
-        // eslint-disable-next-line react/no-array-index-key
+         
         <FallingDie key={i} {...props} />
       ))}
 
