@@ -95,7 +95,7 @@ export function UnifiedChatArea({
     const match = val.match(/(?:^|\s)@(\w*)$/);
     if (match) {
       const query = match[1];
-      setMentionQuery(query);
+      setMentionQuery(query || '');
 
       // Calculate position (simple approximation: above input)
       if (inputRef.current) {

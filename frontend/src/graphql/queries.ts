@@ -105,7 +105,14 @@ export const GET_ROOM_QUERY = gql`
         type
         characterSnapshots
         actions
+        actions
         createdAt
+      }
+      timeFrames(sort: "turnNumber:asc", pagination: { limit: 100 }) {
+        documentId
+        turnNumber
+        timestamp
+        gameState
       }
       owner {
         documentId

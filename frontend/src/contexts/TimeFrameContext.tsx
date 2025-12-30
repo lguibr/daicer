@@ -20,16 +20,20 @@ export const TimeFrameProvider: React.FC<{
   const [history, setHistory] = useState<TimeFrame[]>([]);
 
   useEffect(() => {
-    if (room?.timeFrames) {
-      setHistory((room.timeFrames || []).sort((a: TimeFrame, b: TimeFrame) => a.turnNumber - b.turnNumber));
+    // If room has timeFrames populated from GraphQL, use them as history
+    if (room && 'timeFrames' in room && Array.isArray((room as any).timeFrames)) {
+      const backendHistory = (room as any).timeFrames;
+      // Sort by turn number
+      const sorted = [...backendHistory].sort((a: any, b: any) => a.turnNumber - b.turnNumber);
+      setHistory(sorted);
     }
-  }, [room?.timeFrames]);
+  }, [room]);
 
   const currentTimeFrame = localFrameId
-    ? history.find((f) => f.id === localFrameId) || null
+    ? history.find((f) => f.id === localFrameId || (f as any).documentId === localFrameId) || null
     : history[history.length - 1] || null;
 
-  const isLive = !localFrameId; // If no local override, we are "live" tracking room state
+  const isLive = !localFrameId;
 
   const jumpToFrame = (frameId: string) => {
     setLocalFrameId(frameId);

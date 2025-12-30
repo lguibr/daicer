@@ -2,240 +2,333 @@
  * narrator service
  */
 
-import { getFlashModel } from '../../../utils/llm/gemini';
-import { SystemMessage, HumanMessage, AIMessage, BaseMessage, ToolMessage } from '@langchain/core/messages';
+import { getGeminiModel } from '../../../utils/llm/gemini';
+import { GeminiModel } from '../../../utils/llm/types';
+import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { getRegistryTools } from './tool-registry';
 import { streamManager } from '../../../utils/llm/stream-manager';
+import { NarratorResponse } from './schemas';
+import { createAgent, todoListMiddleware, llmToolSelectorMiddleware } from 'langchain';
+import { StrapiInterface } from '../../../ai/tools/tool-factory';
+
+const safeParseJson = (str: string) => {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return str;
+  }
+};
 
 interface NarratorInput {
-  roomId: string; // DocumentID
+  roomId: string; // DocumentID or unique ID
   input: string;
   mode?: 'debug' | 'game';
   userId?: string; // DocumentID
 }
 
-interface Strapi {
-  documents: (uid: string) => {
-    findOne: (params: unknown) => Promise<any>;
-    findMany: (params: unknown) => Promise<any[]>;
-    create: (params: unknown) => Promise<any>;
-    update: (params: unknown) => Promise<any>;
-  };
-  log: {
-    info: (msg: string) => void;
-    warn: (msg: string, ...args: any[]) => void;
-    error: (msg: string, ...args: any[]) => void;
-  };
+interface CharacterSheet {
+  documentId: string;
+  name: string;
+  type: string;
+  position: { x: number; y: number; z: number };
+  stats: Record<string, unknown>;
+  currentHp: number;
+  maxHp: number;
 }
 
-export default ({ strapi }: { strapi: Strapi }) => ({
+export default ({ strapi }: { strapi: StrapiInterface }) => ({
   async processAction({ roomId, input, mode, userId }: NarratorInput) {
-    // Determine user via userId if provided (passed from controller)
-    let senderName = 'Player';
-    // let userDocumentId = null;
+    strapi.log.info(`[Narrator] Processing action in room ${roomId} (mode: ${mode})`);
 
+    // ---------------------------------------------------------
+    // 0. Resolve User & Room (Fail Fast)
+    // ---------------------------------------------------------
+    let senderName = 'Player';
     if (userId) {
-      // Attempt to fetch user to get name
-      try {
-        const user = await strapi.documents('plugin::users-permissions.user').findOne({ documentId: userId });
-        if (user) {
-          senderName = user.username || 'Player';
-          // userDocumentId = user.documentId;
-        }
-      } catch (e) {
-        console.warn('Failed to fetch user for narrator action', e);
-      }
+      const user = await strapi.documents('plugin::users-permissions.user').findOne({ documentId: userId });
+      if (user?.username) senderName = user.username;
     }
 
-    // 0. Find the Room (needed for relation)
-    // Support both Strapi documentId and custom roomId (UUID)
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: {
-        $or: [
-          { documentId: roomId },
-          { roomId: roomId }, // Custom field
-        ],
+        $or: [{ documentId: roomId }, { roomId: roomId }],
       },
+      populate: ['character_sheets'],
     });
     const room = rooms[0];
     if (!room) throw new Error(`Room not found for ID: ${roomId}`);
 
-    // 1. Persist & Broadcast User Message
-    const userMessageData = {
-      content: input,
-      senderName: senderName,
-      senderType: 'player',
-      room: room.documentId, // Use resolved documentId
-      timestamp: Date.now(),
-    };
+    // ---------------------------------------------------------
+    // 1. Persist User Message
+    // ---------------------------------------------------------
+    let activeTurnId = null;
+    const turns = await strapi.documents('api::turn.turn').findMany({
+      filters: { room: { documentId: room.documentId } },
+      sort: 'turnNumber:desc',
+      limit: 1,
+    });
+    if (turns?.[0]) activeTurnId = turns[0].documentId;
 
     const savedUserMessage = await strapi.documents('api::message.message').create({
-      data: userMessageData,
+      data: {
+        content: input,
+        senderName: senderName,
+        senderType: 'player',
+        room: room.documentId,
+        timestamp: Date.now(),
+        turn: activeTurnId,
+      },
       status: 'published',
     });
 
     streamManager.broadcast(room.documentId, 'message:new', {
-      // Broadcast using resolved ID? Usually roomId (UUID) is used for socket rooms...
-      // check stream-manager. Actually streamManager uses 'room:${roomId}' usually.
-      // If roomId input is UUID, that's likely the socket room name.
-      // If roomId input is documentId, that's also valid.
-      // Let's stick to input roomId for broadcast if that's what the frontend joined.
-      // But for DB relation, use room.documentId.
       ...savedUserMessage,
       id: savedUserMessage.documentId,
     });
 
-    // 2. Initialize LLM
-    const llm = getFlashModel();
-
-    // 3. Setup Tools
+    // ---------------------------------------------------------
+    // 2. Setup Agent & Executor
+    // ---------------------------------------------------------
+    const llm = getGeminiModel(GeminiModel.PRO, { temperature: 0.4 });
     const tools = getRegistryTools(strapi, room.documentId, mode);
-    // Explicitly bind tools. Langchain's bindTools returns a Runnable.
-    const llmWithTools = llm.bindTools(tools);
+    const promptKey = mode === 'debug' ? 'narrator_debug' : 'narrator_dm';
 
-    // 4. Construct Context
+    // Load Prompt - Fail silently to default if missing, but log error
+    let systemPromptText = `You are the DEBUG CONTROLLER.`;
+    try {
+      const prompts = await strapi.documents('api::prompt.prompt').findMany({
+        filters: { key: promptKey },
+      });
+      if (prompts.length > 0) {
+        systemPromptText = prompts[0].text;
+      }
+    } catch (e) {
+      strapi.log.error('Failed to load prompt from DB', e);
+    }
+
     const toolNames = tools.map((t) => t.name).join(', ');
-    const systemPrompt =
-      mode === 'debug'
-        ? `You are the DEBUG CONTROLLER. The user (${senderName}) is a developer/admin.
-         You have access to the following tools: ${toolNames}.
-         1. If the user asks to summon, move, or inspect, USE THE TOOLS.
-         2. DO NOT return raw JSON or 'functionCall' text.
-         3. If you use a tool, do NOT describe the tool call structure, just output the result.
-         4. If no tool matches, say "I don't have a tool for that."
-         5. The 'get_current_room' tool does not exist. Do not call it.`
-        : `You are the DUNGEON MASTER. The user (${senderName}) is a player in your D&D world. 
-         Your goal is to narrate the result of their actions.
-         Tools available: ${toolNames}.
-         1. Check if the action requires a tool.
-         2. Call the tool if needed.
-         3. Narrate the outcome based on the tool result.`;
+    systemPromptText = systemPromptText.replace('{senderName}', senderName).replace('{toolNames}', toolNames);
 
-    const messages: BaseMessage[] = [new SystemMessage(systemPrompt), new HumanMessage(input)];
+    const agent = await createAgent({
+      model: llm,
+      tools: tools,
 
-    // 5. Run Agent Loop
-    const response = (await llmWithTools.invoke(messages)) as AIMessage;
+      systemPrompt: systemPromptText,
+      middleware: [
+        todoListMiddleware(),
+        llmToolSelectorMiddleware({
+          model: llm,
+          maxTools: 5,
+        }),
+      ],
+    });
 
-    // 6. Handle Tool Calls
-    let finalContent = response.content;
-    const generatedImages: string[] = [];
+    // ---------------------------------------------------------
+    // 3. Execution
+    // ---------------------------------------------------------
+    let finalNarratorResponse: NarratorResponse;
     let shouldBroadcastEntities = false;
+    let outputText = '';
 
-    strapi.log.info(`[Narrator] LLM Response Content Type: ${typeof response.content}`);
-    strapi.log.info(`[Narrator] LLM Tool Calls: ${response.tool_calls?.length || 0}`);
+    try {
+      const result = await agent.invoke({
+        messages: [new HumanMessage(input)],
+      });
 
-    if (response.tool_calls && response.tool_calls.length > 0) {
-      // Add the AI's response (with tool calls) to history
-      messages.push(response);
+      const lastMessage =
+        result.messages && result.messages.length > 0 ? result.messages[result.messages.length - 1] : null;
 
-      for (const toolCall of response.tool_calls) {
-        const tool = tools.find((t) => t.name === toolCall.name);
-
-        if (!tool) {
-          strapi.log.warn(`[Narrator] Skipping hallucinated tool: ${toolCall.name}`);
-          messages.push(
-            new ToolMessage({
-              content: `Tool "${toolCall.name}" does not exist. Available tools: ${toolNames}`,
-              tool_call_id: toolCall.id!,
-              name: toolCall.name,
-            })
-          );
-          continue;
-        }
-
-        strapi.log.info(`[Narrator] Executing Tool: ${tool.name}`);
-        let toolResultRaw;
-        try {
-          toolResultRaw = await tool.invoke(toolCall.args);
-        } catch (e) {
-          toolResultRaw = `Error executing tool: ${e.message}`;
-        }
-
-        if (tool.name === 'summon_entity' || tool.name === 'move_entity') {
-          shouldBroadcastEntities = true;
-        }
-
-        let toolResultContent = typeof toolResultRaw === 'string' ? toolResultRaw : JSON.stringify(toolResultRaw);
-
-        // Check for structured image output
-        try {
-          const parsed = JSON.parse(toolResultContent);
-          if (parsed && parsed.type === 'image' && parsed.base64) {
-            generatedImages.push(parsed.base64);
-            toolResultContent = parsed.description || 'Image generated successfully.';
-          }
-        } catch (e) {
-          // Not JSON
-        }
-
-        messages.push(
-          new ToolMessage({
-            content: toolResultContent,
-            tool_call_id: toolCall.id!,
-            name: toolCall.name,
-          })
-        );
+      if (lastMessage?.content) {
+        outputText =
+          typeof lastMessage.content === 'string' ? lastMessage.content : JSON.stringify(lastMessage.content);
+      } else {
+        outputText = 'I have completed the task.';
       }
 
-      // Final generation after tools
-      const finalResponse = await llm.invoke(messages);
-      finalContent = finalResponse.content;
-
-      // Broadcast entities if needed
-      if (shouldBroadcastEntities) {
-        try {
-          const updatedRoom = await strapi.documents('api::room.room').findOne({
-            documentId: room.documentId,
-            populate: ['character_sheets'],
-          });
-
-          if (updatedRoom && updatedRoom.character_sheets) {
-            const entitiesUpdate = updatedRoom.character_sheets.map((cs: any) => ({
-              id: cs.documentId,
-              name: cs.name,
-              type: cs.type,
-              position: cs.position,
-              stats: cs.stats,
-              currentHp: cs.currentHp,
-              maxHp: cs.maxHp,
-            }));
-
-            try {
-              // DEBUG: Write to a file to verify execution and data
-              const fs = await import('fs');
-              const path = await import('path');
-              const logPath = path.join(process.cwd(), 'debug_narrator_broadcast.log');
-
-              const logMsg = `
-[${new Date().toISOString()}] Broadcasting to room ${updatedRoom.roomId} (docId: ${updatedRoom.documentId})
-Entities Count: ${entitiesUpdate.length}
-Payload Start: ${JSON.stringify(entitiesUpdate[0] || {})}
-------------------------------------------------------------------
-`;
-              fs.appendFileSync(logPath, logMsg);
-            } catch (err) {
-              console.error('Failed to write debug log', err);
-            }
-
-            strapi.log.info(
-              `[Narrator] Broadcasting entities:update to room ${updatedRoom.roomId} (docId: ${updatedRoom.documentId})`
-            );
-            strapi.log.info(`[Narrator] Entities count: ${entitiesUpdate.length}`);
-            strapi.log.info(`[Narrator] Payload sample: ${JSON.stringify(entitiesUpdate[0] || {})}`);
-
-            streamManager.broadcast(updatedRoom.roomId, 'entities:update', {
-              entities: entitiesUpdate,
-            });
+      // --------------------------------------------------------------------------------
+      // AGGRESSIVE DEBUG LOGGING [START]
+      // --------------------------------------------------------------------------------
+      if (result.messages) {
+        for (const msg of result.messages) {
+          // Log Human Input
+          if (msg._getType() === 'human') {
+            strapi.log.debug(`[Narrator] 🗣️ User Input: 
+${JSON.stringify({ input: msg.content }, null, 2)}
+----------------------------------------`);
           }
-        } catch (err) {
-          strapi.log.error('Failed to broadcast entities update after tool use', err);
+
+          // Log AI Steps
+          if (msg._getType() === 'ai') {
+            const aiMsg = msg as AIMessage;
+            if (aiMsg.tool_calls && aiMsg.tool_calls.length > 0) {
+              // Log Tool Requests
+              for (const tc of aiMsg.tool_calls) {
+                strapi.log.debug(`[Narrator] 🛠️ TOOL CALL REQUEST: 
+${JSON.stringify(
+  {
+    tool: tc.name,
+    args: tc.args,
+    id: tc.id,
+  },
+  null,
+  2
+)}
+----------------------------------------`);
+
+                if (['summon_entity', 'move_entity'].includes(tc.name)) {
+                  shouldBroadcastEntities = true;
+                }
+              }
+            } else if (aiMsg.content) {
+              // Log Thoughts
+              strapi.log.debug(`[Narrator] 🤔 AI THOUGHT: 
+${JSON.stringify({ thought: aiMsg.content }, null, 2)}
+----------------------------------------`);
+            }
+          }
+
+          // Log Tool Outputs
+          if (msg._getType() === 'tool') {
+            strapi.log.debug(`[Narrator] 📦 TOOL RESULT (${msg.name}): 
+${JSON.stringify(
+  {
+    tool: msg.name,
+    output: typeof msg.content === 'string' ? safeParseJson(msg.content) : msg.content,
+  },
+  null,
+  2
+)}
+----------------------------------------`);
+          }
         }
+      }
+      // --------------------------------------------------------------------------------
+      // AGGRESSIVE DEBUG LOGGING [END]
+      // --------------------------------------------------------------------------------
+
+      strapi.log.debug(`[Narrator] 🧠 FINAL RESPONSE GENERATED:
+${JSON.stringify(
+  {
+    length: outputText.length,
+    shouldBroadcastEntities,
+    rawOutput: outputText.slice(0, 500) + (outputText.length > 500 ? '...' : ''),
+  },
+  null,
+  2
+)}`);
+
+      // Parse Output
+      // Simple logic: Try JSON, if fail, assume text narration
+      const jsonMatch = outputText.match(/```json\n([\s\S]*?)\n```/) || outputText.match(/```([\s\S]*?)```/);
+      const cleanJson = jsonMatch ? jsonMatch[1] : outputText;
+      try {
+        const parsed = JSON.parse(cleanJson);
+        // Validate minimal structure
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) && 'narration' in parsed) {
+          finalNarratorResponse = parsed;
+        } else {
+          // Fallback for malformed JSON structure (like array or missing fields)
+          finalNarratorResponse = {
+            thought_process: 'Malformed Response',
+            narration: typeof parsed === 'string' ? parsed : JSON.stringify(parsed),
+            topics: [],
+          };
+        }
+      } catch {
+        finalNarratorResponse = {
+          thought_process: 'Unstructured Response',
+          narration: outputText,
+          topics: [],
+        };
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      strapi.log.error('Agent execution failed', err);
+      // Fail fast behavior: Retrowing might be too harsh for a game loop, but returning an error response is clear.
+      finalNarratorResponse = {
+        thought_process: 'Agent Error',
+        narration: `I encountered an fatal error: ${errorMessage}`,
+        topics: [],
+      };
+    }
+
+    // ---------------------------------------------------------
+    // 4. Post-Processing
+    // ---------------------------------------------------------
+    if (shouldBroadcastEntities) {
+      // Re-fetch character sheets directly to ensure freshness (avoid Room populate cache/lag)
+      const sheets = (await strapi.documents('api::character-sheet.character-sheet').findMany({
+        filters: { room: { documentId: room.documentId } },
+      })) as unknown as CharacterSheet[];
+
+      strapi.log.info(`[Narrator] Found ${sheets.length} entities to broadcast for room ${room.documentId}`);
+
+      if (sheets.length > 0) {
+        const entitiesUpdate = sheets.map((cs) => ({
+          id: cs.documentId,
+          name: cs.name,
+          type: cs.type,
+          position: cs.position,
+          stats: cs.stats,
+          currentHp: cs.currentHp,
+          maxHp: cs.maxHp,
+        }));
+
+        // Snapshot
+        try {
+          const existingFrames =
+            (await strapi.documents('api::time-frame.time-frame').findMany({
+              filters: { room: { documentId: room.documentId } },
+              fields: ['turnNumber'],
+            })) || [];
+
+          const nextTurnNumber = existingFrames.length + 1;
+
+          await strapi.documents('api::time-frame.time-frame').create({
+            data: {
+              room: room.documentId,
+              timestamp: new Date().toISOString(),
+              turnNumber: nextTurnNumber,
+              gameState: {
+                entities: entitiesUpdate,
+                meta: {
+                  source: 'tool_update',
+                  narration: finalNarratorResponse.narration,
+                },
+              },
+              status: 'published',
+            },
+            status: 'published',
+          });
+          strapi.log.info(`[Narrator] Created snapshot #${nextTurnNumber} with ${entitiesUpdate.length} entities`);
+        } catch (snapErr) {
+          strapi.log.error('Snapshot failed', snapErr);
+        }
+
+        streamManager.broadcast(room.documentId, 'entities:update', {
+          entities: entitiesUpdate,
+        });
       }
     }
 
-    return {
-      message: typeof finalContent === 'string' ? finalContent : JSON.stringify(finalContent),
-      events: [],
-    };
+    // Save AI Message
+    const savedAiMessage = await strapi.documents('api::message.message').create({
+      data: {
+        content: finalNarratorResponse.narration,
+        senderName: 'DM',
+        senderType: 'dm',
+        room: room.documentId,
+        timestamp: Date.now(),
+        turn: activeTurnId,
+      },
+      status: 'published',
+    });
+
+    streamManager.broadcast(room.documentId, 'message:new', {
+      ...savedAiMessage,
+      id: savedAiMessage.documentId,
+    });
+
+    return finalNarratorResponse;
   },
 });

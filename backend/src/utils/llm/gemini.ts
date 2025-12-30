@@ -4,6 +4,8 @@
 
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { GeminiModel, GeminiConfig, DEFAULT_TEXT_CONFIG } from './types';
+import { StructuredOutputMethodParams } from '@langchain/core/language_models/base';
+import { z } from 'zod';
 
 /**
  * Get Gemini API key from environment
@@ -33,21 +35,36 @@ export function getGeminiModel(
   return new ChatGoogleGenerativeAI({
     apiKey,
     model,
-    temperature: finalConfig.temperature,
     maxOutputTokens: finalConfig.maxTokens,
+    temperature: finalConfig.temperature,
     topP: finalConfig.topP,
     topK: finalConfig.topK,
+    // Ensure we can use safety settings if needed
   });
+}
+
+/**
+ * Helper to get a model configured for structured output
+ */
+export function getStructuredGeminiModel(
+  schema: z.ZodType<any>,
+  model: GeminiModel = GeminiModel.FLASH,
+  config: GeminiConfig = {}
+) {
+  const rawModel = getGeminiModel(model, config);
+  return rawModel.withStructuredOutput(schema);
 }
 
 export function extractErrorDetails(error: unknown): string {
   if (!error) return 'Unknown error';
 
   if (error instanceof Error) {
-    const status =
-      (error as { status?: number }).status ?? (error as { response?: { status?: number } }).response?.status;
-    const { code } = error as { code?: string };
-    const details = (error as { response?: { data?: unknown } }).response?.data;
+    // @ts-ignore
+    const status = error.status || error.response?.status;
+    // @ts-ignore
+    const code = error.code;
+    // @ts-ignore
+    const details = error.response?.data;
 
     const parts = [
       error.name,

@@ -1,8 +1,6 @@
 import { chunkMarkdown } from '@daicer/shared';
 // @ts-ignore
 import { embeddingService } from '../src/services/embedding-service';
-// @ts-ignore
-import strapiFactory from '@strapi/strapi';
 
 async function main() {
   console.log('--- Starting Knowledge Flow Verification ---');

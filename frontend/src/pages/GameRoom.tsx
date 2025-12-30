@@ -25,6 +25,7 @@ import useAuth from '../hooks/useAuth';
 import { useLLMStream } from '../hooks/useLLMStream';
 import type { ToolCall } from '../services/socket';
 import { TimeFrameProvider } from '../contexts/TimeFrameContext';
+import { useWakeLock } from '../hooks/useWakeLock';
 
 import { useI18n } from '../i18n';
 
@@ -46,7 +47,9 @@ export default function GameRoomPage() {
   const [isCreatingCharacter, setIsCreatingCharacter] = useState(false);
   const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
 
-  const socket = useSocket(roomId, user?.uid);
+  useWakeLock();
+
+  const socket = useSocket(room?.documentId || roomId, user?.uid);
 
   // Listen to all streams in the room
   const streams = useLLMStream(undefined, socket.socket);
@@ -485,6 +488,7 @@ export default function GameRoomPage() {
         <GameplayScreen
           room={room}
           players={players}
+          creatures={socket.creatures}
           onRefresh={() => {
             if (roomId) {
               getRoomState(roomId).then((roomData) => {

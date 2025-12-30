@@ -82,7 +82,6 @@ interface SocketEvents {
     content?: string;
     metadata?: Record<string, unknown>;
     timestamp: number;
-    timestamp: number;
   }) => void;
   onEntitiesUpdate?: (data: { entities: any[] }) => void;
 }

@@ -28,11 +28,37 @@ function FallingDie({ initialSpeed, rotationSpeed, scale = 1, xPos, zPos, dieTyp
     // Basic die generation
     const dieGroup = createDie(dieType, color, material);
 
-    // Enable shadows
+    // Apply instance-specific randomization to materials for "Storybook" variety
     dieGroup.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+
+        // Clone material to ensure unique instance properties
+        if (child.material) {
+          child.material = child.material.clone();
+          const m = child.material as THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial;
+
+          // Randomize based on style
+          if (material === 'acrylic') {
+            m.opacity = 0.6 + Math.random() * 0.35; // Variable transparency (0.6 - 0.95)
+            m.roughness = 0.05 + Math.random() * 0.1; // Ultra smooth to slightly worn
+            if ('transmission' in m) (m as THREE.MeshPhysicalMaterial).transmission = 0.8 + Math.random() * 0.15;
+          } else if (material === 'metallic') {
+            m.metalness = 0.8 + Math.random() * 0.2; // varying shiny
+            m.roughness = 0.1 + Math.random() * 0.2;
+          } else if (material === 'stone') {
+            m.roughness = 0.8 + Math.random() * 0.2; // Very rough
+            // Slight color variation for stone to look natural
+            m.color.offsetHSL(0, 0, (Math.random() - 0.5) * 0.1);
+          } else if (material === 'glowing') {
+            m.emissiveIntensity = 1.0 + Math.random() * 1.5; // Pulsing intensity variance
+          } else {
+            // Standard
+            m.roughness = 0.3 + Math.random() * 0.3;
+            m.metalness = Math.random() * 0.3;
+          }
+        }
       }
     });
 
@@ -46,6 +72,12 @@ function FallingDie({ initialSpeed, rotationSpeed, scale = 1, xPos, zPos, dieTyp
     return () => {
       if (groupRef.current) {
         groupRef.current.remove(die);
+        // Dispose of unique materials to prevent leak
+        die.traverse((child) => {
+          if (child instanceof THREE.Mesh && child.material) {
+            child.material.dispose();
+          }
+        });
       }
     };
   }, [die]);
@@ -53,9 +85,11 @@ function FallingDie({ initialSpeed, rotationSpeed, scale = 1, xPos, zPos, dieTyp
   // Randomize initial Y to spread them out at start
   const initialY = useMemo(() => Math.random() * 40 + 10, []);
 
-  // Mutable physics state
+  // Mutable physics state - Now includes X and Z for re-randomization
   const physicsState = useRef({
+    x: xPos,
     y: initialY,
+    z: zPos,
     velocity: initialSpeed,
     rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
   });
@@ -85,14 +119,25 @@ function FallingDie({ initialSpeed, rotationSpeed, scale = 1, xPos, zPos, dieTyp
     const spawnHeight = viewport.height / 2 + 5;
 
     if (physicsState.current.y < resetThreshold) {
-      // Reset to top
+      // Reset Y to top
       physicsState.current.y = spawnHeight + Math.random() * 5;
-      // Reset velocity - keep it fast but varied
+
+      // Reset Velocity
       physicsState.current.velocity = initialSpeed + Math.random() * 3;
+
+      // Re-randomize X and Z to prevent boring patterns
+      // Logic mirrored from Scene generation:
+      // Z range: -10 to -30
+      const newZ = -Math.random() * 20 - 10;
+      physicsState.current.z = newZ;
+
+      // X range based on depth spread
+      const spread = Math.abs(newZ - 10) * 0.8;
+      physicsState.current.x = (Math.random() - 0.5) * spread * 2.5;
     }
 
     // Apply
-    groupRef.current.position.set(xPos, physicsState.current.y, zPos);
+    groupRef.current.position.set(physicsState.current.x, physicsState.current.y, physicsState.current.z);
   });
 
   return <group ref={groupRef} position={[xPos, initialY, zPos]} scale={scale} dispose={null} />;
@@ -107,7 +152,29 @@ function Scene() {
     // Supported types from createDie.ts: 2, 4, 6, 8, 10, 12, 20, '20-ai'
     const types: DieType[] = [2, 4, 6, 8, 10, 12, 20, '20-ai'];
     const styles: DieVisualStyle[] = ['acrylic', 'metallic', 'glowing', 'stone', 'standard'];
-    const colors = ['#d4af37', '#7a49d9', '#d88416', '#2e1065', '#4c1d95', '#a855f7', '#fbbf24'];
+
+    // Expanded Rich Palette
+    const colors = [
+      '#d4af37', // Gold
+      '#7a49d9', // Soft Purple
+      '#d88416', // Orange/Amber
+      '#2e1065', // Deep Indigo
+      '#4c1d95', // Violet
+      '#a855f7', // Bright Purple
+      '#fbbf24', // Amber
+      '#e0115f', // Ruby
+      '#0f52ba', // Sapphire
+      '#50c878', // Emerald
+      '#9966cc', // Amethyst
+      '#c0c0c0', // Silver
+      '#cd7f32', // Bronze
+      '#00ffff', // Neon Cyan
+      '#ff00ff', // Neon Magenta
+      '#4b0082', // Indigo
+      '#008080', // Teal
+      '#10b981', // Green
+      '#f43f5e', // Rose
+    ];
 
     // Width calculation at depth -10 roughly
     // FOV 45, Z=10 (camera), Die Z=-5 to -15. Dist = 15 to 25.
@@ -135,8 +202,8 @@ function Scene() {
           (Math.random() - 0.5) * 15,
           (Math.random() - 0.5) * 15,
         ],
-        // Much smaller scale: 0.15 to 0.35
-        scale: 0.15 + Math.random() * 0.2,
+        // Much smaller scale: 0.15 to 0.35 -> Doubled: 0.3 to 0.7
+        scale: 0.3 + Math.random() * 0.4,
 
         // Random visual properties
         dieType: types[Math.floor(Math.random() * types.length)]!,

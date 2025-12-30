@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen } from 'lucide-react';
 
-import type { Room, Player } from '@daicer/engine';
+import type { Room, Player, Creature } from '@daicer/engine';
 // Let's verify compatibility.
 
 import useStreamingSocket from '../../hooks/useStreamingSocket';
@@ -31,6 +31,7 @@ import { Button } from '../ui/button';
 interface GameplayScreenProps {
   room: Room;
   players: Player[];
+  creatures?: Creature[];
   onRefresh?: () => void;
 }
 
@@ -39,7 +40,7 @@ interface GameplayScreenProps {
  * @param props - Component props
  * @returns Gameplay UI with real-time streaming
  */
-export default function GameplayScreen({ room, players, onRefresh }: GameplayScreenProps) {
+export default function GameplayScreen({ room, players, creatures = [], onRefresh }: GameplayScreenProps) {
   const { user } = useAuth();
 
   // Memoize initial messages from room data to hydrate socket state immediately
@@ -308,18 +309,30 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
 
   // Entities for Map
   const mapEntities = useMemo(() => {
-    return players
+    const playerEntities = players
       .filter((p) => p.position) // Only players with position
       .map((p) => ({
         id: p.userId,
-        type: 'player',
+        type: 'player' as const,
         name: p.character?.name || p.name,
         position: p.position!,
         color: p.userId === user?.uid ? '#10b981' : '#3b82f6', // Green for self, Blue for others
         visionRadius: 10, // Default
         exploredTiles: new Set<string>(), // Hydrate if available
       }));
-  }, [players, user?.uid]);
+
+    const creatureEntities = creatures.map((c) => ({
+      id: c.documentId || c.id,
+      type: (c.type || 'monster') as 'monster' | 'npc', // Fallback
+      name: c.name,
+      position: c.position || { x: 0, y: 0, z: 0 },
+      color: '#ef4444', // Red for monsters
+      visionRadius: 0,
+      exploredTiles: new Set<string>(),
+    }));
+
+    return [...playerEntities, ...creatureEntities];
+  }, [players, creatures, user?.uid]);
 
   // Map Component
   const mapContent = (

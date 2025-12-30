@@ -444,7 +444,7 @@ export async function searchEntities(
       fetchPolicy: 'network-only',
     });
 
-    return data.searchEntities || [];
+    return data?.searchEntities || [];
   } catch (err) {
     console.error('Search entities failed:', err);
     return [];

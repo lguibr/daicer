@@ -2,8 +2,12 @@
 
 This directory contains standalone scripts for maintaining and auditing the Daicer backend content.
 
-> [!NOTE] > **Strapi Client Mode**
-> These scripts use `@strapi/client` to communicate with your running backend server (`http://localhost:1337`).
+This directory contains standalone scripts for maintaining and auditing the Daicer backend content.
+
+> [!IMPORTANT] > **🛑 MANDATORY READING**
+> Before writing or running any script, you MUST read **[SCRIPTING_STANDARDS.md](./SCRIPTING_STANDARDS.md)**.
+>
+> **Rule #1:** NEVER instantiate `@strapi/strapi` in these scripts. ALWAYS use `@strapi/client` to connect to the running `yarn develop` instance.
 > Ensure your development server is running: `yarn develop`
 
 ## 1. Content Audit

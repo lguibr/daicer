@@ -120,7 +120,7 @@ export async function generateStructured<T extends z.ZodType>(
   console.info(`[LLM Structured] Using Gemini model: ${geminiModelToken}`);
 
   const baseModel = getGeminiModel(geminiModelToken, config);
-  // @ts-expect-error - Deep type instantiation with Zod/LangChain
+  // Deep type instantiation with Zod/LangChain
   const structuredModel = baseModel.withStructuredOutput(schema);
 
   try {

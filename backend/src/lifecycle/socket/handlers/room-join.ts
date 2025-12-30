@@ -24,6 +24,7 @@ export const handleRoomJoin =
           'messages',
           'messages.recipient',
           'world', // Populate World Relation
+          'character_sheets', // Populate Entities/Character Sheets
         ],
       });
 
@@ -60,7 +61,18 @@ export const handleRoomJoin =
 
       // Safe access for dynamic properties
       const world = room.world as Record<string, unknown> | null;
-      const creatures = (room as unknown as Record<string, unknown>).creatures || []; // Pending schema update for creatures relation
+
+      // Map character_sheets to creatures (entities) for frontend
+      const rawSheets = (room as any).character_sheets || [];
+      const creatures = rawSheets.map((cs: any) => ({
+        id: cs.documentId,
+        name: cs.name,
+        type: cs.type,
+        position: cs.position,
+        stats: cs.stats,
+        currentHp: cs.currentHp,
+        maxHp: cs.maxHp,
+      }));
 
       const gameState = {
         room: {

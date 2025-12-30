@@ -83,6 +83,7 @@ export interface GamePosition extends Struct.ComponentSchema {
     mapId: Schema.Attribute.String;
     x: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     y: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    z: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
   };
 }
 

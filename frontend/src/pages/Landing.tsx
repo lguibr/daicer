@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Sparkles } from 'lucide-react';
-import { UsersIcon } from '@heroicons/react/24/outline';
+
 import useAuth from '../hooks/useAuth';
 import { joinRoom } from '../services/api';
 import { useI18n } from '../i18n';
@@ -14,6 +14,7 @@ import Logo from '../components/ui/Logo';
 
 import { gildedTokens } from '../theme/gildedTokens';
 import { BackgroundDiceField } from '../components/ui/background/BackgroundDiceField';
+import { PWAInstallPrompt } from '../components/pwa/PWAInstallPrompt';
 
 /**
  * Unified landing/ page
@@ -102,6 +103,7 @@ export default function LandingPage() {
               </div>
 
               <button
+                type="button"
                 onClick={signInWithGoogle}
                 disabled={authLoading}
                 className="group relative flex items-center gap-4 px-8 py-4 bg-midnight-900/40 border border-aurora-500/30 rounded-xl backdrop-blur-md transition-all duration-300 hover:bg-midnight-800/60 hover:border-aurora-400/60 hover:shadow-[0_0_30px_rgba(124,58,237,0.25)] hover:scale-105 active:scale-95"
@@ -144,111 +146,117 @@ export default function LandingPage() {
 
   // Authenticated view - Lobby
   return (
-    <DynamicLayout showRoomInfo={false}>
-      {/* 
-        Full-height container 
-        - Override min-h-dvh from pageShell with !min-h-[calc(100dvh-4.5rem)] (navbar height)
-        - Remove default top/bottom padding constraints that cause overflow
-        - Use flex-1 to fill available space
-      */}
-      <div className={`${gildedTokens.pageShell} !min-h-[calc(100dvh-4.5rem)] !py-8 justify-center`}>
-        <div className={gildedTokens.gradientBackdrop} />
+    <DynamicLayout showNavbar showRoomInfo={false}>
+      {/* Main Grid Container ensuring full viewport height */}
+      <div className="relative grid min-h-dvh w-full place-items-center overflow-hidden">
+        {/* Background is absolute/fixed behind the grid */}
+        <div className="absolute inset-0 z-0">
+          <BackgroundDiceField />
+          <div className="absolute inset-0 bg-gradient-to-b from-midnight-950/60 via-midnight-950/40 to-midnight-950/90 pointer-events-none" />
+        </div>
 
-        {/* Header Section */}
-        <header className={`${gildedTokens.heroStack} mb-8 flex-none`}>
-          <div className={`${gildedTokens.haloBadge} animate-float h-32 w-32`}>
-            <UsersIcon className="h-12 w-12 text-aurora-200" aria-hidden="true" />
-            <span className="sr-only">Adventuring party lobby icon</span>
-            <div className={gildedTokens.haloInnerGlow} />
-          </div>
-          <p className={gildedTokens.heroEyebrow}>{t('lobby.subtitle')}</p>
-          <div className="space-y-4">
-            <h1 className={`${gildedTokens.heroTitle} !text-3xl sm:!text-5xl`}>{t('lobby.title')}</h1>
-            <p className={gildedTokens.heroBody}>{t('lobby.description')}</p>
-          </div>
-        </header>
+        {/* Central Content Stack */}
+        <main className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-12 p-6">
+          {/* Illuminated Container - True Cardless with diffuse light */}
+          <div className="relative w-full max-w-lg flex flex-col items-center gap-8 p-12">
+            {/* Diffuse Light at the Middle - Integrated Blend */}
+            <div className="absolute inset-0 top-1/2 -translate-y-1/2 bg-[radial-gradient(circle_closest-side,rgba(139,92,246,0.15),transparent)] scale-150 blur-3xl pointer-events-none" />
 
-        {/* Main Grid Content */}
-        <section className="relative z-10 grid w-full max-w-5xl gap-6 md:grid-cols-2 md:items-stretch flex-1 md:flex-none">
-          {/* Create Room Card */}
-          <article
-            className={`${gildedTokens.glassPanel} flex flex-col gap-6 justify-between h-full hover:border-aurora-500/30 transition-colors duration-300`}
-          >
-            <div className="space-y-6">
-              <div
-                className={`${gildedTokens.inlineBadge} justify-center rounded-3xl border border-aurora-300/40 bg-midnight-900/40 px-5 py-3 text-center sm:justify-start`}
-              >
-                <Sparkles className="h-4 w-4 text-nebula-200" aria-hidden="true" />
-                <span>{t('lobby.joinHero.overline')}</span>
-              </div>
-              <div className="space-y-4">
-                <h2 className={gildedTokens.sectionHeading}>{t('lobby.joinHero.heading')}</h2>
-                <p className={gildedTokens.sectionBody}>{t('lobby.joinHero.copy')}</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <button
-                  type="button"
-                  data-testid="lobby-create-room-btn"
-                  onClick={handleCreateRoom}
-                  disabled={loading}
-                  className={gildedTokens.primaryAction}
-                >
-                  {t('lobby.createButton')}
-                </button>
+            {/* Header / Greeting */}
+            <section className="relative flex flex-col items-center gap-4 text-center animate-in fade-in zoom-in-95 duration-1000">
+              <div className="relative animate-float mb-4">
+                <Logo
+                  size="xl"
+                  className="p-2 filter drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]" // Minimal, just a subtle drop shadow
+                />
+                {/* Soft, borderless atmospheric glow behind */}
+                <div className="absolute inset-0 bg-aurora-500/20 blur-[50px] -z-10 rounded-full scale-150 pointer-events-none" />
               </div>
 
-              <div
-                className={`${gildedTokens.inlineBadge} w-full justify-center rounded-full border border-aurora-300/35 bg-midnight-900/60 px-5 py-2 text-center sm:justify-start`}
-              >
-                <Shield className="h-4 w-4 text-aurora-200" aria-hidden="true" />
-                <span>{t('lobby.joinHero.guardianCallout')}</span>
+              <div className="space-y-2">
+                <p className={`${gildedTokens.heroEyebrow} tracking-[0.3em] text-aurora-200/60`}>
+                  {t('lobby.subtitle')}
+                </p>
+                <h1 className={`${gildedTokens.heroTitle} text-3xl sm:text-4xl lg:text-5xl !leading-tight`}>
+                  <span className="shiny-text filter drop-shadow-[0_0_20px_rgba(124,58,237,0.2)]">
+                    {t('lobby.title')}
+                  </span>
+                </h1>
               </div>
-            </div>
-          </article>
+            </section>
 
-          {/* Join Room Form */}
-          <form
-            id="join-room-form"
-            onSubmit={handleJoinRoom}
-            className={`${gildedTokens.glassPanel} flex flex-col gap-8 justify-center h-full hover:border-aurora-500/30 transition-colors duration-300`}
-          >
-            <div className="space-y-2">
-              <label htmlFor="room-code-input" className={`${gildedTokens.sectionHeading} block`}>
-                {t('lobby.joinHero.joinButton')}
-              </label>
-              <p className={gildedTokens.detailCopy}>{t('lobby.joinHero.helpText')}</p>
-            </div>
+            {/* Interaction Zone */}
+            <section className="relative w-full flex flex-col items-center gap-6 animate-in slide-in-from-bottom-5 fade-in duration-1000 delay-200">
+              {/* Guidance Text */}
+              <p className="text-center text-aurora-200/50 text-sm font-medium tracking-wide max-w-xs mx-auto">
+                {t('lobby.guidance', 'Enter your room code below to join an existing chronicle.')}
+              </p>
 
-            <div className="space-y-4">
-              <label htmlFor="room-code-input" className={`${gildedTokens.inlineBadge} text-aurora-200/90`}>
-                {t('lobby.joinHero.inputLabel')}
-              </label>
-              <input
-                id="room-code-input"
-                type="text"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                placeholder={t('lobby.joinHero.codePlaceholder')}
-                maxLength={6}
-                className={`${gildedTokens.monoInput} !text-4xl py-6`}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <button type="submit" disabled={loading || !roomCode.trim()} className={gildedTokens.secondaryAction}>
-                {loading ? t('lobby.joinHero.joining') : 'Entrar no Sanctum'}
-              </button>
-              {error && (
-                <div className="rounded-2xl border border-red-500/40 bg-red-900/40 p-4 text-sm text-center text-red-200 animate-pulse">
-                  {error}
+              {/* Join Room Input */}
+              <form onSubmit={handleJoinRoom} className="w-full relative group">
+                <div className="absolute inset-0 bg-aurora-500/5 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                    placeholder={t('lobby.joinHero.codePlaceholder')}
+                    maxLength={6}
+                    className={`${gildedTokens.monoInput} !bg-midnight-900/60 !border-aurora-500/20 !text-3xl !py-5 !text-center !tracking-[0.5em] placeholder:tracking-[0.2em] placeholder:text-2xl placeholder:text-aurora-500/30 hover:!border-aurora-400/40 focus:!border-aurora-400/60 focus:!ring-1 focus:!ring-aurora-400/30 transition-all shadow-lg backdrop-blur-md`}
+                  />
+                  <button
+                    type="submit"
+                    disabled={loading || !roomCode.trim()}
+                    className="absolute right-2 top-2 bottom-2 aspect-square flex items-center justify-center rounded-2xl bg-aurora-500/10 text-aurora-300 hover:bg-aurora-500/20 hover:text-aurora-100 disabled:opacity-0 disabled:pointer-events-none transition-all duration-300"
+                  >
+                    <Sparkles className="h-5 w-5" />
+                  </button>
                 </div>
-              )}
-            </div>
-          </form>
-        </section>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="absolute -bottom-8 left-0 right-0 text-center">
+                    <span className="text-red-400 text-xs font-medium tracking-wide animate-pulse">{error}</span>
+                  </div>
+                )}
+              </form>
+
+              {/* Or Divider */}
+              <div className="flex items-center gap-4 w-full opacity-20 my-2">
+                <div className="h-px bg-gradient-to-r from-transparent via-aurora-100 to-transparent flex-1" />
+                <span className="text-[10px] uppercase tracking-widest text-aurora-100 font-semibold">Or</span>
+                <div className="h-px bg-gradient-to-r from-transparent via-aurora-100 to-transparent flex-1" />
+              </div>
+
+              {/* Cooler Create Action */}
+              <button
+                type="button"
+                onClick={handleCreateRoom}
+                disabled={loading}
+                className="group relative w-full py-4 px-6 rounded-2xl overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {/* Button Background & Gradient Border Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-aurora-500/10 via-nebula-500/10 to-aurora-500/10 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-midnight-950/40 backdrop-blur-[2px]" />
+                <div className="absolute inset-0 rounded-2xl border border-white/5 group-hover:border-aurora-300/30 transition-colors" />
+                <div className="absolute -inset-full bg-gradient-to-r from-transparent via-aurora-500/10 to-transparent rotate-45 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+
+                {/* Content */}
+                <div className="relative flex items-center justify-center gap-3">
+                  <Shield className="h-5 w-5 text-aurora-300 group-hover:text-aurora-100 group-hover:drop-shadow-[0_0_8px_rgba(216,130,22,0.5)] transition-all duration-300" />
+                  <span className="font-display text-aurora-100 tracking-[0.15em] uppercase text-sm font-bold group-hover:text-white group-hover:drop-shadow-[0_0_10px_rgba(216,130,22,0.3)] transition-all">
+                    {t('lobby.createButton', 'Forge New Adventure')}
+                  </span>
+                  <Sparkles className="h-4 w-4 text-nebula-300 opacity-0 group-hover:opacity-100 transition-all duration-500 -translate-x-2 group-hover:translate-x-0" />
+                </div>
+              </button>
+
+              <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 delay-500">
+                <PWAInstallPrompt />
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
     </DynamicLayout>
   );

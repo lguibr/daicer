@@ -83,6 +83,7 @@ export interface ServerToClientEvents {
     entities: Entity[];
   }) => void;
   'map:view:error': (data: { error: string }) => void;
+  'entities:update': (data: { entities: any[] }) => void;
 
   // Errors
   error: (data: { message: string }) => void;

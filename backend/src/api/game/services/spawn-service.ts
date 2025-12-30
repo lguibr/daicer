@@ -44,6 +44,23 @@ export default ({ strapi }) => ({
     // We'll store it as is or parse if needed.
     // CharacterSheet doesn't have a specific 'speed' field, it might be in 'stats' component or we rely on 'monster' relation.
 
+    // Check for collision
+    const existing = await strapi.documents('api::character-sheet.character-sheet').findMany({
+      filters: {
+        room: { documentId: room.documentId },
+        position: {
+          x: position.x,
+          y: position.y,
+          z: position.z,
+        },
+      },
+      limit: 1,
+    });
+
+    if (existing.length > 0) {
+      throw new Error(`Position ${position.x},${position.y},${position.z} is occupied by ${existing[0].name}`);
+    }
+
     const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
       data: {
         name: monster.name,
@@ -109,6 +126,23 @@ export default ({ strapi }) => ({
         speed: character.race?.speed,
       },
     });
+
+    // Check for collision
+    const existing = await strapi.documents('api::character-sheet.character-sheet').findMany({
+      filters: {
+        room: { documentId: room.documentId },
+        position: {
+          x: position.x,
+          y: position.y,
+          z: position.z,
+        },
+      },
+      limit: 1,
+    });
+
+    if (existing.length > 0) {
+      throw new Error(`Position ${position.x},${position.y},${position.z} is occupied by ${existing[0].name}`);
+    }
 
     const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
       data: {

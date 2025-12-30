@@ -15,6 +15,10 @@
       "type": "integer",
       "default": 0
     },
+    "z": {
+      "type": "integer",
+      "default": 0
+    },
     "mapId": {
       "type": "string"
     }
