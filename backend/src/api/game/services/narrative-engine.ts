@@ -1,15 +1,17 @@
 import { generateStructured } from '../../../utils/llm/structured';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
-import type { WorldSettings, Player, Creature, Message, Language } from '@daicer/engine';
+import type { WorldSettings, Player, Creature, Message, Language, Entity } from '@daicer/engine';
 import { formatDmInstruction } from '@daicer/engine';
+// import { getStrapiClient } from '../../../utils/strapi-client'; // Assuming utility location or use strapi global
+// import { EngineEntity } from './entity-adapter'; // Removed
 
 export default ({ strapi }) => ({
   async generateNarrativeResponse(
     roomId: string,
     worldDescription: string,
     messages: Message[],
-    players: Player[],
-    creatures: Creature[],
+    players: Player[], // Keep for Perspective mapping
+    entities: Entity[], // Unified Entities (Players + Monsters)
     language: Language = 'en',
     settings?: WorldSettings,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,16 +29,24 @@ export default ({ strapi }) => ({
     };
     const languageName = languageMap[language] || 'English';
 
-    const playerSummaries = players
-      .map((p) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const char = p.character as any;
-        if (!char) return `- ${p.name} (No character sheet)`;
-        return `- ${char.name} (${char.race?.name || 'Unknown Race'} ${char.class?.name || 'Unknown Class'}) | HP: ${char.baseStats?.hp || 10}/${char.baseStats?.maxHp || 10}`;
+    const playerSummaries = entities
+      .filter((e) => e.type === 'player')
+      .map((e) => {
+        // Find basic class/race info if available (Adapter should standardize or we check raw?)
+        // The EngineEntity has stats/hp.
+        // We might want to pass more descriptive strings in EngineEntity if needed.
+        return `- ${e.name} | HP: ${e.hp}/${e.maxHp} | AC: ${e.ac}`;
       })
       .join('\n');
 
-    const creatureSummaries = creatures.map((c) => `- ${c.name}, HP: ${c.hp}/${c.maxHp}`).join('\n');
+    const creatureSummaries = entities
+      .filter((e) => e.type !== 'player')
+      .map(
+        (c) =>
+          `- ${c.name} | HP: ${c.hp}/${c.maxHp} | AC: ${c.ac} | Actions: ${c.actions.map((a) => a.name).join(', ')}`
+      )
+      .join('\n');
+
     const worldConditionsText = ''; // stub
 
     // Style Instructions

@@ -1,0 +1,22 @@
+{
+    "collectionName": "components_game_damage_dice",
+    "info": {
+        "displayName": "Damage Dice",
+        "icon": "dice",
+        "description": "A single damage roll component (e.g. 2d6 + 3 slashing)"
+    },
+    "options": {},
+    "attributes": {
+        "dice": {
+            "type": "string",
+            "required": true
+        },
+        "bonus": {
+            "type": "integer",
+            "default": 0
+        },
+        "type": {
+            "type": "string"
+        }
+    }
+}

@@ -984,6 +984,7 @@ export interface ApiMonsterMonster extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    features: Schema.Attribute.Component<'game.feature', true>;
     hit_dice: Schema.Attribute.String;
     hp: Schema.Attribute.Integer;
     image: Schema.Attribute.Media<'images'>;
@@ -1005,6 +1006,7 @@ export interface ApiMonsterMonster extends Struct.CollectionTypeSchema {
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     special_abilities: Schema.Attribute.JSON;
     stats: Schema.Attribute.Component<'game.stats', false>;
+    structuredActions: Schema.Attribute.Component<'game.action', true>;
     type: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;

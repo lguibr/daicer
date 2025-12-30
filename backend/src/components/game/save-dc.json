@@ -1,0 +1,36 @@
+{
+    "collectionName": "components_game_save_dcs",
+    "info": {
+        "displayName": "Save DC",
+        "icon": "shield-alt",
+        "description": "Saving throw difficulty class"
+    },
+    "options": {},
+    "attributes": {
+        "dc": {
+            "type": "integer",
+            "required": true
+        },
+        "stat": {
+            "type": "enumeration",
+            "enum": [
+                "str",
+                "dex",
+                "con",
+                "int",
+                "wis",
+                "cha"
+            ],
+            "required": true
+        },
+        "success_type": {
+            "type": "enumeration",
+            "enum": [
+                "none",
+                "half",
+                "other"
+            ],
+            "default": "none"
+        }
+    }
+}

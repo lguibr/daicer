@@ -1,0 +1,64 @@
+{
+    "collectionName": "components_game_actions",
+    "info": {
+        "displayName": "Action",
+        "icon": "fist-raised",
+        "description": "Structured action (attack, spell, utility)"
+    },
+    "options": {},
+    "attributes": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "type": {
+            "type": "enumeration",
+            "enum": [
+                "melee",
+                "ranged",
+                "spell",
+                "utility"
+            ],
+            "default": "melee"
+        },
+        "toHit": {
+            "type": "integer"
+        },
+        "reach": {
+            "type": "integer"
+        },
+        "damage": {
+            "type": "component",
+            "repeatable": true,
+            "component": "game.damage-dice"
+        },
+        "save": {
+            "type": "component",
+            "repeatable": false,
+            "component": "game.save-dc"
+        },
+        "area": {
+            "type": "component",
+            "repeatable": false,
+            "component": "game.area-effect"
+        },
+        "duration": {
+            "type": "enumeration",
+            "enum": [
+                "instantaneous",
+                "concentration",
+                "one_minute",
+                "ten_minutes",
+                "one_hour",
+                "eight_hours",
+                "twenty_four_hours",
+                "until_dispelled",
+                "special"
+            ],
+            "default": "instantaneous"
+        },
+        "description": {
+            "type": "text"
+        }
+    }
+}

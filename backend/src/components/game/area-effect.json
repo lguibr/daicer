@@ -1,0 +1,30 @@
+{
+    "collectionName": "components_game_area_effects",
+    "info": {
+        "displayName": "Area Effect",
+        "icon": "expand",
+        "description": "Area of effect definition"
+    },
+    "options": {},
+    "attributes": {
+        "shape": {
+            "type": "enumeration",
+            "enum": [
+                "line",
+                "cone",
+                "cube",
+                "sphere",
+                "circle",
+                "cylinder"
+            ],
+            "required": true
+        },
+        "size": {
+            "type": "integer",
+            "required": true
+        },
+        "width": {
+            "type": "integer"
+        }
+    }
+}

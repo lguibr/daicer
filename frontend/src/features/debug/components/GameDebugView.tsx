@@ -91,8 +91,13 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   );
 }
 
+import { AgentToolPalette } from './AgentToolPalette';
+
+// ... (existing imports)
+
 function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
   // Config State
+  const [activeTab, setActiveTab] = useState<'inspector' | 'tools'>('inspector');
   const [config] = useState<OldWorldConfig>(DEFAULT_CONFIG);
 
   // Time Travel Context
@@ -433,50 +438,78 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
 
         {/* COLUMN 2: INSPECTOR (Middle) - 1/3 Width */}
         <div className="flex-1 min-w-0 flex-shrink-0 bg-midnight-900 border-r border-midnight-800 flex flex-col z-10">
-          <div className="p-3 bg-midnight-900 border-b border-midnight-800 font-bold text-xs uppercase tracking-wider text-shadow-300 flex justify-between">
-            <span>INSPECTOR ({entities.length})</span>
-            {!isLive && <span className="text-cyan-400">HISTORICAL</span>}
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-2 space-y-2">
-            {entities.map((entity) => (
-              <div
-                key={entity.id}
+          <div className="p-3 bg-midnight-900 border-b border-midnight-800 font-bold text-xs uppercase tracking-wider text-shadow-300 flex justify-between items-center">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setActiveTab('inspector')}
                 className={clsx(
-                  'group p-2 rounded border transition-colors cursor-pointer',
-                  activeEntity?.id === entity.id
-                    ? 'bg-midnight-800 border-aurora-500/50'
-                    : 'bg-midnight-950/40 border-midnight-800 hover:bg-midnight-800/60'
+                  'transition-colors',
+                  activeTab === 'inspector' ? 'text-white' : 'text-gray-500 hover:text-gray-400'
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-midnight-950 flex items-center justify-center text-lg shadow-inner">
-                    {entity.type === 'player' ? '👤' : '👾'}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-bold text-shadow-200 text-sm truncate group-hover:text-white transition-colors">
-                      {entity.name || entity.id}
-                    </div>
-                    <div className="text-[10px] text-shadow-400 font-mono flex gap-2">
-                      <span>
-                        {entity.position.x}, {entity.position.y}, {entity.position.z}
-                      </span>
-                      {/* @ts-ignore */}
-                      {entity.currentHp !== undefined && (
-                        // @ts-ignore
-                        <span className={clsx(entity.currentHp <= 0 ? 'text-red-500' : 'text-emerald-400')}>
+                INSPECTOR
+              </button>
+              <button
+                onClick={() => setActiveTab('tools')}
+                className={clsx(
+                  'transition-colors',
+                  activeTab === 'tools' ? 'text-white' : 'text-gray-500 hover:text-gray-400'
+                )}
+              >
+                TOOLS
+              </button>
+            </div>
+            {activeTab === 'inspector' && !isLive && <span className="text-cyan-400">HISTORICAL</span>}
+          </div>
+
+          <div className="flex-1 overflow-hidden relative">
+            {activeTab === 'inspector' ? (
+              <div className="absolute inset-0 overflow-y-auto p-2 space-y-2">
+                {/* ENTITY LIST */}
+                {entities.map((entity) => (
+                  <div
+                    key={entity.id}
+                    className={clsx(
+                      'group p-2 rounded border transition-colors cursor-pointer',
+                      activeEntity?.id === entity.id
+                        ? 'bg-midnight-800 border-aurora-500/50'
+                        : 'bg-midnight-950/40 border-midnight-800 hover:bg-midnight-800/60'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded bg-midnight-950 flex items-center justify-center text-lg shadow-inner">
+                        {entity.type === 'player' ? '👤' : '👾'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-shadow-200 text-sm truncate group-hover:text-white transition-colors">
+                          {entity.name || entity.id}
+                        </div>
+                        <div className="text-[10px] text-shadow-400 font-mono flex gap-2">
+                          <span>
+                            {entity.position.x}, {entity.position.y}, {entity.position.z}
+                          </span>
                           {/* @ts-ignore */}
-                          HP: {entity.currentHp}/{entity.maxHp}
-                        </span>
-                      )}
+                          {entity.currentHp !== undefined && (
+                            // @ts-ignore
+                            <span className={clsx(entity.currentHp <= 0 ? 'text-red-500' : 'text-emerald-400')}>
+                              {/* @ts-ignore */}
+                              HP: {entity.currentHp}/{entity.maxHp}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+                {entities.length === 0 && (
+                  <div className="text-center text-shadow-500 text-xs py-8">
+                    {isLive ? 'No entities in room.' : 'No entities in this snapshot.'}
+                  </div>
+                )}
               </div>
-            ))}
-            {entities.length === 0 && (
-              <div className="text-center text-shadow-500 text-xs py-8">
-                {isLive ? 'No entities in room.' : 'No entities in this snapshot.'}
+            ) : (
+              <div className="absolute inset-0">
+                <AgentToolPalette roomId={roomId} />
               </div>
             )}
           </div>

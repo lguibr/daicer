@@ -6,7 +6,8 @@ export default ({ strapi }) => ({
     worldDescription: string,
     messages: Message[],
     players: Player[],
-    creatures: Creature[],
+    // creatures argument removed/deprecated
+    // creatures: Creature[],
     language: Language = 'en',
     settings?: WorldSettings,
     worldConditions?: unknown[],
@@ -60,7 +61,12 @@ export default ({ strapi }) => ({
         // Fetch Fresh Room Data (to get updated entity positions and exploredTiles)
         const roomEntity = await strapi.documents('api::room.room').findOne({
           documentId: roomId,
-          populate: ['character_sheets', 'creatures'],
+          populate: [
+            'character_sheets',
+            'character_sheets.monster',
+            'character_sheets.character',
+            'character_sheets.character.baseStats',
+          ], // Populate Blueprint for Adapter
         });
 
         const exploredTiles = new Set<string>((roomEntity?.exploredTiles as string[]) || []);
@@ -71,16 +77,20 @@ export default ({ strapi }) => ({
         const center = firstPlayerSheet?.position || { x: 0, y: 0, z: 0 };
 
         // Re-construct players list with updated positions for visualization
-        // The original 'players' array has the old state. We should use the room entities for the map.
-        // We need to map room entities back to minimal Player/Creature objects for the visualizer
-        const updatedPlayers = ((roomEntity.character_sheets as Record<string, unknown>[]) || []).map((s) => ({
+        // Unify all sheets (players + monsters)
+        const updatedEntities = ((roomEntity.character_sheets as Record<string, unknown>[]) || []).map((s) => ({
+          id: s.documentId,
+          name: s.name,
           position: s.position,
+          hp: s.currentHp,
+          maxHp: s.maxHp,
+          type: s.type || 'player',
         }));
-        const updatedCreatures = ((roomEntity.creatures as Record<string, unknown>[]) || []).map((c) => ({
-          position: c.position,
-          hp: c.currentHp || c.hp, // handle schema variance
-          maxHp: c.maxHp,
-        }));
+
+        // Map Renderer likely expects explicit players vs creatures arrays?
+        // For now, let's split them based on type for the legacy signature of generateMapImage
+        const updatedPlayers = updatedEntities.filter((e) => e.type === 'player');
+        const updatedCreatures = updatedEntities.filter((e) => e.type !== 'player');
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapImage = await generateMapImage(chunk, updatedPlayers as any, updatedCreatures as any, exploredTiles, center);
@@ -112,13 +122,34 @@ export default ({ strapi }) => ({
       }
     }
 
+    // 5a. Adapt Entities for Narrative
+    const entityAdapter = strapi.service('api::game.entity-adapter');
+    const allSheets =
+      ((
+        await strapi.documents('api::room.room').findOne({
+          documentId: roomId,
+          populate: [
+            'character_sheets',
+            'character_sheets.monster',
+            'character_sheets.monster.structuredActions',
+            'character_sheets.monster.features',
+            'character_sheets.character',
+            'character_sheets.character.baseStats',
+          ],
+        })
+      ).character_sheets as any[]) || [];
+
+    // Use Adapter
+    const unifiedEntities = allSheets.map((s) => entityAdapter.adapt(s));
+
     // 5. Generate Narrative (with new Map Image)
     const response = await narrativeEngine.generateNarrativeResponse(
       roomId,
       worldDescription,
       messages,
       players,
-      creatures,
+      unifiedEntities,
+
       language,
       settings,
       worldConditions,
@@ -222,10 +253,6 @@ export default ({ strapi }) => ({
       ...(room.character_sheets || []).map((s: Record<string, unknown>) => ({
         id: s.documentId || s.id,
         pos: s.position,
-      })),
-      ...(room.creatures || []).map((c: Record<string, unknown>) => ({
-        id: c.documentId || c.id,
-        pos: c.position,
       })),
     ];
 

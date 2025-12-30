@@ -143,11 +143,51 @@ export type TimeFrame = z.infer<typeof TimeFrameSchema>;
 
 export type Role = z.infer<typeof RoleSchema>;
 
+export interface EntityStats {
+  strength: number;
+  dexterity: number;
+  constitution: number;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+  passivePerception: number;
+  initiativeBonus: number;
+}
+
+export interface EntityAction {
+  name: string;
+  type: 'melee' | 'ranged' | 'spell' | 'utility';
+  toHit?: number;
+  reach?: number;
+  range?: string;
+  damage?: { dice: string; bonus: number; type: string }[];
+  save?: { dc: number; stat: string };
+  description: string;
+}
+
+export interface EntityFeature {
+  name: string;
+  description: string;
+  usage?: { max: number; per: string };
+}
+
 export interface Entity {
   id: string;
   type: 'player' | 'npc' | 'monster' | 'object';
   name: string;
   position: { x: number; y: number; z: number };
+
+  // Instance Vitality
+  hp: number;
+  maxHp: number;
+  ac: number;
+
+  // Blueprint
+  stats: EntityStats;
+  actions: EntityAction[];
+  features: EntityFeature[];
+
+  // Visuals
   color: string;
   visionRadius: number;
 }

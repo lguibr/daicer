@@ -10,17 +10,30 @@ export default ({ strapi }) => ({
     // In a real ECS loop, we'd cache this or have a state manager.
     const room = await strapi.documents('api::room.room').findOne({
       documentId: roomId,
-      populate: ['players', 'players.character', 'character_sheets'],
+      populate: [
+        'players',
+        'players.character',
+        'character_sheets',
+        'character_sheets.monster',
+        'character_sheets.monster.structuredActions',
+        'character_sheets.monster.features',
+        'character_sheets.character',
+        'character_sheets.character.baseStats',
+      ],
     });
 
     if (!room) throw new Error(`Room ${roomId} not found`);
 
     // Map Strapi relations to Engine GameState
     // This is a partial mapping for now
+    // Adapt Entities
+    const entityAdapter = strapi.service('api::game.entity-adapter');
+    const unifiedEntities = (room.character_sheets || []).map((s) => entityAdapter.adapt(s));
+
     const initialState: GameState = {
       room: { id: room.documentId, ...room },
       world: {}, // TODO: Fetch Voxel world if needed for Move checks
-      entities: room.character_sheets || [], // Treating sheets as entities
+      entities: unifiedEntities,
       players: room.players || [],
       settings: room.settings || {},
     };
@@ -46,23 +59,64 @@ export default ({ strapi }) => ({
   },
 
   async persistResult(roomId: string, result: import('@daicer/engine').ActionResult) {
-    // Only handling basic events for now
+    // 1. Apply Immediate Updates (Entity Sync)
     for (const event of result.events) {
       if (event.type === 'ENTITY_MOVED') {
         const { entityId, to } = event.payload;
-        // Update CharacterSheet
         await strapi.documents('api::character-sheet.character-sheet').update({
           documentId: entityId,
           data: { position: to },
         });
       }
-      // Added attack/skill event logging could go to a 'GameLog' collection
+      // Add more syncs as needed (HP, etc.)
     }
 
-    // Broadcast result events to frontend
+    // 2. SOTA Persistence: Create TimeFrame (Turn)
+    // We treat this execution as a discrete "Turn" or "TimeStep".
+
+    // Find latest turn number
+    const lastTurnHandles = await strapi.documents('api::time-frame.time-frame').findMany({
+      filters: { room: { documentId: roomId } },
+      sort: 'turnNumber:desc',
+      limit: 1,
+      fields: ['turnNumber'],
+    });
+    const nextTurnNumber = (lastTurnHandles[0]?.turnNumber || 0) + 1;
+
+    // Create TimeFrame with State Diff (Events as Proxy for now)
+    const timeFrame = await strapi.documents('api::time-frame.time-frame').create({
+      data: {
+        turnNumber: nextTurnNumber,
+        timestamp: new Date().toISOString(),
+        room: roomId,
+        gameState: { events: result.events }, // Storing events as the "State Diff" for this turn
+      },
+      status: 'published',
+    });
+
+    // 3. Create System Message for Log
+    const logContent =
+      result.events.map((e) => `[${e.type}] ${JSON.stringify(e.payload)}`).join('\n') || 'Action executed.';
+
+    await strapi.documents('api::message.message').create({
+      data: {
+        content: logContent,
+        senderName: 'System',
+        senderType: 'system',
+        room: roomId,
+        turn: timeFrame.documentId,
+        timestamp: Date.now(),
+      },
+      status: 'published',
+    });
+
+    // 4. Broadcast
     const { streamManager } = await import('../../../utils/llm/stream-manager');
-    // Need to resolve Room ID for broadcasting (might be room.roomId vs documentId)
-    // We used documentId above to fetch.
-    streamManager.broadcast(roomId, 'engine:events', { events: result.events });
+    // Using roomId as documentId for broadcast channel might be risky if roomId != code.
+    // Assuming roomId passed here is correct for broadcast.
+    streamManager.broadcast(roomId, 'engine:events', {
+      events: result.events,
+      turnId: timeFrame.documentId,
+    });
   },
 });

@@ -1,0 +1,44 @@
+{
+    "collectionName": "components_game_features",
+    "info": {
+        "displayName": "Feature",
+        "icon": "star",
+        "description": "Trait or Special Ability"
+    },
+    "options": {},
+    "attributes": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "description": {
+            "type": "text"
+        },
+        "source": {
+            "type": "enumeration",
+            "enum": [
+                "race",
+                "class",
+                "monster",
+                "feat",
+                "item",
+                "other"
+            ],
+            "default": "monster"
+        },
+        "usage_max": {
+            "type": "integer"
+        },
+        "usage_per": {
+            "type": "enumeration",
+            "enum": [
+                "short_rest",
+                "long_rest",
+                "day",
+                "dawn",
+                "dusk",
+                "other"
+            ]
+        }
+    }
+}

@@ -100,6 +100,16 @@
       "allowedTypes": [
         "images"
       ]
+    },
+    "structuredActions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "game.action"
+    },
+    "features": {
+      "type": "component",
+      "repeatable": true,
+      "component": "game.feature"
     }
   }
 }
