@@ -167,6 +167,15 @@ export interface MonsterLegendaryAction {
   description: string;
 }
 
+export interface MonsterSpeeds {
+  walk: number;
+  fly: number;
+  swim: number;
+  climb: number;
+  burrow: number;
+  hover: boolean;
+}
+
 export interface Monster {
   id: string;
   name: string;
@@ -175,7 +184,7 @@ export interface Monster {
   alignment: string;
   armorClass: number;
   hitPoints: string;
-  speed: string;
+  speed: MonsterSpeeds;
   abilityScores: MonsterAbilityScores;
   savingThrows?: string[];
   skills?: string[];
@@ -518,7 +527,14 @@ export async function getMonsters(): Promise<Monster[]> {
       alignment: m?.alignment || 'Unaligned',
       armorClass: m?.ac || 10,
       hitPoints: String(m?.hp || 10),
-      speed: JSON.stringify(m?.speed) || '30 ft',
+      speed: {
+        walk: m?.stats?.walkSpeed || 30,
+        fly: m?.stats?.flySpeed || 0,
+        swim: m?.stats?.swimSpeed || 0,
+        climb: m?.stats?.climbSpeed || 0,
+        burrow: m?.stats?.burrowSpeed || 0,
+        hover: m?.stats?.hover || false,
+      },
       abilityScores: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 },
       senses: [],
       languages: [],

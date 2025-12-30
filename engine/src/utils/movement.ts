@@ -5,6 +5,8 @@ export interface SpeedCapabilities {
   fly?: number;
   swim?: number;
   climb?: number;
+  burrow?: number;
+  hover?: boolean;
 }
 
 /**
@@ -22,10 +24,12 @@ export const getMovementModes = (speed: Speed | undefined | null): SpeedCapabili
   }
 
   return {
-    walk: speed.walk ?? 0,
-    fly: speed.fly,
-    swim: speed.swim,
-    climb: speed.climb,
+    walk: speed.walkSpeed ?? 0,
+    fly: speed.flySpeed,
+    swim: speed.swimSpeed,
+    climb: speed.climbSpeed,
+    burrow: speed.burrowSpeed,
+    hover: speed.hover,
   };
 };
 
@@ -37,5 +41,7 @@ export const canMove = (speed: Speed | undefined | null, mode: keyof SpeedCapabi
 
   if (mode === 'walk') return (modes.walk ?? 0) > 0;
 
-  return (modes[mode] ?? 0) > 0;
+  const val = modes[mode];
+  if (typeof val === 'boolean') return val;
+  return (val ?? 0) > 0;
 };

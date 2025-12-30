@@ -123,7 +123,26 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
               {/* AC, Init, Speed */}
               <StatBox label="Armor Class" value={character.armorClass} big />
               <StatBox label="Initiative" value={formatModifier(character.initiative)} big />
-              <StatBox label="Speed" value={`${character.speed} ft`} big />
+
+              {/* Complex Speed Display */}
+              <div className="bg-shadow-50/40 border-2 border-shadow-800/30 p-2 rounded-sm flex flex-col items-center justify-center min-h-[5rem]">
+                <span className={paperStyles.label}>Speed</span>
+                <div className="flex flex-col items-center leading-tight">
+                  {typeof character.speed === 'object' && character.speed !== null ? (
+                    Object.entries(character.speed).map(([mode, val]) => {
+                      const label = mode === 'walkSpeed' ? 'Walk' : mode.replace('Speed', '');
+                      if (!val) return null;
+                      return (
+                        <span key={mode} className="font-display font-bold text-lg text-shadow-900">
+                          {label}: {val === true ? 'Yes' : val}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="font-display font-bold text-3xl text-shadow-900">{character.speed} ft</span>
+                  )}
+                </div>
+              </div>
 
               {/* HP - Spans full width */}
               <div className="col-span-3 border-2 border-shadow-800/30 bg-shadow-50/40 p-3 flex justify-between items-center rounded-sm">

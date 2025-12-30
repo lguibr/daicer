@@ -95,12 +95,17 @@ export interface GameStats extends Struct.ComponentSchema {
     icon: 'chart-bar';
   };
   attributes: {
+    burrowSpeed: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     charisma: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
+    climbSpeed: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     constitution: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
     dexterity: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
+    flySpeed: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    hover: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     intelligence: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
-    speed: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<30>;
     strength: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
+    swimSpeed: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    walkSpeed: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     wisdom: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<10>;
   };
 }

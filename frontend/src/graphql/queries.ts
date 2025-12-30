@@ -18,7 +18,14 @@ export const GET_ROOM_QUERY = gql`
         }
         currentHp
         maxHp
-        speed
+        stats {
+          walkSpeed
+          flySpeed
+          swimSpeed
+          climbSpeed
+          burrowSpeed
+          hover
+        }
       }
       players {
         id

@@ -109,6 +109,9 @@ export default ({ strapi }) => ({
         });
         if (races && races.length > 0) {
           raceId = races[0].documentId;
+          // Capture race speed for stat derivation
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (characterData as any)._raceSpeed = races[0].speed;
         }
       }
 
@@ -160,7 +163,22 @@ export default ({ strapi }) => ({
       race: createdCharacter.race, // Relation
       level: 1, // Default start level
       experience: 0,
-      stats: createdCharacter.baseStats, // JSON
+
+      stats: {
+        ...(createdCharacter.baseStats as Record<string, number>),
+        // Derive speed logic inline or use defaults
+        ...(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const raceSpeed = (characterData as any)._raceSpeed || 30;
+          if (typeof raceSpeed === 'number') return { walkSpeed: raceSpeed };
+          // If object, map to walkSpeed if needed or spread if already correct
+          // Assuming legacy migration might be needed if race was not updated?
+          // But valid races are integers in current schema.
+          // If manual object:
+          if (raceSpeed.walk) return { walkSpeed: raceSpeed.walk, ...raceSpeed };
+          return { walkSpeed: 30, ...raceSpeed };
+        })(),
+      },
       baseStats: createdCharacter.baseStats, // Keep a copy of base
       currentHp: 10, // Placeholder, should derive from CON + Class
       maxHp: 10, // Placeholder

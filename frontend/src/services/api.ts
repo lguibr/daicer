@@ -121,7 +121,7 @@ export async function getRoomState(roomId: string): Promise<Room> {
         name: s.name,
         type: s.type || 'monster',
         position: s.position || { x: 0, y: 0, z: 0 },
-        speed: s.speed || 30,
+        speed: s.stats?.walkSpeed || s.speed || 30,
         currentHp: s.currentHp,
         maxHp: s.maxHp,
         visionRadius: 10, // Default

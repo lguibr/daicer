@@ -152,7 +152,14 @@ export const GET_MONSTERS_QUERY = gql`
       alignment
       hp
       ac
-      speed
+      stats {
+        walkSpeed
+        flySpeed
+        swimSpeed
+        climbSpeed
+        burrowSpeed
+        hover
+      }
       challenge_rating
     }
   }

@@ -40,7 +40,14 @@
     },
     "size": {
       "type": "enumeration",
-      "enum": ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"]
+      "enum": [
+        "Tiny",
+        "Small",
+        "Medium",
+        "Large",
+        "Huge",
+        "Gargantuan"
+      ]
     },
     "type": {
       "type": "string"
@@ -56,9 +63,6 @@
     },
     "hit_dice": {
       "type": "string"
-    },
-    "speed": {
-      "type": "json"
     },
     "stats": {
       "type": "component",
@@ -93,7 +97,9 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     }
   }
 }

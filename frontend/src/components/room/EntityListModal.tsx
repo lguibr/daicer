@@ -26,6 +26,7 @@ interface CharacterSheetData {
   features?: string;
   personality?: { traits: string };
   challenge?: number; // For monsters
+  speed?: any; // Unified speed stats
 }
 
 interface CreatureEntity {
@@ -327,6 +328,35 @@ function SheetView({ sheet }: SheetViewProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
       {/* Stats */}
       <div className="space-y-6">
+        {sheet.speed && (
+          <section>
+            <h3 className="text-lg font-bold text-aurora-200 border-b border-aurora-500/20 mb-3 pb-1">Speed</h3>
+            <div className="flex flex-wrap gap-2 text-sm text-white">
+              {typeof sheet.speed === 'object' && sheet.speed !== null ? (
+                Object.entries(sheet.speed).map(([mode, val]) => {
+                  const label = mode === 'walkSpeed' ? 'Walk' : mode.replace('Speed', '');
+                  if ((val as number) > 0 || (typeof val === 'boolean' && val)) {
+                    return (
+                      <div
+                        key={mode}
+                        className="bg-midnight-950 px-3 py-1 rounded border border-midnight-800 flex items-center gap-2"
+                      >
+                        <span className="text-midnight-400 uppercase text-xs font-bold">{label}</span>
+                        <span className="font-bold">{val === true ? 'Yes' : `${val} ft`}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })
+              ) : (
+                <div className="bg-midnight-950 px-3 py-1 rounded border border-midnight-800">
+                  <span className="font-bold">{sheet.speed} ft</span>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         <section>
           <h3 className="text-lg font-bold text-aurora-200 border-b border-aurora-500/20 mb-3 pb-1">Attributes</h3>
           <div className="grid grid-cols-3 gap-2">

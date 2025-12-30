@@ -407,7 +407,6 @@ export interface ApiCharacterSheetCharacterSheet extends Struct.CollectionTypeSc
     publishedAt: Schema.Attribute.DateTime;
     race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
     room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
-    speed: Schema.Attribute.JSON;
     stats: Schema.Attribute.Component<'game.stats', false>;
     type: Schema.Attribute.Enumeration<['player', 'monster', 'npc']> & Schema.Attribute.DefaultTo<'player'>;
     updatedAt: Schema.Attribute.DateTime;
@@ -1005,7 +1004,6 @@ export interface ApiMonsterMonster extends Struct.CollectionTypeSchema {
     size: Schema.Attribute.Enumeration<['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     special_abilities: Schema.Attribute.JSON;
-    speed: Schema.Attribute.JSON;
     stats: Schema.Attribute.Component<'game.stats', false>;
     type: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;

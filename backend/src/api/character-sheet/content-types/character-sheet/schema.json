@@ -17,7 +17,11 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": ["player", "monster", "npc"],
+      "enum": [
+        "player",
+        "monster",
+        "npc"
+      ],
       "default": "player"
     },
     "monster": {
@@ -41,9 +45,6 @@
     },
     "maxHp": {
       "type": "integer"
-    },
-    "speed": {
-      "type": "json"
     },
     "level": {
       "type": "integer",

@@ -74,7 +74,7 @@ export default ({ strapi }) => ({
         position: position,
         // Stats component can be populated from monster.stats if structures match
         stats: monster.stats,
-        speed: monster.speed, // Populate speed directly from monster (which is now JSON)
+
         // We can add appearance/inventory stubs
       },
       status: 'published',
