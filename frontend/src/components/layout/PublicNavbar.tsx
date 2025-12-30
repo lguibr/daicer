@@ -117,15 +117,17 @@ export default function PublicNavbar() {
         {/* Right - Controls (Desktop) */}
         <div className="ml-auto hidden items-center gap-3 md:flex">
           <LanguageSelector variant="compact" data-testid="public-navbar-language-selector" />
-          <button
-            type="button"
-            onClick={() => handleNavigate('/')}
-            className="inline-flex items-center gap-2 rounded-lg border border-aurora-400/40 bg-aurora-500/10 px-4 py-2 text-sm font-semibold text-aurora-100 transition-colors hover:bg-aurora-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aurora-400/40"
-            data-testid="public-navbar-login-button"
-          >
-            <LogIn className="h-4 w-4" aria-hidden />
-            <span>{t('auth.login')}</span>
-          </button>
+          {!isActive('/') && (
+            <button
+              type="button"
+              onClick={() => handleNavigate('/')}
+              className="inline-flex items-center gap-2 rounded-lg border border-aurora-400/40 bg-aurora-500/10 px-4 py-2 text-sm font-semibold text-aurora-100 transition-colors hover:bg-aurora-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aurora-400/40"
+              data-testid="public-navbar-login-button"
+            >
+              <LogIn className="h-4 w-4" aria-hidden />
+              <span>{t('auth.login')}</span>
+            </button>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -175,15 +177,17 @@ export default function PublicNavbar() {
                 className="w-full mb-3"
                 data-testid="public-navbar-mobile-language-selector"
               />
-              <button
-                type="button"
-                onClick={() => handleNavigate('/')}
-                className="w-full px-4 py-3 bg-aurora-500 text-midnight-100 rounded-lg hover:bg-aurora-400 transition-colors font-medium flex items-center justify-center gap-2"
-                data-testid="public-navbar-mobile-login-button"
-              >
-                <LogIn className="h-4 w-4" />
-                <span>{t('auth.login')}</span>
-              </button>
+              {!isActive('/') && (
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/')}
+                  className="w-full px-4 py-3 bg-aurora-500 text-midnight-100 rounded-lg hover:bg-aurora-400 transition-colors font-medium flex items-center justify-center gap-2"
+                  data-testid="public-navbar-mobile-login-button"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>{t('auth.login')}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

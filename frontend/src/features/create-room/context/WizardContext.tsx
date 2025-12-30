@@ -12,7 +12,7 @@ interface WizardContextType {
     key: K,
     value: (typeof initialSettingsBase.dmStyle)[K]
   ) => void;
-  setSettings: (settings: WorldSettings & Partial<WorldConfig>) => void;
+  setSettings: React.Dispatch<React.SetStateAction<WorldSettings & Partial<WorldConfig>>>;
 }
 
 const WizardContext = createContext<WizardContextType | null>(null);
@@ -36,7 +36,7 @@ const initialSettingsBase = {
     detail: 1,
     engagement: 1,
     narrative: 1,
-    specialMode: null,
+    specialMode: null as string | null,
     customDirectives: '',
   },
   dmSystemPrompt: '',

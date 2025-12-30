@@ -23,7 +23,7 @@ export function WorldPreview({ config, className }: WorldPreviewProps) {
   const [viewZ, setViewZ] = useState<number>(0);
 
   // Chunk Loader
-  const { getChunk, isLoading, resetCache } = useChunkLoader({ config });
+  const { getChunk, isLoading } = useChunkLoader({ config });
 
   // Reset cache when config changes (handled by hook mostly, but if we need explicit reset on mount/unmount or special triggers)
   // The hook handles config dependency reset.

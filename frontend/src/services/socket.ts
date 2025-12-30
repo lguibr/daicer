@@ -50,7 +50,7 @@ export interface PresenceData {
  */
 interface SocketEvents {
   onGameState?: (data: { room: Room; players: Player[]; messages: Message[]; creatures: Creature[] }) => void;
-  onRoomUpdated?: (data: { type: string; userId: string; action?: string | null }) => void;
+  onRoomUpdated?: (data: { type?: string; userId?: string; action?: string | null; players?: Player[] }) => void;
   onPlayerJoined?: (data: { userId: string }) => void;
   onPlayerLeft?: (data: { userId: string }) => void;
   onPlayerCreated?: (data: { player: Player }) => void;
@@ -82,7 +82,9 @@ interface SocketEvents {
     content?: string;
     metadata?: Record<string, unknown>;
     timestamp: number;
+    timestamp: number;
   }) => void;
+  onEntitiesUpdate?: (data: { entities: any[] }) => void;
 }
 
 /**
@@ -163,6 +165,9 @@ function registerSocketEvents(s: Socket<ServerToClientEvents, ClientToServerEven
 
   // Presence events
   if (events.onPresenceUpdate) s.on('presence:update', events.onPresenceUpdate);
+
+  // Entities update (God Mode / Narrator)
+  if (events.onEntitiesUpdate) s.on('entities:update', events.onEntitiesUpdate);
 
   // Unified LLM Stream
   if (events.onLLMStreamEvent) s.on('llm:stream:event', events.onLLMStreamEvent);

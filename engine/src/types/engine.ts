@@ -2,7 +2,7 @@ import { Room, Player, Entity, WorldSettings } from './index';
 
 export interface GameState {
   room: Partial<Room>;
-  world: any; // Voxel world
+  world: unknown; // Voxel world
   entities: Entity[];
   players: Player[];
   settings: WorldSettings;
@@ -10,7 +10,7 @@ export interface GameState {
 
 export interface GameEvent {
   type: string;
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: number;
 }
 

@@ -68,8 +68,8 @@ export class FastNoise {
     for (let i = 0; i < 256; i++) p[i] = i;
     for (let i = 0; i < 255; i++) {
       const r = i + ~~(this.rng.next() * (256 - i));
-      const aux = p[r];
-      p[r] = p[i];
+      const aux = p[r]!;
+      p[r] = p[i]!;
       p[i] = aux;
     }
     this.perm = new Array(512);

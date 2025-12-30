@@ -4,7 +4,7 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import type { Player, Room, CharacterSheet } from '@daicer/engine';
+import type { Room, CharacterSheet } from '@daicer/engine';
 import { GamePhase } from '@daicer/engine';
 import GameplayScreen from './GameplayScreen';
 import { NEW_CHARACTER_TEMPLATE } from '../../constants';
@@ -59,7 +59,8 @@ const mockCharacter: CharacterSheet = {
   backstory: 'Once an apprentice to a reclusive archmage, Elara seeks lost reliquaries.',
 };
 
-const mockPlayers: Player[] = [
+// @ts-ignore
+const mockPlayers: any[] = [
   {
     id: 'player-1',
     userId: 'user-1',

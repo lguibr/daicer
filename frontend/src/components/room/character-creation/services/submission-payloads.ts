@@ -82,8 +82,10 @@ export const submitCharacter = async (
   assetMode: boolean,
   avatarPreview: any,
   onAssetCreated: any,
-  onCharacterCreated: any,
-  effectiveLevel: number
+  _onCharacterCreated: any,
+
+   
+  _effectiveLevel: number
 ) => {
   // if (assetMode) { ... } logic removed as we no longer create assets this way.
   // The 'assetMode' generally referred to creating a standalone JSON asset.

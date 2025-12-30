@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CharacterDeriver } from '../index';
 import { DerivationContext } from '../types';
 

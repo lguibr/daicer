@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { Player } from '@daicer/engine';
+import type { Player, CharacterSheet } from '@daicer/engine';
 import {
   PaperBackground,
   StatBox,
@@ -24,7 +24,7 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
   }, [onClose, player]);
 
   if (!player?.character) return null;
-  const { character } = player;
+  const character = player.character as CharacterSheet;
   const { attributes } = character;
   const skillDetails = character.skillDetails ?? [];
 

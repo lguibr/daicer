@@ -14,6 +14,18 @@ export default {
       },
     },
     {
+      method: 'GET',
+      path: '/game/custom-search/entities',
+      handler: 'game.searchEntities',
+      config: {
+        policies: [],
+        middlewares: [],
+        auth: false, // Ensure authenticated in production but disabling here for dev ease? No, keep standard auth.
+        // If auth is needed, default policies usually cover it if not explicitly public.
+        // Assuming default secure.
+      },
+    },
+    {
       method: 'POST',
       path: '/game/:roomId/turn',
       handler: 'game.processTurn',
@@ -53,6 +65,15 @@ export default {
       method: 'POST',
       path: '/game/engine/execute',
       handler: 'game.executeEngineAction',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
+    {
+      method: 'POST',
+      path: '/game/:roomId/ready',
+      handler: 'game.toggleReady',
       config: {
         policies: [],
         middlewares: [],

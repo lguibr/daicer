@@ -20,7 +20,9 @@ export class RoomRuneGenerator {
     if (id < 0) throw new Error('ID must be a positive integer');
 
     if (id === 0) {
-      return this.alphabet[0].repeat(this.length);
+      const firstChar = this.alphabet[0];
+      if (!firstChar) throw new Error('Alphabet is empty');
+      return firstChar.repeat(this.length);
     }
 
     let num = id;
@@ -28,13 +30,16 @@ export class RoomRuneGenerator {
 
     while (num > 0) {
       const remainder = num % this.base;
-      result = this.alphabet[remainder] + result; // Prepend character
+      const char = this.alphabet[remainder];
+      if (!char) throw new Error('Alphabet character undefined');
+      result = char + result; // Prepend character
       num = Math.floor(num / this.base);
     }
 
     // Pad the start with the first character of the alphabet to ensure 6 chars
-    // e.g., if result is "x9", it becomes "qqqqx9" (assuming 'q' is index 0)
-    return result.padStart(this.length, this.alphabet[0]);
+    const padChar = this.alphabet[0];
+    if (!padChar) throw new Error('Alphabet is empty');
+    return result.padStart(this.length, padChar);
   }
 
   /**
@@ -47,7 +52,7 @@ export class RoomRuneGenerator {
     let id = 0;
 
     for (let i = 0; i < cleanRune.length; i++) {
-      const char = cleanRune[i];
+      const char = cleanRune.charAt(i); // Use charAt for safety
       const index = this.alphabet.indexOf(char);
 
       if (index === -1) {

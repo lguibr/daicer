@@ -1,0 +1,18 @@
+yarn workspace v1.22.22
+yarn run v1.22.22
+$ tsc --noEmit
+../engine/src/engine/action-dispatcher.ts(29,22): error TS6133: 'state' is declared but its value is never read.
+../engine/src/engine/action-dispatcher.ts(46,24): error TS6133: 'state' is declared but its value is never read.
+../engine/src/engine/action-dispatcher.ts(65,28): error TS6133: 'state' is declared but its value is never read.
+src/components/game/GameplayScreen.stories.tsx(7,15): error TS6196: 'Player' is declared but never used.
+src/components/room/character-creation/services/submission-payloads.ts(85,3): error TS6133: 'onCharacterCreated' is declared but its value is never read.
+error Command failed with exit code 2.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+error Command failed.
+Exit code: 2
+Command: /Users/lg/.nvm/versions/node/v22.14.0/bin/node
+Arguments: /Users/lg/.cache/node/corepack/v1/yarn/1.22.22/lib/cli.js typecheck
+Directory: /Users/lg/lab/daicer/frontend
+Output:
+
+info Visit https://yarnpkg.com/en/docs/cli/workspace for documentation about this command.

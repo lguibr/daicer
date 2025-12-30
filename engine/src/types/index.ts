@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
   AttributeSchema,
-  SavingThrowsSchema,
   SkillDetailSchema,
   TalentSchema,
   BackgroundDetailsSchema,

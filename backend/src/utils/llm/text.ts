@@ -68,9 +68,11 @@ export async function generateText(
     if (streamId) {
       // Stream in chunks to the frontend
       const chunks = content.split(/(?=[,.\n])/);
+      const targetUser = config.metadata?.targetUserId as string | undefined;
+
       for (const chunk of chunks) {
         if (chunk) {
-          streamManager.emitText(streamId, chunk);
+          streamManager.emitText(streamId, chunk, targetUser);
           await new Promise((r) => setTimeout(r, 20)); // Small delay for effect
         }
       }

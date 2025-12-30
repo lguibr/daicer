@@ -129,6 +129,7 @@ export const PlayerSchema = z.object({
   role: RoleSchema,
   isOnline: z.boolean().optional(),
   character: z.any().nullable(), // CharacterSheetSchema circular ref
+  characterSheet: z.any().nullable().optional(), // The Instantiated Sheet (ID or Object)
   action: z.string().nullable(),
   isReady: z.boolean(),
   joinedAt: z.number(),
@@ -174,6 +175,12 @@ export const RoomSchema = z.object({
   roads: z.array(z.any()).optional(),
   worldConditions: z.array(z.any()).optional(),
   phase: GamePhaseSchema,
+  turnData: z
+    .object({
+      phase: z.enum(['idle', 'waiting_for_actions', 'processing']),
+      actions: z.array(z.any()),
+    })
+    .optional(),
   terrainData: z.any().optional(),
   characterCreationLocked: z.boolean().optional(),
   generationEvents: z.array(z.any()).optional(),

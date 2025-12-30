@@ -43,12 +43,12 @@ export const getMutationResolvers = (strapi) => ({
       'dmStyle',
     ];
 
-    const worldData: any = { name: `${user.username}'s World` };
-    const dmData: any = {};
-    const roomData: any = { ...data };
+    const worldData: Record<string, unknown> = { name: `${user.username}'s World` };
+    const dmData: Record<string, unknown> = {};
+    const roomData: Record<string, unknown> = { ...data };
 
     // Helper to extract fields
-    const extract = (source: any) => {
+    const extract = (source: Record<string, unknown>) => {
       worldFields.forEach((field) => {
         if (source[field] !== undefined) {
           worldData[field] = source[field];
@@ -213,10 +213,10 @@ export const getMutationResolvers = (strapi) => ({
   },
 
   submitAction: async (_parent, args, context) => {
-    const { roomId, action } = args;
+    const { roomId, action, mode } = args;
     const { user } = context.state;
     if (!user) throw new Error('Unauthorized');
-    return strapi.service('api::game.game').submitAction(roomId, action, user);
+    return strapi.service('api::game.game').submitAction(roomId, action, user, mode);
   },
 
   spawnCreature: async (_parent, args, _context) => {

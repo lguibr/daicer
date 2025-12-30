@@ -26,7 +26,7 @@ export function RoomSelection({ onSelect, onCreate }: RoomSelectionProps) {
     );
   }
 
-  const rooms = data?.rooms || [];
+  const rooms = (data as any)?.rooms || [];
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-500">

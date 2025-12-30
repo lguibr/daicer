@@ -8,9 +8,9 @@ import type { WorldSettings, Player, CharacterSheet, Language } from '@daicer/en
 
 export default ({ strapi }) => ({
   createSnapshot(characterSheets: unknown[]) {
-    const snapshot: Record<string, any> = {};
+    const snapshot: Record<string, unknown> = {};
     for (const sheet of characterSheets) {
-      const s = sheet as { documentId: string; [key: string]: any };
+      const s = sheet as { documentId: string; [key: string]: unknown };
       if (s && s.documentId) {
         const snap = createCharacterSnapshot(s);
         if (snap) {
@@ -21,9 +21,13 @@ export default ({ strapi }) => ({
     return snapshot;
   },
 
-  async addCharacter(roomId: string, characterData: any, user: any) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async addCharacter(
+    roomId: string,
+    characterData: Record<string, any>,
+    user: { documentId: string; id: string; username: string }
+  ) {
     // 1. Fetch Room with populated players
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filters: any[] = [{ documentId: roomId }, { roomId: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
@@ -31,7 +35,7 @@ export default ({ strapi }) => ({
 
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: { $or: filters },
-      populate: ['players', 'players.user', 'players.character'],
+      populate: ['players', 'players.user', 'players.character', 'players.characterSheet'],
     });
 
     if (!rooms || rooms.length === 0) {
@@ -70,7 +74,16 @@ export default ({ strapi }) => ({
     }
 
     // 3. Create OR Link Character Entity
-    let createdCharacter: { documentId: string } | null = null;
+    let createdCharacter: {
+      documentId: string;
+      name: string;
+      class?: string;
+      race?: string;
+      baseStats?: unknown;
+      appearance?: unknown;
+      backstory?: unknown;
+      equipment?: unknown[];
+    } | null = null;
 
     // Check if we are linking an existing character
     if (characterData.documentId) {
@@ -138,8 +151,39 @@ export default ({ strapi }) => ({
       });
     }
 
-    // 4. Update Room Player Component
-    const playerIndex = players.findIndex((p: any) => p.user?.documentId === user.documentId || p.user?.id === user.id);
+    // 4. Create Character Sheet (The Gameplay Instance)
+    // We create it immediately so the Waiting Room can show real stats/sheet
+    const sheetData = {
+      name: createdCharacter.name,
+      type: 'player',
+      class: createdCharacter.class, // Relation
+      race: createdCharacter.race, // Relation
+      level: 1, // Default start level
+      experience: 0,
+      stats: createdCharacter.baseStats, // JSON
+      baseStats: createdCharacter.baseStats, // Keep a copy of base
+      currentHp: 10, // Placeholder, should derive from CON + Class
+      maxHp: 10, // Placeholder
+      attributes: createdCharacter.baseStats, // Map baseStats to attributes
+      appearance: createdCharacter.appearance,
+      backstory: createdCharacter.backstory,
+      inventory: createdCharacter.equipment || [],
+      position: { x: 0, y: 0, z: 0 }, // Default spawn
+      character: createdCharacter.documentId, // Link to global asset
+      room: room.documentId,
+    };
+
+    const createdSheet = await strapi.documents('api::character-sheet.character-sheet').create({
+      data: sheetData,
+      status: 'published',
+    });
+
+    strapi.log.info(`Created CharacterSheet ${createdSheet.documentId} for Room ${roomId}`);
+
+    // 5. Update Room Player Component
+    const playerIndex = players.findIndex(
+      (p: Player) => p.user?.documentId === user.documentId || p.user?.id === user.id
+    );
 
     if (playerIndex === -1) {
       throw new Error('User is not a player in this room');
@@ -148,8 +192,9 @@ export default ({ strapi }) => ({
     const updatedPlayers = [...players];
     updatedPlayers[playerIndex] = {
       ...updatedPlayers[playerIndex],
-      character: createdCharacter.documentId,
-      isReady: true,
+      character: createdCharacter.documentId, // Keep global link for reference
+      characterSheet: createdSheet.documentId, // The Active Sheet
+      isReady: false,
       name: characterData.name,
     };
 
@@ -160,7 +205,7 @@ export default ({ strapi }) => ({
       },
     });
 
-    return { character: createdCharacter, player: updatedPlayers[playerIndex] };
+    return { character: createdCharacter, characterSheet: createdSheet, player: updatedPlayers[playerIndex] };
   },
 
   async generateCharacterOpening(
@@ -169,7 +214,8 @@ export default ({ strapi }) => ({
     mainContext: string,
     language: Language = 'en',
     settings?: WorldSettings,
-    streamId?: string
+    streamId?: string,
+    targetUserId?: string
   ): Promise<string> {
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {
@@ -177,7 +223,11 @@ export default ({ strapi }) => ({
       dynamicStyleInstructions = `DYNAMIC STYLE ADJUSTMENTS:\n${instruction}`;
     }
 
-    const c = character as any;
+    const c = character as unknown as {
+      race?: { name?: string };
+      class?: { name?: string };
+      baseStats?: Record<string, number>;
+    };
     const charSummary = `Name: ${character.name}
 Race: ${c.race?.name || character.race || 'Unknown'}
 Class: ${c.class?.name || (character as any).characterClass || 'Unknown'}
@@ -225,12 +275,16 @@ Start with ### Through ${character.name}'s Eyes`;
     if (userPrompt.includes('{{characterName}}')) {
       userPrompt = formatPrompt(userPrompt, {
         characterName: character.name,
-        characterRace: ((character as any).race as any)?.name || character.race || 'Unknown',
-        characterClass: ((character as any).class as any)?.name || (character.characterClass as string) || 'Unknown',
+        characterRace:
+          (character as unknown as { race: { name: string } }).race?.name || (character.race as string) || 'Unknown',
+        characterClass:
+          (character as unknown as { class?: { name?: string }; characterClass?: string }).class?.name ||
+          ((character as unknown as { characterClass?: string }).characterClass as string) ||
+          'Unknown',
       });
     }
 
-    return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
+    return generateText(systemPrompt, userPrompt, language, { metadata: { streamId, targetUserId } });
   },
 
   async generateMainOpening(
@@ -238,7 +292,8 @@ Start with ### Through ${character.name}'s Eyes`;
     players: Player[],
     language: Language = 'en',
     settings?: WorldSettings,
-    streamId?: string
+    streamId?: string,
+    targetUserId?: string
   ): Promise<string> {
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {
@@ -250,9 +305,15 @@ Start with ### Through ${character.name}'s Eyes`;
       players.length > 0
         ? players
             .map((p) => {
-              const c = p.character as any;
+              const c = p.character as unknown as {
+                name: string;
+                race?: string | { name: string };
+                class?: string | { name: string };
+                characterClass?: string;
+                description?: string;
+              };
               if (!c) return `- ${p.name}: (No Character)`;
-              return `- ${c.name} (${c.race?.name || c.race} ${c.class?.name || c.characterClass}): ${c.description || 'A brave adventurer'}`;
+              return `- ${c.name} (${typeof c.race === 'object' ? c.race.name : c.race || 'Unknown'} ${typeof c.class === 'object' ? c.class.name : c.characterClass || 'Unknown'}): ${c.description || 'A brave adventurer'}`;
             })
             .join('\n')
         : 'A group of adventurers form.';

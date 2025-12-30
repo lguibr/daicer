@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BookOpen } from 'lucide-react';
@@ -15,6 +15,10 @@ import { useI18n } from '../../i18n';
 
 // import { auth } from '../../services/firebase';
 import { LoadingOverlay } from '../ui/LoadingOverlay';
+
+import { MapRenderer } from '../../features/debug/components/MapRenderer';
+import { useChunkLoader } from '../../hooks/useChunkLoader';
+import type { WorldConfig, Coordinates } from '../../features/debug/utils/types';
 
 import GameplayChatArea from './GameplayChatArea';
 import GameplayComposer from './GameplayComposer';
@@ -243,17 +247,171 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
     </div>
   );
 
+  // === Map State & Logic ===
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapSize, setMapSize] = useState({ w: 800, h: 600 });
+  const [viewZ, setViewZ] = useState<number>(0);
+  const [zoom, setZoom] = useState<number>(1);
+  const [cameraPosition, setCameraPosition] = useState<Coordinates>({ x: 0, y: 0, z: 0 });
+
+  // Sync camera to player on mount/update if valid
+  useEffect(() => {
+    if (currentPlayer?.position) {
+      setCameraPosition(currentPlayer.position as Coordinates);
+      setViewZ(currentPlayer.position.z);
+    }
+  }, [currentPlayer?.position?.x, currentPlayer?.position?.y, currentPlayer?.position?.z]);
+
+  // Resize Observer for Map Container
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setMapSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+      }
+    });
+    observer.observe(mapContainerRef.current);
+    return () => observer.disconnect();
+  }, [showEntityList]); // Re-measure if modal state changes potentially affecting layout
+
+  // Config for ChunkLoader
+  // Fallback to defaults if room config is missing
+  const mapConfig: WorldConfig = useMemo(() => {
+    const defaults: WorldConfig = {
+      seed: 'default',
+      chunkSize: 32,
+      globalScale: 0.01,
+      seaLevel: 0,
+      elevationScale: 1,
+      roughness: 0.5,
+      detail: 4,
+      moistureScale: 1,
+      temperatureOffset: 0,
+      structureChance: 0.1,
+      structureSpacing: 10,
+      structureSizeAvg: 10,
+      roadDensity: 0.5,
+      fogRadius: 10,
+    };
+    return { ...defaults, ...(room.config || {}) };
+  }, [room.config]);
+
+  const { getChunk } = useChunkLoader({ config: mapConfig });
+
+  // Chunk Provider
+  const chunkProvider = useMemo(
+    () => ({
+      getChunk: (x: number, y: number) => getChunk(x, y),
+    }),
+    [getChunk]
+  );
+
+  // Entities for Map
+  const mapEntities = useMemo(() => {
+    return players
+      .filter((p) => p.position) // Only players with position
+      .map((p) => ({
+        id: p.userId,
+        type: 'player',
+        name: p.character?.name || p.name,
+        position: p.position!,
+        color: p.userId === user?.uid ? '#10b981' : '#3b82f6', // Green for self, Blue for others
+        visionRadius: 10, // Default
+        exploredTiles: new Set<string>(), // Hydrate if available
+      }));
+  }, [players, user?.uid]);
+
+  // Map Component
+  const mapContent = (
+    <div className="relative h-full w-full bg-black" ref={mapContainerRef}>
+      {/* Map Controls Overlay */}
+      <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2">
+        <div className="flex flex-col items-center rounded-lg bg-midnight-900/90 p-2 shadow-xl backdrop-blur">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded hover:bg-midnight-700 text-shadow-200"
+            onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
+          >
+            +
+          </button>
+          <span className="text-xs font-mono text-shadow-400">{Math.round(zoom * 100)}%</span>
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded hover:bg-midnight-700 text-shadow-200"
+            onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
+          >
+            -
+          </button>
+        </div>
+        <div className="flex flex-col items-center rounded-lg bg-midnight-900/90 p-2 shadow-xl backdrop-blur">
+          {([-1, 0, 1] as const).map((z) => (
+            <button
+              key={z}
+              onClick={() => setViewZ(z)}
+              className={`flex h-8 w-8 items-center justify-center rounded text-xs font-bold transition-colors ${
+                viewZ === z ? 'bg-aurora-500 text-midnight-950' : 'text-shadow-400 hover:bg-midnight-700'
+              }`}
+            >
+              {z}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <MapRenderer
+        width={mapSize.w}
+        height={mapSize.h}
+        center={cameraPosition}
+        viewZ={viewZ}
+        scale={zoom}
+        chunkProvider={chunkProvider}
+        visibleTiles={new Set()} // TODO: Implement FOV
+        exploredTiles={new Set()}
+        entities={mapEntities}
+        onTileClick={(col, row) => {
+          // Submit Move Action
+          handleSubmitAction(`MOVE:${col},${row},${viewZ}`);
+        }}
+        onTileHover={() => {}}
+        onZoom={(delta, mouseX, mouseY) => {
+          const SCALE_FACTOR = 0.1;
+          const newZoom = Math.max(0.1, Math.min(5, zoom - delta * SCALE_FACTOR));
+          const TILE_SIZE = 32 * zoom;
+          // Zoom towards cursor
+          const wx = cameraPosition.x + (mouseX - mapSize.w / 2) / TILE_SIZE;
+          const wy = cameraPosition.y + (mouseY - mapSize.h / 2) / TILE_SIZE;
+
+          const NEW_TILE_SIZE = 32 * newZoom;
+          const newCenterX = wx - (mouseX - mapSize.w / 2) / NEW_TILE_SIZE;
+          const newCenterY = wy - (mouseY - mapSize.h / 2) / NEW_TILE_SIZE;
+
+          setZoom(newZoom);
+          setCameraPosition({ ...cameraPosition, x: newCenterX, y: newCenterY });
+        }}
+        onPan={(dx, dy) => {
+          const TILE_SIZE = 32 * zoom;
+          setCameraPosition((prev) => ({
+            ...prev,
+            x: prev.x - dx / TILE_SIZE,
+            y: prev.y - dy / TILE_SIZE,
+          }));
+        }}
+      />
+    </div>
+  );
+
   return (
     <>
       {submitting && socket.isProcessing && <LoadingOverlay message={t('gameplay.processing')} />}
 
-      {/* Desktop View (lg+) */}
+      {/* Desktop View (lg+) - Split Screen */}
       <div className="hidden h-full w-full lg:flex">
-        {/* Full Screen Chat */}
-        <div className="w-full h-full border-r border-midnight-700 bg-midnight-900/95 relative">
+        {/* Left: Map (50%) */}
+        <div className="h-full w-1/2 border-r border-midnight-700 bg-black relative">{mapContent}</div>
+
+        {/* Right: Chat (50%) */}
+        <div className="h-full w-1/2 relative bg-midnight-900/95">
           {chatContent}
 
-          {/* Overlay Controls (repositioned) */}
+          {/* Overlay Controls */}
           <div className="absolute right-4 top-4 flex gap-2">
             <Button size="icon" variant="secondary" onClick={() => setShowEntityList(true)} title="Entities & Sheets">
               <BookOpen className="w-4 h-4" />
@@ -269,11 +427,7 @@ export default function GameplayScreen({ room, players, onRefresh }: GameplayScr
         <RoomTabs
           roomId={room.documentId || room.id}
           chatContent={chatContent}
-          mapContent={
-            <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
-              <p>Map view is currently disabled.</p>
-            </div>
-          }
+          mapContent={mapContent}
           playersContent={<PlayerListTab players={players} currentUserId={user?.uid || ''} />}
           settingsContent={<RoomSettingsTab room={room} onLeave={handleLeaveRoom} />}
         />

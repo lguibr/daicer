@@ -6,7 +6,7 @@
 
 import type { ChunkDTO } from '@daicer/engine';
 
-import { gql } from '@apollo/client';
+// import { gql } from '@apollo/client';
 import { apolloClient } from '../../../lib/apollo';
 import type { TerrainChunk, InfiniteChunksConfig } from '../types';
 import { useTerrainStore } from '../../../stores/useTerrainStore';

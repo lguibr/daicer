@@ -18,7 +18,7 @@ export interface ServerToClientEvents {
   'game:state': (data: { room: Room; players: Player[]; messages: Message[]; creatures: Creature[] }) => void;
 
   // Room
-  'room:updated': (data: { type: string; userId: string; action?: string | null }) => void;
+  'room:updated': (data: { type: string; userId: string; action?: string | null; players?: Player[] }) => void;
   'room:all_ready': (data: { roomId: string }) => void;
   'room:phase_changed': (data: { roomId: string; phase: string }) => void;
 

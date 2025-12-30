@@ -1,0 +1,183 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Daicer Content Audit (Client Mode)</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            h1 { text-align: center; color: #333; }
+            .chart-wrapper { position: relative; height: 600px; width: 100%; margin-top: 40px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 40px; }
+            th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
+            th { background-color: #f8f9fa; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Content Completeness Audit</h1>
+            <p style="text-align: center; color: #666;">Generated via Strapi Client API</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Entity</th>
+                        <th>Total Items</th>
+                        <th>Missing Images</th>
+                        <th>Missing Description</th>
+                        <th>Missing Locales (Gap)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td>monster</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>race</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>magic-item</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>equipment</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>spell</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>class</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>subclass</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>feature</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>trait</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>proficiency</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>magic-school</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>language</td>
+                        <td>0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                        <td style="color: green;">0</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+
+            <div class="chart-wrapper">
+                <canvas id="auditChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            const ctx = document.getElementById('auditChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ["monster","race","magic-item","equipment","spell","class","subclass","feature","trait","proficiency","magic-school","language"],
+                    datasets: [
+                        {
+                            label: 'Total Items',
+                            data: [0,0,0,0,0,0,0,0,0,0,0,0],
+                            backgroundColor: '#e2e8f0',
+                            stack: 'Stack 1' // Separate stack for background context
+                        },
+                        {
+                            label: 'Missing Images',
+                            data: [0,0,0,0,0,0,0,0,0,0,0,0],
+                            backgroundColor: '#ef4444',
+                            stack: 'Stack 0'
+                        },
+                        {
+                            label: 'Missing Description',
+                            data: [0,0,0,0,0,0,0,0,0,0,0,0],
+                            backgroundColor: '#f59e0b',
+                            stack: 'Stack 0'
+                        },
+                        {
+                            label: 'Missing Locales (Gap)',
+                            data: [0,0,0,0,0,0,0,0,0,0,0,0],
+                            backgroundColor: '#3b82f6',
+                            stack: 'Stack 0'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: false } // We don't stack total with the issues
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>
+    

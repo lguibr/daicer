@@ -14,8 +14,9 @@ export default ({ strapi }) => ({
     settings?: WorldSettings,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     worldConditions?: any[],
-    mapContext?: string,
-    streamId?: string
+
+    streamId?: string,
+    mapImage?: Buffer
   ) {
     const { TurnResponseSchema } = await import('../../../schemas/agent-responses');
 
@@ -64,7 +65,8 @@ CRITICAL: TEAMWORK & PARTY COHESION:
 - Create situations that require cooperation and reward working as a group
 
 FORMATTING RULES - EXTREMELY IMPORTANT:
-You MUST use rich markdown formatting in your narrative.`;
+You MUST use rich markdown formatting in your narrative.
+${mapImage ? '\nMAP AWARENESS:\nA visual map of the current area is attached. Use it to describe the environment accurately (terrain, rivers, walls).' : ''}`;
 
     const basePrompt = await getPrompt('dm_system_instruction', language, systemPromptDefault);
 
@@ -105,7 +107,7 @@ ${relevantRules ? `RELEVANT D&D 5E RULES:\n${relevantRules}\n\n` : ''}You MUST r
 PREVIOUS STORY:
 ${conversationHistory}
 
-${mapContext ? `MAP CONTEXT:\n${mapContext}\n` : ''}
+
 CURRENT TURN ACTIONS:
 ${currentActions}
 
@@ -116,6 +118,7 @@ Respond entirely in ${languageName}.`;
 
     return generateStructured(TurnResponseSchema, systemPrompt, fullPrompt, language, {
       metadata: { streamId },
+      images: mapImage ? [mapImage] : undefined,
     });
   },
 });

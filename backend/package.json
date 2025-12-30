@@ -4,10 +4,10 @@
   "private": true,
   "description": "A Strapi application",
   "scripts": {
-    "dev": "strapi develop",
-    "develop": "strapi develop",
+    "dev": "NODE_OPTIONS='--max-old-space-size=8192' strapi develop",
+    "develop": "NODE_OPTIONS='--max-old-space-size=8192' strapi develop",
     "start": "strapi start",
-    "build": "strapi build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' strapi build",
     "strapi": "strapi",
     "deploy": "strapi deploy",
     "test": "exit 0",
@@ -17,9 +17,9 @@
     "seed": "ts-node src/scripts/seed.ts"
   },
   "dependencies": {
-    "@google/genai": "^1.32.0",
-    "@daicer/shared": "*",
     "@daicer/engine": "*",
+    "@daicer/shared": "*",
+    "@google/genai": "^1.32.0",
     "@langchain/core": "^1.1.4",
     "@langchain/google-genai": "^2.0.4",
     "@langchain/openai": "^1.1.3",
@@ -34,7 +34,9 @@
     "fast-simplex-noise": "^4.0.0",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
+    "p-limit": "3",
     "pg": "8.8.0",
+    "pngjs": "^7.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
@@ -42,9 +44,12 @@
     "styled-components": "^6.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   },

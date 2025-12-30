@@ -5,7 +5,7 @@ import { Chunk, WorldConfig } from '@daicer/engine';
 export class ChunkManager {
   private static instance: ChunkManager;
   private worker: Worker;
-  private pending: Map<string, { resolve: (c: Chunk) => void; reject: (e: any) => void }>;
+  private pending: Map<string, { resolve: (c: Chunk) => void; reject: (e: unknown) => void }>;
   private cache: Map<string, Chunk>;
 
   private constructor() {
@@ -15,7 +15,7 @@ export class ChunkManager {
     const workerPath = path.resolve(process.cwd(), 'src/api/voxel-engine/services/chunk-worker-loader.js');
     this.worker = new Worker(workerPath);
 
-    this.worker.on('message', (msg: any) => {
+    this.worker.on('message', (msg: { id: string; success: boolean; result: Chunk; error?: string; seed?: string }) => {
       const { id, success, result, error } = msg;
       if (this.pending.has(id)) {
         const { resolve, reject } = this.pending.get(id)!;

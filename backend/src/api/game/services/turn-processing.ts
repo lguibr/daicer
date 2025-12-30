@@ -1,4 +1,4 @@
-import type { WorldSettings, Player, Creature, Message, Language } from '@daicer/engine';
+import type { WorldSettings, Player, Creature, Message, Language, Chunk } from '@daicer/engine';
 
 export default ({ strapi }) => ({
   async processTurn(
@@ -12,7 +12,8 @@ export default ({ strapi }) => ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     worldConditions?: any[],
     mapContext?: string,
-    streamId?: string
+    streamId?: string,
+    chunk?: Chunk
   ) {
     const narrativeEngine = strapi.service('api::game.narrative-engine');
     const turnPersistence = strapi.service('api::game.turn-persistence');
@@ -22,7 +23,103 @@ export default ({ strapi }) => ({
     // 1. Broadcast Processing Start
     gameBroadcaster.startProcessing(roomId);
 
-    // 2. Generate Narrative
+    // 2. Execute Deterministic Turn (Movement, Collision, Exploration)
+    // Parse actions from players (strings) into structured commands
+    const deterministicActions = players
+      .filter((p) => p.action)
+      .map((p) => {
+        if (!p.action) return null;
+        // Parse "MOVE:x,y,z"
+        if (p.action.startsWith('MOVE:')) {
+          const parts = p.action.replace('MOVE:', '').split(',');
+          if (parts.length >= 2) {
+            const x = Number(parts[0]);
+            const y = Number(parts[1]);
+            const z = parts.length > 2 ? Number(parts[2]) : 0;
+            return {
+              type: 'move',
+              entityId: p.characterSheet?.documentId,
+              payload: { x, y, z },
+            };
+          }
+        }
+        // Fallback or other commands could be parsed here
+        return null;
+      })
+      .filter((a) => a !== null);
+
+    const actionResult = await strapi
+      .service('api::game.turn-processing')
+      .executeDeterministicTurn(roomId, deterministicActions);
+
+    // 3. Generate Map Image with NEW State
+    let mapImage: Buffer | undefined;
+    let mapImageId: string | undefined;
+
+    if (chunk) {
+      try {
+        const { generateMapImage } = await import('./map-visualization');
+
+        // Fetch Fresh Room Data (to get updated entity positions and exploredTiles)
+        const roomEntity = await strapi.documents('api::room.room').findOne({
+          documentId: roomId,
+          populate: ['character_sheets', 'creatures'],
+        });
+
+        const exploredTiles = new Set<string>(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (roomEntity?.exploredTiles as string[]) || []
+        );
+
+        // Calculate center based on first player or default
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firstPlayerSheet = roomEntity.character_sheets?.[0];
+        const center = firstPlayerSheet?.position || { x: 0, y: 0, z: 0 };
+
+        // Re-construct players list with updated positions for visualization
+        // The original 'players' array has the old state. We should use the room entities for the map.
+        // We need to map room entities back to minimal Player/Creature objects for the visualizer
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updatedPlayers = (roomEntity.character_sheets || []).map((s: any) => ({
+          position: s.position,
+        }));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updatedCreatures = (roomEntity.creatures || []).map((c: any) => ({
+          position: c.position,
+          hp: c.currentHp || c.hp, // handle schema variance
+          maxHp: c.maxHp,
+        }));
+
+        mapImage = await generateMapImage(chunk, updatedPlayers as any, updatedCreatures as any, exploredTiles, center);
+
+        // 4. Upload Map Image to Strapi
+        if (mapImage) {
+          const uploadService = strapi.plugin('upload').service('upload');
+          const uploadedFile = await uploadService.upload({
+            data: {
+              refId: roomEntity.id,
+              ref: 'api::room.room', // Temporary association or just orphan?
+              // Actually we want to associate it with the TURN, but the turn doesn't exist yet.
+              // We'll upload it as an orphan first, then link it.
+              field: 'contextImage',
+            },
+            files: {
+              name: `map_turn_${Date.now()}.png`,
+              type: 'image/png',
+              size: mapImage.length,
+              buffer: mapImage,
+            },
+          });
+          // Upload usually returns an array or object depending on version, assuming object or array [0]
+          const file = Array.isArray(uploadedFile) ? uploadedFile[0] : uploadedFile;
+          mapImageId = file.id;
+        }
+      } catch (e) {
+        strapi.log.warn('Failed to generate/upload DM map context:', e);
+      }
+    }
+
+    // 5. Generate Narrative (with new Map Image)
     const response = await narrativeEngine.generateNarrativeResponse(
       roomId,
       worldDescription,
@@ -33,24 +130,41 @@ export default ({ strapi }) => ({
       settings,
       worldConditions,
       mapContext,
-      streamId
+      streamId,
+      mapImage
     );
 
-    // 3. Persist Turn
+    // 6. Persist Turn
     const persistenceResult = await turnPersistence.persistTurn(
       roomId,
       response.overall_summary,
       players.filter((p) => p.action).map((p) => ({ user: p.userId, action: p.action })),
       'group',
-      { model: 'llm', ragUsed: !!response.metadata?.ragContext }
+      {
+        model: 'llm',
+        ragUsed: !!response.metadata?.ragContext,
+        contextImage: mapImageId, // Pass the image ID to persistence
+      }
     );
 
     const { turn, message, room } = persistenceResult;
 
-    // 4. Clear Actions
-    const updatedPlayers = await turnPersistence.clearPlayerActions(room.documentId, players);
+    // Link image if we have one (if persistTurn didn't handle it in metadata, we might need a separate update if schema expects relation)
+    // The Turn schema has 'contextImage' relation. persistTurn usually takes 'metadata' json.
+    // We should probably update the turn entity directly to link the relation.
+    if (mapImageId) {
+      await strapi.documents('api::turn.turn').update({
+        documentId: turn.documentId,
+        data: {
+          contextImage: mapImageId,
+        },
+      });
+    }
 
-    // 5. Broadcast Updates
+    // 7. Clear Actions
+    const updatedPlayersFinal = await turnPersistence.clearPlayerActions(room.documentId, players);
+
+    // 8. Broadcast Updates
     if (message) {
       const socketMessage = {
         id: message.documentId,
@@ -66,7 +180,7 @@ export default ({ strapi }) => ({
       gameBroadcaster.broadcastNewMessage(room.roomId, room.documentId, socketMessage);
     }
 
-    gameBroadcaster.broadcastGameUpdate(room.roomId, room.documentId, { players: updatedPlayers });
+    gameBroadcaster.broadcastGameUpdate(room.roomId, room.documentId, { players: updatedPlayersFinal });
 
     const turnPayload = {
       roomId: room.roomId,
@@ -75,11 +189,12 @@ export default ({ strapi }) => ({
         number: turn.turnNumber,
         narrative: turn.narrative,
         snapshots: persistenceResult.snapshot,
+        contextImage: mapImageId ? { url: `/uploads/map_turn_${Date.now()}.png` } : undefined, // Optimistic?
       },
     };
     gameBroadcaster.broadcastTurnComplete(room.roomId, room.documentId, turnPayload);
 
-    // 6. Dispatch Deterministic Commands (God Mode Integration)
+    // 9. Dispatch Deterministic Commands (God Mode Integration)
     if (response.commands && Array.isArray(response.commands) && response.commands.length > 0) {
       strapi.log.info(`[God Mode] Dispatching ${response.commands.length} commands`);
       await actionEngine.dispatch(roomId, response.commands);
@@ -111,6 +226,17 @@ export default ({ strapi }) => ({
     const processedActions = [];
     const movedEntityIds = new Set<string>();
 
+    const allEntities = [
+      ...(room.character_sheets || []).map((s: any) => ({
+        id: s.documentId || s.id,
+        pos: s.position,
+      })),
+      ...(room.creatures || []).map((c: any) => ({
+        id: c.documentId || c.id,
+        pos: c.position,
+      })),
+    ];
+
     for (const action of actions) {
       if (action.type === 'move') {
         const sheet = room.character_sheets?.find(
@@ -119,6 +245,22 @@ export default ({ strapi }) => ({
         );
 
         if (sheet) {
+          // Collision Check
+          const targetX = Math.round(action.payload.x);
+          const targetY = Math.round(action.payload.y);
+          const isOccupied = allEntities.some(
+            (e) =>
+              e.id !== (sheet.documentId || sheet.id) && // Ignore self
+              e.pos &&
+              Math.round(e.pos.x) === targetX &&
+              Math.round(e.pos.y) === targetY
+          );
+
+          if (isOccupied) {
+            strapi.log.warn(`[Move] Collision detected at ${targetX},${targetY} for ${sheet.name}`);
+            continue; // Skip invalid move
+          }
+
           await turnPersistence.updateCharacterPosition(
             sheet.documentId,
             action.payload.x,
@@ -127,6 +269,48 @@ export default ({ strapi }) => ({
           );
           movedEntityIds.add(sheet.documentId);
           processedActions.push(action);
+
+          // Update local entity list for subsequent checks in same turn
+          const entityRef = allEntities.find((e) => e.id === (sheet.documentId || sheet.id));
+          if (entityRef) {
+            entityRef.pos = { x: targetX, y: targetY, z: action.payload.z };
+          }
+
+          // Exploration Update
+          try {
+            const VISION_RADIUS = 8;
+            const currentExplored = new Set(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (room.exploredTiles as string[]) || []
+            );
+            let explorationChanged = false;
+
+            for (let dy = -VISION_RADIUS; dy <= VISION_RADIUS; dy++) {
+              for (let dx = -VISION_RADIUS; dx <= VISION_RADIUS; dx++) {
+                if (Math.sqrt(dx * dx + dy * dy) <= VISION_RADIUS) {
+                  const wx = targetX + dx;
+                  const wy = targetY + dy;
+                  const key = `${wx},${wy}`;
+                  if (!currentExplored.has(key)) {
+                    currentExplored.add(key);
+                    explorationChanged = true;
+                  }
+                }
+              }
+            }
+
+            if (explorationChanged) {
+              await strapi.documents('api::room.room').update({
+                documentId: roomId,
+                data: {
+                  exploredTiles: Array.from(currentExplored),
+                } as unknown,
+              });
+              // Update local room ref if needed, but not critical for processing loop
+            }
+          } catch (e) {
+            strapi.log.error('Exploration update failed', e);
+          }
         }
       } else if (action.type === 'spawn') {
         try {
@@ -186,7 +370,17 @@ export default ({ strapi }) => ({
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async submitAction(roomId: string, action: string, user: any) {
+  async submitAction(roomId: string, action: string, user: any, mode?: 'debug' | 'game') {
+    // 0. Handle Debug Mode (Immediate Execution)
+    if (mode === 'debug') {
+      return strapi.service('api::narrator.narrator').processAction({
+        roomId,
+        input: action,
+        mode: 'debug',
+        userId: user?.documentId || user?.id,
+      });
+    }
+
     const gameBroadcaster = strapi.service('api::game.game-broadcaster');
 
     // 1. Fetch Room and Player

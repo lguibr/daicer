@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { WorldConfigForm } from '@/features/debug/components/WorldConfigForm';
 import type { WorldConfig } from '@/features/debug/utils/types';
+import type { WorldSettings } from '@daicer/engine';
 import { createRoom } from '@/services/api';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { useWizard } from '../context/WizardContext';
@@ -15,23 +16,29 @@ export default function WorldConfigPage() {
 
   const config: WorldConfig = {
     seed: settings.seed || 'default-seed',
-    chunkSize: settings.chunkSize ?? 32,
-    globalScale: settings.globalScale ?? 0.01,
-    seaLevel: settings.seaLevel ?? 0,
-    elevationScale: settings.elevationScale ?? 1,
-    roughness: settings.roughness ?? 0.5,
-    detail: settings.detail ?? 4,
-    moistureScale: settings.moistureScale ?? 1,
-    temperatureOffset: settings.temperatureOffset ?? 0,
-    structureChance: settings.structureChance ?? 0.1,
-    structureSpacing: settings.structureSpacing ?? 10,
-    structureSizeAvg: settings.structureSizeAvg ?? 10,
-    roadDensity: settings.roadDensity ?? 0.5,
-    fogRadius: settings.fogRadius ?? 10,
+    chunkSize: settings.generationParams?.chunkSize ?? 32,
+    globalScale: settings.generationParams?.globalScale ?? 0.01,
+    seaLevel: settings.generationParams?.seaLevel ?? 0,
+    elevationScale: settings.generationParams?.elevationScale ?? 1,
+    roughness: settings.generationParams?.roughness ?? 0.5,
+    detail: settings.generationParams?.detail ?? 4,
+    moistureScale: settings.generationParams?.moistureScale ?? 1,
+    temperatureOffset: settings.generationParams?.temperatureOffset ?? 0,
+    structureChance: settings.generationParams?.structureChance ?? 0.1,
+    structureSpacing: settings.generationParams?.structureSpacing ?? 10,
+    structureSizeAvg: settings.generationParams?.structureSizeAvg ?? 10,
+    roadDensity: settings.generationParams?.roadDensity ?? 0.5,
+    fogRadius: settings.generationParams?.fogRadius ?? 10,
   };
 
   const handleConfigChange = (newConfig: WorldConfig) => {
-    setSettings((prev) => ({ ...prev, ...newConfig }));
+    setSettings((prev: WorldSettings) => ({
+      ...prev,
+      generationParams: {
+        ...prev.generationParams,
+        ...newConfig,
+      },
+    }));
   };
 
   const handleSubmit = async () => {
@@ -99,7 +106,10 @@ export default function WorldConfigPage() {
       </div>
 
       <div className="flex justify-between pt-4 border-t border-midnight-800">
-        <button onClick={() => navigate('/create/dm-settings')} className="btn-secondary min-w-[150px]">
+        <button
+          onClick={() => navigate({ pathname: '/create/dm-settings', search: location.search })}
+          className="btn-secondary min-w-[150px]"
+        >
           Back
         </button>
         <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary min-w-[200px]">

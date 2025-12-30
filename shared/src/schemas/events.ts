@@ -20,7 +20,8 @@ export type GameEventStrict = z.infer<typeof GameEventPayloadSchema>;
 
 export const RoomJoinSchema = z.object({
   roomId: z.string(),
-  userId: z.string().optional(),
+  token: z.string().optional(),
+  userId: z.string().optional(), // For backward compatibility / explict ID
 });
 
 export type RoomJoinPayload = z.infer<typeof RoomJoinSchema>;
@@ -34,7 +35,24 @@ export type TurnProcessPayload = z.infer<typeof TurnProcessSchema>;
 
 export const PlayerActionSchema = z.object({
   roomId: z.string(),
-  action: z.string(),
+  // Union of action types for strict validation
+  action: z.union([
+    z.string(), // Allow raw string for legacy/LLM freedom
+    z.object({
+      type: z.enum(['move', 'attack', 'interact', 'cast']),
+      x: z.number(),
+      y: z.number(),
+      z: z.number().default(0),
+      targetId: z.string().optional(),
+    }),
+  ]),
 });
 
 export type PlayerActionPayload = z.infer<typeof PlayerActionSchema>;
+
+export const PlayerReadySchema = z.object({
+  roomId: z.string(),
+  isReady: z.boolean(),
+});
+
+export type PlayerReadyPayload = z.infer<typeof PlayerReadySchema>;

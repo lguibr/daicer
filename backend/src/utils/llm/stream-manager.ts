@@ -38,6 +38,12 @@ class StreamManager {
     }
   }
 
+  public broadcastPrivate(userId: string, event: string, payload: unknown) {
+    if (this.io) {
+      this.io.to(`user:${userId}`).emit(event, payload);
+    }
+  }
+
   public startStream(streamId: string, roomId: string, userId: string) {
     this.activeStreams.set(streamId, { roomId, userId });
     this.emitEvent({
@@ -63,16 +69,24 @@ class StreamManager {
     }
   }
 
-  public emitText(streamId: string, text: string) {
+  public emitText(streamId: string, text: string, userId?: string) {
     const stream = this.activeStreams.get(streamId);
     if (stream) {
-      this.emitEvent({
-        streamId,
-        roomId: stream.roomId,
-        type: 'text',
-        content: text,
-        timestamp: Date.now(),
-      });
+      // If userId provided, verify match or just use it?
+      // Actually `activeStreams` has userId stored at startStream!
+      // So checks:
+      const targetUserId = userId || stream.userId;
+
+      this.emitEvent(
+        {
+          streamId,
+          roomId: stream.roomId,
+          type: 'text',
+          content: text,
+          timestamp: Date.now(),
+        },
+        targetUserId
+      );
     }
   }
 
@@ -129,13 +143,17 @@ class StreamManager {
     }
   }
 
-  private emitEvent(event: StreamEvent) {
+  private emitEvent(event: StreamEvent, targetUserId?: string) {
     if (!this.io) {
       //   console.warn('[StreamManager] Socket.IO server not initialized');
       return;
     }
 
-    this.io.to(event.roomId).emit('llm:stream:event', event);
+    if (targetUserId) {
+      this.io.to(`user:${targetUserId}`).emit('llm:stream:event', event);
+    } else {
+      this.io.to(event.roomId).emit('llm:stream:event', event);
+    }
   }
 }
 

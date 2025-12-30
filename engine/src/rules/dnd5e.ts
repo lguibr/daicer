@@ -12,7 +12,7 @@ export interface CharacterSnapshot {
   hp: number;
   maxHp: number;
   stats: Record<string, number>; // Attributes
-  inventory: any[]; // refine type if possible, usually InventoryItem[]
+  inventory: Record<string, unknown>[]; // refine type if possible, usually InventoryItem[]
   level: number;
   experience: number;
   position: { x: number; y: number; z: number };
@@ -22,19 +22,19 @@ export interface CharacterSnapshot {
  * Creates a lightweight snapshot of a character sheet for persistence/history.
  * This ensures we capture the exact state of a character at a specific turn.
  */
-export function createCharacterSnapshot(sheet: CharacterSheet | any): CharacterSnapshot | null {
+export function createCharacterSnapshot(sheet: CharacterSheet | Partial<CharacterSheet>): CharacterSnapshot | null {
   if (!sheet) return null;
 
   // Handle strict typing if CharacterSheet is fully compatible, otherwise allow partial duck typing
   // since backend sometimes populates loosely.
 
   return {
-    hp: sheet.currentHp ?? 10,
-    maxHp: sheet.maxHp ?? 10,
-    stats: sheet.stats || {},
-    inventory: sheet.inventory || [],
-    level: sheet.level ?? 1,
-    experience: sheet.experience ?? 0,
-    position: sheet.position || { x: 0, y: 0, z: 0 },
+    hp: (sheet as any).currentHp ?? 10,
+    maxHp: (sheet as any).maxHp ?? 10,
+    stats: (sheet as any).stats || {},
+    inventory: (sheet as any).inventory || [],
+    level: (sheet as any).level ?? 1,
+    experience: (sheet as any).experience ?? 0,
+    position: (sheet as any).position || { x: 0, y: 0, z: 0 },
   };
 }

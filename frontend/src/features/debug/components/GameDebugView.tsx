@@ -46,13 +46,44 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   const [config] = useState<OldWorldConfig>(DEFAULT_CONFIG);
 
   // Entities
+  // Map 'creatures' from useSocket to 'entities' shape
+  // Note: Backend broadcast uses 'currentHp', 'maxHp', 'position'.
+  // We need to ensure types match or cast.
+  // DebugEntity expects: { id, name, type, position, ... }
+  // useSocket returns 'creatures' which are of type Creature[] from engine.
+  // Let's rely on the raw data passed from backend being compatible or mapped here.
+
+  const { socket, creatures: socketCreatures } = useSocket(roomId, 'debug-user');
+
   const [entities, setEntities] = useState<DebugEntity[]>([]);
-  // const [activeEntityId, setActiveEntityId] = useState<string>('');
+
+  // Sync socket creatures to local entities state (for now, to keep existing logic)
+  useEffect(() => {
+    if (socketCreatures && socketCreatures.length > 0) {
+      setEntities((prev) => {
+        // We replace or merge?
+        // Let's replace for simplicity as 'entities:update' sends full list usually?
+        // Actually narrator sends full list of SHEETs.
+        return socketCreatures.map((c: any) => ({
+          id: c.id || c.documentId,
+          name: c.name,
+          type: c.type || 'monster',
+          position: c.position || { x: 0, y: 0, z: 0 },
+          speed: c.speed || 30,
+          parsedSpeed: typeof c.speed === 'number' ? c.speed : 30, // simplified
+          visionRadius: 10,
+          color: c.type === 'player' ? '#4ade80' : '#f87171',
+          exploredTiles: new Set<string>(), // Reset or persist?
+          pendingPath: undefined,
+          currentHp: c.currentHp,
+          maxHp: c.maxHp,
+        }));
+      });
+    }
+  }, [socketCreatures]);
+
   const activeEntityId = ''; // Default to empty or first if needed, logic below handles it
   const activeEntity = entities.find((e) => e.id === activeEntityId) || entities[0];
-  // const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const { socket } = useSocket(roomId, 'debug-user');
 
   // God Mode Chat State
   const [chatMessages, setChatMessages] = useState<GodModeMessage[]>([
@@ -69,27 +100,8 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   // Socket Integration
   useEffect(() => {
     if (!socket) return;
-    const handleEntitiesUpdate = (data: { entities: any[] }) => {
-      console.log('Socket Update:', data);
-      setEntities((prev) => {
-        const next = [...prev];
-        if (data.entities) {
-          data.entities.forEach((u) => {
-            const idx = next.findIndex((e) => e.id === u.id);
-            if (idx !== -1 && next[idx]) {
-              next[idx] = {
-                ...next[idx],
-                ...u,
-                position: u.position || next[idx].position,
-              };
-            }
-          });
-        }
-        return next;
-      });
-    };
 
-    // Also listen for God Mode responses
+    // Listen for God Mode responses
     const handleGodModeResponse = (data: { message: string }) => {
       setChatMessages((prev) => [
         ...prev,
@@ -103,11 +115,9 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
       setIsProcessing(false);
     };
 
-    socket.on('entities:update', handleEntitiesUpdate);
-    socket.on('godmode:response', handleGodModeResponse); // Hypothetical event
+    socket.on('godmode:response', handleGodModeResponse);
 
     return () => {
-      socket.off('entities:update', handleEntitiesUpdate);
       socket.off('godmode:response', handleGodModeResponse);
     };
   }, [socket]);
@@ -160,7 +170,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   // const [pathDistance] = useState<number | null>(null);
 
   // Chunk Loader
-  const { chunkCache, getChunk, isLoading } = useChunkLoader({ config });
+  const { chunkCache, getChunk } = useChunkLoader({ config });
 
   // Helper
   const getChunkId = (cx: number, cy: number) => `${cx},${cy}`;
@@ -289,23 +299,21 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
     setIsProcessing(true);
 
     try {
-      // Placeholder for backend call
-      // In real implementation: await api.sendGodModeCommand(roomId, message);
-      console.warn('God Mode Command Sent (Mock):', message);
+      const { sendGodModeCommand } = await import('@/services/api');
+      const response = await sendGodModeCommand(roomId, message);
 
-      // Mock response for now if socket doesn't reply immediately
-      setTimeout(() => {
+      if (response && response.message) {
         setChatMessages((prev) => [
           ...prev,
           {
             id: `sys-${Date.now()}`,
             role: 'assistant',
-            content: `I heard you say "${message}". (Backend service pending implementation)`,
+            content: response.message,
             timestamp: Date.now(),
           },
         ]);
-        setIsProcessing(false);
-      }, 1000);
+      }
+      setIsProcessing(false);
     } catch (err) {
       setChatMessages((prev) => [
         ...prev,
@@ -341,38 +349,55 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
             <h3 className="text-xs font-bold text-shadow-400 uppercase tracking-wider mb-2 sticky top-0 bg-midnight-900/50 backdrop-blur pb-2">
               Inspector
             </h3>
-            {activeEntity ? (
+            {/* Inspector List */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <h3 className="text-xs font-bold text-shadow-400 uppercase tracking-wider mb-2 sticky top-0 bg-midnight-900/50 backdrop-blur pb-2 z-10">
+                Inspector ({entities.length})
+              </h3>
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-midnight-800 flex items-center justify-center text-lg">
-                    {activeEntity.type === 'player' ? '👤' : '👾'}
-                  </div>
-                  <div>
-                    <div className="font-bold text-aurora-300 text-sm">{activeEntity.name || activeEntity.id}</div>
-                    <div className="text-[10px] text-shadow-400 font-mono">
-                      {activeEntity.position.x}, {activeEntity.position.y}, {activeEntity.position.z}
+                {entities.map((entity) => (
+                  <div
+                    key={entity.id}
+                    onClick={() => {
+                      /* no-op for now unless we add selection state logic */
+                    }}
+                    className={clsx(
+                      'group p-2 rounded border transition-colors cursor-pointer',
+                      activeEntity?.id === entity.id
+                        ? 'bg-midnight-800 border-aurora-500/50'
+                        : 'bg-midnight-900/40 border-midnight-800 hover:bg-midnight-800/60'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded bg-midnight-950 flex items-center justify-center text-lg shadow-inner">
+                        {entity.type === 'player' ? '👤' : '👾'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-shadow-200 text-sm truncate group-hover:text-white transition-colors">
+                          {entity.name || entity.id}
+                        </div>
+                        <div className="text-[10px] text-shadow-400 font-mono flex gap-2">
+                          <span>
+                            {entity.position.x}, {entity.position.y}, {entity.position.z}
+                          </span>
+                          {/* @ts-ignore */}
+                          {entity.currentHp !== undefined && (
+                            // @ts-ignore
+                            <span className={clsx(entity.currentHp <= 0 ? 'text-red-500' : 'text-emerald-400')}>
+                              {/* @ts-ignore */}
+                              HP: {entity.currentHp}/{entity.maxHp}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                {/* Stats if available */}
-                {/* @ts-ignore */}
-                {activeEntity.stats && (
-                  <div className="grid grid-cols-2 gap-2 text-[10px] text-shadow-300">
-                    <div className="bg-midnight-950 p-1 rounded border border-midnight-700">
-                      {/* @ts-ignore */}
-                      HP: <span className="text-red-400">{activeEntity.stats.hp}</span>
-                    </div>
-                    <div className="bg-midnight-950 p-1 rounded border border-midnight-700">
-                      {/* @ts-ignore */}
-                      AC: <span className="text-blue-400">{activeEntity.stats.ac}</span>
-                    </div>
-                  </div>
+                ))}
+                {entities.length === 0 && (
+                  <div className="text-center text-shadow-500 text-xs py-8">No entities found in room</div>
                 )}
-                <div className="text-[10px] font-mono text-shadow-500 mt-2 break-all">ID: {activeEntity.id}</div>
               </div>
-            ) : (
-              <div className="text-center text-shadow-500 text-xs py-8">Select an entity on map to inspect</div>
-            )}
+            </div>
           </div>
         </div>
       </div>

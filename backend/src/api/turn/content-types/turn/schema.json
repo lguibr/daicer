@@ -34,12 +34,20 @@
     },
     "type": {
       "type": "enumeration",
-      "enum": ["group", "combat", "exploration"],
+      "enum": [
+        "group",
+        "combat",
+        "exploration"
+      ],
       "default": "group"
     },
     "status": {
       "type": "enumeration",
-      "enum": ["waiting", "processing", "complete"],
+      "enum": [
+        "waiting",
+        "processing",
+        "complete"
+      ],
       "default": "waiting"
     },
     "actions": {
@@ -50,6 +58,11 @@
     },
     "characterSnapshots": {
       "type": "json"
+    },
+    "contextImage": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::upload.file"
     }
   }
 }

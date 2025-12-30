@@ -1,8 +1,4 @@
-/**
- * Combat Screen Component
- * Main combat interface with grid, character cards, log, and time-travel
- * Enhanced with optional feature radius panel
- */
+// Combat Screen Component - Cleaned
 
 import { useState, useMemo } from 'react';
 
@@ -163,6 +159,7 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
 
       {/* Main Layout */}
       <div className="flex-1 overflow-hidden">
+        {/* @ts-ignore */}
         <ResizablePanelGroup direction="horizontal">
           {/* Content Area */}
           <ResizablePanel defaultSize={100} minSize={50}>

@@ -32,7 +32,7 @@ function createTypographyComponent<TTag extends IntrinsicTag>({
 
   const Component = React.forwardRef<Element, Props>(({ className, ...props }, ref) => {
     const Comp = tag as unknown as React.ElementType;
-    // @ts-expect-error - Slot cloneElement types
+    // @ts-ignore - Slot cloneElement types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return <Comp ref={ref as any} className={cn(baseClass, className)} {...(props as any)} />;
   });

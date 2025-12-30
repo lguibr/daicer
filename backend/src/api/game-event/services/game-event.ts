@@ -12,15 +12,15 @@ import type { Coordinates } from '@daicer/shared';
 // Minimal Strapi Type Definition for safety
 interface Strapi {
   entityService: {
-    findOne: (uid: string, id: number | string, params?: any) => Promise<any>;
-    findMany: (uid: string, params?: any) => Promise<any>;
-    create: (uid: string, params: { data: any }) => Promise<any>;
+    findOne: (uid: string, id: number | string, params?: unknown) => Promise<unknown>;
+    findMany: (uid: string, params?: unknown) => Promise<unknown>;
+    create: (uid: string, params: { data: unknown }) => Promise<unknown>;
   };
 }
 
 interface RoomSettings {
   code?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const getWorldGenerator = async (strapi: Strapi, roomId: number) => {
@@ -30,11 +30,11 @@ const getWorldGenerator = async (strapi: Strapi, roomId: number) => {
 
   if (!room) throw new Error('Room not found');
 
-  const settings = room.settings as RoomSettings;
+  const settings = (room as any).settings as RoomSettings;
 
   const config = {
     ...DEFAULT_WORLD_CONFIG,
-    seed: room.code || settings?.code || 'default_seed',
+    seed: (room as any).code || settings?.code || 'default_seed',
   };
 
   return new WorldGenerator(config);
@@ -74,7 +74,7 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
       // Just validating the structure, logic handled below
       MapMovePayloadSchema.shape.from.parse(from);
       MapMovePayloadSchema.shape.to.parse(to);
-    } catch (_e) {
+    } catch {
       return { valid: false, reason: 'Invalid coordinates' };
     }
 

@@ -1,0 +1,31 @@
+{
+    "kind": "collectionType",
+    "collectionName": "knowledge_sources",
+    "info": {
+        "singularName": "knowledge-source",
+        "pluralName": "knowledge-sources",
+        "displayName": "Knowledge Source",
+        "description": "A source of knowledge, usually a markdown file."
+    },
+    "options": {
+        "draftAndPublish": false
+    },
+    "pluginOptions": {},
+    "attributes": {
+        "name": {
+            "type": "string",
+            "required": true,
+            "unique": true
+        },
+        "content": {
+            "type": "richtext",
+            "required": true
+        },
+        "snippets": {
+            "type": "relation",
+            "relation": "oneToMany",
+            "target": "api::knowledge-snippet.knowledge-snippet",
+            "mappedBy": "source"
+        }
+    }
+}

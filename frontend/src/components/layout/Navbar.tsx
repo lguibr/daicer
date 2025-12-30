@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { Compass, DoorOpen, Layers, Users, Sparkles, Bug } from 'lucide-react';
+import { Compass, DoorOpen, Bug, Sparkles } from 'lucide-react';
 
 import type { Room } from '@daicer/engine';
 import cn from '@/lib/utils';

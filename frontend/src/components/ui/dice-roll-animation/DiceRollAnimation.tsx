@@ -161,9 +161,15 @@ export function DiceRollAnimation({
   colorByResult = true, // DEFAULT ON: dice morph color based on result (red=bad, green=good)
 }: DiceRollAnimationProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const stateRef = useRef<ThreeState | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Store latest callbacks in refs to avoid re-running effect
+  const latestOnComplete = useRef(onComplete);
+  useEffect(() => {
+    latestOnComplete.current = onComplete;
+  }, [onComplete]);
 
   const canvasStyle = useMemo(() => {
     // Use explicit style dimensions if provided, otherwise use size map
@@ -332,8 +338,8 @@ export function DiceRollAnimation({
 
         if (allComplete && !isComplete) {
           setIsComplete(true);
-          if (onComplete) {
-            onComplete();
+          if (latestOnComplete.current) {
+            latestOnComplete.current();
           }
         }
       }
@@ -404,7 +410,7 @@ export function DiceRollAnimation({
 
       stateRef.current = null;
     };
-  }, [autoStart, onComplete, isComplete, size]);
+  }, [autoStart, size]); // Removed isComplete and onComplete from dependencies
 
   // Create and position dice
   useEffect(() => {

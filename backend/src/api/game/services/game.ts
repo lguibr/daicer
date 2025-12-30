@@ -3,8 +3,10 @@
  * Delegating logic to specialized services
  */
 
-import type { WorldSettings, Player, Creature, Message, Language } from '@daicer/engine';
+import type { WorldSettings, Player, Creature, Message, Language, CharacterSheet } from '@daicer/engine';
 // import { getRuleContext } from '../../../utils/rag'; // TODO: precise path if implemented
+
+import type { Chunk } from '@daicer/engine';
 
 export default ({ strapi }) => ({
   // --- Delegates ---
@@ -21,24 +23,42 @@ export default ({ strapi }) => ({
     creatures: Creature[],
     language: Language = 'en',
     settings?: WorldSettings,
-    worldConditions?: any[],
+    worldConditions?: Record<string, unknown>[],
     mapContext?: string,
     streamId?: string
   ) {
-    return strapi
-      .service('api::game.turn-processing')
-      .processTurn(
-        roomId,
-        worldDescription,
-        messages,
-        players,
-        creatures,
-        language,
-        settings,
-        worldConditions,
-        mapContext,
-        streamId
-      );
+    // Chunk Context Injection
+    // We fetch the chunk here to ensure it's available for the turn processor
+    let chunk: Chunk | undefined;
+
+    try {
+      // Default to first player or 0,0 for chunk context if not specified
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const firstPlayer = players[0] as any;
+      const center = firstPlayer?.position || firstPlayer?.characterSheet?.position || { x: 0, y: 0, z: 0 };
+      const chunkX = Math.floor(center.x / 32);
+      const chunkY = Math.floor(center.y / 32);
+
+      if (settings) {
+        chunk = await strapi.service('api::voxel-engine.voxel-engine').getChunk(chunkX, chunkY, settings);
+      }
+    } catch (e) {
+      strapi.log.warn('Failed to fetch chunk for turn processing:', e);
+    }
+
+    return strapi.service('api::game.turn-processing').processTurn(
+      roomId,
+      worldDescription,
+      messages,
+      players,
+      creatures,
+      language,
+      settings,
+      worldConditions,
+      mapContext,
+      streamId,
+      chunk // Pass chunk instead of mapImage
+    );
   },
 
   async generateCharacterOpening(
@@ -47,11 +67,12 @@ export default ({ strapi }) => ({
     mainContext: string,
     language: Language = 'en',
     settings?: WorldSettings,
-    streamId?: string
+    streamId?: string,
+    targetUserId?: string
   ) {
     return strapi
       .service('api::game.character-lifecycle')
-      .generateCharacterOpening(worldDescription, character, mainContext, language, settings, streamId);
+      .generateCharacterOpening(worldDescription, character, mainContext, language, settings, streamId, targetUserId);
   },
 
   async generateMainOpening(
@@ -70,8 +91,8 @@ export default ({ strapi }) => ({
     return strapi.service('api::game.character-lifecycle').addCharacter(roomId, characterData, user);
   },
 
-  async submitAction(roomId: string, action: string, user: unknown) {
-    return strapi.service('api::game.turn-processing').submitAction(roomId, action, user);
+  async submitAction(roomId: string, action: string, user: unknown, mode?: 'debug' | 'game') {
+    return strapi.service('api::game.turn-processing').submitAction(roomId, action, user, mode);
   },
 
   async spawnCreature(roomId: string, creatureData: Partial<Creature>) {
@@ -109,9 +130,59 @@ export default ({ strapi }) => ({
     return newCreature;
   },
 
+  async togglePlayerReady(roomId: string, userId: string, isReady: boolean) {
+    // 1. Fetch Room
+    const rooms = await strapi.documents('api::room.room').findMany({
+      filters: { $or: [{ documentId: roomId }, { roomId: roomId }, { code: roomId }] },
+      populate: ['players', 'players.user', 'players.character', 'players.characterSheet'],
+    });
+
+    if (!rooms || rooms.length === 0) throw new Error('Room not found');
+    const room = rooms[0] as unknown as {
+      documentId: string;
+      roomId: string;
+      players: Player[];
+    };
+
+    // 2. Find Player
+    const players = room.players || [];
+    const playerIndex = players.findIndex((p: Player) => p.user?.documentId === userId || p.user?.id === userId);
+
+    if (playerIndex === -1) throw new Error('User is not a player in this room');
+
+    // 3. Update Status
+    const updatedPlayers = [...players];
+    updatedPlayers[playerIndex] = {
+      ...updatedPlayers[playerIndex],
+      isReady: isReady,
+    };
+
+    // 4. Update Room
+    await strapi.documents('api::room.room').update({
+      documentId: room.documentId,
+      data: { players: updatedPlayers } as unknown,
+    });
+
+    // 5. Broadcast Minimal Update
+    const { streamManager } = await import('../../../utils/llm/stream-manager');
+    streamManager.broadcast(room.roomId, 'room:update', {
+      players: updatedPlayers.map((p: Player) => ({
+        id: p.id,
+        name: p.name,
+        isReady: p.isReady,
+        character: p.character,
+        characterSheet: p.characterSheet,
+        user: { id: p.user?.id, username: p.user?.username },
+      })),
+    });
+
+    return { success: true, isReady };
+  },
+
   // --- Orchestration ---
 
   async startGame(roomId: string, language: Language = 'en') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filters: any[] = [{ documentId: roomId }, { roomId: roomId }, { code: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
@@ -119,7 +190,15 @@ export default ({ strapi }) => ({
 
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: { $or: filters },
-      populate: ['players', 'players.character', 'players.character.baseStats', 'world', 'dmSettings'],
+      populate: [
+        'players.user',
+        'players.character',
+        'players.characterSheet',
+        'players.character.baseStats',
+        'world',
+        'dmSettings',
+        'character_sheets',
+      ],
     });
 
     if (!rooms || rooms.length === 0) {
@@ -127,74 +206,94 @@ export default ({ strapi }) => ({
       throw new Error('Room not found');
     }
     const room = rooms[0] as unknown as {
-      world: any;
-      dmSettings: any;
+      world: unknown;
+      dmSettings: unknown;
       players: Player[];
+      character_sheets: unknown[];
       documentId: string;
-      roomId: string;
+      roomId: string; // Rune
     };
 
-    const settings = { ...room.world, ...room.dmSettings };
+    const settings: any = { ...(room.world as any), ...(room.dmSettings as any) };
 
-    // 1. Generate Main Opening
-    const mainOpening = await this.generateMainOpening(
-      room.world?.description || 'A mysterious world...',
+    // 0. Verify All Players Ready
+    const roomPlayers = room.players || [];
+    if (roomPlayers.length === 0) {
+      throw new Error('Cannot start game with no players');
+    }
+    const notReady = roomPlayers.filter((p) => !p.isReady);
+    if (notReady.length > 0) {
+      const names = notReady.map((p) => p.name || 'Unknown').join(', ');
+      throw new Error(`Cannot start game: The following players are not ready: ${names}`);
+    }
+
+    // 1. Generate Main Opening (Public)
+    const mainOpeningPromise = this.generateMainOpening(
+      (room.world as { description: string })?.description || 'A mysterious world...',
       room.players || [],
       language,
       settings
     );
 
-    // 2. Create Character Sheets & Update Players
-    const players = room.players || [];
-    let playersUpdated = false;
-    const updatedPlayers = [...players];
+    // 1b. Generate Private Openings (Parallel)
+    const privateOpeningsPromises = roomPlayers.map(async (p) => {
+      // Find character sheet for this player
+      // We assume one sheet per player in 'character_sheets' linked to 'players'?
+      // Or we check 'p.characterSheet' if it was populated?
+      // startGame didn't populate p.characterSheet component specifically,
+      // but p.character is there.
+      // Wait, 'character_sheets' relation on Room contains all sheets.
+      // We need to match player to sheet.
+      // Player component has 'character' (Asset) and 'characterSheet' (Instance).
+      // We need to fetch 'characterSheet' relation for each player to get details like backstory if not fully loaded.
+      // Actually 'character_sheets' on room is a list. We can find the one where sheet.name == p.name? Reliable? NO.
+      // Better: Use `p.characterSheet` ID if available on player component.
+      // We need to populate 'players.characterSheet' in startGame then.
 
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      if (p.character && p.character.documentId) {
-        const char = p.character as unknown as {
-          documentId: string;
-          baseStats?: any;
-          race?: any;
-          class?: any;
-          appearance?: string;
-          backstory?: string;
-          equipment?: any[];
-        };
-        const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
-          data: {
-            character: char.documentId,
-            room: room.documentId,
-            currentHp: char.baseStats?.hp || 10,
-            maxHp: char.baseStats?.maxHp || 10,
-            level: 1,
-            experience: 0,
-            stats: char.baseStats,
-            race: char.race?.documentId,
-            class: char.class?.documentId,
-            appearance: char.appearance,
-            backstory: char.backstory,
-            inventory: char.equipment || [],
-          },
-          status: 'published',
-        });
+      const pAny = p as unknown as { characterSheet: string | { documentId: string } };
+      const pSheetId = typeof pAny.characterSheet === 'object' ? pAny.characterSheet.documentId : pAny.characterSheet;
+      if (!pSheetId) return null; // Skip if no sheet
 
-        if (updatedPlayers[i]) {
-          updatedPlayers[i] = {
-            ...updatedPlayers[i],
-            character: newSheet.documentId,
-          };
-          playersUpdated = true;
-        }
-      }
-    }
+      // We need the full sheet data for generation
+      const sheet = ((room.character_sheets as Record<string, unknown>[]) || []).find(
+        (s) => s.documentId === pSheetId
+      ) as unknown;
+      if (!sheet) return null;
 
-    if (playersUpdated) {
-      await strapi.documents('api::room.room').update({
-        documentId: room.documentId,
-        data: { players: updatedPlayers } as unknown,
-      });
-    }
+      const pUserAny = p as unknown as { user: string | { documentId: string; id: string } };
+      const userId = typeof pUserAny.user === 'object' ? pUserAny.user.documentId || pUserAny.user.id : pUserAny.user;
+      if (!userId) return null;
+
+      // Generate text (Streams to socket via targetUserId)
+      const text = await this.generateCharacterOpening(
+        (room.world as { description: string })?.description || '',
+        sheet as unknown as CharacterSheet,
+        (room.world as { description: string })?.description || '', // Use world description as main context for now, or mainOpening?
+        // Ideally we wait for mainOpening but that delays things.
+        // Let's use world description + "The adventure begins".
+        language,
+        settings,
+        undefined, // streamId (auto-generated by utils if undef? No, utils generateText checks metadata.streamId)
+        // If we want streaming, we should provide a unique streamId for each.
+        // But generateCharacterOpening doesn't return streamId.
+        // It returns PROMISE<STRING>.
+        // If we want streaming, we pass a streamId.
+        String(userId) // targetUserId
+      );
+
+      return { userId, text };
+    });
+
+    const [mainOpening, ...privateOpeningsResults] = await Promise.all([
+      mainOpeningPromise,
+      ...privateOpeningsPromises,
+    ]);
+
+    const validPrivateOpenings = privateOpeningsResults.filter((r) => r !== null) as { userId: string; text: string }[];
+
+    // 2. [REMOVED] Character Sheet Creation Loop
+    // Sheets are now created immediately upon join (addCharacter).
+    // We assume they exist.
 
     // 3. Create Initial Turn (0)
     // Needs sheets populated
@@ -237,6 +336,24 @@ export default ({ strapi }) => ({
       status: 'published',
     });
 
+    // 4b. Persist Private Messages
+    await Promise.all(
+      validPrivateOpenings.map(async (po) => {
+        await strapi.documents('api::message.message').create({
+          data: {
+            content: po.text,
+            senderName: 'DM (Private)', // Or just 'DM'
+            senderType: 'dm',
+            room: room.documentId,
+            turn: turn0.documentId,
+            timestamp: Date.now(),
+            recipient: po.userId, // Link to User
+          },
+          status: 'published',
+        });
+      })
+    );
+
     // 5. Update Room Phase
     await strapi.documents('api::room.room').update({
       documentId: room.documentId,
@@ -267,7 +384,7 @@ export default ({ strapi }) => ({
   async getRoom(roomId: string) {
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: { $or: [{ roomId }, { documentId: roomId }, { code: roomId }] },
-      populate: ['players', 'players.character'],
+      populate: ['players', 'players.character', 'players.characterSheet'],
     });
     return rooms[0];
   },

@@ -188,19 +188,20 @@ export function CampaignWizard({
     startingLevel: 1,
     attributePointBudget: 27,
     language,
-    // Default WorldConfig params
-    globalScale: 0.01,
-    seaLevel: 0,
-    elevationScale: 1,
-    roughness: 0.5,
-    detail: 4,
-    moistureScale: 1,
-    temperatureOffset: 0,
-    structureChance: 0.1,
-    structureSpacing: 10,
-    structureSizeAvg: 10,
-    roadDensity: 0.5,
-    fogRadius: 10,
+    generationParams: {
+      globalScale: initialSettings?.generationParams?.globalScale ?? 0.01,
+      seaLevel: initialSettings?.generationParams?.seaLevel ?? 0,
+      elevationScale: initialSettings?.generationParams?.elevationScale ?? 1,
+      roughness: initialSettings?.generationParams?.roughness ?? 0.5,
+      detail: initialSettings?.generationParams?.detail ?? 4,
+      moistureScale: initialSettings?.generationParams?.moistureScale ?? 1,
+      temperatureOffset: initialSettings?.generationParams?.temperatureOffset ?? 0,
+      structureChance: initialSettings?.generationParams?.structureChance ?? 0.1,
+      structureSpacing: initialSettings?.generationParams?.structureSpacing ?? 10,
+      structureSizeAvg: initialSettings?.generationParams?.structureSizeAvg ?? 10,
+      roadDensity: initialSettings?.generationParams?.roadDensity ?? 0.5,
+      fogRadius: initialSettings?.generationParams?.fogRadius ?? 10,
+    },
     ...initialSettings,
   });
 
@@ -259,7 +260,10 @@ export function CampaignWizard({
     // Merge WorldConfig back into WorldSettings (treating flattened structure)
     setSettings((prev) => ({
       ...prev,
-      ...newConfig,
+      generationParams: {
+        ...prev.generationParams,
+        ...newConfig,
+      },
     }));
   };
 
@@ -491,21 +495,21 @@ export function CampaignWizard({
         // WorldConfig expects: seed, globalScale, etc.
         // WorldSettings has these merged in.
         const config: WorldConfig = {
-          seed: settings.seed,
-          chunkSize: settings.chunkSize ?? 32,
+          seed: settings.seed || 'default-seed',
+          chunkSize: settings.generationParams?.chunkSize ?? 32,
           // Map WorldSettings arbitrary keys to WorldConfig known keys
-          globalScale: settings.globalScale ?? 0.01,
-          seaLevel: settings.seaLevel ?? 0,
-          elevationScale: settings.elevationScale ?? 1,
-          roughness: settings.roughness ?? 0.5,
-          detail: settings.detail ?? 4,
-          moistureScale: settings.moistureScale ?? 1,
-          temperatureOffset: settings.temperatureOffset ?? 0,
-          structureChance: settings.structureChance ?? 0.1,
-          structureSpacing: settings.structureSpacing ?? 10,
-          structureSizeAvg: settings.structureSizeAvg ?? 10,
-          roadDensity: settings.roadDensity ?? 0.5,
-          fogRadius: settings.fogRadius ?? 10,
+          globalScale: settings.generationParams?.globalScale ?? 0.01,
+          seaLevel: settings.generationParams?.seaLevel ?? 0,
+          elevationScale: settings.generationParams?.elevationScale ?? 1,
+          roughness: settings.generationParams?.roughness ?? 0.5,
+          detail: settings.generationParams?.detail ?? 4,
+          moistureScale: settings.generationParams?.moistureScale ?? 1,
+          temperatureOffset: settings.generationParams?.temperatureOffset ?? 0,
+          structureChance: settings.generationParams?.structureChance ?? 0.1,
+          structureSpacing: settings.generationParams?.structureSpacing ?? 10,
+          structureSizeAvg: settings.generationParams?.structureSizeAvg ?? 10,
+          roadDensity: settings.generationParams?.roadDensity ?? 0.5,
+          fogRadius: settings.generationParams?.fogRadius ?? 10,
         };
 
         return (

@@ -26,8 +26,9 @@ import {
   GENERATE_PORTRAIT_MUTATION,
   GENERATE_UPPER_BODY_MUTATION,
   GENERATE_FULL_BODY_MUTATION,
+  SUBMIT_ACTION_MUTATION,
 } from '../graphql/mutations';
-import { GET_ROOM_QUERY, LIST_ROOMS_QUERY } from '../graphql/queries';
+import { GET_ROOM_QUERY, LIST_ROOMS_QUERY, SEARCH_ENTITIES_QUERY } from '../graphql/queries';
 import type {
   CreateRoomMutation,
   JoinRoomMutation,
@@ -404,26 +405,50 @@ export async function invokeCharacterSetupGraph(
  * @returns Success status
  */
 export async function submitAction(roomId: string, action: string): Promise<{ success: boolean; allReady: boolean }> {
-  const token = localStorage.getItem('strapi_jwt');
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
-
-  console.log(`[api.ts] Submitting action for room ${roomId}: "${action}"`);
-
-  const response = await fetch(`${API_URL}/api/game/${roomId}/action`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ action }),
+  const { data } = await apolloClient.mutate<{ submitAction: { success: boolean; allReady: boolean } }>({
+    mutation: SUBMIT_ACTION_MUTATION,
+    variables: { roomId, action },
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to submit action');
+  return data?.submitAction || { success: false, allReady: false };
+}
+
+/**
+ * Send God Mode command
+ * @param roomId - Room ID
+ * @param command - Command text
+ */
+export async function sendGodModeCommand(roomId: string, command: string): Promise<any> {
+  const { data } = await apolloClient.mutate<{ submitAction: any }>({
+    mutation: SUBMIT_ACTION_MUTATION,
+    variables: { roomId, action: command, mode: 'debug' },
+  });
+
+  return data?.submitAction;
+}
+
+/**
+ * Search entities (monsters/characters) for autocomplete
+ * @param query - Search query
+ * @returns List of entities
+ */
+export async function searchEntities(
+  query: string
+): Promise<{ id: string; name: string; type: 'monster' | 'character' }[]> {
+  try {
+    const { data } = await apolloClient.query<{
+      searchEntities: { id: string; name: string; type: 'monster' | 'character' }[];
+    }>({
+      query: SEARCH_ENTITIES_QUERY,
+      variables: { query },
+      fetchPolicy: 'network-only',
+    });
+
+    return data.searchEntities || [];
+  } catch (err) {
+    console.error('Search entities failed:', err);
+    return [];
   }
-  const result = await response.json();
-  console.log('[api.ts] submitAction Result:', JSON.stringify(result, null, 2));
-  return result;
 }
 
 /**

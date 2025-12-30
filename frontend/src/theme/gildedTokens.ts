@@ -13,6 +13,9 @@ export const gildedTokens = {
     'pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-aurora-400/20 via-transparent to-nebula-500/25 blur-[80px]',
   glassPanel:
     'rounded-[32px] border border-aurora-400/25 bg-midnight-950/50 p-8 shadow-[0_40px_90px_rgba(4,7,16,0.55)] backdrop-blur-xl',
+  glassPanelInteractive:
+    'rounded-[24px] border border-midnight-600/40 bg-midnight-950/50 shadow-2xl backdrop-blur-md transition-all duration-500 hover:border-aurora-500/50 hover:shadow-[0_0_30px_rgba(211,143,31,0.15)]',
+  card: 'rounded-2xl border border-aurora-500/20 bg-midnight-900/80 p-6 shadow-xl backdrop-blur-sm',
   inlineBadge:
     'inline-flex items-center gap-3 text-[0.7rem] font-semibold uppercase tracking-[0.45em] text-aurora-100/80',
   sectionHeading: 'font-display text-3xl uppercase tracking-[0.22em] text-aurora-50 sm:text-4xl',

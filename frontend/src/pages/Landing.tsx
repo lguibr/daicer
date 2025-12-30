@@ -12,10 +12,8 @@ import { useI18n } from '../i18n';
 import { DynamicLayout } from '../components/layout';
 import Logo from '../components/ui/Logo';
 
-import { SpotlightCarousel } from '../components/ui';
-import { JoinHeroSlide } from '../components/lobby/JoinHeroSlide';
-import { useJoinSlides } from '../features/lobby/joinSlides';
 import { gildedTokens } from '../theme/gildedTokens';
+import { BackgroundDiceField } from '../components/ui/background/BackgroundDiceField';
 
 /**
  * Unified landing/ page
@@ -28,9 +26,6 @@ export default function LandingPage() {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const publicSlides = useJoinSlides('public');
-  const privateSlides = useJoinSlides('private');
 
   const handleCreateRoom = () => {
     navigate('/create');
@@ -60,86 +55,88 @@ export default function LandingPage() {
   if (!user) {
     return (
       <DynamicLayout showNavbar showLanguageSelector={false}>
-        <div className={gildedTokens.pageShell}>
-          <div className={gildedTokens.gradientBackdrop} />
+        {/* Main Grid Container ensuring full viewport height */}
+        <div className="relative grid min-h-dvh w-full place-items-center overflow-hidden">
+          {/* Background is absolute/fixed behind the grid */}
+          <div className="absolute inset-0 z-0">
+            <BackgroundDiceField />
+            <div className="absolute inset-0 bg-gradient-to-b from-midnight-950/40 via-transparent to-midnight-950/80 pointer-events-none" />
+          </div>
 
-          <section className={gildedTokens.heroStack}>
-            <div className={`${gildedTokens.haloBadge} overflow-hidden`}>
-              <Logo
-                size="xl"
-                className="rounded-full border border-aurora-500/40 bg-midnight-900/70 p-6 shadow-[0_45px_85px_rgba(3,8,14,0.6)]"
-              />
-              <div className={gildedTokens.haloInnerGlow} />
-            </div>
-            <p className={gildedTokens.heroEyebrow}>{t('auth.subtitle')}</p>
-            <div className="space-y-4">
-              <h1 className={gildedTokens.heroTitle}>{t('auth.title')}</h1>
-              <p className={gildedTokens.heroBody}>{t('auth.heroDescription')}</p>
-            </div>
-          </section>
+          {/* Central Content Stack */}
+          <main className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-16 p-6">
+            {/* Hero Section */}
+            <section className="flex flex-col items-center gap-6 text-center animate-in fade-in zoom-in-95 duration-1000">
+              <div className={`${gildedTokens.haloBadge} animate-float mb-4`}>
+                <Logo
+                  size="xl"
+                  className="rounded-full border border-aurora-500/30 bg-midnight-900/40 p-6 backdrop-blur-sm"
+                />
+                <div className={gildedTokens.haloInnerGlow} />
+              </div>
 
-          <section className="relative z-10 flex w-full max-w-4xl flex-col items-center gap-6">
-            <div className={`${gildedTokens.glassPanel} w-full space-y-6 text-center sm:text-left`}>
-              <div className="space-y-3">
-                <p className={gildedTokens.inlineBadge}>{t('auth.cta.heading')}</p>
-                <p className={gildedTokens.sectionBody}>{t('auth.cta.copy')}</p>
+              <div className="space-y-4">
+                <p className={`${gildedTokens.heroEyebrow} tracking-[0.5em] text-aurora-200/80`}>
+                  {t('auth.subtitle')}
+                </p>
+                <h1 className={`${gildedTokens.heroTitle} text-6xl sm:text-7xl lg:text-8xl`}>
+                  <span className="shiny-text filter drop-shadow-[0_0_30px_rgba(124,58,237,0.3)]">DAICER</span>
+                </h1>
+                <p className={`${gildedTokens.heroBody} max-w-2xl text-lg sm:text-xl text-aurora-100/90`}>
+                  {t('auth.heroDescription')}
+                </p>
+              </div>
+            </section>
+
+            {/* Login Gateway Section */}
+            <section className="flex flex-col items-center gap-8 animate-in slide-in-from-bottom-10 fade-in duration-1000 delay-300">
+              <div className="space-y-2 text-center">
+                <div className="flex items-center justify-center gap-3 text-aurora-300/60 mb-2">
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-aurora-500/50" />
+                  <span className="text-xs uppercase tracking-[0.3em] font-medium">Portão de Entrada</span>
+                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-aurora-500/50" />
+                </div>
+                <p className="text-aurora-200 text-sm max-w-md">
+                  Entre com sua carta de aventura e reúna o grupo em instantes.
+                </p>
               </div>
 
               <button
-                type="button"
                 onClick={signInWithGoogle}
                 disabled={authLoading}
-                className="btn-primary flex w-full items-center justify-center gap-3 text-base uppercase tracking-[0.32em]"
+                className="group relative flex items-center gap-4 px-8 py-4 bg-midnight-900/40 border border-aurora-500/30 rounded-xl backdrop-blur-md transition-all duration-300 hover:bg-midnight-800/60 hover:border-aurora-400/60 hover:shadow-[0_0_30px_rgba(124,58,237,0.25)] hover:scale-105 active:scale-95"
+                aria-label={t('auth.login')}
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <svg className="h-6 w-6" viewBox="0 0 24 24">
                   <path
-                    fill="#4285F4"
+                    fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    className="text-[#4285F4]"
                   />
                   <path
-                    fill="#34A853"
+                    fill="currentColor"
                     d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    className="text-[#34A853]"
                   />
                   <path
-                    fill="#FBBC05"
+                    fill="currentColor"
                     d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    className="text-[#FBBC05]"
                   />
                   <path
-                    fill="#EA4335"
+                    fill="currentColor"
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    className="text-[#EA4335]"
                   />
                 </svg>
-                {authLoading ? t('auth.loggingIn') : t('auth.login')}
+                <span className="text-aurora-50 font-medium tracking-wider text-sm uppercase">
+                  {authLoading ? t('auth.loggingIn') : t('auth.login')}
+                </span>
               </button>
 
-              {authError ? <p className="text-center text-sm text-red-300">{authError}</p> : null}
-            </div>
-
-            <div className="w-full rounded-3xl border border-midnight-500/50 bg-midnight-500/40 px-6 py-5 text-center text-xs uppercase tracking-[0.32em] text-shadow-400">
-              <p className="font-semibold text-shadow-200">{t('auth.emulatorNote')}</p>
-              <p className="mt-2 text-[0.78rem] tracking-normal text-shadow-300">{t('auth.emulatorTip')}</p>
-            </div>
-          </section>
-
-          <section className={`${gildedTokens.glassPanel} w-full max-w-5xl space-y-6`}>
-            <div className="space-y-2 text-center">
-              <p className={gildedTokens.heroEyebrow}>{t('lobby.carouselTitle')}</p>
-              <p className="text-sm leading-relaxed text-shadow-300">{t('lobby.carouselDescription')}</p>
-            </div>
-
-            <SpotlightCarousel
-              items={publicSlides}
-              size="lg"
-              layout="split"
-              showControls={false}
-              ariaLabel={t('lobby.joinHero.carouselAria')}
-              frameClassName="bg-transparent"
-              slideClassName="px-4 py-6"
-              renderItem={({ item, index, isActive }) => (
-                <JoinHeroSlide item={item} isActive={isActive} slideIndex={index} />
-              )}
-            />
-          </section>
+              {authError ? <p className="text-red-400 text-xs animate-pulse">{authError}</p> : null}
+            </section>
+          </main>
         </div>
       </DynamicLayout>
     );
@@ -148,25 +145,36 @@ export default function LandingPage() {
   // Authenticated view - Lobby
   return (
     <DynamicLayout showRoomInfo={false}>
-      <div className={gildedTokens.pageShell}>
+      {/* 
+        Full-height container 
+        - Override min-h-dvh from pageShell with !min-h-[calc(100dvh-4.5rem)] (navbar height)
+        - Remove default top/bottom padding constraints that cause overflow
+        - Use flex-1 to fill available space
+      */}
+      <div className={`${gildedTokens.pageShell} !min-h-[calc(100dvh-4.5rem)] !py-8 justify-center`}>
         <div className={gildedTokens.gradientBackdrop} />
 
-        <header className={gildedTokens.heroStack}>
-          <div className={gildedTokens.haloBadge}>
-            <UsersIcon className="h-16 w-16 text-aurora-200" aria-hidden="true" />
+        {/* Header Section */}
+        <header className={`${gildedTokens.heroStack} mb-8 flex-none`}>
+          <div className={`${gildedTokens.haloBadge} animate-float h-32 w-32`}>
+            <UsersIcon className="h-12 w-12 text-aurora-200" aria-hidden="true" />
             <span className="sr-only">Adventuring party lobby icon</span>
             <div className={gildedTokens.haloInnerGlow} />
           </div>
           <p className={gildedTokens.heroEyebrow}>{t('lobby.subtitle')}</p>
           <div className="space-y-4">
-            <h1 className={gildedTokens.heroTitle}>{t('lobby.title')}</h1>
+            <h1 className={`${gildedTokens.heroTitle} !text-3xl sm:!text-5xl`}>{t('lobby.title')}</h1>
             <p className={gildedTokens.heroBody}>{t('lobby.description')}</p>
           </div>
         </header>
 
-        <section className="relative z-10 flex w-full max-w-5xl flex-col gap-10">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <article className={`${gildedTokens.glassPanel} flex flex-col gap-6`}>
+        {/* Main Grid Content */}
+        <section className="relative z-10 grid w-full max-w-5xl gap-6 md:grid-cols-2 md:items-stretch flex-1 md:flex-none">
+          {/* Create Room Card */}
+          <article
+            className={`${gildedTokens.glassPanel} flex flex-col gap-6 justify-between h-full hover:border-aurora-500/30 transition-colors duration-300`}
+          >
+            <div className="space-y-6">
               <div
                 className={`${gildedTokens.inlineBadge} justify-center rounded-3xl border border-aurora-300/40 bg-midnight-900/40 px-5 py-3 text-center sm:justify-start`}
               >
@@ -177,6 +185,9 @@ export default function LandingPage() {
                 <h2 className={gildedTokens.sectionHeading}>{t('lobby.joinHero.heading')}</h2>
                 <p className={gildedTokens.sectionBody}>{t('lobby.joinHero.copy')}</p>
               </div>
+            </div>
+
+            <div className="space-y-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
@@ -187,23 +198,31 @@ export default function LandingPage() {
                 >
                   {t('lobby.createButton')}
                 </button>
-                <p className={`${gildedTokens.detailCopy} text-center text-shadow-300 sm:max-w-xs sm:text-left`}>
-                  {t('lobby.joinHero.helpText')}
-                </p>
               </div>
+
               <div
-                className={`${gildedTokens.inlineBadge} justify-center rounded-full border border-aurora-300/35 bg-midnight-900/60 px-5 py-2 text-center sm:justify-start`}
+                className={`${gildedTokens.inlineBadge} w-full justify-center rounded-full border border-aurora-300/35 bg-midnight-900/60 px-5 py-2 text-center sm:justify-start`}
               >
                 <Shield className="h-4 w-4 text-aurora-200" aria-hidden="true" />
                 <span>{t('lobby.joinHero.guardianCallout')}</span>
               </div>
-            </article>
+            </div>
+          </article>
 
-            <form
-              id="join-room-form"
-              onSubmit={handleJoinRoom}
-              className={`${gildedTokens.glassPanel} flex flex-col gap-5`}
-            >
+          {/* Join Room Form */}
+          <form
+            id="join-room-form"
+            onSubmit={handleJoinRoom}
+            className={`${gildedTokens.glassPanel} flex flex-col gap-8 justify-center h-full hover:border-aurora-500/30 transition-colors duration-300`}
+          >
+            <div className="space-y-2">
+              <label htmlFor="room-code-input" className={`${gildedTokens.sectionHeading} block`}>
+                {t('lobby.joinHero.joinButton')}
+              </label>
+              <p className={gildedTokens.detailCopy}>{t('lobby.joinHero.helpText')}</p>
+            </div>
+
+            <div className="space-y-4">
               <label htmlFor="room-code-input" className={`${gildedTokens.inlineBadge} text-aurora-200/90`}>
                 {t('lobby.joinHero.inputLabel')}
               </label>
@@ -214,38 +233,21 @@ export default function LandingPage() {
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 placeholder={t('lobby.joinHero.codePlaceholder')}
                 maxLength={6}
-                className={gildedTokens.monoInput}
+                className={`${gildedTokens.monoInput} !text-4xl py-6`}
               />
+            </div>
+
+            <div className="space-y-4">
               <button type="submit" disabled={loading || !roomCode.trim()} className={gildedTokens.secondaryAction}>
-                {loading ? t('lobby.joinHero.joining') : t('lobby.joinHero.joinButton')}
+                {loading ? t('lobby.joinHero.joining') : 'Entrar no Sanctum'}
               </button>
               {error && (
-                <div className="rounded-2xl border border-red-500/40 bg-red-900/40 p-4 text-sm text-red-200">
+                <div className="rounded-2xl border border-red-500/40 bg-red-900/40 p-4 text-sm text-center text-red-200 animate-pulse">
                   {error}
                 </div>
               )}
-            </form>
-          </div>
-
-          <section className={`${gildedTokens.glassPanel} flex flex-col gap-6`}>
-            <div className="space-y-2 text-center">
-              <p className={gildedTokens.heroEyebrow}>{t('lobby.carouselTitle')}</p>
-              <p className="text-sm leading-relaxed text-shadow-300">{t('lobby.carouselDescription')}</p>
             </div>
-
-            <SpotlightCarousel
-              items={privateSlides}
-              size="lg"
-              layout="split"
-              showControls={false}
-              ariaLabel={t('lobby.joinHero.carouselAria')}
-              frameClassName="bg-transparent"
-              slideClassName="px-4 py-6"
-              renderItem={({ item, index: slideIndex, isActive }) => (
-                <JoinHeroSlide item={item} isActive={isActive} slideIndex={slideIndex} />
-              )}
-            />
-          </section>
+          </form>
         </section>
       </div>
     </DynamicLayout>

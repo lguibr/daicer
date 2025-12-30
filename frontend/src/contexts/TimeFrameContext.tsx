@@ -27,7 +27,7 @@ export const TimeFrameProvider: React.FC<{
 
   const currentTimeFrame = localFrameId
     ? history.find((f) => f.id === localFrameId) || null
-    : room?.currentTimeFrame || history[history.length - 1] || null;
+    : history[history.length - 1] || null;
 
   const isLive = !localFrameId; // If no local override, we are "live" tracking room state
 

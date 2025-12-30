@@ -1,4 +1,4 @@
-import { Coordinates, BlockType, PHYSICS_CONSTANTS } from '@daicer/engine';
+import { Coordinates, BlockType, PHYSICS_CONSTANTS, Chunk } from '@daicer/engine';
 import { WorldGenerator } from '../world-generator-logic';
 
 export class PhysicsEngine {
@@ -60,7 +60,7 @@ export class PhysicsEngine {
     const minChunkY = Math.floor((origin.y - radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
     const maxChunkY = Math.floor((origin.y + radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
 
-    const chunkCache = new Map<string, any>();
+    const chunkCache = new Map<string, Chunk>();
     const promises = [];
 
     for (let cy = minChunkY; cy <= maxChunkY; cy++) {

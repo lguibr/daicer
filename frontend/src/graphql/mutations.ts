@@ -163,8 +163,8 @@ export const START_GAME_MUTATION = gql`
 `;
 
 export const SUBMIT_ACTION_MUTATION = gql`
-  mutation SubmitAction($roomId: ID!, $action: String!) {
-    submitAction(roomId: $roomId, action: $action)
+  mutation SubmitAction($roomId: ID!, $action: String!, $mode: String) {
+    submitAction(roomId: $roomId, action: $action, mode: $mode)
   }
 `;
 

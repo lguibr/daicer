@@ -15,6 +15,7 @@ export class StructureRenderer {
     tiles: Tile[][][],
     cx: number,
     cy: number,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     generatorMethods: any
   ) {
     switch (struct.type) {

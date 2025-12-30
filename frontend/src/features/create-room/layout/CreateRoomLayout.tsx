@@ -17,7 +17,7 @@ export default function CreateRoomLayout() {
 
   // If we are exactly at /create, redirect to first step
   if (location.pathname === '/create' || location.pathname === '/create/') {
-    return <Navigate to="dm-settings" replace />;
+    return <Navigate to={{ pathname: 'dm-settings', search: location.search }} replace />;
   }
 
   return (
@@ -43,7 +43,7 @@ export default function CreateRoomLayout() {
                   return (
                     <li key={step.path}>
                       <Link
-                        to={step.path}
+                        to={{ pathname: step.path, search: location.search }}
                         className={clsx(
                           'flex w-full flex-col gap-2 rounded-xl border px-4 py-3 text-left transition-all duration-200',
                           isActive &&

@@ -42,6 +42,9 @@
     "turnData": {
       "type": "json"
     },
+    "exploredTiles": {
+      "type": "json"
+    },
     "isActive": {
       "type": "boolean",
       "default": true

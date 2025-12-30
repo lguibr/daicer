@@ -1,14 +1,17 @@
 import { useState } from 'react';
+import { GamePhase, type Room } from '@daicer/engine';
 import { generateAvatarPortrait, generateAvatarUpperBody, generateAvatarFullBody } from '../../../../services/api';
 import { buildAvatarPayload, appendReference, downscalePreviewImage } from '../avatarHelpers';
-import { GamePhase } from '@daicer/engine';
+import type { CharacterFormState } from '../types';
+import type { EquipmentItemData } from "../../../equipment/EquipmentItemCard";
+import type { AvatarPreviewImage } from '../../../../types/assets';
 
 export function useAvatarGeneration(
-  formData: any,
-  room: any,
+  formData: CharacterFormState,
+  room: Room | null | undefined,
   startingLevel: number,
-  equippedItems: any,
-  equipmentItems: any[],
+  equippedItems: Record<string, string | null>,
+  equipmentItems: EquipmentItemData[],
   assetMode: boolean
 ) {
   const [avatarPreview, setAvatarPreview] = useState<any>({});
@@ -40,18 +43,21 @@ export function useAvatarGeneration(
 
       // Step 1: Portrait
       setPreviewLoadState((prev) => ({ ...prev, portrait: true }));
-      let portrait = null;
+      let portrait: AvatarPreviewImage | null = null;
       try {
         const userPortrait = avatarPreview.portrait
           ? `data:${avatarPreview.portrait.mimeType};base64,${avatarPreview.portrait.data}`
           : null;
         const portraitPayload = userPortrait ? payload : appendReference(payload, refs?.portrait);
         const portraitRaw = await generateAvatarPortrait(portraitPayload, userPortrait);
-        portrait = portraitRaw;
+        const tempPortrait = portraitRaw; // Keep raw or process?
+        // generateAvatarPortrait likely returns AvatarPreviewImage (object) or string?
+        // Assuming it matches downscale input.
         try {
-          portrait = await downscalePreviewImage(portraitRaw);
+          portrait = await downscalePreviewImage(tempPortrait);
         } catch (e) {
           console.warn(e);
+          portrait = typeof tempPortrait === 'string' ? null : tempPortrait;
         }
         setAvatarPreview((prev: any) => ({ ...prev, portrait }));
       } finally {
@@ -62,18 +68,19 @@ export function useAvatarGeneration(
 
       // Step 2: Upper Body
       setPreviewLoadState((prev) => ({ ...prev, upperBody: true }));
-      let upperBody = null;
+      let upperBody: AvatarPreviewImage | null = null;
       try {
         const userUpper = avatarPreview.upperBody
           ? `data:${avatarPreview.upperBody.mimeType};base64,${avatarPreview.upperBody.data}`
           : null;
         const upperPayload = userUpper ? payload : appendReference(payload, refs?.upperBody);
         const upperRaw = await generateAvatarUpperBody(upperPayload, portrait, userUpper);
-        upperBody = upperRaw;
+
         try {
           upperBody = await downscalePreviewImage(upperRaw);
         } catch (e) {
           console.warn(e);
+          upperBody = typeof upperRaw === 'string' ? null : upperRaw;
         }
         setAvatarPreview((prev: any) => ({ ...prev, upperBody }));
       } finally {
@@ -90,13 +97,16 @@ export function useAvatarGeneration(
           : null;
         const fullPayload = userFull ? payload : appendReference(payload, refs?.fullBody);
         const fullRaw = await generateAvatarFullBody(fullPayload, portrait, upperBody, userFull);
-        let fullBody = fullRaw;
+
+        // let fullBody = fullRaw;
+        let finalFullBody: AvatarPreviewImage | null = null;
         try {
-          fullBody = await downscalePreviewImage(fullRaw);
+          finalFullBody = await downscalePreviewImage(fullRaw);
         } catch (e) {
           console.warn(e);
+          finalFullBody = typeof fullRaw === 'string' ? null : fullRaw;
         }
-        setAvatarPreview((prev: any) => ({ ...prev, fullBody }));
+        setAvatarPreview((prev: any) => ({ ...prev, fullBody: finalFullBody }));
       } finally {
         setPreviewLoadState((prev) => ({ ...prev, fullBody: false }));
       }

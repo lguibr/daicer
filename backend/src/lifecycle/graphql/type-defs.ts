@@ -57,7 +57,14 @@ export const typeDefs = `
     fogRadius: Int
   }
 
+  type SearchResult {
+    id: ID!
+    name: String!
+    type: String!
+  }
+
   extend type Query {
+    searchEntities(query: String!): [SearchResult]!
     abilities: [Ability]
     skills: [Skill]
     alignments: [Alignment]
@@ -73,7 +80,7 @@ export const typeDefs = `
     joinRoom(code: String!): Room
     addCharacter(roomId: ID!, character: JSON): JSON
     startGame(roomId: ID!, language: String, streamId: String): JSON
-    submitAction(roomId: ID!, action: String): JSON
+    submitAction(roomId: ID!, action: String!, mode: String): JSON
     spawnCreature(roomId: ID!, creature: JSON): JSON
     generateAvatarPortrait(payload: JSON!, referenceImage: String): JSON
     generateAvatarUpperBody(payload: JSON!, portrait: JSON!, referenceImage: String): JSON

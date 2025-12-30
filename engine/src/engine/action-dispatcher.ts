@@ -1,4 +1,4 @@
-import { Command } from '../types';
+import { Command, MoveCommand, AttackCommand, SkillCheckCommand } from '../types';
 import { GameState, ActionResult } from '../types/engine';
 import { Alea } from '../voxel/utils/math';
 
@@ -10,25 +10,23 @@ export class ActionDispatcher {
   }
 
   public dispatch(state: GameState, command: Command): ActionResult {
-    console.log(`[ActionDispatcher] Dispatching command: ${command.type}`);
-
     switch (command.type) {
       case 'MOVE':
-        return this.handleMove(state, command);
+        return this.handleMove(state, command as MoveCommand);
       case 'ATTACK':
-        return this.handleAttack(state, command);
+        return this.handleAttack(state, command as AttackCommand);
       case 'SKILL_CHECK':
-        return this.handleSkillCheck(state, command);
+        return this.handleSkillCheck(state, command as SkillCheckCommand);
       default:
         return {
           success: false,
-          message: `Unknown command type: ${(command as any).type}`,
+          message: `Unknown command type: ${(command as { type: string }).type}`,
           events: [],
         };
     }
   }
 
-  private handleMove(state: GameState, command: import('../types').MoveCommand): ActionResult {
+  private handleMove(_state: GameState, command: MoveCommand): ActionResult {
     const { actorId, targetPosition } = command.payload;
     // Logic: Check bounds, check obstacles (stubbed for now)
 
@@ -45,7 +43,7 @@ export class ActionDispatcher {
     };
   }
 
-  private handleAttack(state: GameState, command: import('../types').AttackCommand): ActionResult {
+  private handleAttack(_state: GameState, command: AttackCommand): ActionResult {
     const { actorId, targetId } = command.payload;
     // Logic: Range check, Hit Roll vs AC
     const roll = Math.floor(this.rng.next() * 20) + 1;
@@ -64,7 +62,7 @@ export class ActionDispatcher {
     };
   }
 
-  private handleSkillCheck(state: GameState, command: import('../types').SkillCheckCommand): ActionResult {
+  private handleSkillCheck(_state: GameState, command: SkillCheckCommand): ActionResult {
     const { actorId, difficultyClass = 10 } = command.payload;
     const roll = Math.floor(this.rng.next() * 20) + 1;
     const success = roll >= difficultyClass;

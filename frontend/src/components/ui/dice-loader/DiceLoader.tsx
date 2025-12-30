@@ -242,7 +242,7 @@ export function DiceLoader({
   static: isStatic = false,
 }: DiceLoaderProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const stateRef = useRef<ThreeState | null>(null);
   const { t, language } = useI18n();
 

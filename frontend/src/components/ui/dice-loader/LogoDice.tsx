@@ -54,7 +54,7 @@ export function LogoDice({
   animated = true,
 }: LogoDiceProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const stateRef = useRef<ThreeState | null>(null);
   const [phase, setPhase] = useState<AnimationPhase>('spinning');
   const startTimeRef = useRef<number>(Date.now());

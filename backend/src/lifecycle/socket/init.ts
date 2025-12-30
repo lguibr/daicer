@@ -2,8 +2,9 @@ import { Server } from 'socket.io';
 import { streamManager } from '../../utils/llm/stream-manager';
 import { handleRoomJoin } from './handlers/room-join';
 import { handleTurnProcess, handlePlayerAction } from './handlers/turn-handlers';
+import { handlePlayerReady } from './handlers/player-handlers';
 import { StrapiWithServer } from './types';
-import { validateRoomJoin, validateTurnProcess, validatePlayerAction } from './validation';
+import { validateRoomJoin, validateTurnProcess, validatePlayerAction, validatePlayerReady } from './validation';
 
 export const initSocket = (strapi: StrapiWithServer) => {
   const httpServer = strapi.server.httpServer;
@@ -26,6 +27,7 @@ export const initSocket = (strapi: StrapiWithServer) => {
     const onRoomJoin = handleRoomJoin(strapi);
     const onTurnProcess = handleTurnProcess(strapi);
     const onPlayerAction = handlePlayerAction(strapi);
+    const onPlayerReady = handlePlayerReady(strapi);
 
     socket.on('room:join', (data) => {
       try {
@@ -53,6 +55,16 @@ export const initSocket = (strapi: StrapiWithServer) => {
         onPlayerAction(socket, validated);
       } catch (error) {
         strapi.log.warn(`Invalid player:action payload from ${socket.id}:`, error);
+        socket.emit('error', { message: 'Invalid payload' });
+      }
+    });
+
+    socket.on('player:ready', (data) => {
+      try {
+        const validated = validatePlayerReady(data);
+        onPlayerReady(socket, validated);
+      } catch (error) {
+        strapi.log.warn(`Invalid player:ready payload from ${socket.id}:`, error);
         socket.emit('error', { message: 'Invalid payload' });
       }
     });

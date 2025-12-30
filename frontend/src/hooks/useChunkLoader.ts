@@ -62,7 +62,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
 
     try {
       console.log('useChunkLoader: Fetching chunks', chunksToFetch, 'config:', config.seed);
-      const { data } = await client.query({
+      const { data } = await client.query<any>({
         query: VOXEL_PREVIEW_QUERY,
         variables: {
           chunks: chunksToFetch,

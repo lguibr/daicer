@@ -46,18 +46,18 @@ export class TerrainGenerator {
         const { biome, surfaceBlock } = this.determineBiome(elev, moist);
 
         // Z=0 (Surface)
-        tiles[3][y][x] = this.createTile(wx, wy, 0, surfaceBlock, biome);
+        tiles[3]![y]![x] = this.createTile(wx, wy, 0, surfaceBlock, biome);
 
         // Z<0 (Underground)
         for (let zIndex = 2; zIndex >= 0; zIndex--) {
           const realZ = (zIndex - 3) as ZLevel;
           const block = realZ === -3 && this.rng.next() > 0.5 ? BlockType.BEDROCK : BlockType.STONE;
-          tiles[zIndex][y][x] = this.createTile(wx, wy, realZ, block, biome);
+          tiles[zIndex]![y]![x] = this.createTile(wx, wy, realZ, block, biome);
         }
 
         // Z>0 (Sky)
         for (let zIndex = 4; zIndex <= 6; zIndex++) {
-          tiles[zIndex][y][x] = this.createTile(wx, wy, (zIndex - 3) as ZLevel, BlockType.AIR, biome);
+          tiles[zIndex]![y]![x] = this.createTile(wx, wy, (zIndex - 3) as ZLevel, BlockType.AIR, biome);
         }
       }
     }
@@ -137,7 +137,7 @@ export function createUnifiedTerrainGenerator(seed: string, params: Partial<Worl
 
   const generator = new TerrainGenerator(config);
 
-  return (chunkX: number, chunkY: number, size?: number) => {
+  return (chunkX: number, chunkY: number, _size?: number) => {
     // If size is provided, it overrides config? Or just assert it matches
     // Currently generator uses config.chunkSize
     return generator.generate(chunkX, chunkY);

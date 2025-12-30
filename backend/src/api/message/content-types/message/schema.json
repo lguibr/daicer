@@ -21,7 +21,11 @@
     },
     "senderType": {
       "type": "enumeration",
-      "enum": ["dm", "player", "system"],
+      "enum": [
+        "dm",
+        "player",
+        "system"
+      ],
       "default": "system"
     },
     "room": {
@@ -44,6 +48,9 @@
     "timestamp": {
       "type": "biginteger",
       "required": false
+    },
+    "images": {
+      "type": "json"
     }
   }
 }

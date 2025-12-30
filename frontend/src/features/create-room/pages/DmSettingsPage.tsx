@@ -255,21 +255,21 @@ export default function DmSettingsPage() {
             id="world-size"
             label="World Size"
             value={worldSizeIndex}
-            onChange={(i) => updateSetting('worldSize', worldSizeOptions[i]?.value)}
+            onChange={(i) => updateSetting('worldSize', worldSizeOptions[i]?.value || 'small')}
             marks={worldSizeMarks}
           />
           <DiscreteSlider
             id="length"
             label="Adventure Length"
             value={adventureLengthIndex}
-            onChange={(i) => updateSetting('adventureLength', adventureLengthOptions[i]?.value)}
+            onChange={(i) => updateSetting('adventureLength', adventureLengthOptions[i]?.value || 'short')}
             marks={adventureLengthMarks}
           />
           <DiscreteSlider
             id="diff"
             label="Difficulty"
             value={difficultyIndex}
-            onChange={(i) => updateSetting('difficulty', difficultyOptions[i]?.value)}
+            onChange={(i) => updateSetting('difficulty', difficultyOptions[i]?.value || 'easy')}
             marks={difficultyMarks}
           />
         </div>

@@ -739,6 +739,59 @@ export interface ApiGameEventGameEvent extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiKnowledgeSnippetKnowledgeSnippet extends Struct.CollectionTypeSchema {
+  collectionName: 'knowledge_snippets';
+  info: {
+    description: 'A chunk of knowledge derived from a source.';
+    displayName: 'Knowledge Snippet';
+    pluralName: 'knowledge-snippets';
+    singularName: 'knowledge-snippet';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    embedding: Schema.Attribute.JSON & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::knowledge-snippet.knowledge-snippet'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    source: Schema.Attribute.Relation<'manyToOne', 'api::knowledge-source.knowledge-source'>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiKnowledgeSourceKnowledgeSource extends Struct.CollectionTypeSchema {
+  collectionName: 'knowledge_sources';
+  info: {
+    description: 'A source of knowledge, usually a markdown file.';
+    displayName: 'Knowledge Source';
+    pluralName: 'knowledge-sources';
+    singularName: 'knowledge-source';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::knowledge-source.knowledge-source'> &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required & Schema.Attribute.Unique;
+    publishedAt: Schema.Attribute.DateTime;
+    snippets: Schema.Attribute.Relation<'oneToMany', 'api::knowledge-snippet.knowledge-snippet'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
 export interface ApiLanguageLanguage extends Struct.CollectionTypeSchema {
   collectionName: 'languages';
   info: {
@@ -888,6 +941,7 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
     content: Schema.Attribute.RichText & Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    images: Schema.Attribute.JSON;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::message.message'> & Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
@@ -1113,6 +1167,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     currentTimeFrame: Schema.Attribute.Relation<'oneToOne', 'api::time-frame.time-frame'>;
     dmSettings: Schema.Attribute.Relation<'oneToOne', 'api::dm-setting.dm-setting'>;
     events: Schema.Attribute.Relation<'oneToMany', 'api::game-event.game-event'>;
+    exploredTiles: Schema.Attribute.JSON;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::room.room'> & Schema.Attribute.Private;
@@ -1317,6 +1372,7 @@ export interface ApiTurnTurn extends Struct.CollectionTypeSchema {
   attributes: {
     actions: Schema.Attribute.JSON;
     characterSnapshots: Schema.Attribute.JSON;
+    contextImage: Schema.Attribute.Relation<'oneToOne', 'plugin::upload.file'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1844,6 +1900,8 @@ declare module '@strapi/strapi' {
       'api::equipment.equipment': ApiEquipmentEquipment;
       'api::feature.feature': ApiFeatureFeature;
       'api::game-event.game-event': ApiGameEventGameEvent;
+      'api::knowledge-snippet.knowledge-snippet': ApiKnowledgeSnippetKnowledgeSnippet;
+      'api::knowledge-source.knowledge-source': ApiKnowledgeSourceKnowledgeSource;
       'api::language.language': ApiLanguageLanguage;
       'api::magic-item.magic-item': ApiMagicItemMagicItem;
       'api::magic-school.magic-school': ApiMagicSchoolMagicSchool;

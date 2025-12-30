@@ -22,6 +22,7 @@ export const handleRoomJoin =
           'players.character.race',
           'players.character.class',
           'messages',
+          'messages.recipient',
           'world', // Populate World Relation
         ],
       });
@@ -35,16 +36,27 @@ export const handleRoomJoin =
       const rawMessages = room.messages || [];
       rawMessages.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 
-      const mappedMessages = rawMessages.map((msg) => ({
-        id: msg.documentId,
-        content: msg.content,
-        text: msg.content,
-        sender: msg.senderName,
-        senderName: msg.senderName,
-        senderType: msg.senderType,
-        timestamp: Number(msg.timestamp),
-        type: msg.senderType === 'dm' ? 'narration' : 'chat',
-      }));
+      const mappedMessages = rawMessages
+        .filter((msg) => {
+          // If no recipient, it's public.
+          // If recipient matches userId, it's for me.
+          // Note: userId passed to room-join is likely documentId based on previous context, or ID string.
+          // Need to handle both potentially if types are loose.
+          const recipientId = (msg as any).recipient?.documentId || (msg as any).recipient?.id;
+          if (!recipientId) return true; // Public
+          return String(recipientId) === String(userId);
+        })
+        .map((msg) => ({
+          id: msg.documentId,
+          content: msg.content,
+          text: msg.content,
+          sender: msg.senderName,
+          senderName: msg.senderName,
+          senderType: msg.senderType,
+          timestamp: Number(msg.timestamp),
+          type: msg.senderType === 'dm' ? 'narration' : 'chat',
+          isPrivate: !!(msg as any).recipient,
+        }));
 
       // Safe access for dynamic properties
       const world = room.world as Record<string, unknown> | null;

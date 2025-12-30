@@ -1,8 +1,8 @@
-import { calculateModifier, Attributes } from './attributes';
+import { calculateModifier } from './attributes';
 import { calculateAC, calculateHP } from './defenses';
 import { deriveSpeed } from './capabilities';
 import { calculateSkillBonus } from './skills';
-import { DerivationContext, Equipment } from './types';
+import { DerivationContext } from './types';
 
 export * from './attributes';
 export * from './defenses';

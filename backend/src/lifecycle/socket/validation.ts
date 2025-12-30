@@ -2,9 +2,11 @@ import {
   RoomJoinSchema,
   TurnProcessSchema,
   PlayerActionSchema,
+  PlayerReadySchema,
   RoomJoinPayload,
   TurnProcessPayload,
   PlayerActionPayload,
+  PlayerReadyPayload,
 } from '@daicer/shared';
 
 export class SocketValidationError extends Error {
@@ -24,4 +26,8 @@ export const validateTurnProcess = (data: unknown): TurnProcessPayload => {
 
 export const validatePlayerAction = (data: unknown): PlayerActionPayload => {
   return PlayerActionSchema.parse(data);
+};
+
+export const validatePlayerReady = (data: unknown): PlayerReadyPayload => {
+  return PlayerReadySchema.parse(data);
 };

@@ -184,3 +184,13 @@ export const LIST_MONSTERS_QUERY = gql`
     }
   }
 `;
+
+export const SEARCH_ENTITIES_QUERY = gql`
+  query SearchEntities($query: String!) {
+    searchEntities(query: $query) {
+      id
+      name
+      type
+    }
+  }
+`;

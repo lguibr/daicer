@@ -118,6 +118,12 @@ export default function useSocket(roomId?: string, userId?: string) {
                   ],
                 };
               });
+            } else if (data.players) {
+              // Handle generic room update with players list (e.g. from togglePlayerReady)
+              setState((prev) => ({
+                ...prev,
+                players: data.players!,
+              }));
             }
           },
           onPlayerJoined: () => {
@@ -150,7 +156,7 @@ export default function useSocket(roomId?: string, userId?: string) {
             console.log('🔔 Received player:ready_updated:', data);
             setState((prev) => ({
               ...prev,
-              players: prev.players.map((p) => (p.id === data.userId ? { ...p, isReady: data.isReady } : p)),
+              players: prev.players.map((p) => (p.userId === data.userId ? { ...p, isReady: data.isReady } : p)),
             }));
           },
           onPhaseChanged: (data) => {
@@ -185,6 +191,21 @@ export default function useSocket(roomId?: string, userId?: string) {
           },
           onError: (data) => {
             updateState({ error: data.message });
+          },
+          onEntitiesUpdate: (data) => {
+            // Merge or replace entities in state?
+            // For now, let's treat 'creatures' as the generic bucket if compatible, or add 'entities'
+            // The type definition for SocketState needs 'entities' generic or we map to players/creatures
+            // Given DebugView uses a custom "entities" list, let's trying to exposing it via 'creatures' or mixed.
+            // GameDebugView expects "DebugEntity[]".
+            // Let's defer "updateState" here if we don't have a slot.
+            // Actually, best to just expose toolCalls or similar.
+            // BUT, GameDebugView listens manually.
+            // Let's verify 'state' has 'creatures'.
+            // For God Mode, we might want to map these to 'creatures' for simplicity.
+            updateState({
+              creatures: data.entities, // Direct map if possible, or we need a new state field
+            });
           },
           onMessageNew: (message) => {
             setState((prev) => {

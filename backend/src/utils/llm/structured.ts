@@ -63,10 +63,23 @@ export async function generateStructured<T extends z.ZodType>(
   systemPrompt: string,
   userPrompt: string,
   language: Language = 'en',
-  config: TextGenConfig = {}
+  config: TextGenConfig & { images?: Buffer[] } = {}
 ): Promise<z.infer<T>> {
   const fullSystemPrompt = await buildSystemPrompt(language, systemPrompt);
-  const messages = [new SystemMessage(fullSystemPrompt), new HumanMessage(userPrompt)];
+
+  let messageContent: any[] = [{ type: 'text', text: userPrompt }];
+
+  if (config.images && config.images.length > 0) {
+    messageContent = [
+      { type: 'text', text: userPrompt },
+      ...config.images.map((img) => ({
+        type: 'image_url',
+        image_url: `data:image/png;base64,${img.toString('base64')}`,
+      })),
+    ];
+  }
+
+  const messages = [new SystemMessage(fullSystemPrompt), new HumanMessage({ content: messageContent })];
 
   // Build RunnableConfig for LangChain with metadata and tags
   const runnableConfig: Record<string, unknown> = {};
@@ -86,12 +99,13 @@ export async function generateStructured<T extends z.ZodType>(
     };
   }
 
-  console.log('[LLM Structured] Generation requested', {
+  console.info('[LLM Structured] Generation requested', {
     language,
     model: config.model || 'gemini-default',
     userId: config.userId,
     schema: schema.description || 'unnamed',
     tags: runnableConfig.tags,
+    hasImages: !!config.images?.length,
   });
 
   // Default to FLASH if not specified or arbitrary string provided
@@ -103,10 +117,10 @@ export async function generateStructured<T extends z.ZodType>(
     }
   }
 
-  console.log(`[LLM Structured] Using Gemini model: ${geminiModelToken}`);
+  console.info(`[LLM Structured] Using Gemini model: ${geminiModelToken}`);
 
   const baseModel = getGeminiModel(geminiModelToken, config);
-  // @ts-ignore - Deep type instantiation with Zod/LangChain
+  // @ts-expect-error - Deep type instantiation with Zod/LangChain
   const structuredModel = baseModel.withStructuredOutput(schema);
 
   try {

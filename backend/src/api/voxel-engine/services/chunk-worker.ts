@@ -16,8 +16,9 @@ if (parentPort) {
       const chunk = builder.generateChunk(task.chunkX, task.chunkY);
       // We send back the result. Note: Structured Clone algorithm handles the copying.
       parentPort!.postMessage({ id: task.id, success: true, result: chunk });
-    } catch (error: any) {
-      parentPort!.postMessage({ id: task.id, success: false, error: error.message || 'Unknown worker error' });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown worker error';
+      parentPort!.postMessage({ id: task.id, success: false, error: errMsg });
     }
   });
 }

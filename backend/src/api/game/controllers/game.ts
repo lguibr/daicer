@@ -22,6 +22,49 @@ export default ({ strapi }) => ({
     }
   },
 
+  async searchEntities(ctx) {
+    try {
+      const { query } = ctx.request.query;
+
+      if (!query || typeof query !== 'string') {
+        return ctx.badRequest('Query parameter required');
+      }
+
+      // Parallel search
+      const [monsters, characters] = await Promise.all([
+        strapi.documents('api::monster.monster').findMany({
+          filters: { name: { $contains: query } }, // Case insensitive usually handled by DB or $containsi if postgres
+          fields: ['name', 'documentId'],
+        }),
+        strapi.documents('api::character.character').findMany({
+          filters: { name: { $contains: query } },
+          fields: ['name', 'documentId'],
+        }),
+      ]);
+
+      // Normalize results
+      const results = [
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(monsters || []).map((m: any) => ({
+          id: m.documentId,
+          name: m.name,
+          type: 'monster',
+        })),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(characters || []).map((c: any) => ({
+          id: c.documentId,
+          name: c.name,
+          type: 'character',
+        })),
+      ];
+
+      return ctx.send(results);
+    } catch (error) {
+      strapi.log.error('searchEntities error:', error);
+      return ctx.internalServerError('Failed to search entities');
+    }
+  },
+
   async processTurn(ctx) {
     try {
       const { roomId } = ctx.params; // or ctx.params.id depending on route config
@@ -138,12 +181,12 @@ export default ({ strapi }) => ({
     try {
       // route: /game/:roomId/action creates params.roomId
       const { roomId } = ctx.params;
-      const { action } = ctx.request.body;
+      const { action, mode } = ctx.request.body;
 
       if (!roomId) return ctx.badRequest('Room ID required');
       if (!action) return ctx.badRequest('Action required');
 
-      const result = await strapi.service('api::game.game').submitAction(roomId, action, ctx.state.user);
+      const result = await strapi.service('api::game.game').submitAction(roomId, action, ctx.state.user, mode);
 
       return ctx.send(result);
     } catch (error) {
@@ -164,6 +207,25 @@ export default ({ strapi }) => ({
     } catch (error) {
       strapi.log.error('executeEngineAction error:', error);
       return ctx.internalServerError('Failed to execute engine action');
+    }
+  },
+
+  async toggleReady(ctx) {
+    try {
+      const { roomId } = ctx.params;
+      const { isReady } = ctx.request.body;
+
+      if (!roomId) return ctx.badRequest('Room ID required');
+      if (typeof isReady !== 'boolean') return ctx.badRequest('isReady boolean required');
+
+      const result = await strapi
+        .service('api::game.game')
+        .togglePlayerReady(roomId, ctx.state.user.id || ctx.state.user.documentId, isReady);
+
+      return ctx.send(result);
+    } catch (error) {
+      strapi.log.error('toggleReady error:', error);
+      return ctx.internalServerError('Failed to toggle ready state');
     }
   },
 });

@@ -27,14 +27,14 @@ export interface ImageAnalysisOptions {
 }
 
 /**
- * Generate an image using Gemini 3 Pro Image Preview via Google GenAI SDK
- * User specified model: 'gemini-3-pro-image-preview'
+ * User specified model: 'gemini-2.5-flash-image' or 'gemini-3-pro-image-preview'
  */
 export async function generateImageGemini(
-  options: ImageGenerationOptions
+  options: ImageGenerationOptions,
+  modelName: string = 'gemini-2.5-flash-image'
 ): Promise<{ url: string; revised_prompt: string }> {
   const ai = getClient();
-  const model = 'gemini-3-pro-image-preview';
+  const model = modelName;
 
   try {
     // Basic Part interface based on usage
@@ -69,13 +69,11 @@ export async function generateImageGemini(
       ],
       config: {
         // responseModalities might not be in the strict types yet for all versions but is in docs
-        // @ts-ignore
         // responseModalities: ['IMAGE'], // Commenting out as mixed Text/Image input might require different output handling or defaults.
         // Actually, if we want an image, we should probably hint it, but default usually works for 'generate-image' models.
         // Let's keep it if it was working for txt2img.
         responseModalities: ['IMAGE'],
         // imageConfig might be experimental in some SDK versions
-        // @ts-ignore
         imageConfig: {
           aspectRatio: options.aspectRatio || '1:1',
         },

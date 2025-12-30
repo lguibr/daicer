@@ -41,6 +41,61 @@ export const registerGraphQLExtension = (strapi) => {
         },
       },
       Query: {
+        searchEntities: async (_parent, args, _context) => {
+          const { query } = args;
+          strapi.log.info(`[Resolver] searchEntities: "${query}"`);
+
+          if (!query || query.length < 2) return [];
+
+          try {
+            // Special Keywords: "characters" or "monsters" list all (limit 50)
+            const lowerQuery = query.toLowerCase();
+            const showAllCharacters = lowerQuery === 'characters' || lowerQuery === 'character';
+            const showAllMonsters = lowerQuery === 'monsters' || lowerQuery === 'monster';
+
+            const filters: any = {};
+            if (!showAllMonsters && !showAllCharacters) {
+              // Standard fuzzy search
+              filters.name = { $contains: query };
+            }
+
+            const [monsters, characters] = await Promise.all([
+              !showAllCharacters
+                ? strapi.documents('api::monster.monster').findMany({
+                    filters: showAllMonsters ? {} : { name: { $contains: query } },
+                    fields: ['name', 'documentId'],
+                    limit: 50,
+                    locale: 'en',
+                  })
+                : [],
+              !showAllMonsters
+                ? strapi.documents('api::character.character').findMany({
+                    filters: showAllCharacters ? {} : { name: { $contains: query } },
+                    fields: ['name', 'documentId'],
+                    limit: 50,
+                  })
+                : [],
+            ]);
+
+            strapi.log.info(`[Resolver] Found ${monsters.length || 0} monsters, ${characters.length || 0} characters`);
+
+            return [
+              ...(monsters || []).map((m: any) => ({
+                id: m.documentId,
+                name: m.name,
+                type: 'monster',
+              })),
+              ...(characters || []).map((c: any) => ({
+                id: c.documentId,
+                name: c.name,
+                type: 'character',
+              })),
+            ];
+          } catch (error) {
+            strapi.log.error('[Resolver] searchEntities error:', error);
+            return [];
+          }
+        },
         abilities: () => [
           {
             id: 'str',
@@ -114,6 +169,7 @@ export const registerGraphQLExtension = (strapi) => {
           scope: ['api::voxel-engine.voxel-engine.voxelPreview'],
         },
       },
+      'Query.searchEntities': { auth: false },
     },
   });
 };

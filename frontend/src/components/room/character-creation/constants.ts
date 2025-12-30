@@ -1,4 +1,4 @@
-import type { Attribute } from '../@daicer/engine';
+import type { Attribute } from '@daicer/engine';
 import type { AvatarPreviewResponse } from '../../../types/assets';
 
 export const ATTRIBUTES: Attribute[] = [

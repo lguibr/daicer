@@ -89,13 +89,13 @@ export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, 
 
                 // Create dynamic marks for consistent UI feel
                 // We'll make start, mid, end marks
-                const range = p.max - p.min;
-                const mid = p.min + range / 2;
-                const marks = [
-                  { value: p.min, label: 'Low' },
-                  { value: mid, label: 'Med' },
-                  { value: p.max, label: 'High' },
-                ];
+                // const range = p.max - p.min;
+                // const mid = p.min + range / 2;
+                // const marks = [
+                //   { value: p.min, label: 'Low' },
+                //   { value: mid, label: 'Med' },
+                //   { value: p.max, label: 'High' },
+                // ];
 
                 return (
                   <div key={p.key}>
