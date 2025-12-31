@@ -15,7 +15,9 @@ interface GodModePaletteProps {
   searchResults?: { id: string; name: string; type: string; description?: string }[];
   isLoading?: boolean;
   onCommandSelect?: (cmd: { prefix: string; id: string; name: string; label: string }) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities?: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   activeEntity?: any;
 }
 
@@ -79,7 +81,6 @@ export function GodModePalette(props: GodModePaletteProps) {
           isLoading={isLoading}
           entities={entities}
           activeEntity={activeEntity}
-          // @ts-ignore
           onCommandSelect={props.onCommandSelect}
         />
       ))}
@@ -88,13 +89,19 @@ export function GodModePalette(props: GodModePaletteProps) {
 }
 
 function ToolDropdown(props: {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   tool: any;
   onAction: (a: string) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSearch: (q: string, t: any) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   searchResults: any[];
   isLoading: boolean;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   onCommandSelect?: (cmd: any) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities?: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   activeEntity?: any;
 }) {
   const { tool, onAction, onSearch, searchResults, isLoading, entities = [], activeEntity } = props;
@@ -139,9 +146,7 @@ function ToolDropdown(props: {
         onClick={() => {
           // Direct action trigger
           const prefix = tool.actionPrefix;
-          // @ts-ignore
           if (props.onCommandSelect) {
-            // @ts-ignore
             props.onCommandSelect({
               prefix,
               id: 'manual', // No ID
@@ -205,7 +210,6 @@ function ToolDropdown(props: {
                 onClick={() => {
                   // Check if parent provided structured handler
                   // Check if parent provided structured handler
-                  // @ts-ignore
                   if (props.onCommandSelect) {
                     let prefix = '';
                     // Logic updated for strict tools:
@@ -228,7 +232,6 @@ function ToolDropdown(props: {
                       prefix = `${tool.actionPrefix} @${result.name}`;
                     }
 
-                    // @ts-ignore
                     props.onCommandSelect({
                       prefix,
                       id: result.id,

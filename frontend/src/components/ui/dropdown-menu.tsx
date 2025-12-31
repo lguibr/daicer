@@ -15,14 +15,23 @@ const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 // Cast primitives to ComponentType to bypass missing prop type errors (e.g. className, children)
 /* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 const SubTriggerPrimitive = DropdownMenuPrimitive.SubTrigger as unknown as React.ComponentType<any>;
+ 
 const SubContentPrimitive = DropdownMenuPrimitive.SubContent as unknown as React.ComponentType<any>;
+ 
 const ContentPrimitive = DropdownMenuPrimitive.Content as unknown as React.ComponentType<any>;
+ 
 const ItemPrimitive = DropdownMenuPrimitive.Item as unknown as React.ComponentType<any>;
+ 
 const CheckboxItemPrimitive = DropdownMenuPrimitive.CheckboxItem as unknown as React.ComponentType<any>;
+ 
 const RadioItemPrimitive = DropdownMenuPrimitive.RadioItem as unknown as React.ComponentType<any>;
+ 
 const LabelPrimitive = DropdownMenuPrimitive.Label as unknown as React.ComponentType<any>;
+ 
 const SeparatorPrimitive = DropdownMenuPrimitive.Separator as unknown as React.ComponentType<any>;
+ 
 const ItemIndicatorPrimitive = DropdownMenuPrimitive.ItemIndicator as unknown as React.ComponentType<any>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
 

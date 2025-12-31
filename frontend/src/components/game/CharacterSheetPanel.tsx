@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Player, CharacterSheet, EntityAction, EntityFeature } from '@daicer/engine';
+import { Swords, Sparkles, Scroll, Shield } from 'lucide-react';
 import {
   PaperBackground,
   StatBox,
@@ -8,7 +9,6 @@ import {
   paperStyles,
   formatModifier,
 } from '../common/PaperSheetComponents';
-import { Swords, Sparkles, Scroll, Shield } from 'lucide-react';
 import cn from '../../lib/utils';
 
 interface CharacterSheetPanelProps {
@@ -217,6 +217,7 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                       value={
                         typeof character.speed === 'number'
                           ? character.speed
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                           : (character.speed as any)?.walkSpeed || 30
                       }
                       big

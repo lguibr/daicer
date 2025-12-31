@@ -9,7 +9,9 @@
     "lint": "eslint src"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "@vitest/coverage-v8": "^4.0.16",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "zod": "^3.22.4"

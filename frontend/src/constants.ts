@@ -55,7 +55,7 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
   hp: 10,
   maxHp: 10,
   temporaryHp: 0,
-  hitDice: { total: 1, current: 1 },
+  hitDice: { total: 1, current: 1, die: '1d10' },
   deathSaves: { successes: 0, failures: 0 },
   armorClass: 10,
   initiative: 0,
@@ -86,7 +86,7 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
   equipment: [],
   currency: { cp: 0, sp: 0, ep: 0, gp: 10, pp: 0 },
   proficienciesAndLanguages: 'Common',
-  features: '',
+  features: [],
   talents: [],
   appearance: {
     age: 'Unknown',

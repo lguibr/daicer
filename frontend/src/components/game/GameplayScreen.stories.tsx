@@ -59,7 +59,7 @@ const mockCharacter: CharacterSheet = {
   backstory: 'Once an apprentice to a reclusive archmage, Elara seeks lost reliquaries.',
 };
 
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockPlayers: any[] = [
   {
     id: 'player-1',

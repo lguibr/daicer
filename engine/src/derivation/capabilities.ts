@@ -8,20 +8,20 @@ import { DerivationContext } from './types';
  * - Modifiers can be added (e.g. Monk Unarmored Movement, Mobile feat) - Placeholder for now.
  * - Heavy Armor penalty (if str < str_minimum)
  */
-export function deriveSpeed(context: DerivationContext): { walkSpeed: number; [key: string]: number } {
+export function deriveSpeed(context: DerivationContext): { walk: number; [key: string]: number } {
   const { race, attributes, equipment } = context;
 
-  let baseSpeed: { walkSpeed: number; [key: string]: number } = { walkSpeed: 30 };
+  let baseSpeed: { walk: number; [key: string]: number } = { walk: 30 };
 
   if (race?.speed) {
     if (typeof race.speed === 'number') {
-      baseSpeed = { walkSpeed: race.speed };
+      baseSpeed = { walk: race.speed };
     } else {
       // Assuming race.speed object already uses new keys? Or do we need to map?
       // Race schema is "integer" currently (Step 375). So it hits the 'number' block.
       // If race had object speed, it would need to match SpeedSchema.
       // But let's assume it maps directly if object.
-      baseSpeed = { ...race.speed } as { walkSpeed: number; [key: string]: number };
+      baseSpeed = { ...race.speed } as { walk: number; [key: string]: number };
     }
   }
 
@@ -29,7 +29,7 @@ export function deriveSpeed(context: DerivationContext): { walkSpeed: number; [k
   const armor = equipment.find((item) => item.equipment_category?.slug === 'heavy-armor');
 
   if (armor && armor.str_minimum && attributes.str < armor.str_minimum) {
-    baseSpeed.walkSpeed = Math.max(0, baseSpeed.walkSpeed - 10);
+    baseSpeed.walk = Math.max(0, baseSpeed.walk - 10);
   }
 
   return baseSpeed;

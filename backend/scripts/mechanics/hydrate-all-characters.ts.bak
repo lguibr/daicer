@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+// @ts-nocheck
 const require = createRequire(import.meta.url);
 const { strapi } = require('@strapi/client'); // Use client if running externally?
 // Wait, the plan says "Standalone script in backend".

@@ -15,6 +15,7 @@ export function useWakeLock() {
           console.log('Wake Lock released');
         });
         console.log('Wake Lock acquired');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error(`${err.name}, ${err.message}`);
       }

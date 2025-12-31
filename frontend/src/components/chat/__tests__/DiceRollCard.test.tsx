@@ -13,6 +13,7 @@ vi.mock('../../ui/dice-roll-animation/DiceRollAnimation', () => ({
 
     return (
       <div data-testid="dice-animation" data-dice-count={dice.length}>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         {dice.map((die: any, i: number) => (
           <div key={i} data-testid={`die-${i}`} data-type={`d${die.type}`} data-result={die.result}>
             D{die.type}: {die.result}

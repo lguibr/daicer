@@ -13,6 +13,7 @@ export const TimeControls: React.FC = () => {
     ? history.length - 1
     : currentTimeFrame
       ? history.findIndex(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           (f) => (f as any).documentId === (currentTimeFrame as any).documentId || f.id === currentTimeFrame.id
         )
       : history.length - 1;
@@ -25,6 +26,7 @@ export const TimeControls: React.FC = () => {
       goLive();
     } else {
       const frame = history[idx];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       jumpToFrame((frame as any)?.documentId || frame?.id);
     }
   };

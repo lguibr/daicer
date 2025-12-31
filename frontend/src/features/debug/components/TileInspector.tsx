@@ -3,6 +3,7 @@ import type { Coordinates } from '../utils/types';
 
 interface TileInspectorProps {
   coords: Coordinates | null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   tileData: any | null;
   isReachable: boolean;
   distance: number | null;

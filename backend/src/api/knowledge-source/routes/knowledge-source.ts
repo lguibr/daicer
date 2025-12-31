@@ -4,5 +4,5 @@
 
 import { factories } from '@strapi/strapi';
 
-// @ts-ignore
+// Router
 export default factories.createCoreRouter('api::knowledge-source.knowledge-source');

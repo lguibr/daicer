@@ -10,6 +10,7 @@ import type { ToolCall } from '../../../services/socket';
 import { vi } from 'vitest';
 
 vi.mock('../DiceRollCard', () => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   default: ({ roll }: { roll: any }) => (
     <div data-testid="mock-dice-roll">
       Mock Roll: {roll.dice} = {roll.result}

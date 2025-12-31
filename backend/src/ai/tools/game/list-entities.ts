@@ -25,6 +25,7 @@ export const listEntitiesTool = (context: StrapiContext) =>
         }
 
         const lines = sheets.map((param) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           const sheet = param as any; // Cast to access fields
           const pos = sheet.position || { x: '?', y: '?', z: '?' };
           const hpStatus = `${sheet.currentHp}/${sheet.maxHp} HP`;

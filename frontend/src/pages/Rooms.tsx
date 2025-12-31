@@ -268,8 +268,6 @@ export default function RoomsPage() {
                             {t('rooms.character.identity')}
                           </span>
                           <span className="font-semibold text-shadow-50">
-                            {/* @ts-ignore */}
-                            {player.character.race?.name || 'Unknown Race'} • {/* @ts-ignore */}
                             {player.character.class?.name || 'Unknown Class'}
                           </span>
                         </div>

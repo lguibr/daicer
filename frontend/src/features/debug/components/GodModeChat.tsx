@@ -20,7 +20,9 @@ interface GodModeChatProps {
   onInputChange: (value: string) => void;
   activeLocation?: { label: string; x: number; y: number; z: number } | null;
   onClearLocation?: () => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities?: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   activeEntity?: any;
 }
 
@@ -93,7 +95,6 @@ export function GodModeChat({
           entities={entities}
           activeEntity={activeEntity}
           // NEW: Callback for structured command
-          // @ts-ignore
           onCommandSelect={(cmd) => {
             setActiveCommand(cmd);
             onInputChange(''); // Clear input for the args part
@@ -137,13 +138,9 @@ export function GodModeChat({
           mode="debug"
           hideInput={false}
           hideHeader
-          // @ts-ignore
           activeCommand={activeCommand}
-          // @ts-ignore
           onClearCommand={() => setActiveCommand(null)}
-          // @ts-ignore
           activeLocation={activeLocation || undefined}
-          // @ts-ignore
           onClearLocation={onClearLocation}
         />
       </div>

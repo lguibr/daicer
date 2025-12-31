@@ -5,6 +5,7 @@
 
 import type { InfiniteChunksState, InfiniteChunksAction } from './types';
 // Helper to merge chunk into grid (Inlined from deleted gridExpander)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mergeChunkIntoGrid(grid: any[][], _chunk: any, offset: { x: number; y: number }, _chunkSize: number) {
   // Simplified implementation for now - just returning current grid to avoid breakages
   // Real implementation would expand grid array keying off chunk.worldOffsetX/Y

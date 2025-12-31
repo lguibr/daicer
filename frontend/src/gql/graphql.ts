@@ -15,12 +15,16 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
+ 
   DateTime: { input: any; output: any; }
   /** A string used to identify an i18n locale */
+ 
   I18NLocaleCode: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
+ 
   JSON: { input: any; output: any; }
   /** The `BigInt` scalar type represents non-fractional signed whole numeric values. */
+ 
   Long: { input: any; output: any; }
 };
 
@@ -4997,6 +5001,7 @@ export type GetSkillsQuery = { __typename?: 'Query', skills?: Array<{ __typename
 export type GetRacesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
+ 
 export type GetRacesQuery = { __typename?: 'Query', races: Array<{ __typename?: 'Race', documentId: string, name: string, description?: string | null, speed?: any | null, size?: Enum_Race_Size | null } | null> };
 
 export type GetClassesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -5047,6 +5052,7 @@ export type GetMonstersQuery = { __typename?: 'Query', monsters: Array<{ __typen
 export type GetSpellsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
+ 
 export type GetSpellsQuery = { __typename?: 'Query', spells: Array<{ __typename?: 'Spell', documentId: string, name: string, level?: number | null, school?: string | null, casting_time?: string | null, range?: string | null, components?: any | null, duration?: string | null, is_ritual?: boolean | null, description?: string | null } | null> };
 
 export type GetFeaturesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -5081,6 +5087,7 @@ export type JoinRoomMutationVariables = Exact<{
 }>;
 
 
+ 
 export type JoinRoomMutation = { __typename?: 'Mutation', joinRoom?: { __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, action?: string | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, portrait?: { __typename?: 'UploadFile', url: string } | null, upperBody?: { __typename?: 'UploadFile', url: string } | null, fullBody?: { __typename?: 'UploadFile', url: string } | null, baseStats?: { __typename?: 'ComponentGameStats', strength?: number | null, dexterity?: number | null, constitution?: number | null, intelligence?: number | null, wisdom?: number | null, charisma?: number | null } | null } | null } | null> | null, world?: { __typename?: 'World', name?: string | null, description?: string | null, seed?: string | null, language?: string | null, chunkSize?: number | null, detail?: number | null, fogRadius?: number | null, globalScale?: number | null, seaLevel?: number | null, elevationScale?: number | null, roughness?: number | null, moistureScale?: number | null, temperatureOffset?: number | null, roadDensity?: number | null, structureChance?: number | null, structureSpacing?: number | null, structureSizeAvg?: number | null, worldSize?: Enum_World_Worldsize | null, worldType?: string | null, worldBackground?: string | null } | null, dmSettings?: { __typename?: 'DmSetting', adventureLength?: Enum_Dmsetting_Adventurelength | null, difficulty?: Enum_Dmsetting_Difficulty | null, theme?: string | null, setting?: string | null, tone?: string | null, playerCount?: number | null, startingLevel?: number | null, attributePointBudget?: number | null, dmSystemPrompt?: string | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null } | null } | null };
 
 export type UpdateRoomMutationVariables = Exact<{
@@ -5097,6 +5104,7 @@ export type GenerateWorldMutationVariables = Exact<{
 }>;
 
 
+ 
 export type GenerateWorldMutation = { __typename?: 'Mutation', generateWorld?: any | null };
 
 export type AddCharacterMutationVariables = Exact<{
@@ -5105,6 +5113,7 @@ export type AddCharacterMutationVariables = Exact<{
 }>;
 
 
+ 
 export type AddCharacterMutation = { __typename?: 'Mutation', addCharacter?: any | null };
 
 export type StartGameMutationVariables = Exact<{
@@ -5114,6 +5123,7 @@ export type StartGameMutationVariables = Exact<{
 }>;
 
 
+ 
 export type StartGameMutation = { __typename?: 'Mutation', startGame?: any | null };
 
 export type SubmitActionMutationVariables = Exact<{
@@ -5123,6 +5133,7 @@ export type SubmitActionMutationVariables = Exact<{
 }>;
 
 
+ 
 export type SubmitActionMutation = { __typename?: 'Mutation', submitAction?: any | null };
 
 export type GenerateAvatarPortraitMutationVariables = Exact<{
@@ -5131,6 +5142,7 @@ export type GenerateAvatarPortraitMutationVariables = Exact<{
 }>;
 
 
+ 
 export type GenerateAvatarPortraitMutation = { __typename?: 'Mutation', generateAvatarPortrait?: any | null };
 
 export type GenerateAvatarUpperBodyMutationVariables = Exact<{
@@ -5140,6 +5152,7 @@ export type GenerateAvatarUpperBodyMutationVariables = Exact<{
 }>;
 
 
+ 
 export type GenerateAvatarUpperBodyMutation = { __typename?: 'Mutation', generateAvatarUpperBody?: any | null };
 
 export type GenerateAvatarFullBodyMutationVariables = Exact<{
@@ -5150,6 +5163,7 @@ export type GenerateAvatarFullBodyMutationVariables = Exact<{
 }>;
 
 
+ 
 export type GenerateAvatarFullBodyMutation = { __typename?: 'Mutation', generateAvatarFullBody?: any | null };
 
 export type SpawnCreatureMutationVariables = Exact<{
@@ -5158,6 +5172,7 @@ export type SpawnCreatureMutationVariables = Exact<{
 }>;
 
 
+ 
 export type SpawnCreatureMutation = { __typename?: 'Mutation', spawnCreature?: any | null };
 
 export type GenerateTerrainChunkMutationVariables = Exact<{
@@ -5168,6 +5183,7 @@ export type GenerateTerrainChunkMutationVariables = Exact<{
 }>;
 
 
+ 
 export type GenerateTerrainChunkMutation = { __typename?: 'Mutation', generateTerrainChunk?: any | null };
 
 export type CreateCharacterSheetMutationVariables = Exact<{
@@ -5182,6 +5198,7 @@ export type GetRoomQueryVariables = Exact<{
 }>;
 
 
+ 
 export type GetRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, character_sheets: Array<{ __typename?: 'CharacterSheet', documentId: string, name?: string | null, type?: Enum_Charactersheet_Type | null, currentHp?: number | null, maxHp?: number | null, position?: { __typename?: 'ComponentGamePosition', x?: number | null, y?: number | null, z?: number | null } | null, stats?: { __typename?: 'ComponentGameStats', walkSpeed?: number | null, flySpeed?: number | null, swimSpeed?: number | null, climbSpeed?: number | null, burrowSpeed?: number | null, hover?: boolean | null } | null } | null>, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, action?: string | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, backstory?: string | null, portrait?: { __typename?: 'UploadFile', url: string } | null, upperBody?: { __typename?: 'UploadFile', url: string } | null, fullBody?: { __typename?: 'UploadFile', url: string } | null, baseStats?: { __typename?: 'ComponentGameStats', strength?: number | null, dexterity?: number | null, constitution?: number | null, intelligence?: number | null, wisdom?: number | null, charisma?: number | null } | null } | null } | null> | null, world?: { __typename?: 'World', documentId: string, name?: string | null, description?: string | null, history?: string | null, worldBackground?: string | null, seed?: string | null, language?: string | null, chunkSize?: number | null, detail?: number | null, fogRadius?: number | null, globalScale?: number | null, seaLevel?: number | null, elevationScale?: number | null, roughness?: number | null, moistureScale?: number | null, temperatureOffset?: number | null, roadDensity?: number | null, structureChance?: number | null, structureSpacing?: number | null, structureSizeAvg?: number | null, worldSize?: Enum_World_Worldsize | null, worldType?: string | null } | null, dmSettings?: { __typename?: 'DmSetting', documentId: string, adventureLength?: Enum_Dmsetting_Adventurelength | null, difficulty?: Enum_Dmsetting_Difficulty | null, theme?: string | null, setting?: string | null, tone?: string | null, playerCount?: number | null, startingLevel?: number | null, attributePointBudget?: number | null, dmSystemPrompt?: string | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null } | null, messages: Array<{ __typename?: 'Message', documentId: string, content: string, senderName?: string | null, senderType?: Enum_Message_Sendertype | null, timestamp?: any | null, turn?: { __typename?: 'Turn', documentId: string, turnNumber: number } | null } | null>, turns: Array<{ __typename?: 'Turn', documentId: string, turnNumber: number, narrative?: string | null, status?: Enum_Turn_Status | null, type?: Enum_Turn_Type | null, characterSnapshots?: any | null, actions?: any | null, createdAt?: any | null } | null>, timeFrames: Array<{ __typename?: 'TimeFrame', documentId: string, turnNumber: number, timestamp: any, gameState: any } | null>, owner?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null } | null> };
 
 export type ListRoomsQueryVariables = Exact<{
@@ -5189,6 +5206,7 @@ export type ListRoomsQueryVariables = Exact<{
 }>;
 
 
+ 
 export type ListRoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, createdAt?: any | null, phase?: Enum_Room_Phase | null, dmSettings?: { __typename?: 'DmSetting', theme?: string | null, setting?: string | null, difficulty?: Enum_Dmsetting_Difficulty | null } | null, character_sheets: Array<{ __typename?: 'CharacterSheet', documentId: string } | null>, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, user?: { __typename?: 'UsersPermissionsUser', documentId: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, race?: { __typename?: 'Race', name: string } | null, class?: { __typename?: 'Class', name: string } | null } | null } | null> | null } | null> };
 
 export type ListCharactersQueryVariables = Exact<{ [key: string]: never; }>;
@@ -5354,6 +5372,7 @@ export type ExplorerGetRacesQueryVariables = Exact<{
 }>;
 
 
+ 
 export type ExplorerGetRacesQuery = { __typename?: 'Query', races_connection?: { __typename?: 'RaceEntityResponseCollection', nodes: Array<{ __typename?: 'Race', documentId: string, slug: string, name: string, description?: string | null, size?: Enum_Race_Size | null, speed?: any | null, image?: { __typename?: 'UploadFile', url: string, alternativeText?: string | null } | null }>, pageInfo: (
       { __typename?: 'Pagination' }
       & { ' $fragmentRefs'?: { 'PaginationFragmentFragment': PaginationFragmentFragment } }

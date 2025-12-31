@@ -26,6 +26,7 @@ import {
 } from '@/models/rules/queries';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+ 
 const CATEGORY_CONFIG: Record<string, { query: any; dataKey: string }> = {
   classes: { query: EXPLORER_GET_CLASSES, dataKey: 'classes_connection' },
   'damage-types': { query: EXPLORER_GET_DAMAGE_TYPES, dataKey: 'damageTypes_connection' },
@@ -51,6 +52,7 @@ interface RulesResourceListProps {
 export function RulesResourceList({ category }: RulesResourceListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+ 
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const config = CATEGORY_CONFIG[category];
@@ -77,6 +79,7 @@ export function RulesResourceList({ category }: RulesResourceListProps) {
   if (!config) return <div className="text-red-400">Invalid Category</div>;
   if (error) return <div className="text-red-400">Error loading data: {error.message}</div>;
 
+ 
   const connection = data?.[config.dataKey as keyof typeof data] as any;
   const items = connection?.nodes || [];
   const pagination = connection?.pageInfo;
@@ -114,6 +117,7 @@ export function RulesResourceList({ category }: RulesResourceListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           {items.map((item: any) => (
             <Card
               key={item.documentId || item.id}

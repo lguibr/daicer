@@ -24,6 +24,7 @@ export const searchClassesTool = (context: StrapiContext) =>
         }
 
         return classes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((c: any) => {
             return `### ${c.name} (Hit Die: ${c.hit_die})\n- Proficiencies: ${c.proficiencies}\n- Features: ${JSON.stringify(c.features)}\n`;
           })

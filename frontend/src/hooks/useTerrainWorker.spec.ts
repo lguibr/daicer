@@ -13,6 +13,7 @@ class MockWorker {
 }
 
 describe('useTerrainWorker', () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   let useTerrainWorker: any;
 
   beforeEach(async () => {

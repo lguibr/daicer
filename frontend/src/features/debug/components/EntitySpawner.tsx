@@ -6,6 +6,7 @@ import { LIST_CHARACTERS_QUERY, LIST_MONSTERS_QUERY } from '@/graphql/queries';
 import type { ListCharactersQuery, ListMonstersQuery } from '@/gql/graphql';
 
 interface EntitySpawnerProps {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSelectEntity: (type: 'character' | 'monster', entity: any) => void;
   selectedEntity: { type: 'character' | 'monster'; id: string } | null;
 }

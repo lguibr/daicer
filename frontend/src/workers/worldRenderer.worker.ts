@@ -3,7 +3,7 @@
  * Renders 2D heightmap chunks in OffscreenCanvas to prevent UI freezing
  */
 
-import '../utils/threeShim';
+import './utils/threeShim';
 
 interface ChunkTile {
   x: number;

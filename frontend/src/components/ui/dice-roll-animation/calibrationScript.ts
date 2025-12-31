@@ -33,5 +33,6 @@ export function printCalibrations() {
 
 // Make available globally for console use
 if (typeof window !== 'undefined') {
+ 
   (window as any).printDiceCalibrations = printCalibrations;
 }

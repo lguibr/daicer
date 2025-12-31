@@ -109,6 +109,7 @@ const TOOLS: ToolDefinition[] = [
 export function AgentToolPalette({ roomId, entities = [] }: AgentToolPaletteProps) {
   const [selectedTool, setSelectedTool] = useState<ToolDefinition | undefined>(TOOLS[0]);
   const [formData, setFormData] = useState<Record<string, any>>({});
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -122,6 +123,7 @@ export function AgentToolPalette({ roomId, entities = [] }: AgentToolPaletteProp
 
     try {
       // Parse JSON fields
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload: any = {};
 
       for (const field of selectedTool.fields) {
@@ -163,6 +165,7 @@ export function AgentToolPalette({ roomId, entities = [] }: AgentToolPaletteProp
       if (!res.ok) throw new Error(data.error?.message || 'Execution failed');
 
       setResult(data);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message);
     } finally {

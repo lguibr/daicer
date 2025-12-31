@@ -253,6 +253,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
 
               return {
                 ...prev,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                 messages: [...prev.messages, { ...message, text: message.text || (message as any).content || '' }],
               };
             });

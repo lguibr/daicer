@@ -11,6 +11,7 @@ import type { DieRoll } from '../types';
 // Mock Three.js WebGLRenderer to avoid WebGL context issues in tests
 // Also mock canvas getContext for texture creation
 vi.mock('three', async (importOriginal) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actual = (await importOriginal()) as any;
 
   // Mock canvas getContext globally
@@ -51,10 +52,12 @@ vi.mock('three', async (importOriginal) => {
         };
       }
       return null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
   }
 
   // Mock renderer as a class
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const MockRenderer = function (this: any) {
     this.domElement = document.createElement('canvas');
     this.setPixelRatio = vi.fn();

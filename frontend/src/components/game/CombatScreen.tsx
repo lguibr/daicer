@@ -159,7 +159,6 @@ export function CombatScreen({ roomId, players = [] }: CombatScreenProps) {
 
       {/* Main Layout */}
       <div className="flex-1 overflow-hidden">
-        {/* @ts-ignore */}
         <ResizablePanelGroup direction="horizontal">
           {/* Content Area */}
           <ResizablePanel defaultSize={100} minSize={50}>

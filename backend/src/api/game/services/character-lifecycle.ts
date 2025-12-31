@@ -27,7 +27,7 @@ export default ({ strapi }) => ({
     user: { documentId: string; id: string; username: string }
   ) {
     // 1. Fetch Room with populated players
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
@@ -286,6 +286,7 @@ Focus on their internal state, their unique perception, and their immediate surr
       systemPrompt = formatPrompt(systemPrompt, { worldDescription, mainContext });
     }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const defaultUser = `Generate a personalized opening for ${character.name} (${character.race} ${character.characterClass || (character as any).class?.name || 'Unknown Class'}).
 Synchronize with the Main Context.
 Describe sensory details, internal state, and prepare for reaction.

@@ -13,6 +13,7 @@ export default {
   },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validateEquipmentSlots(data: any) {
   if (!data.equipment || !Array.isArray(data.equipment)) {
     return;

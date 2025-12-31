@@ -7,6 +7,7 @@ import type { Room, Player } from '@daicer/engine';
 
 // Mock components
 vi.mock('../../terrain/TerrainExplorer', () => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   TerrainExplorer: ({ onTileClick }: any) => (
     <div data-testid="terrain-explorer" onClick={() => onTileClick({ x: 10, y: 10, z: 0 }, 'grass')}>
       Mock Terrain Explorer
@@ -15,6 +16,7 @@ vi.mock('../../terrain/TerrainExplorer', () => ({
 }));
 
 vi.mock('../GameplayComposer', () => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   default: ({ onSubmit }: any) => (
     <div data-testid="gameplay-composer">
       <button onClick={() => onSubmit('Test Action')}>Send Action</button>
@@ -23,6 +25,7 @@ vi.mock('../GameplayComposer', () => ({
 }));
 
 vi.mock('../ActionBar', () => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   ActionBar: ({ onActionSelect }: any) => (
     <div data-testid="action-bar">
       <button onClick={() => onActionSelect('[Action: Attack]')}>Attack</button>
@@ -80,6 +83,7 @@ const mockRoom: Room = {
   roomId: 'ABC123',
   documentId: 'room-doc-1',
   ownerId: 'user-1',
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   phase: 'GAMEPLAY' as any, // Cast to any or import GamePhase if available
   createdAt: Date.now(),
   updatedAt: Date.now(),
@@ -129,7 +133,7 @@ const mockPlayers: Player[] = [
       skills: {},
       alignment: 'Neutral Good',
       background: 'Sage',
-      hitDice: { total: 1, current: 1 },
+      hitDice: { total: 1, current: 1, die: '1d10' },
       deathSaves: { successes: 0, failures: 0 },
       initiative: 0,
       speed: 30,
@@ -154,6 +158,7 @@ const mockPlayers: Player[] = [
       resourcePools: [],
       advancementPoints: { ability: 0, skill: 0, talent: 0 },
       spellcasting: { class: '', ability: '', saveDC: 0, attackBonus: 0, cantrips: [], spellsKnown: [], slots: [] },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any, // Simplified cast for complex char object
     action: null,
   },

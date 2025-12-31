@@ -5,6 +5,7 @@
 
 // Stub document object for texture creation
 const document = {
+ 
   createElement: (tag: string): any => {
     if (tag === 'canvas') {
       // Return OffscreenCanvas in worker context
@@ -18,6 +19,7 @@ const document = {
       getContext: () => null,
     };
   },
+ 
   createElementNS: (_ns: string, tag: string): any => document.createElement(tag),
   body: {
     style: {},
@@ -49,7 +51,9 @@ declare global {
 
 // Inject into worker global scope
 if (typeof self !== 'undefined') {
+ 
   (self as any).document = document;
+ 
   (self as any).window = window;
 }
 

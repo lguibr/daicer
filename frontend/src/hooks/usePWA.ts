@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// @ts-expect-error virtual pwa module
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 export function usePWA() {
@@ -8,9 +7,11 @@ export function usePWA() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     onRegistered(_r: any) {
       // console.log('SW Registered: ' + r);
     },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     onRegisterError(error: any) {
       console.log('SW registration error', error);
     },

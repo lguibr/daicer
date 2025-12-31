@@ -79,6 +79,7 @@ export const WithExistingPlayers: Story = {
           level: 1,
           experiencePoints: 0,
         },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any, // Cast to any to avoid full Player shape requirement
     ],
   },

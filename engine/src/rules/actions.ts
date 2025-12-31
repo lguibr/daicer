@@ -8,11 +8,25 @@ export enum ActionType {
   Attack = 'attack',
   CastSpell = 'cast_spell',
   Dash = 'dash',
-  Disengage = 'disengage',
   Dodge = 'dodge',
-  UseFeature = 'use_feature',
+  Disengage = 'disengage',
+  Hide = 'hide',
   UseItem = 'use_item',
+  UseFeature = 'use_feature',
+  Reaction = 'reaction',
+  Grapple = 'grapple',
 }
+
+export const DamageSchema = z.object({
+  dice: z.string(),
+  bonus: z.number(),
+  type: z.string(),
+});
+
+export const SaveSchema = z.object({
+  stat: z.string(),
+  dc: z.number(),
+});
 
 // Schemas for the *Intent* (what the user/LLM asks to do)
 export const AttackIntentSchema = z.object({
@@ -42,6 +56,12 @@ export const DashIntentSchema = z.object({ type: z.literal(ActionType.Dash) });
 export const DisengageIntentSchema = z.object({ type: z.literal(ActionType.Disengage) });
 export const DodgeIntentSchema = z.object({ type: z.literal(ActionType.Dodge) });
 
+export const GrappleIntentSchema = z.object({
+  type: z.literal(ActionType.Grapple),
+  targetId: z.string(),
+});
+
+// Update Intent Union
 export const ActionIntentSchema = z.discriminatedUnion('type', [
   AttackIntentSchema,
   CastSpellIntentSchema,
@@ -49,6 +69,7 @@ export const ActionIntentSchema = z.discriminatedUnion('type', [
   DisengageIntentSchema,
   DodgeIntentSchema,
   UseFeatureIntentSchema,
+  GrappleIntentSchema,
 ]);
 
 export type ActionIntent = z.infer<typeof ActionIntentSchema>;
@@ -58,7 +79,7 @@ export type ActionIntent = z.infer<typeof ActionIntentSchema>;
 // ============================================================================
 
 // Discriminated types for the "Flattened List" on the Character Sheet
-// These replace the generic `ActionSchema` in character.ts
+// These replace the generic `ActionSchema`
 
 export const MeleeAttackDefinitionSchema = z.object({
   type: z.literal('melee_attack'),
@@ -67,13 +88,8 @@ export const MeleeAttackDefinitionSchema = z.object({
   description: z.string(),
   toHit: z.number(),
   reach: z.number(),
-  damage: z.array(
-    z.object({
-      dice: z.string(),
-      bonus: z.number(),
-      type: z.string(),
-    })
-  ),
+  properties: z.array(z.string()).default([]), // "finesse", "heavy", "two-handed"
+  damage: z.array(DamageSchema),
 });
 
 export const RangedAttackDefinitionSchema = z.object({
@@ -83,13 +99,7 @@ export const RangedAttackDefinitionSchema = z.object({
   description: z.string(),
   toHit: z.number(),
   range: z.object({ normal: z.number(), long: z.number() }),
-  damage: z.array(
-    z.object({
-      dice: z.string(),
-      bonus: z.number(),
-      type: z.string(),
-    })
-  ),
+  damage: z.array(DamageSchema),
   ammoType: z.string().optional(),
 });
 
@@ -124,12 +134,31 @@ export const FeatureDefinitionSchema = z.object({
   description: z.string(),
 });
 
-// The consolidated definition for `structuredActions`
+// ... existing schemas ...
+
+export const ReactionTriggerSchema = z.object({
+  condition: z.enum(['on_hit', 'on_damage', 'on_cast', 'on_move', 'custom']),
+  description: z.string(),
+});
+
+export const ReactionDefinitionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.literal('reaction'),
+  description: z.string(),
+  trigger: ReactionTriggerSchema,
+  cost: z.literal('reaction').default('reaction'),
+  damage: z.array(DamageSchema).optional(),
+  save: SaveSchema.optional(),
+});
+
+// Update the Union
 export const ActionDefinitionSchema = z.discriminatedUnion('type', [
   MeleeAttackDefinitionSchema,
   RangedAttackDefinitionSchema,
   SpellDefinitionSchema,
   FeatureDefinitionSchema,
+  ReactionDefinitionSchema, // New
 ]);
 
 export type ActionDefinition = z.infer<typeof ActionDefinitionSchema>;

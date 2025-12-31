@@ -26,6 +26,7 @@ interface CharacterSheetData {
   features?: string;
   personality?: { traits: string };
   challenge?: number; // For monsters
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   speed?: any; // Unified speed stats
 }
 

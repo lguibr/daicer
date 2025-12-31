@@ -50,12 +50,15 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('@/components/ui/menubar', () => ({
   Menubar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   MenubarMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   MenubarTrigger: ({ children, onClick, ...props }: any) => (
     <button onClick={onClick} {...props}>
       {children}
     </button>
   ),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   MenubarContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   MenubarItem: ({ children, onSelect, ...props }: any) => (
     <div onClick={onSelect} {...props}>
       {children}

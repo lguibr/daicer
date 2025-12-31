@@ -83,6 +83,7 @@ interface SocketEvents {
     metadata?: Record<string, unknown>;
     timestamp: number;
   }) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   onEntitiesUpdate?: (data: { entities: any[] }) => void;
 }
 

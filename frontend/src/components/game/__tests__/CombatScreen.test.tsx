@@ -156,7 +156,9 @@ describe('CombatScreen', () => {
       combatState: {
         sessionId: 'test',
         characters: [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           { id: '1', name: 'Fighter', isPlayer: true, conditions: [], position: { x: 1, y: 1 }, hp: 30 } as any,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           { id: '2', name: 'Goblin', isPlayer: false, conditions: [], position: { x: 5, y: 5 }, hp: 15 } as any,
         ],
         activeCharacterId: null,

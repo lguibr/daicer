@@ -58,7 +58,9 @@ export function levelUp(sheet: CharacterSheet): CharacterSheet {
   // 1. HP Increase (Deterministic Average)
   // Hit Die: "1d8" -> 8. Average is (8/2)+1 = 5.
   const hitDieStr = sheet.hitDice.die || '1d8';
-  const sides = parseInt(hitDieStr.replace(/[^0-9]/g, '')) || 8;
+  // "1d8" -> split 'd' -> ["1", "8"]
+  const parts = hitDieStr.split('d');
+  const sides = parseInt(parts[1] || parts[0]) || 8;
   const avg = Math.floor(sides / 2) + 1;
   const conScore = sheet.attributes.Constitution ?? 10;
   const conMod = calculateModifier(conScore);

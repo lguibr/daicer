@@ -267,8 +267,11 @@ export default function TestSetupPage() {
         hp: 10,
         maxHp: 10,
         temporaryHp: 0,
-        hitDice: { total: 1, current: 1 },
+        hitDice: { total: 1, current: 1, die: '1d10' },
         deathSaves: { successes: 0, failures: 0 },
+        experience: 0,
+        tempHp: 0, // Legacy
+        inventory: [],
         armorClass: 15,
         initiative: 0,
         speed: 30,
@@ -296,7 +299,7 @@ export default function TestSetupPage() {
         equipmentDescription: 'Longsword, shield, chainmail',
         currency: { cp: 0, sp: 0, ep: 0, gp: 50, pp: 0 },
         proficienciesAndLanguages: 'Common, martial weapons',
-        features: 'Fighting Style, Second Wind',
+        features: [],
         talents: [],
         appearance: {
           age: '25',

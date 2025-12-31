@@ -4,7 +4,6 @@
 
 import type { Meta, StoryObj } from '@storybook/react';
  
-// @ts-ignore
 import { action } from '@storybook/addon-actions';
 import StreamingComposer from './StreamingComposer';
 

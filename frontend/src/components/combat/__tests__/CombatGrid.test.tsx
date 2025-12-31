@@ -4,6 +4,7 @@ import { CombatGrid } from '../CombatGrid';
 import { I18nProvider } from '../../../i18n';
 import type { CombatCharacter, Position } from '../../../types/combat';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderWithProviders = (ui: React.ReactNode, options?: any) => {
   return render(<I18nProvider>{ui}</I18nProvider>, options);
 };

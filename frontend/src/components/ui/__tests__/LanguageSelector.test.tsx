@@ -19,6 +19,7 @@ describe('LanguageSelector', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (i18nModule.useI18n as any).mockReturnValue({
       language: 'en',
       setLanguage: mockSetLanguage,
@@ -56,6 +57,7 @@ describe('LanguageSelector', () => {
     const { rerender } = render(<LanguageSelector />);
     expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('en');
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (i18nModule.useI18n as any).mockReturnValue({
       language: 'fr',
       setLanguage: mockSetLanguage,
@@ -73,6 +75,7 @@ describe('LanguageSelector', () => {
   });
 
   it('handles single language option', () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     (i18nModule.useI18n as any).mockReturnValue({
       language: 'en',
       setLanguage: mockSetLanguage,

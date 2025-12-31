@@ -4,5 +4,5 @@
 
 import { factories } from '@strapi/strapi';
 
-// @ts-ignore
+// Controller
 export default factories.createCoreController('api::knowledge-source.knowledge-source');

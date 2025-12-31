@@ -8,6 +8,14 @@ export function calculateModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
 
+/**
+ * Calculates proficiency bonus based on level.
+ * Formula: ceil(level / 4) + 1
+ */
+export function calculateProficiencyBonus(level: number): number {
+  return Math.ceil(level / 4) + 1;
+}
+
 export interface CharacterSnapshot {
   hp: number;
   maxHp: number;

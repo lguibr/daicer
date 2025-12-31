@@ -162,6 +162,7 @@ export function AvatarSection({
               <DiceLoader size="small" diceCount={3} />
               <span className="ml-3">Generating...</span>
             </>
+ 
           ) : anyImage ? (
             <>
               <RefreshCw className="w-5 h-5 mr-2" />

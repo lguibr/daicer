@@ -3,7 +3,7 @@
  * Renders 3D voxel models using Three.js in OffscreenCanvas
  */
 
-import '../utils/threeShim';
+import './utils/threeShim';
 import * as THREE from 'three';
 
 let scene: THREE.Scene | null = null;

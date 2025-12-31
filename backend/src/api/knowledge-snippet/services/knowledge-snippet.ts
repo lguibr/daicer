@@ -4,5 +4,5 @@
 
 import { factories } from '@strapi/strapi';
 
-// @ts-ignore
+// Service
 export default factories.createCoreService('api::knowledge-snippet.knowledge-snippet');

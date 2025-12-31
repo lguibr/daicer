@@ -14,10 +14,12 @@ export function useAvatarGeneration(
   equipmentItems: EquipmentItemData[],
   assetMode: boolean
 ) {
+ 
   const [avatarPreview, setAvatarPreview] = useState<any>({});
   const [previewLoadState, setPreviewLoadState] = useState({ portrait: false, upperBody: false, fullBody: false });
   const [error, setError] = useState<string | null>(null);
 
+ 
   const handleGenerateAll = async (ensurePlaceholdersFn: () => Promise<any>) => {
     setError(null);
     try {
@@ -59,6 +61,7 @@ export function useAvatarGeneration(
           console.warn(e);
           portrait = typeof tempPortrait === 'string' ? null : tempPortrait;
         }
+ 
         setAvatarPreview((prev: any) => ({ ...prev, portrait }));
       } finally {
         setPreviewLoadState((prev) => ({ ...prev, portrait: false }));
@@ -82,6 +85,7 @@ export function useAvatarGeneration(
           console.warn(e);
           upperBody = typeof upperRaw === 'string' ? null : upperRaw;
         }
+ 
         setAvatarPreview((prev: any) => ({ ...prev, upperBody }));
       } finally {
         setPreviewLoadState((prev) => ({ ...prev, upperBody: false }));
@@ -106,10 +110,12 @@ export function useAvatarGeneration(
           console.warn(e);
           finalFullBody = typeof fullRaw === 'string' ? null : fullRaw;
         }
+ 
         setAvatarPreview((prev: any) => ({ ...prev, fullBody: finalFullBody }));
       } finally {
         setPreviewLoadState((prev) => ({ ...prev, fullBody: false }));
       }
+ 
     } catch (err: any) {
       setError(err.message || 'Failed to generate portraits');
       setPreviewLoadState({ portrait: false, upperBody: false, fullBody: false });
@@ -121,6 +127,7 @@ export function useAvatarGeneration(
     if (matches && matches.length === 3) {
       const mimeType = matches[1];
       const data = matches[2];
+ 
       setAvatarPreview((prev: any) => ({
         ...prev,
         [slot]: {

@@ -116,7 +116,7 @@ export async function getRoomState(roomId: string): Promise<Room> {
       ...(r as unknown as Record<string, unknown>), // Cast to avoid strict type mismatch with partial GraphQL response
       players: mappedPlayers,
       // Map character_sheets (from REST/GraphQL) to generic entities
-      // @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       entities: (r.character_sheets || []).map((s: any) => ({
         id: s.documentId,
         name: s.name,
@@ -439,7 +439,9 @@ export async function submitAction(roomId: string, action: string): Promise<{ su
  * @param roomId - Room ID
  * @param command - Command text
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendGodModeCommand(roomId: string, command: string): Promise<any> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await apolloClient.mutate<{ submitAction: any }>({
     mutation: SUBMIT_ACTION_MUTATION,
     variables: { roomId, action: command, mode: 'debug' },
@@ -505,6 +507,7 @@ export async function processTurn(roomId: string, language = 'en'): Promise<void
  */
 export async function executeEngineAction(
   roomId: string,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   actions: any[]
 ): Promise<{ success: boolean; turnId: string }> {
   const token = localStorage.getItem('strapi_jwt');
@@ -547,6 +550,7 @@ export async function searchMonsters(
       fetchPolicy: 'network-only',
     });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ((data as any)?.monsters || []).map((m: any) => ({
       id: m.documentId,
       name: m.name,
@@ -576,6 +580,7 @@ export async function searchSpells(
       fetchPolicy: 'network-only',
     });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ((data as any)?.spells || []).map((s: any) => ({
       id: s.documentId,
       name: s.name,
@@ -605,6 +610,7 @@ export async function searchCharacters(
       fetchPolicy: 'network-only',
     });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     return ((data as any)?.characters || []).map((c: any) => ({
       id: c.documentId,
       name: c.name,

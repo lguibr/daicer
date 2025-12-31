@@ -10,6 +10,7 @@ export default ({ strapi }) => ({
   /**
    * Adapts a CharacterSheet (populated with character/monster) to a unified EngineEntity.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adapt(sheet: any): Entity {
     if (!sheet) throw new Error('Cannot adapt null sheet');
 
@@ -23,6 +24,7 @@ export default ({ strapi }) => ({
     // For Players: usually calculated from Dex + Armor (Inventory).
     // For now, we'll look for 'ac' on blueprint or default to 10 + DexMod.
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let blueprint: any = null;
     if (type === 'monster' || type === 'npc') {
       blueprint = sheet.monster;
@@ -55,6 +57,7 @@ export default ({ strapi }) => ({
     if (blueprint?.structuredActions) {
       // Monster actions
       actions.push(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...blueprint.structuredActions.map((a: any) => ({
           name: a.name,
           type: a.type || 'utility',
@@ -71,6 +74,7 @@ export default ({ strapi }) => ({
     if (!blueprint?.structuredActions && sheet.inventory) {
       // Assuming inventory is populated component list or relation
       // Check if inventory has items that are weapons
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const inventory = sheet.inventory as any[];
       if (Array.isArray(inventory)) {
         inventory.forEach((item) => {
@@ -118,6 +122,7 @@ export default ({ strapi }) => ({
     const features: EntityFeature[] = [];
     if (blueprint?.features) {
       features.push(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...blueprint.features.map((f: any) => ({
           name: f.name,
           description: f.description,
@@ -147,6 +152,7 @@ export default ({ strapi }) => ({
       features,
       color: '#ffffff', // Stub
       visionRadius: 30, // Stub
+      speed: 30,
       position: sheet.position || { x: 0, y: 0, z: 0 },
     };
   },

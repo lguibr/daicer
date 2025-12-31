@@ -358,6 +358,7 @@ export function graphql(source: "\n  query ExplorerGetWeaponProperties(\n    $pa
 export function graphql(source: "\n  mutation GenerateTerrain($roomId: ID!) {\n    generateTerrain(roomId: $roomId)\n  }\n"): (typeof documents)["\n  mutation GenerateTerrain($roomId: ID!) {\n    generateTerrain(roomId: $roomId)\n  }\n"];
 
 export function graphql(source: string) {
+ 
   return (documents as any)[source] ?? {};
 }
 

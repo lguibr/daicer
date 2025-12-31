@@ -22,6 +22,7 @@ describe('useTerrainStore', () => {
       worldOffsetX: 0,
       worldOffsetY: 0,
       size: 16,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     const store = useTerrainStore.getState();
@@ -45,6 +46,7 @@ describe('useTerrainStore', () => {
       worldOffsetX: 0,
       worldOffsetY: 0,
       size: 16,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     const store = useTerrainStore.getState();

@@ -95,6 +95,7 @@ export const SpellbookSchema = z.object({
   spellcastingAbility: z.enum(['intelligence', 'wisdom', 'charisma']).or(z.string()),
   spellSaveDc: z.number(),
   spellAttackBonus: z.number(),
+  concentratingOn: z.string().nullable().optional(), // Spell ID
   slots: SpellSlotsSchema,
 });
 
@@ -109,6 +110,11 @@ export const CharacterSheetSchema = z.object({
   hp: z.number(),
   maxHp: z.number(),
   temporaryHp: z.number().default(0),
+
+  // Defenses (Beta)
+  resistances: z.array(z.string()).default([]),
+  immunities: z.array(z.string()).default([]),
+  vulnerabilities: z.array(z.string()).default([]),
 
   // Progression
   level: z.number(),

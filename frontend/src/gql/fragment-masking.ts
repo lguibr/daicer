@@ -59,6 +59,7 @@ export function useFragment<TType>(
   _documentNode: DocumentTypeDecoration<TType, any>,
   fragmentType: FragmentType<DocumentTypeDecoration<TType, any>> | Array<FragmentType<DocumentTypeDecoration<TType, any>>> | ReadonlyArray<FragmentType<DocumentTypeDecoration<TType, any>>> | null | undefined
 ): TType | Array<TType> | ReadonlyArray<TType> | null | undefined {
+ 
   return fragmentType as any;
 }
 

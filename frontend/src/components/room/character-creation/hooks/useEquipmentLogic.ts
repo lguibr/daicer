@@ -134,12 +134,15 @@ export function useEquipmentLogic({ assetMode, formDataClass, initialGold = 0 }:
 }
 
 // Helpers
+ 
 function addToRefInventory(inv: any[], index: string, qty: number) {
+ 
   const existing = inv.find((i: any) => i.itemIndex === index);
   if (existing) existing.quantity += qty;
   else inv.push({ itemIndex: index, quantity: qty });
 }
 
+ 
 function getStartingPack(className: string | undefined, packItems: any[]) {
   // Switch case logic
   switch (className) {

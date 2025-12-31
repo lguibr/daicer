@@ -8,6 +8,7 @@ export interface CharacterCreationProps {
     startingLevel: number;
     attributeBudget: number;
   };
+ 
   onAssetCreated?: (asset: any) => void;
   onCharacterCreated?: (player?: import('@daicer/engine').Player) => void;
 }

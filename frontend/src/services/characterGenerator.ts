@@ -71,7 +71,6 @@ export const generateRandomCharacter = (
   priority.primary.forEach((stat) => {
     const valueIndex = statPool.findIndex((v) => v === Math.max(...statPool));
     if (valueIndex !== -1) {
-      // @ts-expect-error - legacy code support
       attributes[stat] = statPool[valueIndex];
       statPool.splice(valueIndex, 1);
     }
@@ -81,7 +80,6 @@ export const generateRandomCharacter = (
   priority.secondary.forEach((stat) => {
     const valueIndex = statPool.findIndex((v) => v === Math.max(...statPool));
     if (valueIndex !== -1) {
-      // @ts-expect-error - legacy code support
       attributes[stat] = statPool[valueIndex];
       statPool.splice(valueIndex, 1);
     }
@@ -89,7 +87,6 @@ export const generateRandomCharacter = (
 
   // Assign rest randomly
   Object.keys(attributes).forEach((key) => {
-    // @ts-expect-error - legacy code support
     if (attributes[key] === 10 && statPool.length > 0) {
       // Check if not assigned (default 10 matches one of standard array but we can track assignment better, simpler here)
       // Actually this logic is flawed because 10 is in standard array.

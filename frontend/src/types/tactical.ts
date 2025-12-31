@@ -87,6 +87,7 @@ export interface TacticalState {
   arenaId: string;
   phase: 'setup' | 'initiative' | 'in_progress' | 'complete';
 
+ 
   arena: any | null;
   units: TacticalUnit[];
 
@@ -95,13 +96,17 @@ export interface TacticalState {
   round: number;
 
   pendingCommand: string | null;
+ 
   parsedCommand: any | null;
+ 
   actionPlan: any | null;
 
   isCombatOver: boolean;
   winner: 'player' | 'enemy' | 'neutral' | null;
 
+ 
   log: any[];
+ 
   diceHistory: any[];
   diceRollerSeed: number;
 }

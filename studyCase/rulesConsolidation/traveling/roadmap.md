@@ -2,28 +2,28 @@
 
 ## Overview
 
-Traveling covers the macro-scale movement (Hex Crawl), carrying capacity, and exhaustion accumulation during overland journeys.
+Traveling covers the macro-scale movement across the infinite **Voxel Grid**, carrying capacity, and exhaustion accumulation during chunk traversal.
 
 ## 🟢 Alpha (MVP) _(Implemented)_
 
 **Focus**: Room-Scale Movement.
 
-- **Movement**: Tactical Grid movement (Speed clamping).
-- **Vision**: Simple Line of Sight.
-- **Transport**: Direct teleport/portal logic.
+- **Movement**: Deterministic movement on the Voxel Grid (`x, y, z`) with speed clamping.
+- **Vision**: Basic Line of Sight using Voxel raycasting.
+- **Transport**: Direct teleport/portal logic between Grid coordinates.
 
 ## 🟡 Beta
 
 **Focus**: Overland Mechanics.
 
-- **Encumbrance**: Weight tracking vs STR score (Speed reduction penalties).
-- **Pace**: Fast/Normal/Slow travel settings (adjusting stealth/passive perception).
-- **Foraging**: Survival checks for food/water supply logic.
+- **Encumbrance**: Weight tracking vs STR score reducing Movement Speed (Tiles/Turn).
+- **Pace**: Adjusting travel speed (Chunks per Hour) affecting Passive Perception.
+- **Foraging**: Survival checks for resources within the current Biome/Chunk.
 
 ## 🔵 V1 (Release)
 
 **Focus**: World Simulation.
 
-- **Weather**: Dynamic weather updates affecting Visibility and Movement Cost (Mud, Snow).
-- **Mounts & Vehicles**: Persistent storage on wagons, mount speed bonuses.
-- **Hex Mapping**: Large-scale regional movement tracking.
+- **Weather**: Global weather systems updating Voxel properties (e.g., Snow blocks reducing speed).
+- **Mounts**: Persistent entities for vastly increased Voxel traversal speed.
+- **Global Grid**: Large-scale navigation using the unified coordinate system (no separate Hex map, just zoomed-out Grid views).

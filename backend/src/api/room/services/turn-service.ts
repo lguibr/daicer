@@ -97,8 +97,8 @@ DESCRIPTION: ${room.worldDescription || ''}
 
     // 2. Character Context (Simplified)
     // Access pre-populated character_sheets from room
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
+     
     const charContext =
       ((room.character_sheets as Record<string, unknown>[]) || [])
         ?.map((cs) => {

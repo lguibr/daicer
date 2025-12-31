@@ -16,10 +16,12 @@ export class GraphEngine<TState extends BaseState> implements StateEngine<TState
 
   private listeners = new Set<Listener<TState>>();
 
+ 
   private validateFn: (state: any) => TState;
 
   private registry: ReducerRegistry<TState>;
 
+ 
   constructor(initial: Partial<TState>, validateFn: (state: any) => TState, registry: ReducerRegistry<TState>) {
     this.validateFn = validateFn;
     this.registry = registry;
@@ -50,6 +52,7 @@ export class GraphEngine<TState extends BaseState> implements StateEngine<TState
   }
 
   transaction(mutator: (draft: Draft<TState>) => void): { state: TState; patches: Patch[] } {
+ 
     const [next, patches] = produceWithPatches(this.state, (draft: any) => {
       mutator(draft);
     });
@@ -61,6 +64,7 @@ export class GraphEngine<TState extends BaseState> implements StateEngine<TState
     return { state: this.state, patches };
   }
 
+ 
   protected mapEventToPartial(_evt: { id: string; ts: number; type: string; payload: any }): Partial<TState> {
     return {};
   }

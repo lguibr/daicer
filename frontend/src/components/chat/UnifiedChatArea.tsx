@@ -26,6 +26,7 @@ import ToolCallCard from './ToolCallCard';
 
 // Shared interfaces
 export interface UnifiedChatProps {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   messages: any[]; // Relaxed type for cross-component compatibility
   currentUser?: { name?: string; id?: string; avatar?: string };
   onSendMessage: (msg: string) => Promise<void>;
@@ -38,6 +39,7 @@ export interface UnifiedChatProps {
 
   // Specific Game Props
   worldDescription?: string;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   dmPresence?: any;
   hideInput?: boolean;
 }
@@ -143,7 +145,6 @@ export function UnifiedChatArea({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // @ts-ignore
     if ((!inputValue.trim() && !props.activeCommand && !props.activeLocation) || isProcessing) return;
     const msg = inputValue.trim();
     onInputChange(''); // Clear only text input, command is cleared by parent after send
@@ -282,6 +283,7 @@ export function UnifiedChatArea({
                         {/* Dice Rolls */}
                         {msg.diceRolls?.length > 0 && (
                           <div className="mt-4 space-y-3">
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                             {msg.diceRolls.map((roll: any, i: number) => (
                               <DiceRollCard key={`${msg.id}-dice-${i}`} roll={roll} animate />
                             ))}
@@ -291,6 +293,7 @@ export function UnifiedChatArea({
                         {/* Tool Calls */}
                         {msg.toolCalls?.length > 0 && (
                           <div className="mt-4 space-y-3">
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
                             {msg.toolCalls.map((tc: any, i: number) => (
                               <ToolCallCard key={`${msg.id}-tool-${i}`} toolCall={tc} status="complete" />
                             ))}
@@ -343,20 +346,16 @@ export function UnifiedChatArea({
         >
           <div className="flex-1 flex items-center gap-2 bg-midnight-950 border border-midnight-700 rounded-xl px-4 py-3 focus-within:border-aurora-500/50 focus-within:ring-1 focus-within:ring-aurora-500/20 transition-all">
             {/* Active Command Tag */}
-            {/* @ts-ignore */}
             {props.activeCommand && (
               <div className="flex items-center gap-1.5 bg-aurora-500/10 border border-aurora-500/30 rounded-md pl-2 pr-1 py-0.5 shrink-0 animate-in fade-in zoom-in-95 duration-200">
                 <span className="text-xs font-bold text-aurora-300 uppercase tracking-wide">
-                  {/* @ts-ignore */}
                   {props.activeCommand.label}:
                 </span>
                 <span className="text-sm font-medium text-aurora-100">
-                  {/* @ts-ignore */}
                   {props.activeCommand.name}
                 </span>
                 <button
                   type="button"
-                  // @ts-ignore
                   onClick={props.onClearCommand}
                   className="ml-1 p-0.5 rounded-full hover:bg-aurora-500/20 text-aurora-400 hover:text-aurora-200 transition-colors"
                 >
@@ -368,17 +367,14 @@ export function UnifiedChatArea({
             )}
 
             {/* Active Location Tag */}
-            {/* @ts-ignore */}
             {props.activeLocation && (
               <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md pl-2 pr-1 py-0.5 shrink-0 animate-in fade-in zoom-in-95 duration-200">
                 <span className="text-xs font-bold text-emerald-300 uppercase tracking-wide">AT</span>
                 <span className="text-sm font-medium text-emerald-100 font-mono">
-                  {/* @ts-ignore */}
                   {props.activeLocation.label}
                 </span>
                 <button
                   type="button"
-                  // @ts-ignore
                   onClick={props.onClearLocation}
                   className="ml-1 p-0.5 rounded-full hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-200 transition-colors"
                 >
@@ -398,12 +394,9 @@ export function UnifiedChatArea({
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Backspace' && !inputValue) {
-                  // @ts-ignore
                   if (props.activeLocation && props.onClearLocation) {
-                    // @ts-ignore
                     props.onClearLocation();
                   } else if (props.activeCommand && props.onClearCommand) {
-                    // @ts-ignore
                     props.onClearCommand();
                   }
                 }
@@ -421,7 +414,6 @@ export function UnifiedChatArea({
           <Button
             type="submit"
             size="icon"
-            // @ts-ignore
             disabled={isProcessing || (!inputValue.trim() && !props.activeCommand && !props.activeLocation)}
             className="h-full aspect-square bg-aurora-600 hover:bg-aurora-500 text-white rounded-xl shadow-lg shadow-aurora-900/20 transition-all active:scale-95 shrink-0"
           >

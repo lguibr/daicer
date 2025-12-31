@@ -10,6 +10,8 @@ import { TimeControls } from './TimeControls';
 
 import { MapRenderer } from './MapRenderer';
 
+import { AgentToolPalette } from './AgentToolPalette';
+
 // Default config
 const DEFAULT_CONFIG: OldWorldConfig = {
   seed: 'debug-seed',
@@ -46,6 +48,7 @@ interface GameDebugViewProps {
 }
 
 export function GameDebugView({ roomId }: GameDebugViewProps) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +63,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
           setRoom(r);
           setLoading(false);
         }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (mounted) {
           setError(err.message);
@@ -91,10 +95,9 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
   );
 }
 
-import { AgentToolPalette } from './AgentToolPalette';
-
 // ... (existing imports)
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
   // Config State
   const [activeTab, setActiveTab] = useState<'inspector' | 'tools'>('inspector');
@@ -109,6 +112,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
 
   // Sync Entities: Either from Socket (Live) or from TimeFrame (History)
   useEffect(() => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     let sourceData: any[] = [];
 
     if (isLive) {
@@ -117,12 +121,15 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
       } else if (room && room.entities) {
         sourceData = room.entities;
       }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } else if (currentTimeFrame && currentTimeFrame.gameState && (currentTimeFrame.gameState as any).entities) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       sourceData = (currentTimeFrame.gameState as any).entities;
     }
 
     if (sourceData) {
       setEntities((_prev) =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         sourceData.map((c: any) => ({
           id: c.id || c.documentId,
           name: c.name,
@@ -163,6 +170,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
   // Sync Room Messages to Chat
   useEffect(() => {
     if (room && room.messages) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const historicalMessages = room.messages.map((m: any) => ({
         id: m.documentId,
         role: m.senderType === 'dm' ? 'assistant' : m.senderType === 'player' ? 'user' : 'system',
@@ -178,6 +186,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
       let visibleMessages = historicalMessages;
       if (!isLive && currentTimeFrame) {
         const frameTime = new Date(currentTimeFrame.timestamp).getTime();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         visibleMessages = historicalMessages.filter((m: any) => m.timestamp <= frameTime);
       }
 
@@ -502,11 +511,8 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
                           <span>
                             {entity.position.x}, {entity.position.y}, {entity.position.z}
                           </span>
-                          {/* @ts-ignore */}
                           {entity.currentHp !== undefined && (
-                            // @ts-ignore
                             <span className={clsx(entity.currentHp <= 0 ? 'text-red-500' : 'text-emerald-400')}>
-                              {/* @ts-ignore */}
                               HP: {entity.currentHp}/{entity.maxHp}
                             </span>
                           )}
@@ -568,7 +574,6 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               {[-1, 0, 1].map((z) => (
                 <button
                   key={z}
-                  // @ts-ignore
                   onClick={() => setViewZ(z)}
                   className={clsx(
                     'w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs transition-all',
@@ -597,7 +602,6 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               entities={entities}
               ghostEntities={[]}
               previewPath={activeEntity?.pendingPath}
-              // @ts-ignore
               onTileClick={handleTileSingleClick}
               onTileDoubleClick={handleTileDoubleClick}
               onTileHover={handleTileHover}

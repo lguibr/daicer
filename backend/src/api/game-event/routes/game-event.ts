@@ -4,5 +4,5 @@
 
 import { factories } from '@strapi/strapi';
 
-// @ts-ignore
+// Router
 export default factories.createCoreRouter('api::game-event.game-event');

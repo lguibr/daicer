@@ -137,6 +137,7 @@ export default ({ strapi }) => ({
             'character_sheets.character.baseStats',
           ],
         })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       ).character_sheets as any[]) || [];
 
     // Use Adapter
@@ -315,7 +316,7 @@ export default ({ strapi }) => ({
           try {
             const VISION_RADIUS = 8;
             const currentExplored = new Set(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               (room.exploredTiles as string[]) || []
             );
             let explorationChanged = false;

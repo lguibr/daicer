@@ -44,6 +44,7 @@ export default function CharacterSelectionPage() {
 
     setLoading(true);
     try {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const character = characters.find((c: any) => c.documentId === selectedCharacterId);
       if (!character) throw new Error('Character not found');
 
@@ -58,9 +59,7 @@ export default function CharacterSelectionPage() {
         documentId: character.documentId, // Pass the existing character ID
         name: character.name,
         backstory: character.backstory,
-        // @ts-ignore
         race: character.race?.name || character.race,
-        // @ts-ignore
         characterClass: character.class?.name || character.class,
         // We might want to pass more fields if available in the query, or fetch full details first.
         // For now we assume the backend can handle partial or we might need to fetch full details.
@@ -89,6 +88,7 @@ export default function CharacterSelectionPage() {
     }
   };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCharacterCreated = async (characterData: any) => {
     setLoading(true);
     try {
@@ -115,6 +115,7 @@ export default function CharacterSelectionPage() {
         variables: {
           data: payload,
         },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       })) as { data: any };
 
       if (!res?.createCharacterSheet?.documentId) {
@@ -170,6 +171,7 @@ export default function CharacterSelectionPage() {
             </Card>
 
             {/* Character List */}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             {characters.map((char: any) => (
               <Card
                 key={char.documentId}
@@ -213,6 +215,7 @@ export default function CharacterSelectionPage() {
         <div className="sticky bottom-6 mt-auto bg-midnight-950/90 backdrop-blur border border-midnight-800 p-4 rounded-2xl flex justify-between items-center shadow-2xl">
           <div className="flex items-center gap-2 text-sm text-shadow-400">
             <Info className="w-4 h-4" />
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             <span>Selected: {characters.find((c: any) => c.documentId === selectedCharacterId)?.name || 'None'}</span>
           </div>
 
@@ -242,7 +245,6 @@ export default function CharacterSelectionPage() {
               <CharacterCreation
                 assetMode={false} // Was true, but now we are creating a character not just an asset? Actually it's just 'creation mode'
                 settings={{ attributeBudget: 27, startingLevel: 1 }}
-                // @ts-ignore
                 onAssetCreated={handleCharacterCreated} // We re-use this callback but treat it as handling character data
                 onCharacterCreated={handleCharacterCreated} // Also bind this if component supports it (it seems to support onCharacterCreated in GameRoomPage usage)
               />

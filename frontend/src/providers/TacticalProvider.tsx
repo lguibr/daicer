@@ -45,6 +45,7 @@ export function useTacticalState<T = TacticalState>(selector?: (state: TacticalS
 
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
+ 
   return (selector ? selector(state) : (state as any)) as T;
 }
 
@@ -58,6 +59,7 @@ export function useTacticalActions() {
     // Core engine methods
     applyPartial: (partial: Partial<TacticalState>, meta?: { reason?: string; eventId?: string | null }) =>
       engine.apply(partial, meta),
+ 
     transaction: (mutator: (draft: any) => void) => engine.transaction(mutator),
 
     // Helper methods

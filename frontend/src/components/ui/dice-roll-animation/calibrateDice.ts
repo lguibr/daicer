@@ -98,6 +98,7 @@ export function calibrateDieRotations(dieType: DieType): Record<number, { x: num
  */
 export function generateAllCalibrations(): Record<DieType, Record<number, { x: number; y: number; z: number }>> {
   const allDieTypes: DieType[] = [2, 4, 6, 8, 10, 12, 20];
+ 
   const calibrations: any = {};
 
   allDieTypes.forEach((dieType) => {

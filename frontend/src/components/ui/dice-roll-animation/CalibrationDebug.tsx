@@ -24,6 +24,7 @@ export function CalibrationDebug() {
 
       // Check if calibrations are valid (not all zeros)
       const hasValidCalibrations = Object.values(results).some((rotations) =>
+ 
         Object.values(rotations).some((rot: any) => rot.x !== 0 || rot.y !== 0 || rot.z !== 0)
       );
 

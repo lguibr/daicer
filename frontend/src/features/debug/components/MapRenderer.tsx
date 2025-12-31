@@ -14,13 +14,16 @@ interface MapRendererProps {
   chunkProvider: ChunkProvider; // Changed from generator to interface
   visibleTiles: Set<string>;
   exploredTiles: Set<string>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   ghostEntities?: any[];
   onTileClick: (coords: Coordinates, e: React.MouseEvent) => void;
   onTileDoubleClick?: (coords: Coordinates) => void;
   onTileHover: (coords: Coordinates | null) => void;
   previewPath?: Coordinates[] | null | undefined;
   isLive?: boolean;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   currentTimeFrame?: any;
   onZoom?: (delta: number, mouseX: number, mouseY: number) => void;
   onPan?: (dx: number, dy: number) => void;
@@ -131,7 +134,6 @@ export function MapRenderer({
 
         const lx = ((wx % 32) + 32) % 32;
         const ly = ((wy % 32) + 32) % 32;
-        // @ts-ignore
         const lz = viewZ + 3; // map -3..3 to 0..6
 
         if (!chunk || !chunk.tiles[lz] || !chunk.tiles[lz][ly]) continue;
@@ -226,6 +228,7 @@ export function MapRenderer({
     }
 
     // Draw Entities
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderEntities.forEach((ent: any) => {
       // Only if on same Z level
       if (ent.position.z !== viewZ) return;
@@ -245,6 +248,7 @@ export function MapRenderer({
     });
 
     // Draw Ghost Entities
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     ghostEntities.forEach((ent: any) => {
       if (ent.position.z !== viewZ) return;
 

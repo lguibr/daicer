@@ -83,6 +83,7 @@ export function WizardProvider({
     setSettingsState((prev) => ({ ...prev, [key]: value }));
   };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateDMStyle = <K extends keyof typeof initialSettingsBase.dmStyle>(key: K, value: any) => {
     setSettingsState((prev) => ({
       ...prev,

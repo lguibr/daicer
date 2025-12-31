@@ -62,6 +62,7 @@ export default ({ strapi }) => ({
     if (!room) return;
 
     // Format
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const entities = (room.character_sheets || []).map((sheet: any) => ({
       id: sheet.documentId,
       name: sheet.name,

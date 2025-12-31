@@ -161,6 +161,7 @@ export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, 
 };
 
 // Helper for conditional classes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function clsx(...args: any[]) {
   return args.filter(Boolean).join(' ');
 }

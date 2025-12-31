@@ -9,11 +9,13 @@ export type WorkerType = 'dice' | 'map' | 'voxel';
 
 export interface WorkerMessage {
   type: string;
+ 
   [key: string]: any;
 }
 
 export interface WorkerConfig {
   canvas: HTMLCanvasElement;
+ 
   onMessage?: (data: any) => void;
   onError?: (error: Error) => void;
 }
@@ -28,6 +30,7 @@ export class WorkerManager {
 
   private offscreenCanvas: OffscreenCanvas | null = null;
 
+ 
   private messageHandlers: Map<string, (data: any) => void> = new Map();
 
   private supportsOffscreen: boolean;
@@ -81,6 +84,7 @@ export class WorkerManager {
       this.worker.onerror = (error) => {
         console.error(`[WorkerManager] ${this.workerType} worker error:`, error);
         if (config.onError) {
+ 
           config.onError(error as any);
         }
       };
@@ -91,6 +95,7 @@ export class WorkerManager {
           type: 'init',
           canvas: this.offscreenCanvas,
         },
+ 
         [this.offscreenCanvas as any]
       );
 
@@ -105,6 +110,7 @@ export class WorkerManager {
   /**
    * Register a message handler for a specific message type
    */
+ 
   on(messageType: string, handler: (data: any) => void): void {
     this.messageHandlers.set(messageType, handler);
   }

@@ -152,8 +152,11 @@ describe('TimeTravelPanel', () => {
         state: {
           ...mockHistory[0].state,
           characters: [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             { id: '1', hp: 10, maxHp: 10 } as any,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             { id: '2', hp: 5, maxHp: 10 } as any,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             { id: '3', hp: 0, maxHp: 10 } as any,
           ],
         },

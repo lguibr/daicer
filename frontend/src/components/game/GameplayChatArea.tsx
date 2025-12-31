@@ -30,6 +30,7 @@ interface GameplayChatAreaProps {
   isProcessing: boolean;
   presence: PresenceData[];
   currentUserId?: string; // Strapi Document ID of the current user
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   currentUserCharacter?: any; // To be typed properly if Character definition is shared
 }
 

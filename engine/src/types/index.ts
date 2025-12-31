@@ -253,3 +253,4 @@ export * from '../rules/combat';
 export * from '../rules/magic';
 export * from '../rules/resting';
 export * from '../rules/leveling';
+export * from '../rules/conditions';

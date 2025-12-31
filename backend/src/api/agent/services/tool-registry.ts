@@ -9,6 +9,7 @@ import { ActionDispatcher } from '@daicer/engine';
   It acts as the "Standard Library" for the Agent.
 */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ToolHandler = (roomId: string, payload: any, user: any) => Promise<any>;
 
 export default ({ strapi }) => {
@@ -135,6 +136,7 @@ export default ({ strapi }) => {
     hasTool(name: string) {
       return !!tools[name];
     },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     async execute(name: string, roomId: string, payload: any, user: any) {
       if (!tools[name]) throw new Error(`Tool ${name} not registered`);
       return await tools[name](roomId, payload, user);

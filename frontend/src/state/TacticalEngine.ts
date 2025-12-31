@@ -29,6 +29,7 @@ const tacticalRegistry = new ReducerRegistry<TacticalState>()
   .register('lastEventId', replace);
 
 // Simple validation (just ensure required fields)
+ 
 function validateTacticalState(state: any): TacticalState {
   return {
     version: state.version ?? 0,
@@ -82,6 +83,7 @@ export class TacticalEngine extends GraphEngine<TacticalState> {
    */
   removeUnit(unitId: string): TacticalState {
     return this.transaction((draft) => {
+ 
       draft.units = draft.units.filter((u: any) => u.id !== unitId);
     }).state;
   }
@@ -91,6 +93,7 @@ export class TacticalEngine extends GraphEngine<TacticalState> {
    */
   moveUnit(unitId: string, position: { x: number; y: number }): TacticalState {
     return this.transaction((draft) => {
+ 
       const unit = draft.units.find((u: any) => u.id === unitId);
       if (unit) {
         unit.position = position;
@@ -123,6 +126,7 @@ export class TacticalEngine extends GraphEngine<TacticalState> {
       draft.activeUnitId = draft.turnOrder[nextIndex] || null;
 
       // Reset action economy for active unit
+ 
       const activeUnit = draft.units.find((u: any) => u.id === draft.activeUnitId);
       if (activeUnit) {
         activeUnit.hasAction = true;

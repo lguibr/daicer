@@ -84,44 +84,86 @@ export function validateSpellCast(
 }
 
 /**
- * Resolves the casting of a spell (deducting slots, calculating damage/DC).
- * Note: Does NOT apply damage to targets directly (State mutation should be separate or returned).
- * We return the *Result* of the cast.
+ * Resolves the casting of a spell.
+ * - Deducts slots.
+ * - Handles Concentration (Drop old, Set new).
  */
-export function resolveSpell(caster: CharacterSheet, intent: ActionIntent): SpellResult {
-  if (intent.type !== ActionType.CastSpell) throw new Error('Invalid intent');
+export interface ResolveSpellResult {
+  slotConsumed?: number;
+  saveDC: number;
+  saveStat: string;
+  isAoE: boolean;
+  brokenConcentrationId?: string;
+  newConcentrationId?: string;
+}
 
-  const spell = findSpell(caster, intent.actionId);
-  if (!spell || spell.type !== 'spell') throw new Error('Spell not found');
-
-  // 1. Handle Slot Deduction Logic (Caller must mutate sheet based on this result)
-  // Logic is in validation, we confirm here what *should* happen.
-  const slotLevel = intent.level ?? spell.level;
-
-  // 2. Calculate Output
-  // For MVP, we extract damage from description or a structured `damage` field if we added it.
-  // Wait, ActionDefinitionSchema for 'spell' did NOT have a `damage` array in my previous step!
-  // It checks `description`.
-  // Ideally we should structure damage on Spells too for the engine.
-  // But for now, we return basic DC info.
-
-  let saveDC = 0;
-  if (spell.save) {
-    saveDC = spell.save.dc; // Or calculate from Caster stats?
-    // Usually sheet snapshot has pre-calced DC?
-    // If spell.save.dc is static in JSON, use it.
-    // Otherwise `caster.spellcasting.saveDC`.
-  } else if (caster.spellbook && caster.spellbook.spellSaveDc) {
-    saveDC = caster.spellbook.spellSaveDc;
+export function resolveSpell(sheet: CharacterSheet, intent: ActionIntent): ResolveSpellResult {
+  if (intent.type !== ActionType.CastSpell) {
+    throw new Error('Invalid intent type for resolveSpell');
   }
 
+  const spell = sheet.structuredActions.find((a) => a.id === intent.actionId && a.type === 'spell');
+
+  if (!spell || spell.type !== 'spell') {
+    throw new Error(`Spell ${intent.actionId} not found`);
+  }
+
+  // 1. Deduct Slot (if not cantrip)
+  // Logic simplified: intent.level or spell.level?
+  // Use intent level (upcasting support hook).
+  let slotConsumed: number | undefined;
+
+  const levelToConsume = intent.level ?? spell.level;
+
+  // Validate again (redundant but safe)? validateSpellCast caller usually does this.
+  // We just execute.
+  if (levelToConsume > 0) {
+    if (sheet.spellbook?.slots) {
+      const slot = sheet.spellbook.slots.find((s) => s.level === levelToConsume);
+      if (slot && slot.current > 0) {
+        slot.current--;
+        slotConsumed = levelToConsume;
+      }
+    }
+  } else {
+    slotConsumed = 0;
+  }
+
+  // 2. Handle Concentration
+  let brokenConcentrationId: string | undefined;
+  let newConcentrationId: string | undefined;
+
+  if (spell.concentration) {
+    // If already concentrating, break it
+    if (sheet.spellbook?.concentratingOn) {
+      brokenConcentrationId = sheet.spellbook.concentratingOn;
+    }
+
+    // Set new
+    if (sheet.spellbook) {
+      sheet.spellbook.concentratingOn = spell.id;
+      newConcentrationId = spell.id;
+    }
+  }
+
+  // 3. Output
+  // Default DC from sheet or spell?
+  // SpellDefinition might have override, else Calculate from Spellbook.
+  const dc = sheet.spellbook?.spellSaveDc ?? 10;
+  const saveStat = spell.save?.stat || 'dexterity'; // Default
+
+  // AoE Check
+  // Infer from spell range/target logic?
+  // MVP: If range is "Self (15-foot cone)", it is AoE.
+  // If targetId is missing but location provided, implies AoE.
+  const isAoE = !!spell.range.match(/cone|sphere|line|cylinder|radius/i);
+
   return {
-    success: true,
-    slotConsumed: slotLevel > 0 ? slotLevel : undefined,
-    saveDC: saveDC || undefined,
-    saveStat: spell.save?.stat,
-    description: spell.description,
-    isAoE: !!intent.targetLocation, // inferred
-    damageDetails: [], // Needs structured damage on spell schema to populate
+    slotConsumed,
+    saveDC: dc,
+    saveStat,
+    isAoE,
+    brokenConcentrationId,
+    newConcentrationId,
   };
 }

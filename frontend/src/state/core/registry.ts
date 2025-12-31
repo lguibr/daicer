@@ -6,6 +6,7 @@
 import type { Reducer } from './types';
 
 export class ReducerRegistry<TState extends Record<string, any>> {
+ 
   private map = new Map<keyof TState, Reducer<any>>();
 
   register<K extends keyof TState>(key: K, reducer: Reducer<TState[K]>): this {
@@ -52,6 +53,7 @@ export function mergeWithRegistry<TState extends Record<string, any>>(
 
     if (typeof update === 'undefined') return;
 
+ 
     (next as any)[key] = reducer(current, update as any);
   });
 

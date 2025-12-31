@@ -3,7 +3,7 @@
  * Renders 3D dice using Three.js in OffscreenCanvas to prevent UI blocking
  */
 
-import '../utils/threeShim';
+import './utils/threeShim';
 import * as THREE from 'three';
 
 let scene: THREE.Scene | null = null;

@@ -26,6 +26,7 @@ export function RoomSelection({ onSelect, onCreate }: RoomSelectionProps) {
     );
   }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rooms = (data as any)?.rooms || [];
 
   return (
@@ -54,6 +55,7 @@ export function RoomSelection({ onSelect, onCreate }: RoomSelectionProps) {
           <p className="text-sm text-muted-foreground text-center mt-2">Start a fresh campaign with custom settings</p>
         </div>
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         {rooms.map((room: any) => (
           <Card
             key={room.documentId}

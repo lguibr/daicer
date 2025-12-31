@@ -3,6 +3,7 @@
  */
 
 export default ({ strapi }) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   async executeTool(roomId: string, toolName: string, payload: any, user: any) {
     const registry = strapi.service('api::agent.tool-registry');
 

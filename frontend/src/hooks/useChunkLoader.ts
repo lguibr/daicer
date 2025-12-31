@@ -62,6 +62,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
 
     try {
       console.log('useChunkLoader: Fetching chunks', chunksToFetch, 'config:', config.seed);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await client.query<any>({
         query: VOXEL_PREVIEW_QUERY,
         variables: {

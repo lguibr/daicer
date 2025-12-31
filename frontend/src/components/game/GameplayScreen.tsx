@@ -45,12 +45,15 @@ export default function GameplayScreen({ room, players, creatures = [], onRefres
 
   // Memoize initial messages from room data to hydrate socket state immediately
   const initialMessages = useMemo(() => {
+ 
     const rawMessages = (room as any).messages || [];
     // Sort just in case backend query sort isn't perfect, though GQL usually handles it
     // return rawMessages.map...
     return rawMessages
       .slice()
+ 
       .sort((a: any, b: any) => Number(a.timestamp) - Number(b.timestamp))
+ 
       .map((msg: any) => ({
         id: msg.documentId,
         content: msg.content,
@@ -92,6 +95,7 @@ export default function GameplayScreen({ room, players, creatures = [], onRefres
       '[GameplayScreen Debug] State Update:',
       JSON.stringify(
         {
+ 
           players: players.map((p) => ({ userId: p.userId, action: p.action, rawId: (p as any).id })),
           currentUserUid: user?.uid,
           currentUserDocId: user?.documentId,
@@ -181,6 +185,7 @@ export default function GameplayScreen({ room, players, creatures = [], onRefres
           worldDescription={room.worldDescription}
           isProcessing={socket.isProcessing}
           presence={socket.presence}
+ 
           currentUserId={(currentPlayer as any)?.user?.documentId || user?.uid}
           currentUserCharacter={currentPlayer?.character}
         />
@@ -322,6 +327,7 @@ export default function GameplayScreen({ room, players, creatures = [], onRefres
       }));
 
     const creatureEntities = creatures.map((c) => ({
+ 
       id: (c as any).documentId || c.id,
       type: (c.type || 'monster') as 'monster' | 'npc', // Fallback
       name: c.name,

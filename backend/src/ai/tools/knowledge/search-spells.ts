@@ -14,6 +14,7 @@ export const searchSpellsTool = (context: StrapiContext) =>
       schema: searchSpellsSchema,
       outputSchema: z.string(),
       func: async ({ query, level }, { strapi }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const filters: any = {
           name: { $containsi: query },
         };
@@ -31,6 +32,7 @@ export const searchSpellsTool = (context: StrapiContext) =>
         }
 
         return spells
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((s: any) => {
             return `### ${s.name} (Level ${s.level} ${s.school})\n- Range: ${s.range}\n- Components: ${s.components}\n- Duration: ${s.duration}\n- Description: ${s.desc}\n`;
           })
