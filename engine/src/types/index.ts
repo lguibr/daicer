@@ -247,3 +247,9 @@ export type InteractCommand = z.infer<typeof InteractCommandSchema>;
 export type EndTurnCommand = z.infer<typeof EndTurnCommandSchema>;
 
 export * from './engine';
+export * from '../rules/actions';
+export * from '../rules/dice';
+export * from '../rules/combat';
+export * from '../rules/magic';
+export * from '../rules/resting';
+export * from '../rules/leveling';

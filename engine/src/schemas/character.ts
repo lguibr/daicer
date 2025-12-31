@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { SpeedSchema } from '@daicer/shared';
+// Import the strict definitions
+import { ActionDefinitionSchema } from '../rules/actions';
 
 export const AttributeSchema = z.enum(['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma']);
 
@@ -51,32 +53,10 @@ export const InventoryItemSchema = z.object({
   quantity: z.number(),
   slot: z.string(),
   isEquipped: z.boolean(),
-});
-
-// New Schemas for Phase 1 (Character Structure)
-export const ActionSchema = z.object({
-  id: z.string().optional(),
-  name: z.string(),
-  type: z.enum(['melee', 'ranged', 'spell', 'utility']).or(z.string()), // loose string allowed for robustness
-  toHit: z.number().optional(),
-  reach: z.number().optional(),
-  range: z.string().optional(),
-  damage: z
-    .array(
-      z.object({
-        dice: z.string(),
-        bonus: z.number(),
-        type: z.string(),
-      })
-    )
-    .optional(),
-  save: z
-    .object({
-      dc: z.number(),
-      stat: z.string(),
-    })
-    .optional(),
-  description: z.string(),
+  // Added for rules consolidation
+  properties: z.array(z.string()).optional(),
+  weight: z.number().optional(),
+  cost: z.object({ amount: z.number(), unit: z.string() }).optional(),
 });
 
 export const FeatureSchema = z.object({
@@ -86,18 +66,36 @@ export const FeatureSchema = z.object({
   usage: z
     .object({
       max: z.number(),
+      current: z.number().optional(), // Added current state
       per: z.string(),
     })
     .optional(),
 });
 
+// New Structured Spell Slots
+export const SpellSlotsSchema = z.array(
+  z.object({
+    level: z.number(),
+    max: z.number(),
+    current: z.number(),
+  })
+);
+
+// Conditions
+export const ConditionSchema = z.object({
+  name: z.string(), // e.g. "Stunned", "Prone"
+  duration: z.number(), // in Rounds
+  source: z.string().optional(),
+});
+
 export const SpellbookSchema = z.object({
   id: z.string().optional(),
-  knownSpells: z.array(z.any()).optional(), // Loose for now (relations)
-  preparedSpells: z.array(z.any()).optional(),
+  knownSpells: z.array(z.string()).optional(), // List of Spell Document IDs
+  preparedSpells: z.array(z.string()).optional(), // List of Spell Document IDs
   spellcastingAbility: z.enum(['intelligence', 'wisdom', 'charisma']).or(z.string()),
   spellSaveDc: z.number(),
   spellAttackBonus: z.number(),
+  slots: SpellSlotsSchema,
 });
 
 export const CharacterSheetSchema = z.object({
@@ -105,43 +103,45 @@ export const CharacterSheetSchema = z.object({
   documentId: z.string().optional(),
   name: z.string(),
   race: z.string(),
-  characterClass: z.string(),
-  class: z.any().optional(),
-  background: z.string(),
-  alignment: z.string(),
-  level: z.number(),
-  xp: z.number(),
+  characterClass: z.string(), // e.g. "Wizard 5"
+
+  // Core Vitals
   hp: z.number(),
   maxHp: z.number(),
-  temporaryHp: z.number(),
+  temporaryHp: z.number().default(0),
+
+  // Progression
+  level: z.number(),
+  xp: z.number(),
+
+  // Resources
   hitDice: z.object({
     total: z.number(),
     current: z.number(),
+    die: z.string(), // "1d6"
   }),
+
   deathSaves: z.object({
     successes: z.number(),
     failures: z.number(),
   }),
+
+  // Combat Stats
   armorClass: z.number(),
   initiative: z.number(),
   speed: SpeedSchema,
   proficiencyBonus: z.number(),
   inspiration: z.boolean(),
+
+  // Attributes & Skills
   attributes: z.record(AttributeSchema, z.number()),
   savingThrows: SavingThrowsSchema,
   skills: z.record(z.string(), z.number()),
   skillDetails: z.array(SkillDetailSchema),
   expertises: z.array(z.string()),
-  baseAttackBonus: z.number(),
-  attacks: z.array(
-    z.object({
-      name: z.string(),
-      bonus: z.string(),
-      damageType: z.string(),
-    })
-  ),
+
+  // Equipment & Inventory
   equipment: z.array(InventoryItemSchema),
-  equipmentDescription: z.string().optional(),
   currency: z.object({
     cp: z.number(),
     sp: z.number(),
@@ -149,13 +149,25 @@ export const CharacterSheetSchema = z.object({
     gp: z.number(),
     pp: z.number(),
   }),
-  proficienciesAndLanguages: z.string(),
-  // Modified features to be array of objects
-  features: z.array(FeatureSchema).or(z.string()).default([]), // Allow string for migration, but prefer array
-  structuredActions: z.array(ActionSchema).optional().default([]),
+
+  // Actions & Capabilities (The "Flattened List")
+  structuredActions: z.array(ActionDefinitionSchema).default([]),
+
+  // Spellcasting
   spellbook: SpellbookSchema.optional(),
 
-  talents: z.array(TalentSchema),
+  // Lists (Legacy/Migration support combined with new)
+  features: z.array(FeatureSchema).default([]),
+  talents: z.array(TalentSchema).default([]),
+
+  // State Tracking
+  conditions: z.array(ConditionSchema).default([]),
+  resources: z.array(ResourcePoolSchema).default([]),
+
+  // Flavor / Blueprint Data
+  class: z.any().optional(), // Reference object
+  background: z.string(),
+  alignment: z.string(),
   appearance: z.object({
     age: z.string(),
     height: z.string(),
@@ -175,7 +187,6 @@ export const CharacterSheetSchema = z.object({
   backgroundDetails: BackgroundDetailsSchema,
   alliesAndOrganizations: z.string(),
   treasure: z.string(),
-  resourcePools: z.array(ResourcePoolSchema),
   advancementPoints: AdvancementPointsSchema,
   avatarAssets: z
     .object({
@@ -188,19 +199,4 @@ export const CharacterSheetSchema = z.object({
     })
     .nullable()
     .optional(),
-  spellcasting: z.object({
-    class: z.string(),
-    ability: z.string(),
-    saveDC: z.number(),
-    attackBonus: z.number(),
-    cantrips: z.array(z.string()),
-    spellsKnown: z.array(z.string()),
-    slots: z.array(
-      z.object({
-        level: z.number(),
-        total: z.number(),
-        expended: z.number(),
-      })
-    ),
-  }),
 });
