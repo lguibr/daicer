@@ -18,6 +18,10 @@ interface GodModeChatProps {
   isProcessing?: boolean;
   inputValue: string;
   onInputChange: (value: string) => void;
+  activeLocation?: { label: string; x: number; y: number; z: number } | null;
+  onClearLocation?: () => void;
+  entities?: any[];
+  activeEntity?: any;
 }
 
 export function GodModeChat({
@@ -26,6 +30,10 @@ export function GodModeChat({
   isProcessing = false,
   inputValue,
   onInputChange,
+  activeLocation,
+  onClearLocation,
+  entities,
+  activeEntity,
 }: GodModeChatProps) {
   const { search, results, loading } = useEntitySearch();
   const [activeCommand, setActiveCommand] = useState<{
@@ -82,6 +90,8 @@ export function GodModeChat({
           onSearch={search}
           searchResults={results}
           isLoading={loading}
+          entities={entities}
+          activeEntity={activeEntity}
           // NEW: Callback for structured command
           // @ts-ignore
           onCommandSelect={(cmd) => {
@@ -94,25 +104,32 @@ export function GodModeChat({
         <UnifiedChatArea
           messages={messages}
           onSendMessage={async (msg) => {
-            // If we have an active command, prefix it
+            let fullMsg = msg;
+
+            // 1. Prepend Command
             if (activeCommand) {
-              // Reconstruct the full command string
-              // e.g. summon_entity(id="123", <msg>)
-              // Or simple append: summon_entity(id="123") + " " + msg
-              // The user wants "summon_entity(id=...)" to be hidden behind the tag.
-              // So the actual message sent to LLM should be:
-              // prefix + " " + msg
-              // or if the prefix ends in ), maybe we just append.
-
-              // If format is `summon_entity(id="...")`, and user types `with 50 hp`
-              // Result: `summon_entity(id="...") with 50 hp`
-
-              const fullMsg = `${activeCommand.prefix} ${msg}`;
-              await onSendMessage(fullMsg);
-              setActiveCommand(null); // Reset after send
-            } else {
-              await onSendMessage(msg);
+              fullMsg = `${activeCommand.prefix} ${fullMsg}`;
             }
+
+            // 2. Append Location
+            if (activeLocation) {
+              // If there's already content, add space.
+              // The user prompt said: "move marker for the chat... after send the message we should reset".
+              // The LLM expects "move ... to x,y,z" or similar.
+              // We should make sure the format is intuitive.
+              // If the user types "Summon goat", and Location is (10,10,0).
+              // Result: "Summon goat at (10, 10, 0)"
+              const separator = fullMsg.length > 0 ? ' ' : '';
+              fullMsg = `${fullMsg}${separator}at (${activeLocation.x}, ${activeLocation.y}, ${activeLocation.z})`;
+            }
+
+            if (!fullMsg.trim()) return;
+
+            // 3. Reset States (Immediately)
+            setActiveCommand(null);
+            if (onClearLocation) onClearLocation();
+
+            await onSendMessage(fullMsg);
           }}
           inputValue={inputValue}
           onInputChange={onInputChange}
@@ -124,6 +141,10 @@ export function GodModeChat({
           activeCommand={activeCommand}
           // @ts-ignore
           onClearCommand={() => setActiveCommand(null)}
+          // @ts-ignore
+          activeLocation={activeLocation || undefined}
+          // @ts-ignore
+          onClearLocation={onClearLocation}
         />
       </div>
     </div>

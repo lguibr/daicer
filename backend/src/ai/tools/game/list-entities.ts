@@ -28,7 +28,7 @@ export const listEntitiesTool = (context: StrapiContext) =>
           const sheet = param as any; // Cast to access fields
           const pos = sheet.position || { x: '?', y: '?', z: '?' };
           const hpStatus = `${sheet.currentHp}/${sheet.maxHp} HP`;
-          return `- [${sheet.type?.toUpperCase()}] **${sheet.name}** at (${pos.x}, ${pos.y}, ${pos.z}) | ${hpStatus}`;
+          return `- [${sheet.type?.toUpperCase()}] **${sheet.name}** (ID: ${sheet.documentId}) at (${pos.x}, ${pos.y}, ${pos.z}) | ${hpStatus}`;
         });
 
         return `Found ${sheets.length} entities:\n${lines.join('\n')}`;

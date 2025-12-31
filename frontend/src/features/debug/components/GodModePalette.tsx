@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Skull, User, Sparkles } from 'lucide-react';
+import { MapPin, Skull, User, Sparkles, Hand, Dice5 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,10 +15,12 @@ interface GodModePaletteProps {
   searchResults?: { id: string; name: string; type: string; description?: string }[];
   isLoading?: boolean;
   onCommandSelect?: (cmd: { prefix: string; id: string; name: string; label: string }) => void;
+  entities?: any[];
+  activeEntity?: any;
 }
 
 export function GodModePalette(props: GodModePaletteProps) {
-  const { onAction, onSearch, searchResults = [], isLoading = false } = props;
+  const { onAction, onSearch, searchResults = [], isLoading = false, entities = [], activeEntity } = props;
   const tools = [
     {
       label: 'Summon Monster',
@@ -31,7 +33,7 @@ export function GodModePalette(props: GodModePaletteProps) {
       label: 'Summon Character',
       icon: <User className="w-4 h-4 mr-2" />,
       actionPrefix: 'summon_character',
-      placeholder: 'Search characters...',
+      placeholder: 'Search templates...',
       type: 'character',
     },
     {
@@ -45,8 +47,23 @@ export function GodModePalette(props: GodModePaletteProps) {
       label: 'Move Entity',
       icon: <MapPin className="w-4 h-4 mr-2" />,
       actionPrefix: 'move_entity',
-      placeholder: 'Select entity...',
-      type: 'character', // Reuse character/monster search or a room-entity-list logic
+      placeholder: 'Select active entity...',
+      type: 'room_entity',
+    },
+    {
+      label: 'Interact',
+      icon: <Hand className="w-4 h-4 mr-2" />,
+      actionPrefix: 'interact_object',
+      placeholder: 'Object ID...',
+      type: 'none',
+    },
+
+    {
+      label: 'Roll Save',
+      icon: <Dice5 className="w-4 h-4 mr-2" />,
+      actionPrefix: 'roll_save',
+      placeholder: 'Stat...',
+      type: 'none',
     },
   ] as const;
 
@@ -60,6 +77,8 @@ export function GodModePalette(props: GodModePaletteProps) {
           onSearch={onSearch}
           searchResults={searchResults}
           isLoading={isLoading}
+          entities={entities}
+          activeEntity={activeEntity}
           // @ts-ignore
           onCommandSelect={props.onCommandSelect}
         />
@@ -75,19 +94,70 @@ function ToolDropdown(props: {
   searchResults: any[];
   isLoading: boolean;
   onCommandSelect?: (cmd: any) => void;
+  entities?: any[];
+  activeEntity?: any;
 }) {
-  const { tool, onAction, onSearch, searchResults, isLoading } = props;
+  const { tool, onAction, onSearch, searchResults, isLoading, entities = [], activeEntity } = props;
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   // Trigger default search on open
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      // Fetch defaults
-      onSearch('', tool.type);
+      if (tool.type === 'room_entity') {
+        // Local filter, no API call
+      } else {
+        // Fetch defaults
+        onSearch('', tool.type);
+      }
       setSearchTerm('');
     }
   };
+
+  // Determine items to display
+  let items = searchResults;
+  if (tool.type === 'room_entity') {
+    items = entities
+      .filter((e) => e.name.toLowerCase().includes(searchTerm.toLowerCase()) || e.id.includes(searchTerm))
+      .map((e) => ({
+        id: e.id,
+        name: e.name,
+        type: e.type,
+        description: `${e.type} at ${e.position.x},${e.position.y},${e.position.z}`,
+      }));
+  }
+
+  // Override isLoading for local
+  const showLoading = tool.type === 'room_entity' ? false : isLoading;
+
+  if (tool.type === 'none') {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="bg-midnight-800 border-midnight-600 hover:bg-midnight-700 text-shadow-200"
+        onClick={() => {
+          // Direct action trigger
+          const prefix = tool.actionPrefix;
+          // @ts-ignore
+          if (props.onCommandSelect) {
+            // @ts-ignore
+            props.onCommandSelect({
+              prefix,
+              id: 'manual', // No ID
+              name: tool.label, // Use Label as Name
+              label: tool.label,
+            });
+          } else {
+            onAction(prefix);
+          }
+        }}
+      >
+        {tool.icon}
+        {tool.label}
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
@@ -124,12 +194,12 @@ function ToolDropdown(props: {
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-[100px] p-1">
-          {isLoading ? (
+          {showLoading ? (
             <div className="flex items-center justify-center p-4 text-xs text-midnight-400">
               <span className="animate-pulse">Loading...</span>
             </div>
-          ) : searchResults && searchResults.length > 0 ? (
-            searchResults.map((result) => (
+          ) : items && items.length > 0 ? (
+            items.map((result) => (
               <DropdownMenuItem
                 key={result.id}
                 onClick={() => {
@@ -148,7 +218,8 @@ function ToolDropdown(props: {
                     } else if (tool.actionPrefix === 'summon_character') {
                       prefix = `summon_character(templateId="${result.id}")`; // Use templateId
                     } else if (tool.actionPrefix === 'cast_spell') {
-                      prefix = `cast_spell(id="${result.id}")`;
+                      const caster = activeEntity ? activeEntity.id : 'DM';
+                      prefix = `cast_spell(spellId="${result.id}", casterId="${caster}")`;
                     } else {
                       // move_entity or others usually take @Name or id.
                       // For move_entity we really want an active entity ID, not a template ID.
@@ -174,7 +245,8 @@ function ToolDropdown(props: {
                   } else if (tool.actionPrefix === 'summon_character') {
                     onAction(`summon_character(templateId="${result.id}")`);
                   } else if (tool.actionPrefix === 'cast_spell') {
-                    onAction(`cast_spell(id="${result.id}")`);
+                    const caster = activeEntity ? activeEntity.id : 'DM';
+                    onAction(`cast_spell(spellId="${result.id}", casterId="${caster}")`);
                   } else {
                     onAction(`${tool.actionPrefix} @${result.name}`);
                   }

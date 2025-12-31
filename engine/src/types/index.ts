@@ -181,6 +181,7 @@ export interface Entity {
   hp: number;
   maxHp: number;
   ac: number;
+  speed: number;
 
   // Blueprint
   stats: EntityStats;

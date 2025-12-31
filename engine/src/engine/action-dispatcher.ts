@@ -1,4 +1,4 @@
-import { Command, MoveCommand, AttackCommand, SkillCheckCommand } from '../types';
+import { Command, MoveCommand, AttackCommand, SkillCheckCommand, CastSpellCommand, InteractCommand } from '../types';
 import { GameState, ActionResult } from '../types/engine';
 import { Alea } from '../voxel/utils/math';
 
@@ -17,6 +17,24 @@ export class ActionDispatcher {
         return this.handleAttack(state, command as AttackCommand);
       case 'SKILL_CHECK':
         return this.handleSkillCheck(state, command as SkillCheckCommand);
+      case 'CAST_SPELL':
+        return this.handleCastSpell(state, command as CastSpellCommand);
+      case 'INTERACT':
+        return this.handleInteract(state, command as InteractCommand);
+      // @ts-ignore
+      case 'ROLL_SAVE':
+        // Reuse Skill Check logic or simplified version
+        return this.handleSkillCheck(state, {
+          ...(command as any),
+          type: 'SKILL_CHECK',
+          payload: {
+            // @ts-ignore
+            actorId: command.payload.actorId || command.payload.targetId, // Adapt payload
+            // @ts-ignore
+            attribute: command.payload.stat,
+            difficultyClass: 10,
+          },
+        } as SkillCheckCommand);
       default:
         return {
           success: false,
@@ -26,20 +44,57 @@ export class ActionDispatcher {
     }
   }
 
-  private handleMove(_state: GameState, command: MoveCommand): ActionResult {
+  private handleMove(state: GameState, command: MoveCommand): ActionResult {
     const { actorId, targetPosition } = command.payload;
-    // Logic: Check bounds, check obstacles (stubbed for now)
+    const entity = state.entities.find((e) => e.id === actorId);
+
+    if (!entity) return { success: false, message: 'Actor not found', events: [] };
+
+    // 1. Calculate Distance (Euclidean)
+    // Assumption: 1 unit = 1 foot (as per user request)
+    const dx = targetPosition.x - entity.position.x;
+    const dy = targetPosition.y - entity.position.y;
+    const dz = targetPosition.z - entity.position.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    // 2. Clamp to Speed
+    // If exact diagonal is > speed, we stop at speed limit
+    const speed = entity.speed || 30; // Default 30ft if not set
+    let finalPos = targetPosition;
+
+    if (dist > speed) {
+      if (dist === 0) {
+        // @ts-ignore
+        finalPos = entity.position; // Stay put
+      } else {
+        const ratio = speed / dist;
+        // Linear interpolation towards target, clamped at range
+        finalPos = {
+          x: Math.round(entity.position.x + dx * ratio),
+          y: Math.round(entity.position.y + dy * ratio),
+          z: Math.round(entity.position.z + dz * ratio) as any, // Cast to match strict ZLevel type
+        };
+      }
+    }
+
+    // 3. Update State (Mutable Engine)
+    const oldPos = { ...entity.position };
+    // @ts-ignore
+    entity.position = finalPos;
 
     return {
       success: true,
+      message: `Movito to ${finalPos.x}, ${finalPos.y}, ${finalPos.z}`,
       events: [
         {
           type: 'ENTITY_MOVED',
-          payload: { entityId: actorId, from: { x: 0, y: 0, z: 0 }, to: targetPosition },
+          payload: { entityId: actorId, from: oldPos, to: finalPos },
           timestamp: Date.now(),
         },
       ],
-      newStateDiff: {}, // In a real ECS we'd return the diff
+      newStateDiff: {
+        entities: state.entities, // Simplified diff strategy
+      },
     };
   }
 
@@ -96,11 +151,16 @@ export class ActionDispatcher {
       } else {
         totalDamage = 1 + (action.toHit || 0); // Fallback: 1 + Mod
       }
+
+      // Apply Damage to Target State
+      target.hp = Math.max(0, target.hp - totalDamage);
     }
 
     return {
       success: true,
-      message: isHit ? `Hit with ${action.name} for ${totalDamage} damage!` : `Missed with ${action.name}.`,
+      message: isHit
+        ? `Hit with ${action.name} for ${totalDamage} damage! (${target.hp} HP remaining)`
+        : `Missed with ${action.name}.`,
       events: [
         {
           type: 'ATTACK_RESULT',
@@ -114,11 +174,14 @@ export class ActionDispatcher {
             isHit,
             isCrit,
             damage: totalDamage,
+            targetHp: target.hp,
           },
           timestamp: Date.now(),
         },
       ],
-      newStateDiff: {}, // We might want to decrement HP here in a real ECS
+      newStateDiff: {
+        entities: state.entities,
+      },
     };
   }
 
@@ -178,6 +241,40 @@ export class ActionDispatcher {
             advantage,
             disadvantage,
           },
+          timestamp: Date.now(),
+        },
+      ],
+      newStateDiff: {},
+    };
+  }
+
+  private handleCastSpell(_state: GameState, command: CastSpellCommand): ActionResult {
+    // @ts-ignore
+    const { actorId, spellId, targetId } = command.payload;
+    return {
+      success: true,
+      message: `Casted ${spellId} on ${targetId}`,
+      events: [
+        {
+          type: 'SPELL_CAST',
+          payload: { casterId: actorId, spellId, targetId }, // Map actorId to casterId for event
+          timestamp: Date.now(),
+        },
+      ],
+      newStateDiff: {},
+    };
+  }
+
+  private handleInteract(_state: GameState, command: InteractCommand): ActionResult {
+    // @ts-ignore
+    const { actorId, targetId, interactionType } = command.payload;
+    return {
+      success: true,
+      message: `${actorId} interacted with ${targetId} (${interactionType})`,
+      events: [
+        {
+          type: 'OBJECT_INTERACTION',
+          payload: { actorId, targetId, interactionType },
           timestamp: Date.now(),
         },
       ],

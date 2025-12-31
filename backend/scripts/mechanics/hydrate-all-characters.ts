@@ -1,0 +1,70 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { strapi } = require('@strapi/client'); // Use client if running externally?
+// Wait, the plan says "Standalone script in backend".
+// If I use @strapi/client, I trigger the HTTP API, which triggers lifecycles.
+// So yes, using the client is the BEST way to trigger lifecycles without loading the full backend in the script.
+
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load env vars
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+function getClient() {
+  let baseURL = process.env.VITE_API_URL || 'http://localhost:1337';
+  if (!baseURL.endsWith('/api')) baseURL = `${baseURL}/api`;
+  const token = process.env.STRAPI_AUDIT_TOKEN || process.env.STRAPI_API_TOKEN;
+  return strapi({ baseURL, auth: token });
+}
+
+async function main() {
+  console.log('Starting Character Hydration...');
+  const client = getClient();
+
+  try {
+    // 1. Fetch all characters
+    // client.collection(...).find usually returns { data: [], meta: {} }
+    const res = await client.collection('character-sheets').find({
+      pagination: { pageSize: 100 }, // Batch size
+    });
+
+    const characters = res.data || [];
+    console.log(`Found ${characters.length} characters to hydrate.`);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const char of characters) {
+      try {
+        // 2. Trigger Update
+        // We send a dummy update to 'level' (same value) or just empty data?
+        // Providing empty data might not trigger 'beforeUpdate' if Strapi optimizes no-op updates.
+        // Let's toggle something or send the same level.
+        // The lifecycle checks: if (relevantFields.some(key => key in data))
+        // So we MUST send one of relevantFields keys.
+        // We'll send 'level': char.level
+
+        // Note: client.collection().update(documentId, data)
+        const docId = char.documentId;
+
+        console.log(`Hydrating ${char.name} (${docId})...`);
+
+        await client.collection('character-sheets').update(docId, {
+          level: char.level || 1, // effectively no-op but triggers lifecycle check
+        });
+
+        successCount++;
+      } catch (err: any) {
+        console.error(`Failed to hydrate ${char.name}:`, err.message);
+        failCount++;
+      }
+    }
+
+    console.log(`Hydration Complete. Success: ${successCount}, Failed: ${failCount}`);
+  } catch (error: any) {
+    console.error('Fatal Error:', error);
+  }
+}
+
+main();

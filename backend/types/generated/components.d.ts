@@ -180,6 +180,21 @@ export interface GameSaveDc extends Struct.ComponentSchema {
   };
 }
 
+export interface GameSpellbook extends Struct.ComponentSchema {
+  collectionName: 'components_game_spellbooks';
+  info: {
+    displayName: 'Spellbook';
+    icon: 'book';
+  };
+  attributes: {
+    knownSpells: Schema.Attribute.Relation<'oneToMany', 'api::spell.spell'>;
+    preparedSpells: Schema.Attribute.Relation<'oneToMany', 'api::spell.spell'>;
+    spellAttackBonus: Schema.Attribute.Integer;
+    spellcastingAbility: Schema.Attribute.Enumeration<['intelligence', 'wisdom', 'charisma']>;
+    spellSaveDc: Schema.Attribute.Integer;
+  };
+}
+
 export interface GameStats extends Struct.ComponentSchema {
   collectionName: 'components_game_stats';
   info: {
@@ -223,6 +238,7 @@ declare module '@strapi/strapi' {
       'game.player': GamePlayer;
       'game.position': GamePosition;
       'game.save-dc': GameSaveDc;
+      'game.spellbook': GameSpellbook;
       'game.stats': GameStats;
     }
   }

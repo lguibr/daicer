@@ -395,6 +395,7 @@ export interface ApiCharacterSheetCharacterSheet extends Struct.CollectionTypeSc
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
     currentHp: Schema.Attribute.Integer;
     experience: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    features: Schema.Attribute.Component<'game.feature', true>;
     inventory: Schema.Attribute.Component<'game.inventory-item', true>;
     level: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -407,7 +408,9 @@ export interface ApiCharacterSheetCharacterSheet extends Struct.CollectionTypeSc
     publishedAt: Schema.Attribute.DateTime;
     race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
     room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    spellbook: Schema.Attribute.Component<'game.spellbook', false>;
     stats: Schema.Attribute.Component<'game.stats', false>;
+    structuredActions: Schema.Attribute.Component<'game.action', true>;
     type: Schema.Attribute.Enumeration<['player', 'monster', 'npc']> & Schema.Attribute.DefaultTo<'player'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;

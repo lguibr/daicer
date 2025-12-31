@@ -141,8 +141,12 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
     }
   }, [socketCreatures, currentTimeFrame, isLive]);
 
-  const activeEntityId = ''; // Default to empty or first if needed, logic below handles it
-  const activeEntity = entities.find((e) => e.id === activeEntityId) || entities[0];
+  // Entity Selection State
+  const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
+  const activeEntity = useMemo(
+    () => entities.find((e) => e.id === activeEntityId) || entities[0] || null,
+    [entities, activeEntityId]
+  );
 
   // God Mode Chat State
   const [chatMessages, setChatMessages] = useState<GodModeMessage[]>([
@@ -223,14 +227,19 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
   // Map & View State
   const [cameraPosition, setCameraPosition] = useState<Coordinates>({ x: 0, y: 0, z: 0 });
 
+  // Chat State
+  const [activeLocation, setActiveLocation] = useState<{ label: string; x: number; y: number; z: number } | null>(null);
+
   // Handle Interactions
   const handleTileSingleClick = (target: Coordinates) => {
-    // Append coordinates to chat input
-    const coordString = `(${target.x}, ${target.y}, ${target.z})`;
-    setChatInput((prev) => {
-      const separator = prev.endsWith(' ') ? '' : ' ';
-      return prev + separator + coordString;
+    // Set Active Location (Chip)
+    setActiveLocation({
+      label: `${target.x}, ${target.y}, ${target.z}`,
+      x: target.x,
+      y: target.y,
+      z: target.z,
     });
+    // Don't modify input string directly anymore
   };
 
   const [viewZ, setViewZ] = useState<number>(0);
@@ -432,6 +441,10 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               isProcessing={isProcessing}
               inputValue={chatInput}
               onInputChange={setChatInput}
+              activeLocation={activeLocation}
+              onClearLocation={() => setActiveLocation(null)}
+              entities={entities}
+              activeEntity={activeEntity}
             />
           </div>
         </div>
@@ -469,6 +482,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
                 {entities.map((entity) => (
                   <div
                     key={entity.id}
+                    onClick={() => setActiveEntityId(entity.id)}
                     className={clsx(
                       'group p-2 rounded border transition-colors cursor-pointer',
                       activeEntity?.id === entity.id
@@ -509,7 +523,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               </div>
             ) : (
               <div className="absolute inset-0">
-                <AgentToolPalette roomId={roomId} />
+                <AgentToolPalette roomId={roomId} entities={entities} />
               </div>
             )}
           </div>

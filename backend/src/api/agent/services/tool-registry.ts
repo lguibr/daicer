@@ -85,6 +85,52 @@ export default ({ strapi }) => {
     return await actionEngine.dispatch(roomId, [command]);
   });
 
+  // 5. CAST_SPELL
+  register('cast_spell', async (roomId, payload, user) => {
+    const actionEngine = strapi.service('api::game.action-engine');
+    // Stub implementation as MagicSystem is not fully separated yet
+    const command = {
+      type: 'CAST_SPELL',
+      payload: payload,
+      timestamp: Date.now(),
+    };
+    return await actionEngine.dispatch(roomId, [command]);
+  });
+
+  // 6. INTERACT_OBJECT
+  register('interact_object', async (roomId, payload, user) => {
+    const actionEngine = strapi.service('api::game.action-engine');
+    const command = {
+      type: 'INTERACT',
+      payload: payload,
+      timestamp: Date.now(),
+    };
+    return await actionEngine.dispatch(roomId, [command]);
+  });
+
+  // 7. MODIFY_TERRAIN
+  register('modify_terrain', async (roomId, payload, user) => {
+    const actionEngine = strapi.service('api::game.action-engine');
+    // Map modification usually goes to VoxelEngine, but we wrap it in an Event/Command for persistence
+    const command = {
+      type: 'MODIFY_TERRAIN',
+      payload: payload,
+      timestamp: Date.now(),
+    };
+    return await actionEngine.dispatch(roomId, [command]);
+  });
+
+  // 8. LONG_REST
+  register('long_rest', async (roomId, payload, user) => {
+    const actionEngine = strapi.service('api::game.action-engine');
+    const command = {
+      type: 'LONG_REST',
+      payload: payload,
+      timestamp: Date.now(),
+    };
+    return await actionEngine.dispatch(roomId, [command]);
+  });
+
   return {
     hasTool(name: string) {
       return !!tools[name];

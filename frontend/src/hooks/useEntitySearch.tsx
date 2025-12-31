@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { debounce } from 'lodash';
-import { searchMonsters, searchSpells } from '@/services/api'; // We'll need to implement these API endpoints or use existing
+import { searchMonsters, searchSpells, searchCharacters } from '@/services/api'; // We'll need to implement these API endpoints or use existing
 
 interface SearchResult {
   id: string;
@@ -24,6 +24,8 @@ export function useEntitySearch() {
           data = await searchMonsters(query || ''); // Ensure backend handles empty string
         } else if (type === 'spell') {
           data = await searchSpells(query || '');
+        } else if (type === 'character') {
+          data = await searchCharacters(query || '');
         }
 
         setResults(data as SearchResult[]);

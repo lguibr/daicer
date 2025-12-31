@@ -34,6 +34,7 @@ import {
   SEARCH_ENTITIES_QUERY,
   LIST_MONSTERS_QUERY,
   LIST_SPELLS_QUERY,
+  LIST_CHARACTERS_QUERY,
 } from '../graphql/queries';
 import type {
   CreateRoomMutation,
@@ -583,6 +584,35 @@ export async function searchSpells(
     }));
   } catch (err) {
     console.error('Search spells failed:', err);
+    return [];
+  }
+}
+
+/**
+ * Search characters by name
+ */
+export async function searchCharacters(
+  query: string
+): Promise<{ id: string; name: string; type: string; description: string }[]> {
+  try {
+    const { data } = await apolloClient.query({
+      query: LIST_CHARACTERS_QUERY,
+      variables: {
+        filters: {
+          name: { containsi: query },
+        },
+      },
+      fetchPolicy: 'network-only',
+    });
+
+    return ((data as any)?.characters || []).map((c: any) => ({
+      id: c.documentId,
+      name: c.name,
+      type: 'character',
+      description: `Lvl 1 ${c.race?.name || 'Unknown'} ${c.class?.name || 'Unknown'}`,
+    }));
+  } catch (err) {
+    console.error('Search characters failed:', err);
     return [];
   }
 }

@@ -1,0 +1,34 @@
+{
+    "collectionName": "components_game_spellbooks",
+    "info": {
+        "displayName": "Spellbook",
+        "icon": "book"
+    },
+    "options": {},
+    "attributes": {
+        "knownSpells": {
+            "type": "relation",
+            "relation": "oneToMany",
+            "target": "api::spell.spell"
+        },
+        "preparedSpells": {
+            "type": "relation",
+            "relation": "oneToMany",
+            "target": "api::spell.spell"
+        },
+        "spellcastingAbility": {
+            "type": "enumeration",
+            "enum": [
+                "intelligence",
+                "wisdom",
+                "charisma"
+            ]
+        },
+        "spellSaveDc": {
+            "type": "integer"
+        },
+        "spellAttackBonus": {
+            "type": "integer"
+        }
+    }
+}

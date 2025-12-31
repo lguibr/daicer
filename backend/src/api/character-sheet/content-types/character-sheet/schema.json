@@ -84,6 +84,21 @@
       "type": "component",
       "repeatable": false,
       "component": "game.position"
+    },
+    "structuredActions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "game.action"
+    },
+    "features": {
+      "type": "component",
+      "repeatable": true,
+      "component": "game.feature"
+    },
+    "spellbook": {
+      "type": "component",
+      "repeatable": false,
+      "component": "game.spellbook"
     }
   }
 }

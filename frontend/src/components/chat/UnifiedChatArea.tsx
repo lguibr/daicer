@@ -61,6 +61,8 @@ export function UnifiedChatArea({
   hideHeader?: boolean;
   activeCommand?: { label: string; name: string };
   onClearCommand?: () => void;
+  activeLocation?: { label: string; x: number; y: number; z: number };
+  onClearLocation?: () => void;
 }) {
   // Start of body
   const { t } = useI18n();
@@ -142,7 +144,7 @@ export function UnifiedChatArea({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // @ts-ignore
-    if ((!inputValue.trim() && !props.activeCommand) || isProcessing) return;
+    if ((!inputValue.trim() && !props.activeCommand && !props.activeLocation) || isProcessing) return;
     const msg = inputValue.trim();
     onInputChange(''); // Clear only text input, command is cleared by parent after send
     await onSendMessage(msg);
@@ -365,25 +367,50 @@ export function UnifiedChatArea({
               </div>
             )}
 
+            {/* Active Location Tag */}
+            {/* @ts-ignore */}
+            {props.activeLocation && (
+              <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md pl-2 pr-1 py-0.5 shrink-0 animate-in fade-in zoom-in-95 duration-200">
+                <span className="text-xs font-bold text-emerald-300 uppercase tracking-wide">AT</span>
+                <span className="text-sm font-medium text-emerald-100 font-mono">
+                  {/* @ts-ignore */}
+                  {props.activeLocation.label}
+                </span>
+                <button
+                  type="button"
+                  // @ts-ignore
+                  onClick={props.onClearLocation}
+                  className="ml-1 p-0.5 rounded-full hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-200 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
             <input
               ref={inputRef}
               type="text"
               value={inputValue}
               onChange={(e) => {
-                // If backspace on empty input with active command, clear command?
-                // Hard to detect backspace specifically in onChange without onKeyDown.
-                // Let's keep it simple: input handles text.
                 handleLocalInputChange(e.target.value);
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Backspace' && !inputValue && props.activeCommand && props.onClearCommand) {
+                if (e.key === 'Backspace' && !inputValue) {
                   // @ts-ignore
-                  props.onClearCommand();
+                  if (props.activeLocation && props.onClearLocation) {
+                    // @ts-ignore
+                    props.onClearLocation();
+                  } else if (props.activeCommand && props.onClearCommand) {
+                    // @ts-ignore
+                    props.onClearCommand();
+                  }
                 }
               }}
               placeholder={
-                props.activeCommand
-                  ? "Add details (e.g. 'with 50 HP')..."
+                props.activeCommand || props.activeLocation
+                  ? 'Add details...'
                   : placeholder || (isDebugMode ? 'Command the world...' : t('gameplay.placeholder'))
               }
               className="flex-1 bg-transparent border-none p-0 text-sm text-shadow-100 focus:outline-none placeholder:text-midnight-600 min-w-[50px]"
@@ -394,7 +421,8 @@ export function UnifiedChatArea({
           <Button
             type="submit"
             size="icon"
-            disabled={isProcessing || (!inputValue.trim() && !props.activeCommand)}
+            // @ts-ignore
+            disabled={isProcessing || (!inputValue.trim() && !props.activeCommand && !props.activeLocation)}
             className="h-full aspect-square bg-aurora-600 hover:bg-aurora-500 text-white rounded-xl shadow-lg shadow-aurora-900/20 transition-all active:scale-95 shrink-0"
           >
             <Send className="w-5 h-5" />

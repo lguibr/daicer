@@ -53,6 +53,53 @@ export const InventoryItemSchema = z.object({
   isEquipped: z.boolean(),
 });
 
+// New Schemas for Phase 1 (Character Structure)
+export const ActionSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  type: z.enum(['melee', 'ranged', 'spell', 'utility']).or(z.string()), // loose string allowed for robustness
+  toHit: z.number().optional(),
+  reach: z.number().optional(),
+  range: z.string().optional(),
+  damage: z
+    .array(
+      z.object({
+        dice: z.string(),
+        bonus: z.number(),
+        type: z.string(),
+      })
+    )
+    .optional(),
+  save: z
+    .object({
+      dc: z.number(),
+      stat: z.string(),
+    })
+    .optional(),
+  description: z.string(),
+});
+
+export const FeatureSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  description: z.string(),
+  usage: z
+    .object({
+      max: z.number(),
+      per: z.string(),
+    })
+    .optional(),
+});
+
+export const SpellbookSchema = z.object({
+  id: z.string().optional(),
+  knownSpells: z.array(z.any()).optional(), // Loose for now (relations)
+  preparedSpells: z.array(z.any()).optional(),
+  spellcastingAbility: z.enum(['intelligence', 'wisdom', 'charisma']).or(z.string()),
+  spellSaveDc: z.number(),
+  spellAttackBonus: z.number(),
+});
+
 export const CharacterSheetSchema = z.object({
   id: z.string().optional(),
   documentId: z.string().optional(),
@@ -103,7 +150,11 @@ export const CharacterSheetSchema = z.object({
     pp: z.number(),
   }),
   proficienciesAndLanguages: z.string(),
-  features: z.string(),
+  // Modified features to be array of objects
+  features: z.array(FeatureSchema).or(z.string()).default([]), // Allow string for migration, but prefer array
+  structuredActions: z.array(ActionSchema).optional().default([]),
+  spellbook: SpellbookSchema.optional(),
+
   talents: z.array(TalentSchema),
   appearance: z.object({
     age: z.string(),

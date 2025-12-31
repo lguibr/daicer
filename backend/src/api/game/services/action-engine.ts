@@ -19,6 +19,7 @@ export default ({ strapi }) => ({
         'character_sheets.monster.features',
         'character_sheets.character',
         'character_sheets.character.baseStats',
+        'character_sheets.position', // Critical for correct entity placement
       ],
     });
 
@@ -82,14 +83,34 @@ export default ({ strapi }) => ({
       fields: ['turnNumber'],
     });
     const nextTurnNumber = (lastTurnHandles[0]?.turnNumber || 0) + 1;
+    const now = Date.now();
 
-    // Create TimeFrame with State Diff (Events as Proxy for now)
+    // 2b. Create Game Event Entities
+    const createdEventIds: string[] = [];
+
+    for (const event of result.events) {
+      const gEvent = await strapi.documents('api::game-event.game-event').create({
+        data: {
+          type: event.type,
+          payload: event.payload,
+          timestamp: now,
+          room: roomId,
+          turnNumber: nextTurnNumber,
+          actorId: event.payload.actorId || event.payload.entityId || null,
+        },
+        status: 'published',
+      });
+      createdEventIds.push(gEvent.documentId);
+    }
+
+    // Create TimeFrame with State Diff AND Relation linkage
     const timeFrame = await strapi.documents('api::time-frame.time-frame').create({
       data: {
         turnNumber: nextTurnNumber,
         timestamp: new Date().toISOString(),
         room: roomId,
-        gameState: { events: result.events }, // Storing events as the "State Diff" for this turn
+        gameState: { events: result.events }, // Keep JSON for quick client diffs
+        events: createdEventIds, // Link to queryable entities
       },
       status: 'published',
     });
@@ -105,15 +126,13 @@ export default ({ strapi }) => ({
         senderType: 'system',
         room: roomId,
         turn: timeFrame.documentId,
-        timestamp: Date.now(),
+        timestamp: now,
       },
       status: 'published',
     });
 
     // 4. Broadcast
     const { streamManager } = await import('../../../utils/llm/stream-manager');
-    // Using roomId as documentId for broadcast channel might be risky if roomId != code.
-    // Assuming roomId passed here is correct for broadcast.
     streamManager.broadcast(roomId, 'engine:events', {
       events: result.events,
       turnId: timeFrame.documentId,

@@ -300,7 +300,7 @@ export default ({ strapi }) => ({
     // Needs sheets populated
     const roomWithSheets = await strapi.documents('api::room.room').findOne({
       documentId: room.documentId,
-      populate: ['character_sheets'],
+      populate: ['character_sheets', 'character_sheets.position'],
     });
 
     // Use extracted helper via service or duplicate?
@@ -385,7 +385,13 @@ export default ({ strapi }) => ({
   async getRoom(roomId: string) {
     const rooms = await strapi.documents('api::room.room').findMany({
       filters: { $or: [{ roomId }, { documentId: roomId }, { code: roomId }] },
-      populate: ['players', 'players.character', 'players.characterSheet', 'character_sheets'],
+      populate: [
+        'players',
+        'players.character',
+        'players.characterSheet',
+        'character_sheets',
+        'character_sheets.position',
+      ],
     });
 
     if (!rooms || rooms.length === 0) return null;
