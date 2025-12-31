@@ -1,5 +1,5 @@
 import { ActionDefinition, ActionIntent, ActionType } from './actions';
-import { CharacterSheet } from '../types';
+import { CharacterSheet, ExecutionTrace, ExecutionStep } from '../types';
 import { roll, DiceResult, parseDiceString } from './dice';
 import { calculateDistance } from '../utils/geometry';
 import { getConditionModifiers, hasCondition, ConditionType } from './conditions';
@@ -28,7 +28,9 @@ export interface AttackResult {
     diceString: string;
   }[];
   verdict: string; // "Hit!", "Miss", "Critical Hit!"
+  trace: ExecutionTrace;
 }
+import { ExecutionTrace } from '../types'; // Import at top needed, simpler to just use type if imported
 
 // ============================================================================
 // Helpers
@@ -74,7 +76,12 @@ export function validateAttack(
 /**
  * Resolves a unified Attack Action (Melee or Ranged).
  */
-export function resolveAttack(attacker: CharacterSheet, target: CharacterSheet, intent: ActionIntent): AttackResult {
+export function resolveAttack(
+  attacker: CharacterSheet,
+  target: CharacterSheet,
+  intent: ActionIntent,
+  rng?: () => number
+): AttackResult {
   if (intent.type !== ActionType.Attack) {
     throw new Error('Invalid intent type for resolveAttack');
   }
@@ -133,16 +140,16 @@ export function resolveAttack(attacker: CharacterSheet, target: CharacterSheet, 
   }
 
   if (hasAdvantage && !hasDisadvantage) {
-    const r1 = roll({ count: 1, sides: 20, bonus: action.toHit });
-    const r2 = roll({ count: 1, sides: 20, bonus: action.toHit });
+    const r1 = roll({ count: 1, sides: 20, bonus: action.toHit }, rng);
+    const r2 = roll({ count: 1, sides: 20, bonus: action.toHit }, rng);
     rollRes = r1.total >= r2.total ? r1 : r2;
   } else if (hasDisadvantage && !hasAdvantage) {
-    const r1 = roll({ count: 1, sides: 20, bonus: action.toHit });
-    const r2 = roll({ count: 1, sides: 20, bonus: action.toHit });
+    const r1 = roll({ count: 1, sides: 20, bonus: action.toHit }, rng);
+    const r2 = roll({ count: 1, sides: 20, bonus: action.toHit }, rng);
     rollRes = r1.total <= r2.total ? r1 : r2;
   } else {
     // Normal or Cancelled out
-    rollRes = roll({ count: 1, sides: 20, bonus: action.toHit });
+    rollRes = roll({ count: 1, sides: 20, bonus: action.toHit }, rng);
   }
 
   const natural = rollRes.rolls[0];
@@ -190,7 +197,7 @@ export function resolveAttack(attacker: CharacterSheet, target: CharacterSheet, 
       }
 
       // Roll damage
-      const dmgRoll = roll({ ...def, bonus: d.bonus + rageBonus });
+      const dmgRoll = roll({ ...def, bonus: d.bonus + rageBonus }, rng);
       // Clear rage bonus after first damage instance? Usually applies once per hit.
       // Applied to first damage chunk is safest.
       rageBonus = 0;
@@ -239,7 +246,7 @@ export function resolveAttack(attacker: CharacterSheet, target: CharacterSheet, 
       let sneakDiceTotal = sneakDiceCount;
       if (isCritical) sneakDiceTotal *= 2;
 
-      const sneakRoll = roll({ count: sneakDiceTotal, sides: 6, bonus: 0 });
+      const sneakRoll = roll({ count: sneakDiceTotal, sides: 6, bonus: 0 }, rng);
       const sneakDmg = sneakRoll.total;
 
       totalDamage += sneakDmg;
@@ -253,6 +260,53 @@ export function resolveAttack(attacker: CharacterSheet, target: CharacterSheet, 
     }
   }
 
+  // 4. Construct Trace
+  const trace: ExecutionTrace = [];
+
+  // Log Attack Roll
+  const attackRollStep: ExecutionStep = {
+    type: 'roll_to_hit',
+    description: `Attack Roll (${action.name})`,
+    base: natural,
+    modifiers: [{ source: 'To Hit Bonus', value: action.toHit }],
+    total: totalHit,
+    diceNotation: '1d20',
+    rolls: rollRes.rolls,
+    outcome: hit ? (isCritical ? 'Critical Hit' : 'Hit') : isCriticalFail ? 'Critical Miss' : 'Miss',
+    targetValue: targetAC,
+  };
+
+  // Log Advantage/Disadvantage sources
+  if (hasAdvantage) attackRollStep.modifiers?.push({ source: 'Advantage', value: 0 }); // Contextual
+  if (hasDisadvantage) attackRollStep.modifiers?.push({ source: 'Disadvantage', value: 0 });
+
+  trace.push(attackRollStep);
+
+  // Log Conditions
+  if (hasCondition(target, ConditionType.Prone)) {
+    trace.push({
+      type: 'condition_effect',
+      description: 'Target is Prone',
+      total: 0,
+      outcome: action.type === 'melee_attack' ? 'Grant Advantage (Melee)' : 'Grant Disadvantage (Ranged)',
+    });
+  }
+
+  // Log Damage
+  if (hit) {
+    damageDetails.forEach((d) => {
+      trace.push({
+        type: 'roll_damage',
+        description: `Damage (${d.type})`,
+        base: d.total - d.bonus, // Rough reverse engineer or just use d.diceRolls sum
+        modifiers: d.bonus ? [{ source: 'Bonus', value: d.bonus }] : [],
+        total: d.total,
+        diceNotation: d.diceString,
+        rolls: d.diceRolls,
+      });
+    });
+  }
+
   return {
     hit,
     isCritical,
@@ -261,6 +315,7 @@ export function resolveAttack(attacker: CharacterSheet, target: CharacterSheet, 
     damageTotal: totalDamage,
     damageDetails,
     verdict: isCritical ? 'Critical Hit!' : hit ? 'Hit' : isCriticalFail ? 'Critical Miss!' : 'Miss',
+    trace,
   };
 }
 // ... imports ...

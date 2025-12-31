@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Room, Player, Message, Creature } from '@daicer/engine';
+import type { Room, Player, Message, Creature, GameEvent } from '@daicer/engine';
 import { initSocket, disconnectSocket, getSocket, type ToolCall } from '../services/socket';
 
 /**
@@ -13,6 +13,7 @@ interface SocketState {
   messages: Message[];
   creatures: Creature[];
   toolCalls: ToolCall[];
+  gameEvents: GameEvent[];
   isProcessing: boolean;
 }
 
@@ -30,6 +31,7 @@ export default function useSocket(roomId?: string, userId?: string) {
     messages: [],
     creatures: [],
     toolCalls: [],
+    gameEvents: [],
     isProcessing: false,
   });
 
@@ -220,6 +222,13 @@ export default function useSocket(roomId?: string, userId?: string) {
               };
             });
           },
+          onGameEvents: (data) => {
+            console.log('⚡ Received Game Events:', data.events);
+            setState((prev) => ({
+              ...prev,
+              gameEvents: [...prev.gameEvents, ...data.events],
+            }));
+          },
         });
       } catch (error) {
         updateState({
@@ -243,6 +252,7 @@ export default function useSocket(roomId?: string, userId?: string) {
     messages: state.messages,
     creatures: state.creatures,
     toolCalls: state.toolCalls,
+    gameEvents: state.gameEvents,
     socket: getSocket(),
     isProcessing: state.isProcessing,
   };

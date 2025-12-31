@@ -10,6 +10,7 @@ import { searchSpellsTool } from '../../../ai/tools/knowledge/search-spells';
 import { searchClassesTool } from '../../../ai/tools/knowledge/search-classes';
 import { searchRacesTool } from '../../../ai/tools/knowledge/search-races';
 import { retrieveKnowledgeTool } from '../../../ai/tools/knowledge-tool';
+import { performActionTool } from '../../../ai/tools/game/perform-action';
 import { StrapiContext, StrapiInterface } from '../../../ai/tools/tool-factory';
 
 export const getRegistryTools = (strapi: StrapiInterface, roomDocumentId: string, mode: 'game' | 'debug' = 'game') => {
@@ -27,6 +28,7 @@ export const getRegistryTools = (strapi: StrapiInterface, roomDocumentId: string
   tools.push(searchSpellsTool(context));
   tools.push(searchClassesTool(context));
   tools.push(searchRacesTool(context));
+  tools.push(performActionTool(context));
 
   // Knowledge Tool (added back explicitly)
   // Check if factory supports context?

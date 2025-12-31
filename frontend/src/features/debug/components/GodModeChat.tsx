@@ -20,10 +20,12 @@ interface GodModeChatProps {
   onInputChange: (value: string) => void;
   activeLocation?: { label: string; x: number; y: number; z: number } | null;
   onClearLocation?: () => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities?: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   activeEntity?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  events?: any[];
 }
 
 export function GodModeChat({
@@ -36,8 +38,24 @@ export function GodModeChat({
   onClearLocation,
   entities,
   activeEntity,
+  events = [],
 }: GodModeChatProps) {
   const { search, results, loading } = useEntitySearch();
+
+  // Merge Messages & Events
+  const displayItems = [
+    ...messages,
+    ...events.map((e) => ({
+      id: `event-${e.timestamp}-${Math.random()}`,
+      role: 'system',
+      sender: 'Engine',
+      content: '', // No text content
+      timestamp: e.timestamp,
+      isEvent: true,
+      data: e,
+    })),
+  ].sort((a, b) => a.timestamp - b.timestamp);
+
   const [activeCommand, setActiveCommand] = useState<{
     prefix: string;
     id: string;
@@ -103,7 +121,7 @@ export function GodModeChat({
       </div>
       <div className="flex-1 overflow-hidden">
         <UnifiedChatArea
-          messages={messages}
+          messages={displayItems}
           onSendMessage={async (msg) => {
             let fullMsg = msg;
 

@@ -1,6 +1,10 @@
 import { Command, MoveCommand, AttackCommand, SkillCheckCommand, CastSpellCommand, InteractCommand } from '../types';
 import { GameState, ActionResult } from '../types/engine';
 import { Alea } from '../voxel/utils/math';
+import { resolveAttack } from '../rules/combat';
+import { findPath } from '../rules/spatial';
+import { TerrainGenerator } from '../voxel/terrain-generator';
+import { WorldConfig, ZLevel } from '../types';
 
 export class ActionDispatcher {
   private rng: Alea;
@@ -50,50 +54,116 @@ export class ActionDispatcher {
 
     if (!entity) return { success: false, message: 'Actor not found', events: [] };
 
-    // 1. Calculate Distance (Euclidean)
-    // Assumption: 1 unit = 1 foot (as per user request)
-    const dx = targetPosition.x - entity.position.x;
-    const dy = targetPosition.y - entity.position.y;
-    const dz = targetPosition.z - entity.position.z;
-    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const targetPos = targetPosition; // Rename for clarity
 
-    // 2. Clamp to Speed
-    // If exact diagonal is > speed, we stop at speed limit
-    const speed = entity.speed || 30; // Default 30ft if not set
-    let finalPos = targetPosition;
+    // 1. Setup Collision Checker
+    let checkCollision = (p: { x: number; y: number; z: number }): boolean => {
+      // Check Entities (Basic 1x1 size assumption for now)
+      const occupied = state.entities.some(
+        (e) =>
+          e.id !== actorId &&
+          Math.round(e.position.x) === p.x &&
+          Math.round(e.position.y) === p.y &&
+          Math.round(e.position.z) === p.z
+      );
+      if (occupied) return true;
+      return false; // Default open if no map
+    };
 
-    if (dist > speed) {
-      if (dist === 0) {
-        // @ts-ignore
-        finalPos = entity.position; // Stay put
-      } else {
-        const ratio = speed / dist;
-        // Linear interpolation towards target, clamped at range
-        finalPos = {
-          x: Math.round(entity.position.x + dx * ratio),
-          y: Math.round(entity.position.y + dy * ratio),
-          z: Math.round(entity.position.z + dz * ratio) as any, // Cast to match strict ZLevel type
-        };
-      }
+    // If Room Config exists, use Terrain Generator for walls
+    if (state.room && (state.room as any).config) {
+      const config = (state.room as any).config as WorldConfig;
+      // We create a generator on the fly - assumption: seed is stable.
+      // Note: This might be slow for massive batch moves, but fine for turn-based 1 action.
+      const generator = new TerrainGenerator(config);
+
+      const baseCheck = checkCollision;
+      checkCollision = (p: { x: number; y: number; z: number }) => {
+        if (baseCheck(p)) return true;
+        // Check Terrain
+        // ZLevel cast needed
+        const tile = generator.getTileAt(p.x, p.y, Math.round(p.z) as ZLevel);
+        return !tile.isWalkable;
+      };
     }
 
-    // 3. Update State (Mutable Engine)
+    // 2. Find Path
+    // Limit A* to 500 iterations for safety
+    const path = findPath(entity.position, targetPos, checkCollision, 500);
+
+    if (path.length === 0) {
+      // No path found or blocked immediately?
+      // Or maybe start equals end?
+      // Fallback: If close, try direct linear check?
+      // For now, fail if blocked.
+
+      // Edge case: User clicked ON an entity or wall.
+      // If target is blocked, findPath fails.
+      // We should try to move adjacent to target?
+      // Current behavior: Fail.
+      return { success: false, message: 'Path blocked or unreachable', events: [] };
+    }
+
+    // 3. Walk the Path up to Speed
+    const speed = typeof entity.speed === 'number' ? entity.speed : 30;
+
+    // Path includes start? usually not. findPath returns [start, ... nodes, end].
+    // Let's check `spatial.ts` implementation.
+    // It returns `reconstructPath(current)` which pushes `curr.pos` up to start.
+    // So path[0] is Start, path[last] is End.
+
+    let traveled = 0;
+    let finalPos = path[0]; // Start at 0
+
+    // Iterate steps (skip start)
+    for (let i = 1; i < path.length; i++) {
+      const prev = path[i - 1];
+      const next = path[i];
+
+      // Calculate cost (Diagonals = 1.414 ~ 1.5, Straight = 1)
+      // D&D 5e Variant: 5-10-5? or Simple 1-1-1 (Chess)?
+      // Use Euclidean for true distance cost
+      const dist = Math.sqrt(
+        Math.pow(next.x - prev.x, 2) + Math.pow(next.y - prev.y, 2) + Math.pow(next.z - prev.z, 2)
+      );
+
+      if (traveled + dist > speed) {
+        break; // Stop here
+      }
+
+      traveled += dist;
+      finalPos = next;
+    }
+
+    // 4. Update State
     const oldPos = { ...entity.position };
+
+    // Optimization: If didn't move
+    if (finalPos.x === oldPos.x && finalPos.y === oldPos.y && finalPos.z === oldPos.z) {
+      return { success: false, message: 'No movement possible (blocked or 0 distance)', events: [] };
+    }
+
     // @ts-ignore
     entity.position = finalPos;
 
     return {
       success: true,
-      message: `Movito to ${finalPos.x}, ${finalPos.y}, ${finalPos.z}`,
+      message: `Moved to ${finalPos.x}, ${finalPos.y}, ${finalPos.z} (${path.length - 1} steps, used ${Math.round(traveled)}/${speed}ft)`,
       events: [
         {
           type: 'ENTITY_MOVED',
-          payload: { entityId: actorId, from: oldPos, to: finalPos },
+          payload: {
+            entityId: actorId,
+            from: oldPos,
+            to: finalPos,
+            path: path.map((p) => ({ x: p.x, y: p.y, z: p.z })), // Send full path for viz?
+            cost: traveled,
+          },
           timestamp: Date.now(),
         },
       ],
       newStateDiff: {
-        entities: state.entities, // Simplified diff strategy
+        entities: state.entities,
       },
     };
   }
@@ -107,82 +177,73 @@ export class ActionDispatcher {
       return { success: false, message: 'Actor or Target not found', events: [] };
     }
 
-    // 1. Determine Action
-    let action = actor.actions.find((a) => a.name === weaponId);
-    if (!action && !weaponId && actor.actions.length > 0) {
-      action = actor.actions[0]; // Default to first
+    if (!actor.sheet || !target.sheet) {
+      return { success: false, message: 'Actors missing Character Sheets', events: [] };
     }
 
-    // Fallback if still no action found (shouldn't happen with Unarmed Strike fallback)
-    if (!action) {
-      return { success: false, message: 'No valid attack action available', events: [] };
+    // 1. Resolve using Shared Kernel Rule
+    // Intent construction
+    // TODO: Client should send specific ActionIntent. For now, infer it.
+    // If weaponId is provided, we search for it.
+
+    // We need to find the action ID. Engine expects actionId.
+    // Allow payload to optionally send full intent? For now, we reconstruct.
+    let actionId: string = weaponId;
+    if (!actionId && actor.sheet.structuredActions.length > 0) {
+      actionId = actor.sheet.structuredActions[0].id;
     }
 
-    // 2. Resolve Hit
-    const attackBonus = action.toHit || 0;
-    const roll = Math.floor(this.rng.next() * 20) + 1;
-    const total = roll + attackBonus;
-    const ac = target.ac || 10;
-
-    const isHit = total >= ac || roll === 20;
-    const isCrit = roll === 20;
-
-    // 3. Resolve Damage
-    let totalDamage = 0;
-    if (isHit) {
-      if (action.damage && action.damage.length > 0) {
-        // Sum parts
-        action.damage.forEach((part) => {
-          // Parse dice: "1d8"
-          const split = (part.dice || '1d6').split('d');
-          const countStr = split[0];
-          const faceStr = split[1];
-          const count = parseInt(countStr || '1') || 1;
-          const faces = parseInt(faceStr || '6') || 6;
-
-          let rollSum = 0;
-          for (let i = 0; i < count; i++) {
-            let d = Math.floor(this.rng.next() * faces) + 1;
-            if (isCrit) d += Math.floor(this.rng.next() * faces) + 1; // Crit rule: Roll twice
-            rollSum += d;
-          }
-          totalDamage += rollSum + (part.bonus || 0);
-        });
-      } else {
-        totalDamage = 1 + (action.toHit || 0); // Fallback: 1 + Mod
-      }
-
-      // Apply Damage to Target State
-      target.hp = Math.max(0, target.hp - totalDamage);
+    if (!actionId) {
+      return { success: false, message: 'No action specified or available', events: [] };
     }
 
-    return {
-      success: true,
-      message: isHit
-        ? `Hit with ${action.name} for ${totalDamage} damage! (${target.hp} HP remaining)`
-        : `Missed with ${action.name}.`,
-      events: [
-        {
-          type: 'ATTACK_RESULT',
-          payload: {
-            actorId,
-            targetId,
-            actionName: action.name,
-            roll,
-            total,
-            ac,
-            isHit,
-            isCrit,
-            damage: totalDamage,
-            targetHp: target.hp,
+    // Prepare RNG wrapper
+    // Alea.next() returns 0-1 exclusive? or uint32?
+    // Alea returns 0 <= n < 1.
+    const rng = () => this.rng.next();
+
+    try {
+      const result = resolveAttack(
+        actor.sheet,
+        target.sheet,
+        { type: 'attack', actionId }, // Fallback type check inside resolveAttack will validate. Actually resolveAttack checks type match against definition.
+        rng
+      );
+
+      // 2. Apply State (State Mutation)
+      // resolveAttack returns 'damageTotal' but does NOT mutate 'target.sheet.hp' (it mutates local clone? No, it mutates passed reference!).
+      // Wait, 'resolveAttack' takes 'CharacterSheet'. 'state.entities[i].sheet' IS that object.
+      // So HP is ALREADY updated by resolveAttack!
+      // Double check resolveAttack source... "target.hp = Math.max..."
+      // Yes. So we just need to sync Entity.hp if it's separate from Sheet.
+      // Entity interface has 'hp'. Sheet has 'hp'. They should be synced.
+      target.hp = target.sheet.hp;
+
+      // 3. Emit Event with Trace
+      return {
+        success: true,
+        message: result.verdict + ` (${result.damageTotal} damage)`,
+        events: [
+          {
+            type: 'ATTACK_RESULT',
+            payload: {
+              actorId,
+              targetId,
+              roll: result.attackRoll.total, // Total or Natural? Legacy was Natural. Use Total for clarity? Or expand payload.
+              total: result.attackRoll.total,
+              isHit: result.hit,
+              isCrit: result.isCritical,
+              damage: result.damageTotal,
+              trace: result.trace,
+            },
+            timestamp: Date.now(),
           },
-          timestamp: Date.now(),
-        },
-      ],
-      newStateDiff: {
-        entities: state.entities,
-      },
-    };
+        ],
+        newStateDiff: { entities: state.entities }, // Fully dirty for now
+      };
+    } catch (e: any) {
+      return { success: false, message: e.message, events: [] };
+    }
   }
 
   private handleSkillCheck(state: GameState, command: SkillCheckCommand): ActionResult {

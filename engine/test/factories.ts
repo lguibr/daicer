@@ -112,3 +112,36 @@ export const createSpellAction = (id: string, level: number = 1, concentration: 
   concentration,
   description: 'A magical effect',
 });
+
+export const createAction = (overrides: any) => ({
+  type: 'melee_attack',
+  id: 'action-generic',
+  name: 'Generic Action',
+  description: 'Generic',
+  toHit: 0,
+  ...overrides,
+});
+
+export const createEntity = (overrides: any = {}) => ({
+  id: 'ent-1',
+  type: 'character',
+  name: 'Entity',
+  position: { x: 0, y: 0, z: 0 },
+  rotation: { x: 0, y: 0, z: 0 },
+  speed: 30,
+  stats: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10, charisma: 10 },
+  hp: 10,
+  maxHp: 10,
+  ac: 10,
+  sheet: createCharacterSheet(),
+  ...overrides,
+});
+
+export const createGameState = (overrides: any = {}) => ({
+  entities: [],
+  players: [],
+  room: { id: 'room-1', config: {} },
+  world: {},
+  settings: { allowPvp: true },
+  ...overrides,
+});

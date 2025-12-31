@@ -41,6 +41,8 @@ interface DebugEntity {
   color: string;
   exploredTiles: Set<string>;
   pendingPath?: Coordinates[];
+  currentHp?: number;
+  maxHp?: number;
 }
 
 interface GameDebugViewProps {
@@ -48,7 +50,7 @@ interface GameDebugViewProps {
 }
 
 export function GameDebugView({ roomId }: GameDebugViewProps) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [room, setRoom] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function GameDebugView({ roomId }: GameDebugViewProps) {
           setRoom(r);
           setLoading(false);
         }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         if (mounted) {
           setError(err.message);
@@ -106,13 +108,13 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
   // Time Travel Context
   const { currentTimeFrame, isLive } = useTimeFrame();
 
-  const { socket, creatures: socketCreatures } = useSocket(room.documentId, 'debug-user');
+  const { socket, creatures: socketCreatures, gameEvents } = useSocket(room.documentId, 'debug-user');
 
   const [entities, setEntities] = useState<DebugEntity[]>([]);
 
   // Sync Entities: Either from Socket (Live) or from TimeFrame (History)
   useEffect(() => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let sourceData: any[] = [];
 
     if (isLive) {
@@ -121,15 +123,15 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
       } else if (room && room.entities) {
         sourceData = room.entities;
       }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } else if (currentTimeFrame && currentTimeFrame.gameState && (currentTimeFrame.gameState as any).entities) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sourceData = (currentTimeFrame.gameState as any).entities;
     }
 
     if (sourceData) {
       setEntities((_prev) =>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sourceData.map((c: any) => ({
           id: c.id || c.documentId,
           name: c.name,
@@ -170,7 +172,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
   // Sync Room Messages to Chat
   useEffect(() => {
     if (room && room.messages) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const historicalMessages = room.messages.map((m: any) => ({
         id: m.documentId,
         role: m.senderType === 'dm' ? 'assistant' : m.senderType === 'player' ? 'user' : 'system',
@@ -186,7 +188,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
       let visibleMessages = historicalMessages;
       if (!isLive && currentTimeFrame) {
         const frameTime = new Date(currentTimeFrame.timestamp).getTime();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         visibleMessages = historicalMessages.filter((m: any) => m.timestamp <= frameTime);
       }
 
@@ -454,6 +456,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               onClearLocation={() => setActiveLocation(null)}
               entities={entities}
               activeEntity={activeEntity}
+              events={gameEvents}
             />
           </div>
         </div>

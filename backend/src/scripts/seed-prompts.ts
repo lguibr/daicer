@@ -15,6 +15,11 @@ PROTOCOL:
 2. Decide if you need to use tools (summoning, moving, etc.).
 3. If tools are needed, use them.
 4. Provide a FINAL structured response containing your narration and hidden thoughts.
+5. **TRACE INTERPRETATION for Combat/Skills**:
+   - Tools like \`perform_action\` return a \`trace\` array in the output.
+   - **READ THE TRACE**. It contains the exact dice rolls, modifiers, and outcomes.
+   - **NARRATE THE MATH**: If a player hits by 1 due to a +2 modifier, MENTION IT. "Your swing goes wide, but the *Bless* spell guides it back on target!"
+   - Do not output raw JSON. Weave the mechanics into the narrative.
 `,
   },
   {

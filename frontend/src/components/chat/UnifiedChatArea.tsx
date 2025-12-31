@@ -23,10 +23,11 @@ import {
 import { MentionDropdown } from './MentionDropdown';
 import DiceRollCard from './DiceRollCard';
 import ToolCallCard from './ToolCallCard';
+import TraceEventCard from './TraceEventCard';
 
 // Shared interfaces
 export interface UnifiedChatProps {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   messages: any[]; // Relaxed type for cross-component compatibility
   currentUser?: { name?: string; id?: string; avatar?: string };
   onSendMessage: (msg: string) => Promise<void>;
@@ -39,7 +40,7 @@ export interface UnifiedChatProps {
 
   // Specific Game Props
   worldDescription?: string;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dmPresence?: any;
   hideInput?: boolean;
 }
@@ -205,6 +206,15 @@ export function UnifiedChatArea({
               const isSystem = role === 'system' && isDebugMode;
 
               if (isSystem) {
+                // If it's a Trace Event (God Mode)
+                if (msg.isEvent) {
+                  return (
+                    <div key={msg.id} className="flex justify-center my-2 w-full px-4">
+                      <TraceEventCard event={msg.data} />
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={msg.id} className="flex justify-center my-2">
                     <div className="bg-midnight-800/80 border border-aurora-500/20 rounded-full px-3 py-1 text-[10px] text-aurora-300 shadow-sm flex items-center gap-2">
@@ -283,7 +293,7 @@ export function UnifiedChatArea({
                         {/* Dice Rolls */}
                         {msg.diceRolls?.length > 0 && (
                           <div className="mt-4 space-y-3">
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             {msg.diceRolls.map((roll: any, i: number) => (
                               <DiceRollCard key={`${msg.id}-dice-${i}`} roll={roll} animate />
                             ))}
@@ -293,7 +303,7 @@ export function UnifiedChatArea({
                         {/* Tool Calls */}
                         {msg.toolCalls?.length > 0 && (
                           <div className="mt-4 space-y-3">
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             {msg.toolCalls.map((tc: any, i: number) => (
                               <ToolCallCard key={`${msg.id}-tool-${i}`} toolCall={tc} status="complete" />
                             ))}
@@ -351,9 +361,7 @@ export function UnifiedChatArea({
                 <span className="text-xs font-bold text-aurora-300 uppercase tracking-wide">
                   {props.activeCommand.label}:
                 </span>
-                <span className="text-sm font-medium text-aurora-100">
-                  {props.activeCommand.name}
-                </span>
+                <span className="text-sm font-medium text-aurora-100">{props.activeCommand.name}</span>
                 <button
                   type="button"
                   onClick={props.onClearCommand}
@@ -370,9 +378,7 @@ export function UnifiedChatArea({
             {props.activeLocation && (
               <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md pl-2 pr-1 py-0.5 shrink-0 animate-in fade-in zoom-in-95 duration-200">
                 <span className="text-xs font-bold text-emerald-300 uppercase tracking-wide">AT</span>
-                <span className="text-sm font-medium text-emerald-100 font-mono">
-                  {props.activeLocation.label}
-                </span>
+                <span className="text-sm font-medium text-emerald-100 font-mono">{props.activeLocation.label}</span>
                 <button
                   type="button"
                   onClick={props.onClearLocation}

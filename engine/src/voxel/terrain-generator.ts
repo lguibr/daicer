@@ -65,6 +65,33 @@ export class TerrainGenerator {
     return tiles;
   }
 
+  public getTileAt(x: number, y: number, z: ZLevel): Tile {
+    const nx = x * this.config.globalScale;
+    const ny = y * this.config.globalScale;
+    const elev = this.noiseElevation.fbm(
+      nx * this.config.elevationScale,
+      ny * this.config.elevationScale,
+      Math.floor(this.config.detail),
+      this.config.roughness
+    );
+    const moist = this.noiseMoisture.fbm(nx * this.config.moistureScale, ny * this.config.moistureScale, 2);
+
+    const { biome, surfaceBlock } = this.determineBiome(elev, moist);
+
+    let block;
+
+    // Determine block based on Z
+    if (z === 0) {
+      block = surfaceBlock;
+    } else if (z < 0) {
+      block = z === -3 && this.rng.next() > 0.5 ? BlockType.BEDROCK : BlockType.STONE;
+    } else {
+      block = BlockType.AIR;
+    }
+
+    return this.createTile(x, y, z, block, biome);
+  }
+
   private determineBiome(elev: number, moist: number): { biome: BiomeType; surfaceBlock: BlockType } {
     if (elev < this.config.seaLevel) return { biome: BiomeType.ocean, surfaceBlock: BlockType.WATER };
     if (elev < this.config.seaLevel + 0.05) return { biome: BiomeType.beach, surfaceBlock: BlockType.SAND };

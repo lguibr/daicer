@@ -39,13 +39,16 @@ export function parseDiceString(str: string): DiceRollDefinition {
 
 /**
  * Rolls dice based on a definition.
+ * @param def Dice definition
+ * @param rng Optional random number generator (returns 0-1). Defaults to Math.random.
  */
-export function roll(def: DiceRollDefinition): DiceResult {
+export function roll(def: DiceRollDefinition, rng?: () => number): DiceResult {
   let total = 0;
   const rolls: number[] = [];
+  const generator = rng || Math.random;
 
   for (let i = 0; i < def.count; i++) {
-    const r = Math.floor(Math.random() * def.sides) + 1;
+    const r = Math.floor(generator() * def.sides) + 1;
     rolls.push(r);
     total += r;
   }

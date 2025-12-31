@@ -83,8 +83,10 @@ interface SocketEvents {
     metadata?: Record<string, unknown>;
     timestamp: number;
   }) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onEntitiesUpdate?: (data: { entities: any[] }) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onGameEvents?: (data: { events: any[] }) => void;
 }
 
 /**
@@ -171,6 +173,9 @@ function registerSocketEvents(s: Socket<ServerToClientEvents, ClientToServerEven
 
   // Unified LLM Stream
   if (events.onLLMStreamEvent) s.on('llm:stream:event', events.onLLMStreamEvent);
+
+  // Game Events (Trace)
+  if (events.onGameEvents) s.on('game:events', events.onGameEvents);
 
   return s;
 }

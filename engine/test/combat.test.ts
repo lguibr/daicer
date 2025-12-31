@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { resolveAttack, resolveGrapple, validateAttack } from '../src/rules/combat';
-import { createCharacterSheet, createMeleeAction, createRangedAction } from './factories';
+import { createCharacterSheet, createMeleeAction, createRangedAction, createAction } from './factories';
 import { ConditionType } from '../src/rules/conditions';
 import { ActionType } from '../src/rules/actions';
 import * as diceModule from '../src/rules/dice';
@@ -294,6 +294,42 @@ describe('Combat Engine: SOTA Coverage', () => {
 
       const res = invoke();
       expect(res.isCritical).toBe(true);
+    });
+
+    test('should include execution trace in result', () => {
+      const attacker = createCharacterSheet({
+        name: 'Tracer',
+        structuredActions: [
+          createAction({
+            id: 'action-1',
+            name: 'Shortsword',
+            toHit: 5,
+            damage: [{ dice: '1d6', bonus: 3, type: 'piercing' }],
+          }),
+        ],
+      });
+      const target = createCharacterSheet({ name: 'Dummy', armorClass: 10 });
+      const intent: ActionIntent = { type: ActionType.Attack, actionId: 'action-1' };
+
+      // Mock Roll: Hit (15+5=20 vs 10)
+      // Damage: 4+3=7
+      vi.mocked(diceModule.roll)
+        .mockReturnValueOnce({ total: 20, rolls: [15], bonus: 5, definition: { count: 1, sides: 20, bonus: 5 } }) // Hit
+        .mockReturnValueOnce({ total: 7, rolls: [4], bonus: 3, definition: { count: 1, sides: 6, bonus: 3 } }); // Damage
+
+      const result = resolveAttack(attacker, target, intent);
+
+      expect(result.trace).toBeDefined();
+      expect(result.trace).toHaveLength(2); // Hit + Damage
+
+      const hitStep = result.trace[0];
+      expect(hitStep.type).toBe('roll_to_hit');
+      expect(hitStep.total).toBe(20);
+      expect(hitStep.outcome).toBe('Hit');
+
+      const dmgStep = result.trace[1];
+      expect(dmgStep.type).toBe('roll_damage');
+      expect(dmgStep.total).toBe(7);
     });
   });
 });
