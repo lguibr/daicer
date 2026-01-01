@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import type { CombatCharacter } from '../../../../types/combat';
 import { PORTRAIT_LABELS, type PortraitView, SECTION_TITLE_CLASSES } from '../utils';
 
 interface PortraitPanelProps {
   character: CombatCharacter;
-  characterSheet?: CharacterSheet | null;
+  characterSheet?: EntitySheet | null;
 }
 
 export function PortraitPanel({ character, characterSheet }: PortraitPanelProps) {

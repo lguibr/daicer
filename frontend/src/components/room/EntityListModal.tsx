@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Plus, Search, Skull, User } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Player, Creature, CharacterSheet } from '@daicer/engine';
+import type { Player, Creature, EntitySheet } from '@daicer/engine';
 import { useMutation } from '@apollo/client/react';
 import { Button } from '../ui/button';
 import Input from '../ui/input';
@@ -292,7 +292,7 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
 }
 
 interface SheetViewProps {
-  sheet: CharacterSheet | undefined | null;
+  sheet: EntitySheet | undefined | null;
 }
 
 function SheetView({ sheet }: SheetViewProps) {

@@ -1,9 +1,9 @@
 import { ActionIntent, ActionDefinition, ActionType } from './actions';
 import { z } from 'zod';
-import { CharacterSheetSchema } from '../schemas/character';
+import { EntitySheetSchema } from '../schemas/entity-sheet';
 import { calculateDistance, Point3D } from '../utils/geometry';
 
-type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
+type EntitySheet = z.infer<typeof EntitySheetSchema>;
 
 export interface MagicValidationResult {
   valid: boolean;
@@ -26,7 +26,7 @@ export interface SpellResult {
   isAoE: boolean;
 }
 
-function findSpell(sheet: CharacterSheet, actionId: string): ActionDefinition | undefined {
+function findSpell(sheet: EntitySheet, actionId: string): ActionDefinition | undefined {
   return sheet.structuredActions.find((a) => a.id === actionId && a.type === 'spell');
 }
 
@@ -34,7 +34,7 @@ function findSpell(sheet: CharacterSheet, actionId: string): ActionDefinition | 
  * Validates if a spell can be cast.
  */
 export function validateSpellCast(
-  caster: CharacterSheet,
+  caster: EntitySheet,
   intent: ActionIntent,
   casterPos: Point3D,
   targetPos?: Point3D
@@ -97,7 +97,7 @@ export interface ResolveSpellResult {
   newConcentrationId?: string;
 }
 
-export function resolveSpell(sheet: CharacterSheet, intent: ActionIntent): ResolveSpellResult {
+export function resolveSpell(sheet: EntitySheet, intent: ActionIntent): ResolveSpellResult {
   if (intent.type !== ActionType.CastSpell) {
     throw new Error('Invalid intent type for resolveSpell');
   }

@@ -109,10 +109,25 @@ export default factories.createCoreService('api::game-event.game-event', ({ stra
       limit: 10000, // Reasonable limit for now
     });
 
+    // Fetch room to get initial state
+    const room = await strapi.documents('api::room.room').findOne({
+      documentId: roomDocumentId,
+      populate: ['character_sheets'],
+    });
+
     // Default State
     const state = {
       entities: {} as Record<string, Coordinates>,
     };
+
+    if (room && (room as { character_sheets?: unknown[] }).character_sheets) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (room as { character_sheets: any[] }).character_sheets.forEach((c: any) => {
+        // Use documentId as the stable public ID
+        const key = c.documentId || String(c.id);
+        state.entities[key] = c.position;
+      });
+    }
 
     // Replay
     for (const event of events as { type: string; payload: unknown }[]) {

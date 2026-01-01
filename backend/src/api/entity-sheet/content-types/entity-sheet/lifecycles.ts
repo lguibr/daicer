@@ -62,7 +62,7 @@ async function updateDerivedData(event) {
 
   // 1. Fetch current full state from DB
   // We use documentId if available, v5 standard
-  const current = await strapi.documents('api::character-sheet.character-sheet').findOne({
+  const current = await strapi.documents('api::entity-sheet.entity-sheet').findOne({
     documentId: where.documentId,
     populate: {
       class: { populate: ['features'] }, // Assuming class has features relation

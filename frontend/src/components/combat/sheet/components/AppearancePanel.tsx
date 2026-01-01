@@ -1,7 +1,7 @@
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import { SECTION_TITLE_CLASSES, formatLabel } from '../utils';
 
-export function AppearancePanel({ characterSheet }: { characterSheet?: CharacterSheet | null }) {
+export function AppearancePanel({ characterSheet }: { characterSheet?: EntitySheet | null }) {
   const appearanceEntries = characterSheet?.appearance ? Object.entries(characterSheet.appearance) : [];
 
   return (

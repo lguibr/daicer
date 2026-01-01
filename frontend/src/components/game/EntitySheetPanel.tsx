@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Player, CharacterSheet, ActionDefinition, EntityFeature } from '@daicer/engine';
+import type { Player, EntitySheet, ActionDefinition, EntityFeature } from '@daicer/engine';
 import { Swords, Sparkles, Scroll, Shield } from 'lucide-react';
 import {
   PaperBackground,
@@ -11,7 +11,7 @@ import {
 } from '../common/PaperSheetComponents';
 import cn from '../../lib/utils';
 
-interface CharacterSheetPanelProps {
+interface EntitySheetPanelProps {
   player: Player | null;
   onClose: () => void;
 }
@@ -70,7 +70,7 @@ function FeatureItem({ feature }: { feature: EntityFeature }) {
   );
 }
 
-export default function CharacterSheetPanel({ player, onClose }: CharacterSheetPanelProps) {
+export default function EntitySheetPanel({ player, onClose }: EntitySheetPanelProps) {
   const [activeTab, setActiveTab] = useState<'main' | 'spells'>('main');
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
   }, [onClose, player]);
 
   if (!player?.character) return null;
-  const character = player.character as CharacterSheet;
+  const character = player.character as EntitySheet;
   const { attributes } = character;
   const skillDetails = character.skillDetails ?? [];
 

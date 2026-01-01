@@ -36,7 +36,19 @@ export const summonMonsterTool = (context: StrapiContext) =>
 
           return `Successfully summoned "${instance.name}" (Instance: ${instance.documentId}) at ${x},${y},${z}.`;
         } catch (error) {
-          return `Failed to summon monster: ${error instanceof Error ? error.message : String(error)}`;
+          // Standardized Validation Error Logging
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const details = (error as any).details?.errors
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (error as any).details.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+            : undefined;
+
+          strapi.log.error(`[Tool:SummonMonster] Failed: ${error instanceof Error ? error.message : String(error)}`, {
+            details,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+
+          return `Failed to summon monster: ${details || (error instanceof Error ? error.message : String(error))}`;
         }
       },
     },

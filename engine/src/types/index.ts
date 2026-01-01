@@ -7,7 +7,7 @@ import {
   ResourcePoolSchema,
   AdvancementPointsSchema,
   InventoryItemSchema,
-  CharacterSheetSchema,
+  EntitySheetSchema,
   GamePhaseSchema,
   ScaleLevelSchema,
   AdventureLengthSchema,
@@ -65,7 +65,9 @@ export type ResourcePool = z.infer<typeof ResourcePoolSchema>;
 export type AdvancementPoints = z.infer<typeof AdvancementPointsSchema>;
 export type InventoryItem = z.infer<typeof InventoryItemSchema>;
 export type CharacterEquipment = InventoryItem[]; // Alias
-export type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
+export type EntitySheet = z.infer<typeof EntitySheetSchema>;
+/** @deprecated Use EntitySheet instead */
+export type CharacterSheet = EntitySheet;
 
 export type GamePhase = z.infer<typeof GamePhaseSchema>;
 export const GamePhase = {
@@ -106,7 +108,7 @@ export interface Creature {
   damage?: string;
   position: { x: number; y: number; z: number };
   type: 'npc' | 'monster';
-  sheet?: CharacterSheet;
+  sheet?: EntitySheet;
 }
 
 // === Voxel & World Types ===
@@ -191,7 +193,7 @@ export interface Entity {
   // Visuals
   color: string;
   visionRadius: number;
-  sheet?: CharacterSheet; // Link to detailed sheet
+  sheet?: EntitySheet; // Link to detailed sheet
 }
 
 export interface RoomMembership {

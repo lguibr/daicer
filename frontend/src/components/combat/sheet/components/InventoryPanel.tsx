@@ -1,7 +1,7 @@
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import { SECTION_TITLE_CLASSES } from '../utils';
 
-export function InventoryPanel({ characterSheet }: { characterSheet?: CharacterSheet | null }) {
+export function InventoryPanel({ characterSheet }: { characterSheet?: EntitySheet | null }) {
   const currency = characterSheet?.currency ?? null;
   const currencyDisplay = currency
     ? `CP ${currency.cp} • SP ${currency.sp} • EP ${currency.ep} • GP ${currency.gp} • PP ${currency.pp}`

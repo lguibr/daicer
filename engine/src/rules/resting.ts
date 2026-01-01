@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { CharacterSheetSchema } from '../schemas/character';
+import { EntitySheetSchema } from '../schemas/entity-sheet';
 import { rollDie } from './dice';
 import { calculateModifier } from './dnd5e';
 
-type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
+type EntitySheet = z.infer<typeof EntitySheetSchema>;
 
 export interface RestResult {
   hpHealed: number;
@@ -19,7 +19,7 @@ export interface RestResult {
  * Allows spending Hit Dice to heal.
  * Resets "short-rest" resources.
  */
-export function shortRest(sheet: CharacterSheet, hitDiceToSpend: number): RestResult {
+export function shortRest(sheet: EntitySheet, hitDiceToSpend: number): RestResult {
   let hpHealed = 0;
   let hitDiceSpent = 0;
 
@@ -124,7 +124,7 @@ export function shortRest(sheet: CharacterSheet, hitDiceToSpend: number): RestRe
  * Performs a Long Rest.
  * Full Heal, Reset All Slots, Recover 1/2 Hit Dice.
  */
-export function longRest(sheet: CharacterSheet): RestResult {
+export function longRest(sheet: EntitySheet): RestResult {
   const hpHealed = sheet.maxHp - sheet.hp;
 
   // 1. Recover HP

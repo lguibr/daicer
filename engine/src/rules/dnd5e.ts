@@ -1,4 +1,4 @@
-import { CharacterSheet } from '../types';
+import { EntitySheet } from '../types';
 
 /**
  * Calculates the ability modifier for a given ability score.
@@ -30,7 +30,7 @@ export interface CharacterSnapshot {
  * Creates a lightweight snapshot of a character sheet for persistence/history.
  * This ensures we capture the exact state of a character at a specific turn.
  */
-export function createCharacterSnapshot(sheet: CharacterSheet | Partial<CharacterSheet>): CharacterSnapshot | null {
+export function createCharacterSnapshot(sheet: EntitySheet | Partial<EntitySheet>): CharacterSnapshot | null {
   if (!sheet) return null;
 
   // Handle strict typing if CharacterSheet is fully compatible, otherwise allow partial duck typing

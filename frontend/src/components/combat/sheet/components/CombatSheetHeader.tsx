@@ -1,9 +1,9 @@
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import type { CombatCharacter } from '../../../../types/combat';
 
 interface HeaderProps {
   character: CombatCharacter;
-  characterSheet?: CharacterSheet | null;
+  characterSheet?: EntitySheet | null;
   onClose: () => void;
 }
 

@@ -55,7 +55,7 @@ export default ({ strapi }) => ({
    */
   async moveEntity(characterId: string | number, x: number, y: number) {
     // 1. Fetch Character Sheet
-    const sheet = await strapi.entityService.findOne('api::character-sheet.character-sheet', characterId, {
+    const sheet = await strapi.entityService.findOne('api::entity-sheet.entity-sheet', characterId, {
       populate: ['stats', 'position', 'race', 'class'], // Populate stats for speed
     });
 
@@ -83,7 +83,7 @@ export default ({ strapi }) => ({
     // 4. Update Position
     // TODO: Check Room Terrain for Walls
 
-    await strapi.entityService.update('api::character-sheet.character-sheet', characterId, {
+    await strapi.entityService.update('api::entity-sheet.entity-sheet', characterId, {
       data: {
         position: { x, y },
       },
@@ -104,14 +104,14 @@ export default ({ strapi }) => ({
    * Reduces HP. Handles Unconsciousness.
    */
   async applyDamage(targetId: string | number, amount: number, type: string) {
-    const sheet = await strapi.entityService.findOne('api::character-sheet.character-sheet', targetId);
+    const sheet = await strapi.entityService.findOne('api::entity-sheet.entity-sheet', targetId);
     if (!sheet) throw new Error('Target not found');
 
     const currentHp = sheet.currentHp;
     const newHp = Math.max(0, currentHp - amount);
     const isUnconscious = newHp === 0;
 
-    await strapi.entityService.update('api::character-sheet.character-sheet', targetId, {
+    await strapi.entityService.update('api::entity-sheet.entity-sheet', targetId, {
       data: { currentHp: newHp },
     });
 
@@ -130,7 +130,7 @@ export default ({ strapi }) => ({
    * Removes item count or spell slots.
    */
   async deductResource(characterId: string | number, resourceName: string, amount: number = 1) {
-    const sheet = await strapi.entityService.findOne('api::character-sheet.character-sheet', characterId, {
+    const sheet = await strapi.entityService.findOne('api::entity-sheet.entity-sheet', characterId, {
       populate: ['inventory'],
     });
 

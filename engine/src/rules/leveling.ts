@@ -1,4 +1,4 @@
-import { CharacterSheet } from '../types';
+import { EntitySheet } from '../types';
 import { calculateModifier, calculateProficiencyBonus } from './dnd5e';
 
 export const XP_TABLE = [
@@ -43,7 +43,7 @@ const FULL_CASTER_SLOTS: Record<number, number[]> = {
  * Processes a Level Up.
  * Note: Mutates the sheet for MVP.
  */
-export function levelUp(sheet: CharacterSheet): CharacterSheet {
+export function levelUp(sheet: EntitySheet): EntitySheet {
   const currentLevel = sheet.level;
   const newLevel = currentLevel + 1;
 

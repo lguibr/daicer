@@ -10,7 +10,7 @@ export * from './capabilities';
 export * from './skills';
 export * from './types';
 
-export class CharacterDeriver {
+export class EntityDeriver {
   static calculateModifier = calculateModifier;
 
   /**

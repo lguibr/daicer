@@ -64,7 +64,7 @@ export default ({ strapi }) => ({
     for (const event of result.events) {
       if (event.type === 'ENTITY_MOVED') {
         const { entityId, to } = event.payload;
-        await strapi.documents('api::character-sheet.character-sheet').update({
+        await strapi.documents('api::entity-sheet.entity-sheet').update({
           documentId: entityId,
           data: { position: to },
         });

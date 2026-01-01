@@ -45,7 +45,7 @@ export default ({ strapi }) => ({
     // CharacterSheet doesn't have a specific 'speed' field, it might be in 'stats' component or we rely on 'monster' relation.
 
     // Check for collision
-    const existing = await strapi.documents('api::character-sheet.character-sheet').findMany({
+    const existing = await strapi.documents('api::entity-sheet.entity-sheet').findMany({
       filters: {
         room: { documentId: room.documentId },
         position: {
@@ -61,7 +61,7 @@ export default ({ strapi }) => ({
       throw new Error(`Position ${position.x},${position.y},${position.z} is occupied by ${existing[0].name}`);
     }
 
-    const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
+    const newSheet = await strapi.documents('api::entity-sheet.entity-sheet').create({
       data: {
         name: monster.name,
         type: 'monster',
@@ -113,7 +113,18 @@ export default ({ strapi }) => ({
     }
 
     // Prepare Derivation Context
-    const attributes = character.baseStats; // Assuming structure matches { str: 10, ... }
+    // Map Strapi 'baseStats' (full names) to Engine 'Attributes' (short names)
+    // Strapi: strength, dexterity, constitution, intelligence, wisdom, charisma
+    // Engine: str, dex, con, int, wis, cha
+    const baseStats = character.baseStats || {};
+    const attributes = {
+      str: baseStats.strength || 10,
+      dex: baseStats.dexterity || 10,
+      con: baseStats.constitution || 10,
+      int: baseStats.intelligence || 10,
+      wis: baseStats.wisdom || 10,
+      cha: baseStats.charisma || 10,
+    };
 
     // Calculate Stats
     const derived = CharacterDeriver.derive({
@@ -128,7 +139,7 @@ export default ({ strapi }) => ({
     });
 
     // Check for collision
-    const existing = await strapi.documents('api::character-sheet.character-sheet').findMany({
+    const existing = await strapi.documents('api::entity-sheet.entity-sheet').findMany({
       filters: {
         room: { documentId: room.documentId },
         position: {
@@ -144,7 +155,7 @@ export default ({ strapi }) => ({
       throw new Error(`Position ${position.x},${position.y},${position.z} is occupied by ${existing[0].name}`);
     }
 
-    const newSheet = await strapi.documents('api::character-sheet.character-sheet').create({
+    const newSheet = await strapi.documents('api::entity-sheet.entity-sheet').create({
       data: {
         name: character.name,
         type: 'player', // or 'npc' if spawned by DM
@@ -155,13 +166,23 @@ export default ({ strapi }) => ({
         level: 1,
         experience: 0,
         position: position,
-        stats: character.baseStats,
+        stats: (() => {
+          if (!character.baseStats) return undefined;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, ...rest } = character.baseStats;
+          return rest;
+        })(),
         race: character.race?.documentId,
         class: character.class?.documentId,
-        speed: derived.speed,
+        // speed: derived.speed, // Not in schema 'speed' -> stored in stats.walkSpeed? No, schema doesn't have root speed.
         appearance: character.appearance,
         backstory: character.backstory,
-        inventory: character.equipment || [],
+        inventory:
+          character.equipment?.map((item) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id, ...rest } = item;
+            return rest;
+          }) || [],
       },
       status: 'published',
     });

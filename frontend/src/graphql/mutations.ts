@@ -204,9 +204,9 @@ export const GENERATE_TERRAIN_CHUNK_MUTATION = gql`
   }
 `;
 
-export const CREATE_CHARACTER_SHEET_MUTATION = gql`
-  mutation CreateCharacterSheet($data: CharacterSheetInput!) {
-    createCharacterSheet(data: $data) {
+export const CREATE_ENTITY_SHEET_MUTATION = gql`
+  mutation CreateEntitySheet($data: EntitySheetInput!) {
+    createEntitySheet(data: $data) {
       documentId
       name
     }

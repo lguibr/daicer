@@ -9,6 +9,6 @@ export * from './schemas';
 export * from './voxel/utils/math';
 export * from './engine/action-dispatcher';
 export * from './utils/movement';
-export { CharacterDeriver } from './derivation';
+export { EntityDeriver } from './derivation';
 export type { DerivationContext, Equipment } from './derivation';
 export * from './constants/physics';

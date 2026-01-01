@@ -375,48 +375,6 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiCharacterSheetCharacterSheet extends Struct.CollectionTypeSchema {
-  collectionName: 'character_sheets';
-  info: {
-    description: 'Instance of a character in a game room';
-    displayName: 'Character Sheet';
-    pluralName: 'character-sheets';
-    singularName: 'character-sheet';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    appearance: Schema.Attribute.JSON;
-    backstory: Schema.Attribute.Text;
-    character: Schema.Attribute.Relation<'manyToOne', 'api::character.character'>;
-    class: Schema.Attribute.Relation<'manyToOne', 'api::class.class'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-    currentHp: Schema.Attribute.Integer;
-    experience: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    features: Schema.Attribute.Component<'game.feature', true>;
-    inventory: Schema.Attribute.Component<'game.inventory-item', true>;
-    level: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::character-sheet.character-sheet'> &
-      Schema.Attribute.Private;
-    maxHp: Schema.Attribute.Integer;
-    monster: Schema.Attribute.Relation<'manyToOne', 'api::monster.monster'>;
-    name: Schema.Attribute.String;
-    position: Schema.Attribute.Component<'game.position', false>;
-    publishedAt: Schema.Attribute.DateTime;
-    race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
-    room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
-    spellbook: Schema.Attribute.Component<'game.spellbook', false>;
-    stats: Schema.Attribute.Component<'game.stats', false>;
-    structuredActions: Schema.Attribute.Component<'game.action', true>;
-    type: Schema.Attribute.Enumeration<['player', 'monster', 'npc']> & Schema.Attribute.DefaultTo<'player'>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
-  };
-}
-
 export interface ApiCharacterCharacter extends Struct.CollectionTypeSchema {
   collectionName: 'characters';
   info: {
@@ -567,6 +525,47 @@ export interface ApiDmSettingDmSetting extends Struct.CollectionTypeSchema {
     startingLevel: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
     theme: Schema.Attribute.String;
     tone: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+  };
+}
+
+export interface ApiEntitySheetEntitySheet extends Struct.CollectionTypeSchema {
+  collectionName: 'character_sheets';
+  info: {
+    description: 'Instance of an entity in a game room';
+    displayName: 'Entity Sheet';
+    pluralName: 'entity-sheets';
+    singularName: 'entity-sheet';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    appearance: Schema.Attribute.JSON;
+    backstory: Schema.Attribute.Text;
+    character: Schema.Attribute.Relation<'manyToOne', 'api::character.character'>;
+    class: Schema.Attribute.Relation<'manyToOne', 'api::class.class'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
+    currentHp: Schema.Attribute.Integer;
+    experience: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    features: Schema.Attribute.Component<'game.feature', true>;
+    inventory: Schema.Attribute.Component<'game.inventory-item', true>;
+    level: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::entity-sheet.entity-sheet'> & Schema.Attribute.Private;
+    maxHp: Schema.Attribute.Integer;
+    monster: Schema.Attribute.Relation<'manyToOne', 'api::monster.monster'>;
+    name: Schema.Attribute.String;
+    position: Schema.Attribute.Component<'game.position', false>;
+    publishedAt: Schema.Attribute.DateTime;
+    race: Schema.Attribute.Relation<'manyToOne', 'api::race.race'>;
+    room: Schema.Attribute.Relation<'manyToOne', 'api::room.room'>;
+    spellbook: Schema.Attribute.Component<'game.spellbook', false>;
+    stats: Schema.Attribute.Component<'game.stats', false>;
+    structuredActions: Schema.Attribute.Component<'game.action', true>;
+    type: Schema.Attribute.Enumeration<['player', 'monster', 'npc']> & Schema.Attribute.DefaultTo<'player'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
   };
@@ -1163,7 +1162,7 @@ export interface ApiRoomRoom extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    character_sheets: Schema.Attribute.Relation<'oneToMany', 'api::character-sheet.character-sheet'>;
+    character_sheets: Schema.Attribute.Relation<'oneToMany', 'api::entity-sheet.entity-sheet'>;
     code: Schema.Attribute.String & Schema.Attribute.Unique;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> & Schema.Attribute.Private;
@@ -1894,11 +1893,11 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
-      'api::character-sheet.character-sheet': ApiCharacterSheetCharacterSheet;
       'api::character.character': ApiCharacterCharacter;
       'api::class.class': ApiClassClass;
       'api::damage-type.damage-type': ApiDamageTypeDamageType;
       'api::dm-setting.dm-setting': ApiDmSettingDmSetting;
+      'api::entity-sheet.entity-sheet': ApiEntitySheetEntitySheet;
       'api::equipment-category.equipment-category': ApiEquipmentCategoryEquipmentCategory;
       'api::equipment.equipment': ApiEquipmentEquipment;
       'api::feature.feature': ApiFeatureFeature;

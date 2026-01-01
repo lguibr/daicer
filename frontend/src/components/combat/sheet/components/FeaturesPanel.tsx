@@ -1,7 +1,7 @@
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import { SECTION_TITLE_CLASSES } from '../utils';
 
-export function FeaturesPanel({ characterSheet }: { characterSheet?: CharacterSheet | null }) {
+export function FeaturesPanel({ characterSheet }: { characterSheet?: EntitySheet | null }) {
   // Features are now the primary list.
   const features = characterSheet?.features ?? [];
 

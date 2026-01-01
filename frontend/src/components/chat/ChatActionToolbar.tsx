@@ -38,16 +38,39 @@ export function ChatActionToolbar({
 
   const selectedTool = TOOLS.find((t) => t.id === selectedToolId);
 
-  // Auto-fill activeLocation into Position fields
+  // Auto-fill activeLocation into Position fields OR individual x,y,z fields
   useEffect(() => {
     if (selectedTool && activeLocation) {
-      const posField = selectedTool.fields.find((f) => f.type === 'position');
-      if (posField) {
-        setFormData((prev) => ({
-          ...prev,
-          [posField.name]: JSON.stringify({ x: activeLocation.x, y: activeLocation.y, z: activeLocation.z }),
-        }));
-      }
+      setFormData((prev) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updates: Record<string, any> = { ...prev };
+
+        // 1. JSON Position Field
+        const posField = selectedTool.fields.find((f) => f.type === 'position');
+        if (posField) {
+          updates[posField.name] = JSON.stringify({ x: activeLocation.x, y: activeLocation.y, z: activeLocation.z });
+        }
+
+        // 2. Individual Coordinate Fields
+        // Check if tool has x, y, and z fields
+        const hasX = selectedTool.fields.some((f) => f.name === 'x');
+        const hasY = selectedTool.fields.some((f) => f.name === 'y');
+        const hasZ = selectedTool.fields.some((f) => f.name === 'z');
+
+        if (hasX) updates['x'] = activeLocation.x.toString();
+        if (hasY) updates['y'] = activeLocation.y.toString();
+        if (hasZ) updates['z'] = activeLocation.z.toString();
+
+        // 3. Path Field (Move Tool)
+        // If tool has a 'path' field, we assume it's for movement and set a single step path to the target.
+        const pathField = selectedTool.fields.find((f) => f.name === 'path' && f.type === 'json');
+        if (pathField) {
+          // We create a single-step path to the clicked location
+          updates[pathField.name] = JSON.stringify([{ x: activeLocation.x, y: activeLocation.y, z: activeLocation.z }]);
+        }
+
+        return updates;
+      });
     }
   }, [activeLocation, selectedTool]);
 

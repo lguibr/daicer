@@ -38,6 +38,16 @@ export const summonCharacterTool = (context: StrapiContext) =>
 
           return `Successfully summoned "${instance.name}" (Instance: ${instance.documentId}) at ${x},${y},${z}.`;
         } catch (error) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if ((error as any).details?.errors) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const details = (error as any).details.errors
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .map((e: any) => `${e.path.join('.')}: ${e.message}`)
+              .join(', ');
+            strapi.log.error(`Summon Character Validation Error: ${details}`);
+            return `Failed to summon character: ${details}`;
+          }
           return `Failed to summon character: ${error instanceof Error ? error.message : String(error)}`;
         }
       },

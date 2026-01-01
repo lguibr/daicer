@@ -1,7 +1,7 @@
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import { SECTION_TITLE_CLASSES } from '../utils';
 
-export function SpellcastingPanel({ characterSheet }: { characterSheet?: CharacterSheet | null }) {
+export function SpellcastingPanel({ characterSheet }: { characterSheet?: EntitySheet | null }) {
   // Placeholder until Spellcasting is properly re-implemented with new Schema
   if (!characterSheet) return null;
 

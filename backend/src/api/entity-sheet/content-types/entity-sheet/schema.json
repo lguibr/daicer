@@ -2,10 +2,10 @@
   "kind": "collectionType",
   "collectionName": "character_sheets",
   "info": {
-    "singularName": "character-sheet",
-    "pluralName": "character-sheets",
-    "displayName": "Character Sheet",
-    "description": "Instance of a character in a game room"
+    "singularName": "entity-sheet",
+    "pluralName": "entity-sheets",
+    "displayName": "Entity Sheet",
+    "description": "Instance of an entity in a game room"
   },
   "options": {
     "draftAndPublish": true

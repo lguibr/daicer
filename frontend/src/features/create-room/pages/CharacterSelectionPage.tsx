@@ -8,7 +8,7 @@ import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import CharacterCreation from '@/components/room/CharacterCreation';
 import Navbar from '@/components/layout/Navbar';
 import { LIST_CHARACTERS_QUERY } from '@/graphql/queries';
-import { CREATE_CHARACTER_SHEET_MUTATION } from '@/graphql/mutations';
+import { CREATE_ENTITY_SHEET_MUTATION } from '@/graphql/mutations';
 import { addCharacter } from '@/services/api';
 import { ListCharactersQuery } from '../../../gql/graphql';
 
@@ -31,7 +31,7 @@ export default function CharacterSelectionPage() {
     fetchPolicy: 'network-only',
   });
 
-  const [createCharacterSheet] = useMutation(CREATE_CHARACTER_SHEET_MUTATION);
+  const [createEntitySheet] = useMutation(CREATE_ENTITY_SHEET_MUTATION);
 
   const characters = data?.characters || [];
 
@@ -111,14 +111,14 @@ export default function CharacterSelectionPage() {
         ...characterData,
       };
 
-      const { data: res } = (await createCharacterSheet({
+      const { data: res } = (await createEntitySheet({
         variables: {
           data: payload,
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       })) as { data: any };
 
-      if (!res?.createCharacterSheet?.documentId) {
+      if (!res?.createEntitySheet?.documentId) {
         throw new Error('Failed to create character sheet');
       }
 
@@ -126,7 +126,7 @@ export default function CharacterSelectionPage() {
       await refetch();
 
       // 3. Select the new character
-      setSelectedCharacterId(res.createCharacterSheet.documentId);
+      setSelectedCharacterId(res.createEntitySheet.documentId);
       setShowCreateModal(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save character');

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import type { CombatCharacter } from '../../types/combat';
 import { CombatSheetHeader } from './sheet/components/CombatSheetHeader';
 import { PortraitPanel } from './sheet/components/PortraitPanel';
@@ -15,7 +15,7 @@ import { BackgroundPanel } from './sheet/components/BackgroundPanel';
 
 interface CombatCharacterSheetProps {
   character: CombatCharacter;
-  characterSheet?: CharacterSheet | null;
+  characterSheet?: EntitySheet | null;
   onClose: () => void;
 }
 

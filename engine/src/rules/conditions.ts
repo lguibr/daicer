@@ -1,4 +1,4 @@
-import { CharacterSheet } from '../types';
+import { EntitySheet } from '../types';
 
 export enum ConditionType {
   Blinded = 'Blinded',
@@ -91,14 +91,14 @@ const CONDITION_REGISTRY: Record<string, ConditionModifier> = {
 /**
  * Checks if a character has a specific condition.
  */
-export function hasCondition(sheet: CharacterSheet, type: ConditionType | string): boolean {
+export function hasCondition(sheet: EntitySheet, type: ConditionType | string): boolean {
   return sheet.conditions?.some((c) => c.name.toLowerCase() === type.toLowerCase()) ?? false;
 }
 
 /**
  * Aggregates all active modifiers for a character based on their conditions.
  */
-export function getConditionModifiers(sheet: CharacterSheet): ConditionModifier {
+export function getConditionModifiers(sheet: EntitySheet): ConditionModifier {
   const result: ConditionModifier = {};
 
   if (!sheet.conditions) return result;

@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import { SECTION_TITLE_CLASSES } from '../utils';
 import { SkillBadge } from './SharedComponents';
 
-export function SkillsPanel({ characterSheet }: { characterSheet?: CharacterSheet | null }) {
+export function SkillsPanel({ characterSheet }: { characterSheet?: EntitySheet | null }) {
   const sortedSkills = useMemo(() => {
     const skills = characterSheet?.skillDetails ?? [];
     return [...skills].sort((a, b) => a.name.localeCompare(b.name));

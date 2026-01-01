@@ -20,7 +20,7 @@
     "characterSheet": {
       "type": "relation",
       "relation": "oneToOne",
-      "target": "api::character-sheet.character-sheet"
+      "target": "api::entity-sheet.entity-sheet"
     },
     "isReady": {
       "type": "boolean",

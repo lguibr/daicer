@@ -1,7 +1,7 @@
-import { CharacterDeriver } from '../index';
+import { EntityDeriver } from '../index';
 import { DerivationContext } from '../types';
 
-describe('CharacterDeriver', () => {
+describe('EntityDeriver', () => {
   const baseAttributes = {
     str: 10,
     dex: 10,
@@ -12,10 +12,10 @@ describe('CharacterDeriver', () => {
   };
 
   it('calculates modifiers correctly', () => {
-    expect(CharacterDeriver.calculateModifier(10)).toBe(0);
-    expect(CharacterDeriver.calculateModifier(12)).toBe(1);
-    expect(CharacterDeriver.calculateModifier(9)).toBe(-1);
-    expect(CharacterDeriver.calculateModifier(20)).toBe(5);
+    expect(EntityDeriver.calculateModifier(10)).toBe(0);
+    expect(EntityDeriver.calculateModifier(12)).toBe(1);
+    expect(EntityDeriver.calculateModifier(9)).toBe(-1);
+    expect(EntityDeriver.calculateModifier(20)).toBe(5);
   });
 
   it('derives unarmored defense correctly', () => {
@@ -26,7 +26,7 @@ describe('CharacterDeriver', () => {
       equipment: [],
       race: { speed: 30 },
     };
-    const derived = CharacterDeriver.derive(context);
+    const derived = EntityDeriver.derive(context);
     expect(derived.ac).toBe(12);
   });
 
@@ -45,7 +45,7 @@ describe('CharacterDeriver', () => {
       ],
       race: { speed: 30 },
     };
-    const derived = CharacterDeriver.derive(context);
+    const derived = EntityDeriver.derive(context);
     expect(derived.ac).toBe(13); // 11 + 2
   });
 
@@ -64,7 +64,7 @@ describe('CharacterDeriver', () => {
       ],
       race: { speed: 30 },
     };
-    const derived = CharacterDeriver.derive(context);
+    const derived = EntityDeriver.derive(context);
     expect(derived.ac).toBe(16); // 14 + 2 (capped)
   });
 
@@ -77,7 +77,7 @@ describe('CharacterDeriver', () => {
       hitDie: 10,
       race: { speed: 30 },
     };
-    const derived = CharacterDeriver.derive(context);
+    const derived = EntityDeriver.derive(context);
     expect(derived.hp).toBe(12); // 10 + 2
   });
 
@@ -90,7 +90,7 @@ describe('CharacterDeriver', () => {
       hitDie: 10, // avg 6
       race: { speed: 30 },
     };
-    const derived = CharacterDeriver.derive(context);
+    const derived = EntityDeriver.derive(context);
     // L1: 10 + 2 = 12
     // L2: 6 + 2 = 8
     // L3: 6 + 2 = 8
@@ -112,7 +112,7 @@ describe('CharacterDeriver', () => {
       ],
       race: { speed: 30 },
     };
-    const derived = CharacterDeriver.derive(context);
+    const derived = EntityDeriver.derive(context);
     expect(derived.speed.walk).toBe(20); // 30 - 10 penalty
   });
 });

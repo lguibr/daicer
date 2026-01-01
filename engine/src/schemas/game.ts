@@ -128,8 +128,8 @@ export const PlayerSchema = z.object({
   name: z.string(),
   role: RoleSchema,
   isOnline: z.boolean().optional(),
-  character: z.any().nullable(), // CharacterSheetSchema circular ref
-  characterSheet: z.any().nullable().optional(), // The Instantiated Sheet (ID or Object)
+  character: z.any().nullable(), // EntitySheetSchema circular ref
+  characterSheet: z.any().nullable().optional(), // The Instantiated Entity Sheet
   action: z.string().nullable(),
   isReady: z.boolean(),
   joinedAt: z.number(),

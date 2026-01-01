@@ -1,7 +1,7 @@
-import type { CharacterSheet } from '@daicer/engine';
+import type { EntitySheet } from '@daicer/engine';
 import { SECTION_TITLE_CLASSES } from '../utils';
 
-export function BackgroundPanel({ characterSheet }: { characterSheet?: CharacterSheet | null }) {
+export function BackgroundPanel({ characterSheet }: { characterSheet?: EntitySheet | null }) {
   const backgroundDetails = characterSheet?.backgroundDetails ?? null;
   const keyEvents = backgroundDetails?.keyEvents ?? [];
   const allies = backgroundDetails?.allies ?? [];

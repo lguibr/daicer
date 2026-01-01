@@ -1,5 +1,5 @@
 import { ActionDefinition, ActionIntent, ActionType } from './actions';
-import { CharacterSheet, ExecutionTrace, ExecutionStep } from '../types';
+import { EntitySheet, ExecutionTrace, ExecutionStep } from '../types';
 import { roll, DiceResult, parseDiceString } from './dice';
 import { calculateDistance } from '../utils/geometry';
 import { getConditionModifiers, hasCondition, ConditionType } from './conditions';
@@ -35,7 +35,7 @@ export interface AttackResult {
 // Helpers
 // ============================================================================
 
-function findAction(sheet: CharacterSheet, actionId: string): ActionDefinition | undefined {
+function findAction(sheet: EntitySheet, actionId: string): ActionDefinition | undefined {
   return sheet.structuredActions.find((a) => a.id === actionId);
 }
 
@@ -47,8 +47,8 @@ function findAction(sheet: CharacterSheet, actionId: string): ActionDefinition |
  * Validates if an attack is possible (Range check).
  */
 export function validateAttack(
-  attacker: CharacterSheet,
-  target: CharacterSheet,
+  attacker: EntitySheet,
+  target: EntitySheet,
   intent: ActionIntent,
   positions: CombatPositions
 ): { valid: boolean; reason?: string } {
@@ -76,8 +76,8 @@ export function validateAttack(
  * Resolves a unified Attack Action (Melee or Ranged).
  */
 export function resolveAttack(
-  attacker: CharacterSheet,
-  target: CharacterSheet,
+  attacker: EntitySheet,
+  target: EntitySheet,
   intent: ActionIntent,
   rng?: () => number
 ): AttackResult {
@@ -329,7 +329,7 @@ export interface GrappleResult {
 /**
  * Resolves a Grapple attempt (Contested Check).
  */
-export function resolveGrapple(attacker: CharacterSheet, target: CharacterSheet): GrappleResult {
+export function resolveGrapple(attacker: EntitySheet, target: EntitySheet): GrappleResult {
   // 1. Attacker: Athletics
   // Check if exists, else fallback to Str Mod.
   // Attributes fallback to 10 if missing to avoid NaN.

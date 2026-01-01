@@ -99,12 +99,12 @@ export const SpellbookSchema = z.object({
   slots: SpellSlotsSchema,
 });
 
-export const CharacterSheetSchema = z.object({
+export const EntitySheetSchema = z.object({
   id: z.string().optional(),
   documentId: z.string().optional(),
   name: z.string(),
   race: z.string(),
-  characterClass: z.string(), // e.g. "Wizard 5"
+  characterClass: z.string(), // e.g. "Wizard 5" (Keeping 'characterClass' for legacy specific D&D mapping)
 
   // Core Vitals
   hp: z.number(),

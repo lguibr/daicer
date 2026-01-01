@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { CoordinatesSchema } from './voxel';
-import { AttributeSchema } from './character';
+import { AttributeSchema } from './entity-sheet';
 
 // === Base Command Types ===
 

@@ -100,7 +100,7 @@ export default ({ strapi }) => ({
   },
 
   async updateCharacterPosition(sheetId: string, x: number, y: number, z: number) {
-    return strapi.documents('api::character-sheet.character-sheet').update({
+    return strapi.documents('api::entity-sheet.entity-sheet').update({
       documentId: sheetId,
       data: {
         position: { x, y, z },

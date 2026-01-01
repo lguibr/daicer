@@ -19,7 +19,7 @@ The most important distinction in this module is between a **Character** and a *
 
 ### 2. Character Sheet (The Instance)
 
-- **Location**: `api::character-sheet.character-sheet`
+- **Location**: `api::entity-sheet.entity-sheet`
 - **Purpose**: Represents a living, breathing entity inside a specific Game Room.
 - **Mutability**: Highly volatile. HP changes, items are looted/dropped, position updates every turn.
 - **Lifecycle**: Created when a player "joins" a room with a Character. Deleted or archived when the campaign ends.

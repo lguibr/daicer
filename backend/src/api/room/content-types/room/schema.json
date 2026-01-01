@@ -24,7 +24,14 @@
     },
     "phase": {
       "type": "enumeration",
-      "enum": ["lobby", "character_creation", "world_generation", "gameplay", "combat", "ending"],
+      "enum": [
+        "lobby",
+        "character_creation",
+        "world_generation",
+        "gameplay",
+        "combat",
+        "ending"
+      ],
       "default": "lobby"
     },
     "players": {
@@ -49,7 +56,7 @@
     "character_sheets": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::character-sheet.character-sheet",
+      "target": "api::entity-sheet.entity-sheet",
       "mappedBy": "room"
     },
     "turns": {

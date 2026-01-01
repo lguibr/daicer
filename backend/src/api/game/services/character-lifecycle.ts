@@ -49,9 +49,14 @@ export default ({ strapi }) => ({
 
     // 2. Process Avatar Uploads
     const avatarSlots = ['portrait', 'upperBody', 'fullBody'];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const processedAvatarPreview: Record<string, any> = {
-      ...((characterData.avatarPreview as Record<string, unknown>) || {}),
+    const processedAvatarPreview: Record<
+      string,
+      { id?: string | number; url?: string; data?: string; mimeType?: string }
+    > = {
+      ...((characterData.avatarPreview as Record<
+        string,
+        { id?: string | number; url?: string; data?: string; mimeType?: string }
+      >) || {}),
     };
 
     if (processedAvatarPreview) {
@@ -66,7 +71,7 @@ export default ({ strapi }) => ({
               processedAvatarPreview[slot] = {
                 id: uploadResult.id,
                 url: uploadResult.url,
-              };
+              } as { id?: string | number; url?: string; data?: string; mimeType?: string };
               strapi.log.info(`Avatar ${slot} uploaded successfully: ${uploadResult.id}`);
             }
           } catch (err) {
@@ -113,8 +118,10 @@ export default ({ strapi }) => ({
         if (races && races.length > 0) {
           raceId = races[0].documentId;
           // Capture race speed for stat derivation
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (characterData as any)._raceSpeed = races[0].speed;
+          // Capture race speed for stat derivation
+          if ('speed' in races[0]) {
+            (characterData as Record<string, unknown>)._raceSpeed = races[0].speed;
+          }
         }
       }
 
@@ -129,7 +136,7 @@ export default ({ strapi }) => ({
         }
       }
 
-      const rawStats = (characterData.baseStats || characterData.attributes || {}) as Record<string, any>;
+      const rawStats = (characterData.baseStats || characterData.attributes || {}) as Record<string, unknown>;
       const baseStats = {
         strength: Number(rawStats.Strength || rawStats.strength || 10),
         dexterity: Number(rawStats.Dexterity || rawStats.dexterity || 10),
@@ -171,15 +178,20 @@ export default ({ strapi }) => ({
         ...(createdCharacter.baseStats as Record<string, number>),
         // Derive speed logic inline or use defaults
         ...(() => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const raceSpeed = (characterData as any)._raceSpeed || 30;
-          if (typeof raceSpeed === 'number') return { walkSpeed: raceSpeed };
-          // If object, map to walkSpeed if needed or spread if already correct
-          // Assuming legacy migration might be needed if race was not updated?
-          // But valid races are integers in current schema.
-          // If manual object:
-          if (raceSpeed.walk) return { walkSpeed: raceSpeed.walk, ...raceSpeed };
-          return { walkSpeed: 30, ...raceSpeed };
+          const speedVal = (characterData as Record<string, unknown>)._raceSpeed || 30;
+
+          if (typeof speedVal === 'number') {
+            return { walkSpeed: speedVal };
+          }
+
+          if (typeof speedVal === 'object' && speedVal !== null) {
+            const speedObj = speedVal as Record<string, number>;
+            if (speedObj.walk) {
+              return { ...speedObj, walkSpeed: speedObj.walk };
+            }
+            return { walkSpeed: 30, ...speedObj };
+          }
+          return { walkSpeed: 30 };
         })(),
       },
       baseStats: createdCharacter.baseStats, // Keep a copy of base
@@ -194,7 +206,7 @@ export default ({ strapi }) => ({
       room: room.documentId,
     };
 
-    const createdSheet = await strapi.documents('api::character-sheet.character-sheet').create({
+    const createdSheet = await strapi.documents('api::entity-sheet.entity-sheet').create({
       data: sheetData,
       status: 'published',
     });
@@ -248,8 +260,7 @@ export default ({ strapi }) => ({
       class?: { name?: string };
       baseStats?: Record<string, number>;
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cAny = character as any;
+    const cAny = character as unknown as { characterClass?: string };
     const charSummary = `Name: ${character.name}
 Race: ${c.race?.name || character.race || 'Unknown'}
 Class: ${c.class?.name || cAny.characterClass || 'Unknown'}

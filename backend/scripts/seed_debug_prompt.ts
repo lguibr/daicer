@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// @ts-expect-error
+// @ts-expect-error - Direct DB access in seed script
 import { strapi } from '@strapi/client';
 
 // Constants

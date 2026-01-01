@@ -142,7 +142,7 @@ export interface GamePlayer extends Struct.ComponentSchema {
   attributes: {
     action: Schema.Attribute.String;
     character: Schema.Attribute.Relation<'oneToOne', 'api::character.character'>;
-    characterSheet: Schema.Attribute.Relation<'oneToOne', 'api::character-sheet.character-sheet'>;
+    characterSheet: Schema.Attribute.Relation<'oneToOne', 'api::entity-sheet.entity-sheet'>;
     isOnline: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     isReady: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     joinedAt: Schema.Attribute.DateTime;

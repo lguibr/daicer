@@ -13,26 +13,27 @@ export const listEntitiesTool = (context: StrapiContext) =>
       outputSchema: z.string(), // Returns a formatted string list
       func: async (_input, { strapi, roomDocumentId }) => {
         // Fetch all character sheets in the room
-        const sheets = await strapi.documents('api::character-sheet.character-sheet').findMany({
+        const entities = await strapi.documents('api::entity-sheet.entity-sheet').findMany({
           filters: {
             room: { documentId: roomDocumentId },
           },
           populate: ['stats', 'position'], // Ensure position is loaded
+          limit: 100, // Reasonable cap
         });
 
-        if (!sheets || sheets.length === 0) {
-          return 'There are no entities in this room.';
+        if (!entities || entities.length === 0) {
+          return 'No entities found in this room.';
         }
 
-        const lines = sheets.map((param) => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const lines = entities.map((param) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const sheet = param as any; // Cast to access fields
           const pos = sheet.position || { x: '?', y: '?', z: '?' };
           const hpStatus = `${sheet.currentHp}/${sheet.maxHp} HP`;
           return `- [${sheet.type?.toUpperCase()}] **${sheet.name}** (ID: ${sheet.documentId}) at (${pos.x}, ${pos.y}, ${pos.z}) | ${hpStatus}`;
         });
 
-        return `Found ${sheets.length} entities:\n${lines.join('\n')}`;
+        return `Found ${entities.length} entities:\n${lines.join('\n')}`;
       },
     },
     context

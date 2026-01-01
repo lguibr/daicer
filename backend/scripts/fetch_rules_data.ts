@@ -15,7 +15,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-// @ts-ignore
 const { getStrapiClient } = require('./utils/strapi-client');
 
 const OUTPUT_PATH = path.resolve(__dirname, '../../studyCase/rulesConsolidation/data_samples.json');

@@ -20,44 +20,49 @@ export const moveEntityTool = (context: StrapiContext) =>
       func: async ({ entityId, x, y, z }, { strapi, roomDocumentId }) => {
         const gameEventService = strapi.service('api::game-event.game-event');
 
-        // 1. Get current state to verify entity exists in room
-        const gameState = await gameEventService.getGameState(roomDocumentId);
+        // Wrap in Try-Catch for safety
+        try {
+          // 1. Get current state to verify entity exists in room
+          const gameState = await gameEventService.getGameState(roomDocumentId);
 
-        // Check if entity is in the state (i.e. is an active character sheet in the room)
-        if (!gameState.entities[entityId]) {
-          // Fallback: Check via DB if it's a valid character sheet in this room just in case state is stale,
-          // but usually state is authoritative.
-          // For now, strict check against state.
-          return `Error: Entity "${entityId}" not found active in this room. Make sure you are using the Instance ID (Character Sheet ID), not a Template ID. Use list_entities to find valid IDs.`;
-        }
+          // Check if entity is in the state
+          if (!gameState.entities[entityId]) {
+            strapi.log.warn(`[Tool:MoveEntity] Entity ${entityId} not found in state for room ${roomDocumentId}`);
+            strapi.log.warn(`[Tool:MoveEntity] Available IDs: ${Object.keys(gameState.entities).join(', ')}`);
+            return `Error: Entity "${entityId}" not found active in this room. Make sure you are using the Instance ID.`;
+          }
 
-        const currentPos = gameState.entities[entityId];
+          const currentPos = gameState.entities[entityId];
 
-        // 2. Validate
-        const result = await gameEventService.validateMove(roomDocumentId, currentPos, { x, y, z });
-        if (result.valid) {
-          // 3. Update DB State (Persistence)
-          await strapi.documents('api::character-sheet.character-sheet').update({
-            documentId: entityId,
-            data: {
-              position: { x, y, z },
-            },
-          });
+          // 2. Validate
+          const result = await gameEventService.validateMove(roomDocumentId, currentPos, { x, y, z });
+          if (result.valid) {
+            // 3. Update DB State (Persistence)
+            await strapi.documents('api::entity-sheet.entity-sheet').update({
+              documentId: entityId,
+              data: {
+                position: { x, y, z },
+              },
+            });
 
-          // 4. Log event (History)
-          await gameEventService.logEvent(roomDocumentId, 'MOVE', {
-            entityId,
-            from: currentPos,
-            to: { x, y, z },
-          });
+            // 4. Log event (History)
+            await gameEventService.logEvent(roomDocumentId, 'MOVE', {
+              entityId,
+              from: currentPos,
+              to: { x, y, z },
+            });
 
-          // 5. Broadcast Update (Live View)
-          // We call game-broadcaster to fetch fresh state and blast it to socket
-          await strapi.service('api::game.game-broadcaster').broadcastRoomEntities(roomDocumentId);
+            // 5. Broadcast Update
+            await strapi.service('api::game.game-broadcaster').broadcastRoomEntities(roomDocumentId);
 
-          return `Moved entity ${entityId} to ${x},${y},${z}.`;
-        } else {
-          return `Failed to move: ${result.reason}`;
+            return `Moved entity ${entityId} to ${x},${y},${z}.`;
+          } else {
+            strapi.log.warn(`[Tool:MoveEntity] Validation Failed: ${result.reason}`);
+            return `Failed to move: ${result.reason}`;
+          }
+        } catch (error) {
+          strapi.log.error(`[Tool:MoveEntity] Critical Error:`, error);
+          return `Internal Error moving entity: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
     },
