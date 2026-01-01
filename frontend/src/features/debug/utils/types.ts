@@ -78,3 +78,18 @@ export interface WorldConfig {
   // Gameplay / Visuals
   fogRadius: number; // 5 to 50 tiles
 }
+
+export interface DebugEntity {
+  id: string;
+  name: string;
+  type: 'player' | 'monster';
+  position: Coordinates;
+  speed: string | number | Record<string, string>;
+  parsedSpeed: number;
+  visionRadius: number;
+  color: string;
+  exploredTiles: Set<string>;
+  pendingPath?: Coordinates[];
+  currentHp?: number;
+  maxHp?: number;
+}

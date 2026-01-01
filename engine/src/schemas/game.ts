@@ -105,6 +105,7 @@ export const AvatarPreviewImageSchema = z.object({
 // Define TimeFrameSchema
 export const TimeFrameSchema = z.object({
   id: z.string(),
+  documentId: z.string().optional(),
   turnNumber: z.number(),
   timestamp: z.string(),
   gameState: z.object({
@@ -150,6 +151,19 @@ export const PlayerSchema = z.object({
     .optional(),
 });
 
+export const MessageSchema = z.object({
+  id: z.string(),
+  documentId: z.string().optional(),
+  sender: z.string(),
+  recipientId: z.string().optional(),
+  text: z.string(),
+  images: z.array(z.string()).optional(),
+  timestamp: z.number(),
+  targetPlayer: z.string().optional(),
+  type: z.enum(['talk', 'narration', 'system', 'text', 'narrative']).optional(),
+  metadata: z.record(z.string(), z.any()).optional(), // Explicit key type
+});
+
 export const RoomSchema = z.object({
   id: z.string(),
   documentId: z.string().optional(),
@@ -167,6 +181,7 @@ export const RoomSchema = z.object({
     })
     .optional(),
   players: z.array(PlayerSchema).optional(),
+  messages: z.array(MessageSchema).optional(),
   settings: WorldSettingsSchema.nullable(),
   mapConfig: MapConfigSchema.optional(),
   worldDescription: z.string(),
@@ -188,16 +203,4 @@ export const RoomSchema = z.object({
   updatedAt: z.number(),
   isActive: z.boolean().optional(),
   timeFrames: z.array(TimeFrameSchema).optional(),
-});
-
-export const MessageSchema = z.object({
-  id: z.string(),
-  sender: z.string(),
-  recipientId: z.string().optional(),
-  text: z.string(),
-  images: z.array(z.string()).optional(),
-  timestamp: z.number(),
-  targetPlayer: z.string().optional(),
-  type: z.enum(['talk', 'narration', 'system', 'text', 'narrative']).optional(),
-  metadata: z.record(z.string(), z.any()).optional(), // Explicit key type
 });

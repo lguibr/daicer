@@ -290,7 +290,8 @@ ${JSON.stringify(
               timestamp: new Date().toISOString(),
               turnNumber: nextTurnNumber,
               gameState: {
-                entities: entitiesUpdate,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                entities: entitiesUpdate as any,
                 meta: {
                   source: 'tool_update',
                   narration: finalNarratorResponse.narration,

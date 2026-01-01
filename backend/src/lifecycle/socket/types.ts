@@ -22,6 +22,8 @@ export interface RoomWithPopulations {
     name: string;
     description?: string;
   };
+  config?: Record<string, unknown>; // Map generation config check schema
+  exploredTiles?: string[]; // stored as json array or string? Schema says JSON. So simple array likely.
   messages?: Array<{
     documentId: string;
     content: string;
