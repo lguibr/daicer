@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createDaicerTool, StrapiContext } from '../tool-factory';
-import { ActionDispatcher } from '@daicer/engine';
+import { ActionDispatcher, GameState, Entity } from '@daicer/engine';
+import { RoomWithPopulations } from '../../../lifecycle/socket/types';
 
 // Define Input Schema
 const PerformActionSchema = z.object({
@@ -24,30 +25,38 @@ export const performActionTool = (context: StrapiContext) => {
           const { strapi, roomDocumentId } = ctx;
 
           // 1. Load Room State
-          const room = await strapi.documents('api::room.room').findOne({
+          const roomRaw = await strapi.documents('api::room.room').findOne({
             documentId: roomDocumentId,
             populate: ['character_sheets'],
           });
 
-          if (!room) throw new Error(`Room ${roomDocumentId} not found`);
+          if (!roomRaw) throw new Error(`Room ${roomDocumentId} not found`);
 
+          const room = roomRaw as unknown as RoomWithPopulations;
           const entities = room.character_sheets || [];
 
           // 2. Initialize Dispatcher with Room State
           const state = {
-            // Ensure strong typing by importing EntitySheet if needed, or asserting check
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            entities: (entities as any[]).map((e) => ({
-              id: e.documentId || String(e.id),
-              position: e.position,
-              stats: e.stats,
-              type: e.type,
-              hp: e.hp,
-              maxHp: e.maxHp,
-              sheet: e,
-            })),
+            entities: entities.map(
+              (e): Entity => ({
+                id: e.documentId,
+                position: e.position,
+                stats: e.stats as any, // TODO: Define strict stats
+                type: e.type as 'player' | 'npc' | 'monster' | 'object',
+                name: e.name,
+                hp: e.currentHp,
+                maxHp: e.maxHp,
+                ac: 10,
+                speed: 30,
+                actions: [],
+                features: [],
+                color: '#fff',
+                visionRadius: 10,
+                sheet: e as any,
+              })
+            ),
             map: { width: 100, height: 100, voxels: {} },
-          };
+          } as unknown as GameState;
 
           const dispatcher = new ActionDispatcher();
 
@@ -74,7 +83,6 @@ export const performActionTool = (context: StrapiContext) => {
           // 4. Dispatch
           strapi.log.info(`[Tool:PerformAction] Dispatching ${input.commandType}`, parsedPayload);
 
-          // @ts-expect-error Legacy engine parity
           const result = dispatcher.dispatch(state, command);
 
           // 5. Broadcast Events

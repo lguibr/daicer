@@ -14,8 +14,7 @@ export const searchSpellsTool = (context: StrapiContext) =>
       schema: searchSpellsSchema,
       outputSchema: z.string(),
       func: async ({ query, level }, { strapi }) => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const filters: any = {
+        const filters: Record<string, unknown> = {
           name: { $containsi: query },
         };
         if (level !== undefined) {
@@ -31,9 +30,8 @@ export const searchSpellsTool = (context: StrapiContext) =>
           return `No spells found matching "${query}".`;
         }
 
-        return spells
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((s: any) => {
+        return (spells as Record<string, any>[])
+          .map((s) => {
             return `### ${s.name} (Level ${s.level} ${s.school})\n- Range: ${s.range}\n- Components: ${s.components}\n- Duration: ${s.duration}\n- Description: ${s.desc}\n`;
           })
           .join('\n---\n');

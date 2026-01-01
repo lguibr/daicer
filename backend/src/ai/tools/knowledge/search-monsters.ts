@@ -14,8 +14,7 @@ export const searchMonstersTool = (context: StrapiContext) =>
       schema: searchMonstersSchema,
       outputSchema: z.string(), // Returns formatted markup
       func: async ({ query, type }, { strapi }) => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const filters: any = {
+        const filters: Record<string, unknown> = {
           name: { $containsi: query },
         };
         if (type) {
@@ -31,9 +30,8 @@ export const searchMonstersTool = (context: StrapiContext) =>
           return `No monsters found matching "${query}".`;
         }
 
-        return monsters
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((m: any) => {
+        return (monsters as Record<string, any>[])
+          .map((m) => {
             const stats = m.stats ? JSON.stringify(m.stats) : 'N/A';
             return `### ${m.name} (${m.size} ${m.type}, CR ${m.challenge_rating})\n- HP: ${m.hp}\n- AC: ${m.armor_class}\n- Speed: ${JSON.stringify(m.speed)}\n- Stats: ${stats}\n`;
           })

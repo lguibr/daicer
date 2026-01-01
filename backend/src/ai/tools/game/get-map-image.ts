@@ -28,7 +28,6 @@ export const getMapImageTool = (context: StrapiContext) =>
 
         // Fetch Room Data
         // Fetch Room Data
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const roomRaw = await strapi.documents('api::room.room').findOne({
           documentId: roomDocumentId,
           populate: ['character_sheets'],
@@ -43,12 +42,13 @@ export const getMapImageTool = (context: StrapiContext) =>
         const chunkY = Math.floor(y / 32);
 
         let chunk;
-        const voxelService = strapi.service('api::voxel-engine.voxel-engine');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (voxelService && (voxelService as any).getChunk) {
+        const voxelService = strapi.service('api::voxel-engine.voxel-engine') as unknown as {
+          getChunk: (x: number, y: number, config: unknown) => Promise<unknown>;
+        };
+
+        if (voxelService && voxelService.getChunk) {
           const config = room.config || { seed: 'default' };
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          chunk = await (voxelService as any).getChunk(chunkX, chunkY, config);
+          chunk = await voxelService.getChunk(chunkX, chunkY, config);
         } else {
           throw new Error('Voxel Engine service unavailable.');
         }
@@ -56,8 +56,8 @@ export const getMapImageTool = (context: StrapiContext) =>
         if (!chunk) throw new Error('Failed to load map chunk.');
 
         // Map sheets to creatures
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const creatures = (room.character_sheets || []).map((cs: any) => ({
+        // Map sheets to creatures
+        const creatures = (room.character_sheets || []).map((cs) => ({
           id: cs.documentId,
           name: cs.name,
           type: cs.type,

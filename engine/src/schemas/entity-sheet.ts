@@ -171,7 +171,7 @@ export const EntitySheetSchema = z.object({
   resources: z.array(ResourcePoolSchema).default([]),
 
   // Flavor / Blueprint Data
-  class: z.any().optional(), // Reference object
+  class: z.unknown().optional(), // Reference object
   background: z.string(),
   alignment: z.string(),
   appearance: z.object({

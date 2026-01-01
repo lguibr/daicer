@@ -23,14 +23,11 @@ export const searchClassesTool = (context: StrapiContext) =>
           return `No classes found matching "${query}".`;
         }
 
-        return (
-          classes
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map((c: any) => {
-              return `### ${c.name} (Hit Die: ${c.hit_die})\n- Proficiencies: ${c.proficiencies}\n- Features: ${JSON.stringify(c.features)}\n`;
-            })
-            .join('\n---\n')
-        );
+        return (classes as Record<string, any>[])
+          .map((c) => {
+            return `### ${c.name} (Hit Die: ${c.hit_die})\n- Proficiencies: ${c.proficiencies}\n- Features: ${JSON.stringify(c.features)}\n`;
+          })
+          .join('\n---\n');
       },
     },
     context

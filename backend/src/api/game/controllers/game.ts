@@ -44,14 +44,12 @@ export default ({ strapi }) => ({
 
       // Normalize results
       const results = [
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(monsters || []).map((m: any) => ({
+        ...((monsters as Array<{ documentId: string; name: string }>) || []).map((m) => ({
           id: m.documentId,
           name: m.name,
           type: 'monster',
         })),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(characters || []).map((c: any) => ({
+        ...((characters as Array<{ documentId: string; name: string }>) || []).map((c) => ({
           id: c.documentId,
           name: c.name,
           type: 'character',

@@ -222,7 +222,8 @@ export default ({ strapi }) => ({
       throw new Error('User is not a player in this room');
     }
 
-    const updatedPlayers = [...players];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updatedPlayers: any[] = [...players];
     updatedPlayers[playerIndex] = {
       ...updatedPlayers[playerIndex],
       character: createdCharacter.documentId, // Keep global link for reference

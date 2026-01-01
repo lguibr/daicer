@@ -1,36 +1,33 @@
 import { streamManager } from '../../../utils/llm/stream-manager';
+import { RoomWithPopulations, TurnProcessPayload } from '../../../lifecycle/socket/types';
 
 export default ({ strapi }) => ({
   startProcessing(roomId: string) {
     streamManager.broadcast(roomId, 'turn:processing', { roomId });
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  broadcastTurnComplete(roomId: string, documentId: string, turnPayload: any) {
+  broadcastTurnComplete(roomId: string, documentId: string, turnPayload: TurnProcessPayload) {
     streamManager.broadcast(roomId, 'turn:complete', turnPayload);
     if (documentId !== roomId) {
       streamManager.broadcast(documentId, 'turn:complete', turnPayload);
     }
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  broadcastNewMessage(roomId: string, documentId: string, message: any) {
+  broadcastNewMessage(roomId: string, documentId: string, message: unknown) {
     streamManager.broadcast(roomId, 'message:new', message);
     if (documentId !== roomId) {
       streamManager.broadcast(documentId, 'message:new', message);
     }
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  broadcastGameUpdate(roomId: string, documentId: string, updatePayload: any) {
+  broadcastGameUpdate(roomId: string, documentId: string, updatePayload: unknown) {
     streamManager.broadcast(roomId, 'game:update', updatePayload);
     if (documentId !== roomId) {
       streamManager.broadcast(documentId, 'game:update', updatePayload);
     }
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  broadcastEntitiesUpdate(roomId: string, entities: any[]) {
+  broadcastEntitiesUpdate(roomId: string, entities: unknown[]) {
     streamManager.broadcast(roomId, 'entities:update', { entities });
   },
 
@@ -39,31 +36,18 @@ export default ({ strapi }) => ({
    * This ensures the frontend (Debug Map, etc.) is in sync with DB state.
    */
   async broadcastRoomEntities(roomDocumentId: string) {
-    // strapi is available in closure scope from factory
-    // But here export default () => ... passed in file view?
-    // Wait, previous file view of game-broadcaster.ts showed `export default () => ({` !
-    // It did NOT take strapi in the factory function arguments in the file view I saw (Step 1405).
-    // line 3: export default () => ({
-    // This implies it doesn't use 'strapi' instance, or relies on global?
-    // Or it handles it via imports?
-    // It imports streamManager directly.
-    // I need 'strapi' to fetch documents.
-    // I should check if I can add ({ strapi }) to the arguments.
-    // Standard Strapi 5/4 service format: export default ({ strapi }) => ({ ... });
-
-    // I will update the export to accept { strapi }.
-
     // Logic:
-    const room = await strapi.documents('api::room.room').findOne({
+    const roomRaw = await strapi.documents('api::room.room').findOne({
       documentId: roomDocumentId,
       populate: ['character_sheets', 'character_sheets.position'],
     });
 
-    if (!room) return;
+    if (!roomRaw) return;
+
+    const room = roomRaw as unknown as RoomWithPopulations;
 
     // Format
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const entities = (room.character_sheets || []).map((sheet: any) => ({
+    const entities = (room.character_sheets || []).map((sheet) => ({
       id: sheet.documentId,
       name: sheet.name,
       type: sheet.type || 'monster',

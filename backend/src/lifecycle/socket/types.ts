@@ -46,10 +46,11 @@ export interface RoomWithPopulations {
     documentId: string;
     name: string;
     type: string;
-    position: unknown;
+    position: { x: number; y: number; z: number };
     stats: unknown;
     currentHp: number;
     maxHp: number;
+    speed: number;
   }>;
   worldConditions?: unknown[]; // or specific type if known
 }
