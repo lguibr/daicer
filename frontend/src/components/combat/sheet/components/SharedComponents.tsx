@@ -18,7 +18,7 @@ export function InfoTile({ label, value, hint }: InfoTileProps) {
   );
 }
 
-type ResourcePool = CharacterSheet['resources'][number];
+type ResourcePool = EntitySheet['resources'][number];
 
 export function ResourceTile({ pool }: { pool: ResourcePool }) {
   return (

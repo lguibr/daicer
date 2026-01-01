@@ -206,7 +206,7 @@ export default function useSocket(roomId?: string, userId?: string) {
             // Let's verify 'state' has 'creatures'.
             // For God Mode, we might want to map these to 'creatures' for simplicity.
             updateState({
-              creatures: data.entities, // Direct map if possible, or we need a new state field
+              creatures: data.entities as Creature[], // Direct map if possible, or we need a new state field
             });
           },
           onMessageNew: (message) => {
@@ -226,7 +226,7 @@ export default function useSocket(roomId?: string, userId?: string) {
             console.info('⚡ Received Game Events:', data.events);
             setState((prev) => ({
               ...prev,
-              gameEvents: [...prev.gameEvents, ...data.events],
+              gameEvents: [...prev.gameEvents, ...(data.events as GameEvent[])],
             }));
           },
         });

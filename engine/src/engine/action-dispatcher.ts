@@ -7,6 +7,7 @@ import {
   InteractCommand,
   LongRestCommand,
   ModifyTerrainCommand,
+  RollSaveCommand,
 } from '../types';
 import { GameState, ActionResult } from '../types/engine';
 import { ActionType } from '../rules/actions';
@@ -39,20 +40,21 @@ export class ActionDispatcher {
         return this.handleLongRest(state, command as LongRestCommand);
       case 'MODIFY_TERRAIN':
         return this.handleModifyTerrain(state, command as ModifyTerrainCommand);
-      // @ts-expect-error - ROLL_SAVE is not in standard Command union yet
       case 'ROLL_SAVE':
         // Reuse Skill Check logic or simplified version
+        // We adapt RollSaveCommand to SkillCheckCommand structure for the handler
         return this.handleSkillCheck(state, {
-          ...(command as object),
+          id: command.id,
+          timestamp: command.timestamp,
           type: 'SKILL_CHECK',
           payload: {
-            // @ts-expect-error - Inference on payload union is tricky here
-            actorId: command.payload.actorId || command.payload.targetId, // Adapt payload
-            // @ts-expect-error - stat property might be missing on some payloads
-            attribute: command.payload.stat,
-            difficultyClass: 10,
+            actorId: (command as RollSaveCommand).payload.actorId,
+            attribute: (command as RollSaveCommand).payload.stat, // Remap 'stat' -> 'attribute'
+            difficultyClass: (command as RollSaveCommand).payload.difficultyClass || 10,
+            advantage: (command as RollSaveCommand).payload.advantage,
+            disadvantage: (command as RollSaveCommand).payload.disadvantage,
           },
-        } as SkillCheckCommand);
+        });
       default:
         return {
           success: false,

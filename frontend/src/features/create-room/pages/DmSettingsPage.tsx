@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { useI18n } from '@/i18n';
+// import { useI18n } from '@/i18n';
 import DiscreteSlider, { type SliderMark } from '@/components/forms/DiscreteSlider';
 import {
   VERBOSITY_MARK_KEYS,
@@ -27,7 +27,7 @@ type ScaleLevel = number;
 
 export default function DmSettingsPage() {
   const { settings, updateSetting, updateDMStyle } = useWizard();
-  const { language } = useI18n();
+  // const { language } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
 

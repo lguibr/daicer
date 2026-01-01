@@ -11,7 +11,7 @@ function ResizablePanelGroup({ className, ...props }: React.ComponentProps<typeo
 const ResizablePanel = Panel;
 
 function ResizableHandle({
-  _withHandle,
+  // _withHandle,
   className,
   ...props
 }: React.ComponentProps<typeof Separator> & {

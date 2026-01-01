@@ -242,18 +242,24 @@ export function DiceRollAnimation({
 
     stateRef.current = { scene, camera, renderer, axes, dice: [] };
 
-    const handleResize = (entries: ResizeObserverEntry[]) => {
-      if (!mountElement || !stateRef.current) return;
-      const { camera: currentCamera, renderer: currentRenderer } = stateRef.current;
-      const entry = entries[0];
-      const { width: containerWidth, height: containerHeight } = entry.contentRect;
+    const updateSize = (width: number, height: number) => {
+      if (!width || !height) return;
+      stateRef.current?.renderer.setSize(width, height, false);
+      if (stateRef.current?.camera) {
+        stateRef.current.camera.aspect = width / height;
+        stateRef.current.camera.updateProjectionMatrix();
+      }
+    };
 
-      // Skip resize if dimensions are invalid or zero
-      if (containerWidth === 0 || containerHeight === 0) return;
+    const handleObserverResize = (entries: ResizeObserverEntry[]) => {
+      if (!entries[0]) return;
+      const { width, height } = entries[0].contentRect;
+      updateSize(width, height);
+    };
 
-      currentRenderer.setSize(containerWidth, containerHeight, false);
-      currentCamera.aspect = containerWidth / containerHeight;
-      currentCamera.updateProjectionMatrix();
+    const handleWindowResize = () => {
+      if (!mountElement) return;
+      updateSize(mountElement.clientWidth, mountElement.clientHeight);
     };
 
     const animate = () => {
@@ -347,17 +353,17 @@ export function DiceRollAnimation({
     };
 
     animate();
-    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => handleResize()) : null;
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(handleObserverResize) : null;
     if (resizeObserver) {
       resizeObserver.observe(mountElement);
     }
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleWindowResize);
 
     return () => {
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleWindowResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = undefined;

@@ -91,6 +91,18 @@ export const ModifyTerrainCommandSchema = BaseCommandSchema.extend({
     .passthrough(), // Allow flexible payload for voxel engine
 });
 
+export const RollSaveCommandSchema = BaseCommandSchema.extend({
+  type: z.literal('ROLL_SAVE'),
+  payload: z.object({
+    actorId: z.string(),
+    targetId: z.string().optional(), // For flexibility in payload mapping
+    stat: AttributeSchema, // Mapped to 'attribute' in SkillCheck
+    difficultyClass: z.number().optional().default(10),
+    advantage: z.boolean().optional(),
+    disadvantage: z.boolean().optional(),
+  }),
+});
+
 // === Union of All Commands ===
 
 export const CommandSchema = z.union([
@@ -99,10 +111,10 @@ export const CommandSchema = z.union([
   SkillCheckCommandSchema,
   CastSpellCommandSchema,
   InteractCommandSchema,
-  InteractCommandSchema,
   EndTurnCommandSchema,
   LongRestCommandSchema,
   ModifyTerrainCommandSchema,
+  RollSaveCommandSchema,
 ]);
 
 // Helper to infer discriminated union type

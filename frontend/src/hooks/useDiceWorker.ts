@@ -3,7 +3,7 @@
  * Offloads dice rendering to prevent UI blocking
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { createDiceWorker } from '../workers/WorkerManager';
 import type { WorkerManager } from '../workers/WorkerManager';
 

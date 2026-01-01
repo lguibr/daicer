@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createDaicerTool, StrapiContext } from '../tool-factory';
+import { formatStrapiError, logStrapiError } from '../../../utils/error-handling';
 
 const summonCharacterSchema = z.object({
   templateId: z
@@ -38,17 +39,11 @@ export const summonCharacterTool = (context: StrapiContext) =>
 
           return `Successfully summoned "${instance.name}" (Instance: ${instance.documentId}) at ${x},${y},${z}.`;
         } catch (error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if ((error as any).details?.errors) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const details = (error as any).details.errors
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .map((e: any) => `${e.path.join('.')}: ${e.message}`)
-              .join(', ');
-            strapi.log.error(`Summon Character Validation Error: ${details}`);
-            return `Failed to summon character: ${details}`;
-          }
-          return `Failed to summon character: ${error instanceof Error ? error.message : String(error)}`;
+          // Standardized Validation Error Logging
+          const errorMessage = formatStrapiError(error);
+          logStrapiError(strapi.log, 'Tool:SummonCharacter', error);
+
+          return `Failed to summon character: ${errorMessage}`;
         }
       },
     },

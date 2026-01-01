@@ -33,7 +33,7 @@ export default function CharacterSelectionPage() {
 
   const [createEntitySheet] = useMutation(CREATE_ENTITY_SHEET_MUTATION);
 
-  const characters = data?.characters || [];
+  const characters = (data?.characters || []).filter((c) => !!c);
 
   const handleCharacterSelect = (charId: string) => {
     setSelectedCharacterId(charId);
@@ -45,7 +45,7 @@ export default function CharacterSelectionPage() {
     setLoading(true);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const character = characters.find((c: any) => c.documentId === selectedCharacterId);
+      const character = characters.find((c: any) => c?.documentId === selectedCharacterId);
       if (!character) throw new Error('Character not found');
 
       // Instantiate Character in Room
@@ -59,8 +59,8 @@ export default function CharacterSelectionPage() {
         documentId: character.documentId, // Pass the existing character ID
         name: character.name,
         backstory: character.backstory,
-        race: character.race?.name || character.race,
-        characterClass: character.class?.name || character.class,
+        race: typeof character.race === 'object' ? character.race?.name || '' : character.race,
+        characterClass: typeof character.class === 'object' ? character.class?.name || '' : character.class || '',
         // We might want to pass more fields if available in the query, or fetch full details first.
         // For now we assume the backend can handle partial or we might need to fetch full details.
         // Wait, LIST_CHARACTERS_QUERY only has basic info.
@@ -214,7 +214,7 @@ export default function CharacterSelectionPage() {
         <div className="sticky bottom-6 mt-auto bg-midnight-950/90 backdrop-blur border border-midnight-800 p-4 rounded-2xl flex justify-between items-center shadow-2xl">
           <div className="flex items-center gap-2 text-sm text-shadow-400">
             <Info className="w-4 h-4" />
-            <span>Selected: {characters.find((c) => c.documentId === selectedCharacterId)?.name || 'None'}</span>
+            <span>Selected: {characters.find((c) => c?.documentId === selectedCharacterId)?.name || 'None'}</span>
           </div>
 
           <Button

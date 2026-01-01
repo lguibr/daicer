@@ -3,7 +3,7 @@
  * Handles instantiation of Characters and Monsters into the game world.
  */
 
-import { CharacterDeriver } from '@daicer/engine';
+import { EntityDeriver } from '@daicer/engine';
 
 export default ({ strapi }) => ({
   /**
@@ -127,7 +127,7 @@ export default ({ strapi }) => ({
     };
 
     // Calculate Stats
-    const derived = CharacterDeriver.derive({
+    const derived = EntityDeriver.derive({
       attributes: attributes,
       level: 1,
       proficiencyBonus: 2, // Level 1 default

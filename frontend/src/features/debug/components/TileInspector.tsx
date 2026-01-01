@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import type { Coordinates } from '../utils/types';
 
 interface TileInspectorProps {

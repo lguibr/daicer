@@ -45,6 +45,7 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "../node_modules/@vitejs/plugin-react/dist/index.d.ts"
   ]
 }

@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { StrapiWithServer, PlayerReadyPayload } from '../types';
+import { StrapiWithServer, PlayerReadyPayload, RoomWithPopulations } from '../types';
 
 export const handlePlayerReady =
   (strapi: StrapiWithServer) =>
@@ -35,7 +35,7 @@ export const handlePlayerReady =
 
       if (!rooms || rooms.length === 0) return;
 
-      const room = rooms[0];
+      const room = rooms[0] as unknown as RoomWithPopulations;
       const players = room.players || [];
 
       // We need to identify the user. Strapi socket init usually doesn't attach user unless we have middleware.
@@ -75,7 +75,7 @@ export const handlePlayerReady =
         return;
       }
 
-      const playerIndex = players.findIndex((p: { user?: { documentId?: string; id?: unknown } }) => {
+      const playerIndex = players.findIndex((p) => {
         const pUserId = p.user?.documentId || p.user?.id;
         return String(pUserId) === String(userId);
       });

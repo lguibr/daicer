@@ -54,15 +54,24 @@ export function getStructuredGeminiModel(
   return rawModel.withStructuredOutput(schema);
 }
 
+// Local interface for common error shapes (Axios, GoogleGenerativeAI, etc)
+interface ExtendedError extends Error {
+  status?: number;
+  code?: string | number;
+  response?: {
+    status?: number;
+    data?: unknown;
+  };
+}
+
 export function extractErrorDetails(error: unknown): string {
   if (!error) return 'Unknown error';
 
   if (error instanceof Error) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errAny = error as any;
-    const status = errAny.status || errAny.response?.status;
-    const code = errAny.code;
-    const details = errAny.response?.data;
+    const errExt = error as ExtendedError;
+    const status = errExt.status || errExt.response?.status;
+    const code = errExt.code;
+    const details = errExt.response?.data;
 
     const parts = [
       error.name,

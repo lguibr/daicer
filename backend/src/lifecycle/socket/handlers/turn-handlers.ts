@@ -1,5 +1,5 @@
 import { streamManager } from '../../../utils/llm/stream-manager';
-import { StrapiWithServer, TurnProcessPayload, PlayerActionPayload } from '../types';
+import { StrapiWithServer, TurnProcessPayload, PlayerActionPayload, RoomWithPopulations } from '../types';
 
 import { Socket } from 'socket.io';
 
@@ -29,8 +29,8 @@ export const handleTurnProcess =
         socket.emit('error', { message: 'Room not found during processing' });
         return;
       }
-      const room = rooms[0];
-      const world = room.world as Record<string, unknown> | null;
+      const room = rooms[0] as unknown as RoomWithPopulations;
+      const world = room.world;
 
       const messages = (room.messages || []).map((msg) => ({
         sender: msg.senderName,
@@ -38,8 +38,7 @@ export const handleTurnProcess =
         timestamp: msg.timestamp,
       }));
 
-      // Safe access until schema is strict
-      const worldConditions = (room as unknown as Record<string, unknown>).worldConditions || [];
+      const worldConditions = room.worldConditions || [];
 
       await strapi
         .service('api::game.game')

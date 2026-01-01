@@ -270,7 +270,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
 
     if (!chunk.tiles || lz < 0 || lz >= chunk.tiles.length) return null;
 
-    if (chunk.tiles[lz] && chunk.tiles[lz][ly]) {
+    if (chunk?.tiles?.[lz]?.[ly]) {
       return chunk.tiles[lz][ly][lx];
     }
     return null;

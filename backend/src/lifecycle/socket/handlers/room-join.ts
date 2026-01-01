@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io'; // Import Socket type
-import { StrapiWithServer, RoomJoinPayload } from '../types';
+import { StrapiWithServer, RoomJoinPayload, RoomWithPopulations } from '../types';
 
 export const handleRoomJoin =
   (strapi: StrapiWithServer) =>
@@ -33,7 +33,9 @@ export const handleRoomJoin =
         return;
       }
 
-      const room = rooms[0];
+      const room = rooms[0] as unknown as RoomWithPopulations; // Strapi return type is generic, so we cast to our defined shape once safely.
+      // Better yet, if we could type findMany generic... but Strapi types are complex.
+      // This cast is acceptable as it types the boundary between Strapi SDK and our logic.
       const rawMessages = room.messages || [];
       rawMessages.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 
@@ -43,7 +45,7 @@ export const handleRoomJoin =
           // If recipient matches userId, it's for me.
           // Note: userId passed to room-join is likely documentId based on previous context, or ID string.
           // Need to handle both potentially if types are loose.
-          const msgRec = (msg as unknown as Record<string, unknown>).recipient as Record<string, unknown>;
+          const msgRec = msg.recipient;
           const recipientId = msgRec?.documentId || msgRec?.id;
           if (!recipientId) return true; // Public
           return String(recipientId) === String(userId);
@@ -57,14 +59,14 @@ export const handleRoomJoin =
           senderType: msg.senderType,
           timestamp: Number(msg.timestamp),
           type: msg.senderType === 'dm' ? 'narration' : 'chat',
-          isPrivate: !!(msg as unknown as Record<string, unknown>).recipient,
+          isPrivate: !!msg.recipient,
         }));
 
       // Safe access for dynamic properties
-      const world = room.world as Record<string, unknown> | null;
+      const world = room.world;
 
       // Map character_sheets to creatures (entities) for frontend
-      const rawSheets = (room as unknown as { character_sheets: unknown[] }).character_sheets || [];
+      const rawSheets = room.character_sheets || [];
       const creatures = rawSheets.map((cs: Record<string, unknown>) => ({
         id: cs.documentId,
         name: cs.name,

@@ -276,7 +276,9 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
 
               {/* Content */}
               <ScrollArea className="flex-1 p-6">
-                <SheetView sheet={'role' in selectedEntity ? selectedEntity.character : selectedEntity.sheet} />
+                <SheetView
+                  sheet={'role' in selectedEntity ? (selectedEntity.character as EntitySheet) : selectedEntity.sheet}
+                />
               </ScrollArea>
             </div>
           ) : (

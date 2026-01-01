@@ -1,9 +1,8 @@
 import { getMutationResolvers } from './mutation-resolvers';
+import { typeDefs } from './type-defs';
 
 export const registerGraphQLExtension = (strapi) => {
   const extensionService = strapi.plugin('graphql').service('extension');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { typeDefs } = require('./type-defs');
 
   extensionService.use({
     typeDefs,
@@ -14,14 +13,16 @@ export const registerGraphQLExtension = (strapi) => {
           const { documentId } = parent;
           const user = context.state.user;
 
-          const filters = {
-            room: { documentId: documentId },
-            $or: [{ recipient: { $null: true } }] as unknown[],
-          };
+          const orFilters: Array<Record<string, unknown>> = [{ recipient: { $null: true } }];
 
           if (user) {
-            filters.$or.push({ recipient: { documentId: user.documentId } });
+            orFilters.push({ recipient: { documentId: user.documentId } });
           }
+
+          const filters: Record<string, unknown> = {
+            room: { documentId: documentId },
+            $or: orFilters,
+          };
 
           return strapi.documents('api::message.message').findMany({
             filters,

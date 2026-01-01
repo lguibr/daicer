@@ -3,7 +3,7 @@
  * Offloads 3D voxel rendering to prevent UI blocking
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { createVoxelWorker } from '../workers/WorkerManager';
 import type { WorkerManager } from '../workers/WorkerManager';
 

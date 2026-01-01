@@ -85,7 +85,6 @@ interface SocketEvents {
   }) => void;
   onEntitiesUpdate?: (data: { entities: unknown[] }) => void;
   onGameEvents?: (data: { events: unknown[] }) => void;
-  onGameEvents?: (data: { events: unknown[] }) => void;
 }
 
 /**

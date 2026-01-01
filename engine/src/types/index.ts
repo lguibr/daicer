@@ -241,6 +241,7 @@ import {
   EndTurnCommandSchema,
   LongRestCommandSchema,
   ModifyTerrainCommandSchema,
+  RollSaveCommandSchema,
 } from '../schemas';
 
 export type Command = z.infer<typeof CommandSchema>;
@@ -252,6 +253,7 @@ export type InteractCommand = z.infer<typeof InteractCommandSchema>;
 export type EndTurnCommand = z.infer<typeof EndTurnCommandSchema>;
 export type LongRestCommand = z.infer<typeof LongRestCommandSchema>;
 export type ModifyTerrainCommand = z.infer<typeof ModifyTerrainCommandSchema>;
+export type RollSaveCommand = z.infer<typeof RollSaveCommandSchema>;
 
 export * from './engine';
 export * from '../rules/actions';

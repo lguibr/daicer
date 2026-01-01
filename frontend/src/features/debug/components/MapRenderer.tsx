@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import type { Coordinates, Chunk, ZLevel } from '../utils/types';
 
 interface ChunkProvider {
-  getChunk: (x: number, y: number) => Chunk | null;
+  getChunk: (x: number, y: number) => Chunk | null | undefined;
 }
 
 interface MapRendererProps {
@@ -139,7 +139,7 @@ export function MapRenderer({
         const ly = ((wy % 32) + 32) % 32;
         const lz = viewZ + 3; // map -3..3 to 0..6
 
-        if (!chunk || !chunk.tiles[lz] || !chunk.tiles[lz][ly]) continue;
+        if (!chunk || !chunk.tiles?.[lz]?.[ly]) continue;
         const tile = chunk.tiles[lz][ly][lx];
         if (!tile) continue;
 
