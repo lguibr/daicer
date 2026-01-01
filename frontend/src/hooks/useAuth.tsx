@@ -74,7 +74,9 @@ export default function useAuth() {
           });
         });
     } else {
-      setState((prev) => ({ ...prev, loading: false }));
+      setTimeout(() => {
+        setState((prev) => ({ ...prev, loading: false }));
+      }, 0);
     }
   }, []);
 

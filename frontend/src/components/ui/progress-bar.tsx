@@ -47,6 +47,7 @@ export function ProgressBar({ current, target, className, showPercentage = true,
   useEffect(() => {
     startTimeRef.current = null;
     firstProgressRef.current = null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEta(null);
   }, [target]);
 

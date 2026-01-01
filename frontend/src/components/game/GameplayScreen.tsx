@@ -91,7 +91,7 @@ export default function GameplayScreen({ room, players, creatures = [], onRefres
   const isDM = (!!room.owner?.documentId && room.owner.documentId === user?.documentId) || room.ownerId === user?.uid;
 
   useEffect(() => {
-    console.log(
+    console.info(
       '[GameplayScreen Debug] State Update:',
       JSON.stringify(
         {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { getRegistryTools } from '../../src/api/narrator/services/tool-registry';
 
 // Mocks for Strapi and dependencies
@@ -49,7 +50,6 @@ const mockStrapi = {
 
 describe('Narrator Tool Registry Integration', () => {
   const ROOM_DOC_ID = 'doc-room-123';
-  const ROOM_UUID = 'aa737f68-uuid';
 
   it('should register summon_entity tool', () => {
     const tools = getRegistryTools(mockStrapi as any, ROOM_DOC_ID);

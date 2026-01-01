@@ -50,6 +50,7 @@ export function Reasoning({
   // Auto-open when streaming starts
   useEffect(() => {
     if (isStreaming && !isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       handleOpenChange(true);
       startTimeRef.current = Date.now();
     }

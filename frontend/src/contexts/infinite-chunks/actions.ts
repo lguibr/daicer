@@ -34,7 +34,7 @@ export function useInfiniteChunksActions(): InfiniteChunksActions {
         state.loading
       );
 
-      console.log(
+      console.info(
         `[InfiniteChunks Action] checkChunkLoading(${playerX}, ${playerY}) found ${chunksToLoad.length} chunks to load. Config:`,
         {
           enabled: state.config.enabled,

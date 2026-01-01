@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Update DM Prompts for Structured God Mode
  * usage: npx ts-node scripts/update-prompts.ts

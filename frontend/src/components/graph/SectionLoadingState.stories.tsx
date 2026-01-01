@@ -94,7 +94,7 @@ export const ErrorWithRetry: Story = {
     sectionNumber: 1,
     sectionName: 'Generating World History',
     error: 'LLM timeout at history_period_node (period 5/10)',
-    onRetry: () => console.log('Retry clicked'),
+    onRetry: () => console.info('Retry clicked'),
   },
 };
 
@@ -117,6 +117,6 @@ export const ValidationError: Story = {
     sectionNumber: 1,
     sectionName: 'Generating World History',
     error: 'Validation failed: theme is required',
-    onRetry: () => console.log('Retry clicked'),
+    onRetry: () => console.info('Retry clicked'),
   },
 };

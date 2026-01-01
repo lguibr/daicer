@@ -27,7 +27,7 @@ interface SocketState {
  * @returns Socket state and utilities
  */
 export default function useStreamingSocket(roomId?: string, initialMessages?: Message[]) {
-  const [state, setState] = useState<SocketState>({
+  const [state, setState] = useState<SocketState>(() => ({
     connected: false,
     error: null,
     room: null,
@@ -40,7 +40,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
     presence: [],
     sseHealthWarning: false,
     lastSSEEvent: Date.now(),
-  });
+  }));
 
   const updateState = useCallback((updates: Partial<SocketState>) => {
     setState((prev) => ({ ...prev, ...updates }));
@@ -103,7 +103,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
       const socket = getSocket();
       // Force room join if already connected (e.g. reused socket from Lobby)
       if (socket?.connected && roomId) {
-        console.log('[useStreamingSocket] Socket already connected, joining room:', roomId);
+        console.info('[useStreamingSocket] Socket already connected, joining room:', roomId);
         socket.emit('room:join', { roomId });
         // Also ensure state is synced
         updateState({ connected: true, error: null });
@@ -253,13 +253,13 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
 
               return {
                 ...prev,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 messages: [...prev.messages, { ...message, text: message.text || (message as any).content || '' }],
               };
             });
           },
           onGameStart: (data) => {
-            console.log('[Socket] Game started:', data);
+            console.info('[Socket] Game started:', data);
 
             // Create the initial message object
             const initialMessage: Message = {
@@ -278,7 +278,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
           },
           // Streaming event handlers
           onStreamStart: (data) => {
-            console.log('[Streaming] Stream started:', data);
+            console.info('[Streaming] Stream started:', data);
             recordSSEEvent();
             updateStreamingMessage(data.messageId, '');
           },
@@ -287,7 +287,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
             updateStreamingMessage(data.messageId, data.accumulated);
           },
           onStreamEnd: (data) => {
-            console.log('[Streaming] Stream ended:', data);
+            console.info('[Streaming] Stream ended:', data);
             recordSSEEvent();
             // Add complete message to messages array
             setState((prev) => {
@@ -329,7 +329,7 @@ export default function useStreamingSocket(roomId?: string, initialMessages?: Me
             }
           },
           onStreamAborted: (data) => {
-            console.log('[Streaming] Stream aborted:', data);
+            console.info('[Streaming] Stream aborted:', data);
             clearStreamingMessage(data.messageId);
           },
           // Presence event handlers

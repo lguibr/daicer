@@ -1,3 +1,4 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 /**
  * backend/scripts/fetch_rules_data.ts
  *

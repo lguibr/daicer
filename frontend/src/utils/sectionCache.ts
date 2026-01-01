@@ -161,7 +161,7 @@ export function clearSectionCache(roomId: string): void {
 
     keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-    console.log(`[SectionCache] Cleared all caches for room ${roomId}`);
+    console.info(`[SectionCache] Cleared all caches for room ${roomId}`);
   } catch (error) {
     console.error('[SectionCache] Failed to clear cache:', error);
   }
@@ -192,7 +192,7 @@ export function clearSection3Cache(roomId: string): void {
 
     keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-    console.log(`[SectionCache] Cleared Section 3 cache for room ${roomId}`);
+    console.info(`[SectionCache] Cleared Section 3 cache for room ${roomId}`);
   } catch (error) {
     console.error('[SectionCache] Failed to clear Section 3 cache:', error);
   }

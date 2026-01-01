@@ -48,7 +48,7 @@ export function PushNotificationManager() {
     // });
     // setSubscription(sub);
     // Send sub to backend...
-    console.log('Push subscription logic placeholder');
+    console.info('Push subscription logic placeholder');
   };
 */
 

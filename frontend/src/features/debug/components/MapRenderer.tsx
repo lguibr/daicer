@@ -14,16 +14,16 @@ interface MapRendererProps {
   chunkProvider: ChunkProvider; // Changed from generator to interface
   visibleTiles: Set<string>;
   exploredTiles: Set<string>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entities: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ghostEntities?: any[];
   onTileClick: (coords: Coordinates, e: React.MouseEvent) => void;
   onTileDoubleClick?: (coords: Coordinates) => void;
   onTileHover: (coords: Coordinates | null) => void;
   previewPath?: Coordinates[] | null | undefined;
   isLive?: boolean;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   currentTimeFrame?: any;
   onZoom?: (delta: number, mouseX: number, mouseY: number) => void;
   onPan?: (dx: number, dy: number) => void;
@@ -54,6 +54,9 @@ export function MapRenderer({
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Drag state
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  // Drag state
   const isDownRef = useRef(false);
   const isPanningRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
@@ -68,7 +71,7 @@ export function MapRenderer({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     if (!ctx) return;
-    console.log(
+    console.info(
       'MapRenderer Debug: Rendering started. Size:',
       width,
       'x',
@@ -126,10 +129,10 @@ export function MapRenderer({
         const chunk = chunkProvider.getChunk(chunkX, chunkY);
         // Debug: Log first chunk found to verify structure
         if (chunk && wx === center.x && wy === center.y) {
-          console.log('MapRenderer Debug: Center Chunk:', chunk);
-          console.log('MapRenderer Debug: Chunk Tiles Z=3:', chunk.tiles[3]);
+          console.info('MapRenderer Debug: Center Chunk:', chunk);
+          console.info('MapRenderer Debug: Chunk Tiles Z=3:', chunk.tiles[3]);
         } else if (!chunk && wx === center.x && wy === center.y) {
-          console.log('MapRenderer Debug: MISSING Center Chunk at', chunkX, chunkY);
+          console.info('MapRenderer Debug: MISSING Center Chunk at', chunkX, chunkY);
         }
 
         const lx = ((wx % 32) + 32) % 32;
@@ -157,7 +160,7 @@ export function MapRenderer({
         if (tile.block.includes('door')) color = '#854d0e';
 
         if (wx === 0 && wy === 0) {
-          console.log('MapRenderer Debug: Drawing tile 0,0', tile, 'color:', color);
+          console.info('MapRenderer Debug: Drawing tile 0,0', tile, 'color:', color);
         }
 
         ctx.fillStyle = color;
@@ -182,7 +185,7 @@ export function MapRenderer({
         const screenY = (wy - center.y) * TILE_SIZE + height / 2 - TILE_SIZE / 2;
 
         if (wx === 0 && wy === 0) {
-          console.log('MapRenderer Debug: Tile 0,0 coords:', { screenX, screenY, TILE_SIZE });
+          console.info('MapRenderer Debug: Tile 0,0 coords:', { screenX, screenY, TILE_SIZE });
         }
 
         ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
@@ -228,7 +231,7 @@ export function MapRenderer({
     }
 
     // Draw Entities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     renderEntities.forEach((ent: any) => {
       // Only if on same Z level
       if (ent.position.z !== viewZ) return;
@@ -248,7 +251,7 @@ export function MapRenderer({
     });
 
     // Draw Ghost Entities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ghostEntities.forEach((ent: any) => {
       if (ent.position.z !== viewZ) return;
 
@@ -296,6 +299,7 @@ export function MapRenderer({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDownRef.current = true;
+    setIsDragging(true);
     isPanningRef.current = false;
     lastPosRef.current = { x: e.clientX, y: e.clientY };
     startPosRef.current = { x: e.clientX, y: e.clientY };
@@ -303,6 +307,7 @@ export function MapRenderer({
 
   const handleMouseUp = (_e: React.MouseEvent) => {
     isDownRef.current = false;
+    setIsDragging(false);
     // Don't need to do anything else, handleClick uses isPanningRef
   };
 
@@ -375,10 +380,11 @@ export function MapRenderer({
       onMouseMove={handleMouseMove}
       onMouseLeave={(_e) => {
         isDownRef.current = false;
+        setIsDragging(false);
         onTileHover?.(null);
       }}
       onWheel={handleWheel}
-      className={`block touch-none bg-pink-500 ${isDownRef.current ? 'cursor-grabbing' : 'cursor-crosshair'}`}
+      className={`block touch-none bg-pink-500 ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
     />
   );
 }

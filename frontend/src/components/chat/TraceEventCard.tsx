@@ -1,21 +1,18 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Activity, Swords, Shield, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, ChevronRight, Activity, Swords } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Types from Engine (Manual copy to ensure stability if import fails)
 export interface ExecutionStep {
   type: string;
-  label: string;
+  description: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data?: any;
+  [key: string]: any; // Allow relaxed access for UI component
 }
 
-export interface ExecutionTrace {
-  id: string;
-  actionId: string;
-  steps: ExecutionStep[];
-}
+// ExecutionTrace is an array of steps in engine
+export type ExecutionTrace = ExecutionStep[];
 
 interface TraceEventCardProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,8 +23,11 @@ export default function TraceEventCard({ event }: TraceEventCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   // Safely extract trace
-  const trace = event.payload?.trace as ExecutionTrace | undefined;
-  if (!trace) return null;
+  // Safely extract trace steps
+  const trace = event.payload?.trace;
+  const steps = Array.isArray(trace) ? trace : trace?.steps;
+
+  if (!steps || steps.length === 0) return null;
 
   const isAttack = event.type === 'ATTACK_RESULT';
   const outcome = event.payload?.outcome;
@@ -94,11 +94,11 @@ export default function TraceEventCard({ event }: TraceEventCardProps) {
               className="overflow-hidden"
             >
               <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
-                {trace.steps.map((step, idx) => (
+                {steps.map((step: ExecutionStep, idx: number) => (
                   <div key={idx} className="text-xs bg-black/20 rounded p-2 border border-white/5">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-1 h-1 rounded-full bg-aurora-500/50" />
-                      <span className="font-semibold text-aurora-200">{step.label}</span>
+                      <span className="font-semibold text-aurora-200">{step.description}</span>
                     </div>
 
                     {/* Render Step Data pretty-printed */}

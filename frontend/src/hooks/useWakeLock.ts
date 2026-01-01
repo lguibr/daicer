@@ -12,10 +12,10 @@ export function useWakeLock() {
 
         wakeLock.current.addEventListener('release', () => {
           setIsLocked(false);
-          console.log('Wake Lock released');
+          console.info('Wake Lock released');
         });
-        console.log('Wake Lock acquired');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.info('Wake Lock acquired');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error(`${err.name}, ${err.message}`);
       }
@@ -31,6 +31,7 @@ export function useWakeLock() {
 
   useEffect(() => {
     // Attempt to acquire lock on mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     requestWakeLock();
 
     // Re-acquire lock when page becomes visible again

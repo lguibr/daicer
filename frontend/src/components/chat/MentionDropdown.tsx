@@ -33,6 +33,7 @@ export function MentionDropdown({ suggestions, onSelect, isLoading, position, on
         {!isLoading &&
           suggestions.map((s) => (
             <button
+              type="button"
               key={s.id}
               className="flex items-center gap-2 p-2 hover:bg-gray-800 w-full text-left transition-colors cursor-pointer text-gray-200"
               onClick={() => onSelect(s)}

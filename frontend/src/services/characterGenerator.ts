@@ -54,46 +54,7 @@ export const generateRandomCharacter = (
   const bonds = faker.lorem.sentence();
   const flaws = faker.hacker.phrase(); // playful choice
 
-  // Attributes
-  const attributes = {
-    Strength: 10,
-    Dexterity: 10,
-    Constitution: 10,
-    Intelligence: 10,
-    Wisdom: 10,
-    Charisma: 10,
-  };
-
   const priority = CLASS_PRIORITIES[characterClass] || { primary: ['Strength'], secondary: ['Constitution'] };
-  const statPool = [...STANDARD_ARRAY];
-
-  // Assign primary
-  priority.primary.forEach((stat) => {
-    const valueIndex = statPool.findIndex((v) => v === Math.max(...statPool));
-    if (valueIndex !== -1) {
-      attributes[stat] = statPool[valueIndex];
-      statPool.splice(valueIndex, 1);
-    }
-  });
-
-  // Assign secondary
-  priority.secondary.forEach((stat) => {
-    const valueIndex = statPool.findIndex((v) => v === Math.max(...statPool));
-    if (valueIndex !== -1) {
-      attributes[stat] = statPool[valueIndex];
-      statPool.splice(valueIndex, 1);
-    }
-  });
-
-  // Assign rest randomly
-  Object.keys(attributes).forEach((key) => {
-    if (attributes[key] === 10 && statPool.length > 0) {
-      // Check if not assigned (default 10 matches one of standard array but we can track assignment better, simpler here)
-      // Actually this logic is flawed because 10 is in standard array.
-      // Better to initialize empty or null. But let's just re-assign unassigned ones.
-      // We can iterate keys, check if it was in priority.
-    }
-  });
 
   // Re-do attributes clean
   const cleanAttributes: Record<string, number> = {};

@@ -38,7 +38,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
     if (!roomId) return;
 
     // Debug: Log which dependency changed
-    console.log('[InfiniteChunks] Initializing/Updating provider. Changed deps:', {
+    console.info('[InfiniteChunks] Initializing/Updating provider. Changed deps:', {
       roomId,
       initialGridLen: initialGrid.length,
       chunkSize,
@@ -67,7 +67,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
       },
     });
 
-    console.log(
+    console.info(
       `[InfiniteChunks] Initialized for room ${roomId} (mode: ${chunkGenerator ? 'generator' : 'backend'}, layer: ${layer})`
     );
   }, [roomId, initialGrid, chunkSize, loadRadius, enabled, chunkGenerator, /* placementMap, */ layer]);
@@ -76,7 +76,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
   const checkChunkLoadingInternal = useCallback(
     async (playerX: number, playerY: number) => {
       if (!enabled || !state.initialized) {
-        console.log('[InfiniteChunks] Skipping checkChunkLoading: not enabled or initialized', {
+        console.info('[InfiniteChunks] Skipping checkChunkLoading: not enabled or initialized', {
           enabled,
           initialized: state.initialized,
         });
@@ -92,7 +92,7 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
         state.loading
       );
 
-      console.log(
+      console.info(
         `[InfiniteChunks] checkChunkLoading(${playerX}, ${playerY}) found ${chunksToLoad.length} chunks to load`
       );
 
@@ -146,9 +146,9 @@ export function InfiniteChunksProvider({ children, options }: InfiniteChunksProv
   // Force initial chunk loading for empty grids
   useEffect(() => {
     if (state.initialized && initialGrid.length === 0) {
-      console.log('[InfiniteChunks] Initialized with empty grid. Triggering initial load in 100ms...');
+      console.info('[InfiniteChunks] Initialized with empty grid. Triggering initial load in 100ms...');
       setTimeout(() => {
-        console.log('[InfiniteChunks] Executing initial load timeout...');
+        console.info('[InfiniteChunks] Executing initial load timeout...');
         checkChunkLoadingInternal(0, 0);
       }, 100);
     }

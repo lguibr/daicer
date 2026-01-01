@@ -113,7 +113,7 @@ export default function OpenedRoomPage() {
       return;
     }
 
-    console.log('[OpenedRoom] Starting world generation SSE listeners');
+    console.info('[OpenedRoom] Starting world generation SSE listeners');
 
     // Clear previous events once on mount
     setStreamEvents([]);
@@ -126,10 +126,10 @@ export default function OpenedRoomPage() {
       if (isCleanedUp) return;
 
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const user = auth.currentUser;
-      if (!user) return;
+      const { currentUser } = auth;
+      if (!currentUser) return;
 
-      const token = await user.getIdToken();
+      const token = await currentUser.getIdToken();
 
       // Start with Section 1 (dm-story)
       const endpoint = `${API_URL}/api/graph/dm-story/stream?roomId=${roomId}&token=${encodeURIComponent(token)}`;
@@ -175,7 +175,7 @@ export default function OpenedRoomPage() {
 
             // Connect to Section 2 stream
             setTimeout(async () => {
-              if (isCleanedUp) return;
+              if (isCleanedUp || !user) return;
               const token2 = await user.getIdToken();
               const endpoint2 = `${API_URL}/api/graph/world-config/stream?roomId=${roomId}&token=${encodeURIComponent(token2)}`;
               eventSource = new EventSource(endpoint2, { withCredentials: true });

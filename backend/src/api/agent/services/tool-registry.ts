@@ -2,8 +2,6 @@
  * Tool Registry Service
  */
 
-import { ActionDispatcher } from '@daicer/engine';
-
 /*
   This service maps string tool names to actual logic.
   It acts as the "Standard Library" for the Agent.
@@ -22,7 +20,7 @@ export default ({ strapi }) => {
   // --- PILOT TOOLS ---
 
   // 1. PERFORM_ATTACK
-  register('perform_attack', async (roomId, payload, user) => {
+  register('perform_attack', async (roomId, payload, _user) => {
     // 1. Get Game State (reuse ActionEngine logic?)
     // Ideally we use ActionEngine as the facade for Dispatcher.
     // Let's call ActionEngine.
@@ -43,7 +41,7 @@ export default ({ strapi }) => {
   });
 
   // 2. MOVE_ENTITY
-  register('move_entity', async (roomId, payload, user) => {
+  register('move_entity', async (roomId, payload, _user) => {
     const actionEngine = strapi.service('api::game.action-engine');
 
     const command = {
@@ -60,14 +58,14 @@ export default ({ strapi }) => {
   });
 
   // 3. SPAWN_ENTITY
-  register('spawn_entity', async (roomId, payload, user) => {
+  register('spawn_entity', async (roomId, payload, _user) => {
     const spawnService = strapi.service('api::game.spawn-service');
     // Schema: blueprintId, type, position
     return await spawnService.spawn(roomId, payload);
   });
 
   // 4. ROLL_SAVE (Using SKILL_CHECK for now until we expand)
-  register('roll_save', async (roomId, payload, user) => {
+  register('roll_save', async (roomId, payload, _user) => {
     const actionEngine = strapi.service('api::game.action-engine');
 
     // Adapting "Save" to "Skill Check" structure for now, or adding SAVE cmd
@@ -87,7 +85,7 @@ export default ({ strapi }) => {
   });
 
   // 5. CAST_SPELL
-  register('cast_spell', async (roomId, payload, user) => {
+  register('cast_spell', async (roomId, payload, _user) => {
     const actionEngine = strapi.service('api::game.action-engine');
     // Stub implementation as MagicSystem is not fully separated yet
     const command = {
@@ -99,7 +97,7 @@ export default ({ strapi }) => {
   });
 
   // 6. INTERACT_OBJECT
-  register('interact_object', async (roomId, payload, user) => {
+  register('interact_object', async (roomId, payload, _user) => {
     const actionEngine = strapi.service('api::game.action-engine');
     const command = {
       type: 'INTERACT',
@@ -110,7 +108,7 @@ export default ({ strapi }) => {
   });
 
   // 7. MODIFY_TERRAIN
-  register('modify_terrain', async (roomId, payload, user) => {
+  register('modify_terrain', async (roomId, payload, _user) => {
     const actionEngine = strapi.service('api::game.action-engine');
     // Map modification usually goes to VoxelEngine, but we wrap it in an Event/Command for persistence
     const command = {
@@ -122,7 +120,7 @@ export default ({ strapi }) => {
   });
 
   // 8. LONG_REST
-  register('long_rest', async (roomId, payload, user) => {
+  register('long_rest', async (roomId, payload, _user) => {
     const actionEngine = strapi.service('api::game.action-engine');
     const command = {
       type: 'LONG_REST',
@@ -136,7 +134,7 @@ export default ({ strapi }) => {
     hasTool(name: string) {
       return !!tools[name];
     },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async execute(name: string, roomId: string, payload: any, user: any) {
       if (!tools[name]) throw new Error(`Tool ${name} not registered`);
       return await tools[name](roomId, payload, user);

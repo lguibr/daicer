@@ -62,8 +62,8 @@ export async function generateMapImage(
       // Default: Black (Unseen)
       let r = 0,
         g = 0,
-        b = 0,
-        a = 255;
+        b = 0;
+      const a = 255;
 
       if (isVisible || isExplored) {
         // Get Tile Data from Chunk

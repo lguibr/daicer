@@ -1,6 +1,4 @@
-import { Core } from '@strapi/strapi';
-
-const TEMPLATES: Record<string, any> = {
+const TEMPLATES: Record<string, unknown> = {
   fighter: {
     name: 'Valen Heritage',
     race: 'Human',
@@ -100,7 +98,7 @@ const TEMPLATES: Record<string, any> = {
   },
 };
 
-export default ({ strapi }: { strapi: Core.Strapi }) => ({
+export default () => ({
   async getTemplate(ctx) {
     const { archetype } = ctx.params;
     const key = archetype?.toLowerCase();
@@ -111,7 +109,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     if (!template) {
       // Generic fallback for unmapped classes
       template = {
-        ...TEMPLATES.fighter,
+        ...(TEMPLATES.fighter as Record<string, unknown>),
         name: 'Novice Adventurer',
         characterClass: archetype.charAt(0).toUpperCase() + archetype.slice(1),
         backstory: `A novice ${archetype} starting their journey to find their destiny.`,

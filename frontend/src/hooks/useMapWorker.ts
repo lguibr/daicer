@@ -34,6 +34,8 @@ export function useMapWorker(options: UseMapWorkerOptions) {
   const viewportRef = useRef({ x: 0, y: 0, zoom: 1.0 });
   const isWorkerActiveRef = useRef(false);
 
+  const [isWorkerActive, setIsWorkerActive] = useState(false);
+
   /**
    * Initialize worker with canvas
    */
@@ -62,6 +64,7 @@ export function useMapWorker(options: UseMapWorkerOptions) {
       if (success) {
         workerRef.current = worker;
         isWorkerActiveRef.current = true;
+        setIsWorkerActive(true);
 
         // Send initial size
         worker.postMessage({
@@ -72,7 +75,7 @@ export function useMapWorker(options: UseMapWorkerOptions) {
           zoom: viewportRef.current.zoom,
         });
 
-        console.log('[useMapWorker] Worker initialized successfully');
+        console.info('[useMapWorker] Worker initialized successfully');
         return true;
       }
 
@@ -163,7 +166,8 @@ export function useMapWorker(options: UseMapWorkerOptions) {
         workerRef.current.terminate();
         workerRef.current = null;
         isWorkerActiveRef.current = false;
-        console.log('[useMapWorker] Worker terminated');
+        setIsWorkerActive(false);
+        console.info('[useMapWorker] Worker terminated');
       }
     },
     []
@@ -175,6 +179,6 @@ export function useMapWorker(options: UseMapWorkerOptions) {
     updateViewport,
     clearChunks,
     resize,
-    isWorkerActive: isWorkerActiveRef.current,
+    isWorkerActive,
   };
 }

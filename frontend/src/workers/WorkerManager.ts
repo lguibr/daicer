@@ -99,7 +99,7 @@ export class WorkerManager {
         [this.offscreenCanvas as any]
       );
 
-      console.log(`[WorkerManager] ${this.workerType} worker initialized successfully`);
+      console.info(`[WorkerManager] ${this.workerType} worker initialized successfully`);
       return true;
     } catch (error) {
       console.error(`[WorkerManager] Failed to initialize ${this.workerType} worker:`, error);
@@ -144,7 +144,7 @@ export class WorkerManager {
     this.canvas = null;
     this.messageHandlers.clear();
 
-    console.log(`[WorkerManager] ${this.workerType} worker terminated`);
+    console.info(`[WorkerManager] ${this.workerType} worker terminated`);
   }
 
   /**

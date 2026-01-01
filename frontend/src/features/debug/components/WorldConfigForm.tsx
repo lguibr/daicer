@@ -1,5 +1,7 @@
 import React from 'react';
 import { RefreshCw, RotateCcw } from 'lucide-react';
+import { clsx } from 'clsx';
+
 import type { WorldConfig } from '../utils/types';
 
 interface WorldConfigProps {
@@ -49,7 +51,7 @@ const SliderParams = [
   },
 ];
 
-export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, onConfigChange, onRegenerate }) => {
+export function WorldConfigForm({ config, isActive, onConfigChange, onRegenerate }: WorldConfigProps) {
   const handleChange = (key: keyof WorldConfig, value: number | string) => {
     onConfigChange({ ...config, [key]: value });
   };
@@ -58,15 +60,19 @@ export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, 
     <div className="space-y-4">
       {/* Seed */}
       <div className="space-y-1">
-        <label className="text-xs font-bold text-shadow-400 uppercase tracking-wider">SEED ID</label>
+        <label htmlFor="seed-input" className="text-xs font-bold text-shadow-400 uppercase tracking-wider">
+          SEED ID
+        </label>
         <div className="flex gap-2">
           <input
+            id="seed-input"
             type="text"
             value={config.seed}
             onChange={(e) => handleChange('seed', e.target.value)}
             className="flex-1 bg-midnight-950/50 border border-midnight-700 rounded-lg px-3 py-2 text-sm font-mono text-aurora-300 focus:outline-none focus:border-aurora-500/50 transition-colors"
           />
           <button
+            type="button"
             onClick={() => handleChange('seed', Math.random().toString(36).substr(2, 6))}
             className="p-2 bg-midnight-800 hover:bg-midnight-700 border border-midnight-600 rounded-lg transition-colors group"
             title="Randomize Seed"
@@ -144,6 +150,7 @@ export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, 
 
       {/* Regenerate Button */}
       <button
+        type="button"
         onClick={onRegenerate}
         disabled={!isActive}
         className={clsx(
@@ -158,10 +165,4 @@ export const WorldConfigForm: React.FC<WorldConfigProps> = ({ config, isActive, 
       </button>
     </div>
   );
-};
-
-// Helper for conditional classes
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function clsx(...args: any[]) {
-  return args.filter(Boolean).join(' ');
 }

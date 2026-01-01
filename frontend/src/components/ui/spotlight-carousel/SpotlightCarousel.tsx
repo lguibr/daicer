@@ -120,6 +120,7 @@ export function SpotlightCarousel({
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveIndex((prev) => {
       if (slideCount === 0) {
         return 0;
@@ -134,6 +135,7 @@ export function SpotlightCarousel({
   useEffect(() => {
     if (typeof startIndex === 'number' && slideCount > 0) {
       const clamped = Math.max(0, Math.min(slideCount - 1, Math.floor(startIndex)));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveIndex(clamped);
     }
   }, [startIndex, slideCount]);

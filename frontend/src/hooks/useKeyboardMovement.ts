@@ -39,6 +39,7 @@ export function useKeyboardMovement({
   // Only sync with initial position on first mount
   useEffect(() => {
     if (!isInitialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition(initialPosition);
       setIsInitialized(true);
     }
@@ -49,7 +50,7 @@ export function useKeyboardMovement({
     if (isInitialized) {
       // Convert from old coordinate system to new one
       // This prevents teleportation when grid expands
-      console.log('[useKeyboardMovement] Coordinate offset changed:', coordinateOffset);
+      console.info('[useKeyboardMovement] Coordinate offset changed:', coordinateOffset);
     }
   }, [coordinateOffset, isInitialized]);
   useEffect(() => {

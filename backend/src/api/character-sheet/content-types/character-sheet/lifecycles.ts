@@ -42,7 +42,6 @@ function validateInventorySlots(data: any) {
   }
 
   const slots = new Set();
-  const validSlots = ['mainHand', 'offHand', 'armor', 'helmet', 'boots', 'accessory']; // Expand as needed
 
   for (const item of data.inventory) {
     // Skip if item doesn't have a slot or is in backpack
@@ -104,13 +103,13 @@ async function updateDerivedData(event) {
   // Assuming classData has 'features' which is a collection of some entity
   const featuresInput = {
     characterLevel: level,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     classFeatures: (classData?.features || []).map((f: any) => ({
       name: f.name,
       description: f.description || '',
       level: f.level || 1,
     })),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     raceFeatures: (raceData?.features || []).map((f: any) => ({
       name: f.name,
       description: f.description || '',
@@ -121,7 +120,7 @@ async function updateDerivedData(event) {
 
   // 4. Hydrate Actions
   // Look for equipped weapons in inventory
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generatedActions: any[] = [];
 
   // We assume inventory item has 'isEquipped' logic or we check slot
@@ -134,7 +133,7 @@ async function updateDerivedData(event) {
   // If 'item' field stores the Name (string), we query Equipment by name.
   // If 'item' is a Relation (unlikely in simple component design usually string?), check schema. It says "item: string".
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const equippedItems = inventory.filter((i: any) => i.slot && i.slot !== 'backpack' && i.isEquipped !== false);
 
   for (const invItem of equippedItems) {

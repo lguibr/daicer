@@ -38,7 +38,7 @@ function ExampleWizard() {
   ];
 
   return (
-    <FormWizard steps={steps} onComplete={() => console.log('Wizard completed!', formData)} className="w-[600px]">
+    <FormWizard steps={steps} onComplete={() => console.info('Wizard completed!', formData)} className="w-[600px]">
       <FormWizardSteps />
       <FormWizardContent>
         <FormWizardStep step="basic">
@@ -101,7 +101,7 @@ export const ThreeStepWizard: Story = {
 
 export const SingleStep: Story = {
   render: () => (
-    <FormWizard steps={[{ id: 'only', title: 'Single Step' }]} onComplete={() => console.log('Done!')}>
+    <FormWizard steps={[{ id: 'only', title: 'Single Step' }]} onComplete={() => console.info('Done!')}>
       <FormWizardSteps />
       <FormWizardContent>
         <FormWizardStep step="only">
@@ -129,7 +129,7 @@ export const FiveStepWizard: Story = {
         { id: '4', title: 'Step 4' },
         { id: '5', title: 'Step 5' },
       ]}
-      onComplete={() => console.log('Five steps completed!')}
+      onComplete={() => console.info('Five steps completed!')}
     >
       <FormWizardSteps />
       <FormWizardContent>

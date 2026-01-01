@@ -112,7 +112,7 @@ export default function GameRoomPage() {
     }
 
     const loadRoom = async () => {
-      console.log('[GameRoom] Loading room:', roomId);
+      console.info('[GameRoom] Loading room:', roomId);
       try {
         const roomData = (await getRoomState(roomId)) as SharedRoom & { players: Player[] };
 
@@ -120,7 +120,7 @@ export default function GameRoomPage() {
           throw new Error(t('gameRoom.errors.notFound'));
         }
 
-        console.log('[GameRoom] Loaded room data:', {
+        console.info('[GameRoom] Loaded room data:', {
           id: roomData.id,
           phase: roomData.phase,
           players: roomData.players?.length,
@@ -141,7 +141,7 @@ export default function GameRoomPage() {
   // Update state from socket
   useEffect(() => {
     if (socket.room) {
-      console.log('[GameRoom] Socket room update:', socket.room.phase);
+      console.info('[GameRoom] Socket room update:', socket.room.phase);
       setRoom(socket.room);
 
       // If room has generation events, restore them to streamEvents
@@ -166,7 +166,7 @@ export default function GameRoomPage() {
       return;
     }
 
-    console.log('[GameRoom] Starting world generation SSE listeners');
+    console.info('[GameRoom] Starting world generation SSE listeners');
 
     // Clear previous events once on mount
     setStreamEvents([]);
@@ -405,16 +405,16 @@ export default function GameRoomPage() {
       try {
         setLoading(true);
         const streamId = crypto.randomUUID();
-        console.log('GameRoom DEBUG: Calling startGame...');
+        console.info('GameRoom DEBUG: Calling startGame...');
         await startGame(room.documentId || room.roomId || room.id, room.settings?.language || 'en', streamId);
-        console.log('GameRoom DEBUG: startGame returned.');
+        console.info('GameRoom DEBUG: startGame returned.');
 
         // Force refresh room state to ensure phase change is reflected immediately
         // This handles cases where socket event might be delayed or missed
         const updatedRoom = (await getRoomState(room.documentId || room.roomId || room.id)) as SharedRoom & {
           players: Player[];
         };
-        console.log('GameRoom DEBUG: Refetched room phase:', updatedRoom.phase);
+        console.info('GameRoom DEBUG: Refetched room phase:', updatedRoom.phase);
         setRoom(updatedRoom);
       } catch (err) {
         console.error('Failed to start game:', err);

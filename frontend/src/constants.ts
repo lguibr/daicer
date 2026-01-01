@@ -58,11 +58,14 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
   hitDice: { total: 1, current: 1, die: '1d10' },
   deathSaves: { successes: 0, failures: 0 },
   armorClass: 10,
+  resistances: [],
+  immunities: [],
+  vulnerabilities: [],
   initiative: 0,
-  speed: 30,
+  speed: { walk: 30 },
   proficiencyBonus: 2,
   inspiration: false,
-  baseAttackBonus: 0,
+
   attributes: {
     [Attribute.STR]: 10,
     [Attribute.DEX]: 10,
@@ -76,18 +79,18 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
     reflex: 0,
     will: 0,
   },
+  conditions: [],
   skills: SKILLS_LIST.reduce<Record<string, number>>((acc, skill) => {
     acc[skill] = 0;
     return acc;
   }, {}),
   skillDetails: [],
-  expertises: [],
-  attacks: [],
-  equipment: [],
-  currency: { cp: 0, sp: 0, ep: 0, gp: 10, pp: 0 },
-  proficienciesAndLanguages: 'Common',
-  features: [],
   talents: [],
+  expertises: [],
+  equipment: [],
+  structuredActions: [],
+  features: [],
+  currency: { cp: 0, sp: 0, ep: 0, gp: 10, pp: 0 },
   appearance: {
     age: 'Unknown',
     height: '5\'8"',
@@ -104,28 +107,9 @@ export const NEW_CHARACTER_TEMPLATE: Omit<CharacterSheet, 'name' | 'race' | 'cha
     flaws: '',
   },
   backstory: '',
-  backgroundDetails: {
-    origin: '',
-    upbringing: '',
-    motivation: '',
-    keyEvents: [],
-    allies: [],
-  },
   alliesAndOrganizations: '',
   treasure: '',
-  resourcePools: [],
-  advancementPoints: {
-    ability: 0,
-    skill: 0,
-    talent: 0,
-  },
-  spellcasting: {
-    class: '',
-    ability: '',
-    saveDC: 10,
-    attackBonus: 0,
-    cantrips: [],
-    spellsKnown: [],
-    slots: [],
-  },
+  backgroundDetails: { origin: '', upbringing: '', motivation: '', keyEvents: [] },
+  advancementPoints: { ability: 0, skill: 0, talent: 0 },
+  resources: [], // Renamed from resourcePools
 };

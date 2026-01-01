@@ -11,7 +11,7 @@ export const listEntitiesTool = (context: StrapiContext) =>
         'Lists all entities (players, monsters, NPCs) currently in the room with their positions and status.',
       schema: listEntitiesSchema,
       outputSchema: z.string(), // Returns a formatted string list
-      func: async ({}, { strapi, roomDocumentId }) => {
+      func: async (_input, { strapi, roomDocumentId }) => {
         // Fetch all character sheets in the room
         const sheets = await strapi.documents('api::character-sheet.character-sheet').findMany({
           filters: {

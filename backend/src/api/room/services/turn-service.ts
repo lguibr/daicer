@@ -86,7 +86,7 @@ export default ({ strapi }) => ({
   /**
    * Helper: Build Context for the DM
    */
-  async buildTurnContext(room: Record<string, any>, turnData: TurnData) {
+  async buildTurnContext(room: Record<string, unknown>, turnData: TurnData) {
     // 1. World Context
     const worldInfo = `
 WORLD SETTING: ${room.setting || 'Generic Fantasy'}
@@ -97,8 +97,7 @@ DESCRIPTION: ${room.worldDescription || ''}
 
     // 2. Character Context (Simplified)
     // Access pre-populated character_sheets from room
-     
-     
+
     const charContext =
       ((room.character_sheets as Record<string, unknown>[]) || [])
         ?.map((cs) => {

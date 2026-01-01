@@ -32,7 +32,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@daicer/engine": ["../engine/src/index.ts"],
+      "@daicer/engine": ["../engine/dist/index.d.ts"],
       "@daicer/shared": ["../shared/src/index.ts"]
     },
     "allowSyntheticDefaultImports": true

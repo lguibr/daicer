@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { getStrapiClient } from './utils/strapi-client';
 
 async function auditMonsterSpeeds() {

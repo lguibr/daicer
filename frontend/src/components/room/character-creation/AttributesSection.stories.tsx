@@ -65,7 +65,7 @@ export const Default: Story = {
     attributes: mockFormState.attributes,
     pointsRemaining: 5,
     attributeBudget: 27,
-    onAttributeChange: (attr, value) => console.log(`Change ${attr} to ${value}`),
+    onAttributeChange: (attr, value) => console.info(`Change ${attr} to ${value}`),
   },
 };
 
@@ -81,7 +81,7 @@ export const HighAttributes: Story = {
     },
     pointsRemaining: 0,
     attributeBudget: 27,
-    onAttributeChange: (attr, value) => console.log(`Change ${attr} to ${value}`),
+    onAttributeChange: (attr, value) => console.info(`Change ${attr} to ${value}`),
   },
 };
 
@@ -97,6 +97,6 @@ export const MinimalPoints: Story = {
     },
     pointsRemaining: 27,
     attributeBudget: 27,
-    onAttributeChange: (attr, value) => console.log(`Change ${attr} to ${value}`),
+    onAttributeChange: (attr, value) => console.info(`Change ${attr} to ${value}`),
   },
 };

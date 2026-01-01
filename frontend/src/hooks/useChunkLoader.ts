@@ -61,7 +61,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
     }
 
     try {
-      console.log('useChunkLoader: Fetching chunks', chunksToFetch, 'config:', config.seed);
+      console.info('useChunkLoader: Fetching chunks', chunksToFetch, 'config:', config.seed);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await client.query<any>({
         query: VOXEL_PREVIEW_QUERY,
@@ -73,7 +73,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
       });
 
       const results = data?.voxelPreview;
-      console.log('useChunkLoader: Received results', results);
+      console.info('useChunkLoader: Received results', results);
 
       if (Array.isArray(results)) {
         setChunkCache((prev) => {
@@ -82,7 +82,7 @@ export function useChunkLoader({ config }: UseChunkLoaderProps) {
             const req = chunksToFetch[index];
             if (req) {
               const id = getChunkId(req.x, req.y);
-              console.log('useChunkLoader: Caching chunk', id, chunk ? 'FOUND' : 'NULL');
+              console.info('useChunkLoader: Caching chunk', id, chunk ? 'FOUND' : 'NULL');
               next[id] = chunk;
             }
           });

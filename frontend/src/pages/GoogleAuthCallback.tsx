@@ -10,7 +10,7 @@ export default function GoogleAuthCallback() {
     const params = new URLSearchParams(location.search);
 
     // Debug logging
-    console.log('[GoogleAuthCallback] Redirect params:', Object.fromEntries(params.entries()));
+    console.info('[GoogleAuthCallback] Redirect params:', Object.fromEntries(params.entries()));
 
     // Prioritize 'jwt' from Strapi.
     // Strapi typically returns: ?jwt=...&user=...
@@ -18,14 +18,14 @@ export default function GoogleAuthCallback() {
     const jwt = params.get('jwt');
 
     if (jwt) {
-      console.log('[GoogleAuthCallback] JWT found, saving to localStorage');
+      console.info('[GoogleAuthCallback] JWT found, saving to localStorage');
       localStorage.setItem('strapi_jwt', jwt);
 
       const userStr = params.get('user');
       if (userStr) {
         try {
           const userObj = JSON.parse(decodeURIComponent(userStr));
-          console.log('[GoogleAuthCallback] User object found:', userObj);
+          console.info('[GoogleAuthCallback] User object found:', userObj);
           // We could save this too, but useAuth fetches 'me' anyway.
         } catch (e) {
           console.warn('[GoogleAuthCallback] Failed to parse user object', e);
@@ -38,7 +38,7 @@ export default function GoogleAuthCallback() {
       const accessToken = params.get('access_token');
 
       if (accessToken) {
-        console.log('[GoogleAuthCallback] Found access_token, attempting to exchange for Strapi JWT...');
+        console.info('[GoogleAuthCallback] Found access_token, attempting to exchange for Strapi JWT...');
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1337';
 
         // Clean params, only send access_token to avoid parameter pollution or backend confusion
@@ -50,7 +50,7 @@ export default function GoogleAuthCallback() {
         })
           .then((res) => res.json())
           .then((data) => {
-            console.log('[GoogleAuthCallback] Exchange response:', data);
+            console.info('[GoogleAuthCallback] Exchange response:', data);
             if (data.jwt) {
               localStorage.setItem('strapi_jwt', data.jwt);
               navigate('/');

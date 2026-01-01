@@ -4,17 +4,10 @@ import { ActionDispatcher } from '@daicer/engine';
 
 // Define Input Schema
 const PerformActionSchema = z.object({
-  actorId: z.string().describe('The DocumentID of the entity performing the action'),
-  actionId: z.string().describe('The ID of the action to perform (e.g., "sword_attack", "fireball")'),
-  targetId: z.string().optional().describe('The DocumentID of the target entity (if applicable)'),
-  targetPosition: z
-    .object({
-      x: z.number(),
-      y: z.number(),
-      z: z.number(),
-    })
-    .optional()
-    .describe('Target coordinates (if targeting a point or area)'),
+  commandType: z.enum(['ATTACK', 'SKILL_CHECK', 'CAST_SPELL', 'INTERACT', 'LONG_REST', 'MODIFY_TERRAIN']),
+  payload: z
+    .record(z.string(), z.unknown())
+    .describe('The payload matching the specific command schema in @daicer/engine'),
 });
 
 export const performActionTool = (context: StrapiContext) => {
@@ -22,7 +15,7 @@ export const performActionTool = (context: StrapiContext) => {
     {
       name: 'perform_action',
       description:
-        'Perform a game action (Attack, Spell, Skill) using the Deterministic Engine. Returns execution trace and results.',
+        'Dispatch a deterministic engine command. Types: ATTACK, SKILL_CHECK, CAST_SPELL, INTERACT, LONG_REST, MODIFY_TERRAIN. Payload must match engine schema.',
       schema: PerformActionSchema,
       func: async (input, ctx) => {
         const { strapi, roomDocumentId } = ctx;
@@ -38,59 +31,42 @@ export const performActionTool = (context: StrapiContext) => {
         const entities = room.character_sheets || [];
 
         // 2. Initialize Dispatcher with Room State
-        // We need to map Strapi entities to Engine entities
-        // NOTE: This mapping must align with Engine types.
         const state = {
-          entities: entities.map((e: any) => ({
+          entities: entities.map((e: Record<string, unknown>) => ({
             id: e.documentId,
             position: e.position,
             stats: e.stats,
-            // ... map other fields as needed by ActionDispatcher
-            // For MVP, we pass minimal state required by resolveAttack
+            type: e.type, // Ensure type is passed
+            hp: e.hp,
+            maxHp: e.maxHp,
+            sheet: e, // Pass full sheet as legacy/adapter
           })),
-          map: { width: 100, height: 100, voxels: {} }, // Mock map for now or load if needed
+          map: { width: 100, height: 100, voxels: {} },
         };
 
         const dispatcher = new ActionDispatcher();
 
-        // 3. Dispatch Action
-        // We need to construct the command based on input.
-        // For now, let's assume 'attack' intent if actionId matches a weapon/attack.
-        // But ActionDispatcher expects specific command types.
-
-        // WAIT: ActionDispatcher.dispatch takes (state, command).
-        // Command types: ATTACK, CAST_SPELL etc.
-        // We need to infer the command type or pass it in.
-        // For simplified tool, let's try to detect or generically pass 'USE_ACTION'.
-
-        // REFACTOR: ActionDispatcher should ideally have a generic 'execute' or we map 'perform_action' -> specific commands.
-        // Let's treat this as an 'ATTACK' for the MVP transparency test.
-
+        // 3. Construct Command
         const command = {
-          type: 'ATTACK' as const,
-          payload: {
-            actorId: input.actorId,
-            targetId: input.targetId!, // Force for attack
-            weaponId: input.actionId, // e.g. 'shortsword'
-          },
+          type: input.commandType,
+          payload: input.payload,
           timestamp: Date.now(),
         };
 
-        const result = dispatcher.dispatch(state as any, command);
+        // 4. Dispatch
+        // @ts-expect-error Legacy engine parity
+        const result = dispatcher.dispatch(state, command);
 
-        // 4. Broadcast Events (The "Pipe")
-        // This is where we satisfy the user request.
+        // 5. Broadcast Events
         if (result.events.length > 0) {
-          // We need to broadcast these events to the frontend via socket.
-          // @ts-ignore
-          const streamManager = require('../../../utils/llm/stream-manager').streamManager;
+          const { streamManager } = await import('../../../utils/llm/stream-manager');
           streamManager.broadcast(roomDocumentId, 'game:events', { events: result.events });
         }
 
         return {
           success: result.success,
           message: result.message,
-          trace: result.events.find((e) => e.type === 'ATTACK_RESULT')?.payload.trace, // Expose trace directly for LLM
+          trace: result.events.find((e) => e.type === 'ATTACK_RESULT' || e.type === 'SKILL_CHECK_RESULT')?.payload,
         };
       },
     },

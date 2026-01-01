@@ -23,6 +23,8 @@ export function useVoxelWorker(options: UseVoxelWorkerOptions = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isWorkerActiveRef = useRef(false);
 
+  const [isWorkerActive, setIsWorkerActive] = useState(false);
+
   /**
    * Initialize worker with canvas
    */
@@ -46,13 +48,14 @@ export function useVoxelWorker(options: UseVoxelWorkerOptions = {}) {
       if (success) {
         workerRef.current = worker;
         isWorkerActiveRef.current = true;
+        setIsWorkerActive(true);
 
         // Start animation if auto-animate is enabled
         if (options.autoAnimate) {
           worker.postMessage({ type: 'start-animation' });
         }
 
-        console.log('[useVoxelWorker] Worker initialized successfully');
+        console.info('[useVoxelWorker] Worker initialized successfully');
         return true;
       }
 
@@ -144,7 +147,8 @@ export function useVoxelWorker(options: UseVoxelWorkerOptions = {}) {
         workerRef.current.terminate();
         workerRef.current = null;
         isWorkerActiveRef.current = false;
-        console.log('[useVoxelWorker] Worker terminated');
+        setIsWorkerActive(false);
+        console.info('[useVoxelWorker] Worker terminated');
       }
     },
     []
@@ -157,6 +161,6 @@ export function useVoxelWorker(options: UseVoxelWorkerOptions = {}) {
     startAnimation,
     stopAnimation,
     resize,
-    isWorkerActive: isWorkerActiveRef.current,
+    isWorkerActive,
   };
 }

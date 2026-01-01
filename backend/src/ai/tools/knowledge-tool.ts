@@ -19,7 +19,8 @@ export const retrieveKnowledgeTool = (context: StrapiContext) =>
 
           // Use require or import. Assuming this service exists.
           // Correct relative path: src/ai/tools -> src/services
-          const { embeddingService } = require('../../services/embedding-service');
+          // Correct relative path: src/ai/tools -> src/services
+          const { embeddingService } = await import('../../services/embedding-service');
 
           const queryEmbedding = await embeddingService.generateEmbedding(query);
 
@@ -42,9 +43,9 @@ export const retrieveKnowledgeTool = (context: StrapiContext) =>
             return 'No relevant knowledge found.';
           }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return rows.map((row: any) => `### ${row.title}\n${row.content}\n`).join('\n---\n');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           console.error('Knowledge retrieval failed:', error);
           return 'Error retrieving knowledge.';

@@ -1,3 +1,4 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 /**
  * scripts/verify-entities-client.ts
  *

@@ -1,9 +1,14 @@
 import { generateStructured } from '../../../utils/llm/structured';
 import { getPrompt, formatPrompt } from '../../../utils/prompt';
-import type { WorldSettings, Player, Creature, Message, Language, Entity } from '@daicer/engine';
 import { formatDmInstruction } from '@daicer/engine';
 // import { getStrapiClient } from '../../../utils/strapi-client'; // Assuming utility location or use strapi global
 // import { EngineEntity } from './entity-adapter'; // Removed
+import type { Player, WorldSettings, Language, Entity } from '@daicer/engine';
+// Local definition
+interface Message {
+  sender: string;
+  text: string;
+}
 
 export default ({ strapi }) => ({
   async generateNarrativeResponse(

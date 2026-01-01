@@ -9,7 +9,11 @@ import { useI18n } from '../i18n';
 import CharacterSheetPanel from '../components/game/CharacterSheetPanel';
 import { DiceLoader } from '../components/ui/dice-loader';
 
-type RoomMembership = any;
+interface RoomMembership {
+  room: Room;
+  isOwner: boolean;
+  player: Player | null;
+}
 
 interface MembershipState {
   items: RoomMembership[];

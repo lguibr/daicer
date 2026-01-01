@@ -1,9 +1,9 @@
 import { ActionIntent, ActionDefinition, ActionType } from './actions';
-import { CharacterSheet, DiceResult, roll } from '../types'; // Adjust imports from index
+import { z } from 'zod';
+import { CharacterSheetSchema } from '../schemas/character';
 import { calculateDistance, Point3D } from '../utils/geometry';
 
-// We need to re-import Dice tools as they might not be fully exported in types/index yet or circular dep
-import { parseDiceString } from './dice';
+type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
 
 export interface MagicValidationResult {
   valid: boolean;
@@ -63,7 +63,7 @@ export function validateSpellCast(
 
   // 3. Range Check
   if (targetPos) {
-    const range = parseInt(spellAction.range); // "60 feet" -> naive parse, needs better parsing usually
+    // const range = parseInt(spellAction.range);
     // For MVP assume range string is just number ?? Or "Touch"
     let maxDist = 5;
     if (spellAction.range.toLowerCase().includes('touch'))

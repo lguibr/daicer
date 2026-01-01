@@ -6,7 +6,7 @@ export interface EngineEntity {
 }
 */
 
-export default ({ strapi }) => ({
+export default () => ({
   /**
    * Adapts a CharacterSheet (populated with character/monster) to a unified EngineEntity.
    */

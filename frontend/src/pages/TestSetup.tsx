@@ -269,9 +269,7 @@ export default function TestSetupPage() {
         temporaryHp: 0,
         hitDice: { total: 1, current: 1, die: '1d10' },
         deathSaves: { successes: 0, failures: 0 },
-        experience: 0,
-        tempHp: 0, // Legacy
-        inventory: [],
+
         armorClass: 15,
         initiative: 0,
         speed: 30,
@@ -289,18 +287,23 @@ export default function TestSetupPage() {
         skills: {},
         skillDetails: [],
         expertises: [],
-        baseAttackBonus: 2,
-        attacks: [{ name: 'Longsword', bonus: '+4', damageType: '1d8+2 slashing' }],
+
         equipment: [
           { item: 'Longsword', quantity: 1, slot: 'mainHand', isEquipped: true },
           { item: 'Shield', quantity: 1, slot: 'offHand', isEquipped: true },
           { item: 'Chainmail', quantity: 1, slot: 'armor', isEquipped: true },
         ],
-        equipmentDescription: 'Longsword, shield, chainmail',
+
         currency: { cp: 0, sp: 0, ep: 0, gp: 50, pp: 0 },
-        proficienciesAndLanguages: 'Common, martial weapons',
+
         features: [],
+        resistances: [],
+        immunities: [],
+        vulnerabilities: [],
         talents: [],
+        structuredActions: [],
+        conditions: [],
+        resources: [],
         appearance: {
           age: '25',
           height: '5\'10"',
@@ -310,37 +313,12 @@ export default function TestSetupPage() {
           hair: 'Black',
           description: 'A capable warrior',
         },
-        personality: {
-          traits: 'Brave and loyal',
-          ideals: 'Honor',
-          bonds: 'Protects the innocent',
-          flaws: 'Stubborn',
-        },
-        backstory: 'A test character for quick game testing',
-        backgroundDetails: {
-          origin: '',
-          upbringing: '',
-          motivation: '',
-          keyEvents: [],
-          allies: [],
-        },
+        personality: { traits: 'Brave', ideals: 'Honor', bonds: 'Protects', flaws: 'Stubborn' },
+        backstory: 'A test character',
+        backgroundDetails: { origin: '', upbringing: '', motivation: '', keyEvents: [] },
         alliesAndOrganizations: 'None',
         treasure: 'Standard gear',
-        resourcePools: [],
-        advancementPoints: {
-          ability: 0,
-          skill: 0,
-          talent: 0,
-        },
-        spellcasting: {
-          class: '',
-          ability: '',
-          saveDC: 0,
-          attackBonus: 0,
-          cantrips: [],
-          spellsKnown: [],
-          slots: [],
-        },
+        advancementPoints: { ability: 0, skill: 0, talent: 0 },
         ...scenario.presetCharacter,
       };
 

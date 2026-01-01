@@ -2,6 +2,7 @@
  * @file frontend/src/test/test-utils.tsx
  * @description Custom render utilities for tests with providers
  */
+/* eslint-disable react-refresh/only-export-components */
 
 import { ReactElement, ReactNode } from 'react';
 import { render, RenderOptions } from '@testing-library/react';

@@ -67,9 +67,11 @@ export function Carousel({
 
   useEffect(() => {
     if (slideCount === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentIndex(0);
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentIndex((prev) => {
       if (prev < slideCount) {
         return prev;

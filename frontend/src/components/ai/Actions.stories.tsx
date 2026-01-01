@@ -26,10 +26,10 @@ type Story = StoryObj<typeof Actions>;
 
 export const AllActions: Story = {
   render: () => {
-    const handleCopy = () => console.log('Copy clicked');
-    const handleRegenerate = (id: string) => console.log('Regenerate:', id);
-    const handleEdit = (id: string) => console.log('Edit:', id);
-    const handleDelete = (id: string) => console.log('Delete:', id);
+    const handleCopy = () => console.info('Copy clicked');
+    const handleRegenerate = (id: string) => console.info('Regenerate:', id);
+    const handleEdit = (id: string) => console.info('Edit:', id);
+    const handleDelete = (id: string) => console.info('Delete:', id);
 
     return (
       <div className="bg-midnight-950 p-8">
@@ -93,8 +93,8 @@ export const DMActions: Story = {
             </div>
             <Actions>
               <ActionCopy text="DM narration text" />
-              <ActionRegenerate messageId="msg-dm" onRegenerate={(id) => console.log('Regenerate:', id)} />
-              <ActionDelete messageId="msg-dm" onDelete={(id) => console.log('Delete:', id)} />
+              <ActionRegenerate messageId="msg-dm" onRegenerate={(id) => console.info('Regenerate:', id)} />
+              <ActionDelete messageId="msg-dm" onDelete={(id) => console.info('Delete:', id)} />
             </Actions>
           </MessageHeader>
           <MessageContent>
@@ -119,7 +119,7 @@ export const PlayerActions: Story = {
             </div>
             <Actions>
               <ActionCopy text="Player action text" />
-              <ActionEdit messageId="msg-player" onEdit={(id) => console.log('Edit:', id)} />
+              <ActionEdit messageId="msg-player" onEdit={(id) => console.info('Edit:', id)} />
             </Actions>
           </MessageHeader>
           <MessageContent>
@@ -325,8 +325,8 @@ export const InConversation: Story = {
             </div>
             <Actions>
               <ActionCopy text="You enter a dark tavern..." />
-              <ActionRegenerate messageId="msg-1" onRegenerate={(id) => console.log('Regenerate:', id)} />
-              <ActionDelete messageId="msg-1" onDelete={(id) => console.log('Delete:', id)} />
+              <ActionRegenerate messageId="msg-1" onRegenerate={(id) => console.info('Regenerate:', id)} />
+              <ActionDelete messageId="msg-1" onDelete={(id) => console.info('Delete:', id)} />
             </Actions>
           </MessageHeader>
           <MessageContent>
@@ -344,7 +344,7 @@ export const InConversation: Story = {
             </div>
             <Actions>
               <ActionCopy text="I order an ale" />
-              <ActionEdit messageId="msg-2" onEdit={(id) => console.log('Edit:', id)} />
+              <ActionEdit messageId="msg-2" onEdit={(id) => console.info('Edit:', id)} />
             </Actions>
           </MessageHeader>
           <MessageContent>
@@ -362,8 +362,8 @@ export const InConversation: Story = {
             </div>
             <Actions>
               <ActionCopy text="The bartender slides you a drink..." />
-              <ActionRegenerate messageId="msg-3" onRegenerate={(id) => console.log('Regenerate:', id)} />
-              <ActionDelete messageId="msg-3" onDelete={(id) => console.log('Delete:', id)} />
+              <ActionRegenerate messageId="msg-3" onRegenerate={(id) => console.info('Regenerate:', id)} />
+              <ActionDelete messageId="msg-3" onDelete={(id) => console.info('Delete:', id)} />
             </Actions>
           </MessageHeader>
           <MessageContent>

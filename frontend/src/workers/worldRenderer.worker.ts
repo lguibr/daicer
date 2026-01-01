@@ -151,7 +151,7 @@ self.onmessage = (e: MessageEvent) => {
       ctx = canvas.getContext('2d');
       width = data.width || 800;
       height = data.height || 600;
-      console.log('[WorldWorker] Initialized:', { width, height });
+      console.info('[WorldWorker] Initialized:', { width, height });
       break;
 
     case 'add-chunk': {

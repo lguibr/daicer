@@ -62,7 +62,7 @@ function initScene(canvas: OffscreenCanvas, width: number, height: number) {
   directionalLight.position.set(5, 10, 5);
   scene.add(directionalLight);
 
-  console.log('[DiceWorker] Scene initialized');
+  console.info('[DiceWorker] Scene initialized');
 }
 
 /**
@@ -95,7 +95,7 @@ function addDice(count: number, type: 'd6' | 'd20') {
     dice.push(die);
   }
 
-  console.log(`[DiceWorker] Added ${count} ${type} dice`);
+  console.info(`[DiceWorker] Added ${count} ${type} dice`);
 }
 
 /**
@@ -200,7 +200,7 @@ function dispose() {
   scene = null;
   camera = null;
 
-  console.log('[DiceWorker] Resources disposed');
+  console.info('[DiceWorker] Resources disposed');
 }
 
 // Message handler

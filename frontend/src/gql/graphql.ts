@@ -15,16 +15,12 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
- 
   DateTime: { input: any; output: any; }
   /** A string used to identify an i18n locale */
- 
   I18NLocaleCode: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
- 
   JSON: { input: any; output: any; }
   /** The `BigInt` scalar type represents non-fractional signed whole numeric values. */
- 
   Long: { input: any; output: any; }
 };
 
@@ -161,6 +157,7 @@ export type CharacterSheet = {
   currentHp?: Maybe<Scalars['Int']['output']>;
   documentId: Scalars['ID']['output'];
   experience?: Maybe<Scalars['Int']['output']>;
+  features?: Maybe<Array<Maybe<ComponentGameFeature>>>;
   inventory?: Maybe<Array<Maybe<ComponentGameInventoryItem>>>;
   level?: Maybe<Scalars['Int']['output']>;
   maxHp?: Maybe<Scalars['Int']['output']>;
@@ -170,15 +167,30 @@ export type CharacterSheet = {
   publishedAt?: Maybe<Scalars['DateTime']['output']>;
   race?: Maybe<Race>;
   room?: Maybe<Room>;
-  speed?: Maybe<Scalars['JSON']['output']>;
+  spellbook?: Maybe<ComponentGameSpellbook>;
   stats?: Maybe<ComponentGameStats>;
+  structuredActions?: Maybe<Array<Maybe<ComponentGameAction>>>;
   type?: Maybe<Enum_Charactersheet_Type>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
 
+export type CharacterSheetFeaturesArgs = {
+  filters?: InputMaybe<ComponentGameFeatureFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
 export type CharacterSheetInventoryArgs = {
   filters?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type CharacterSheetStructuredActionsArgs = {
+  filters?: InputMaybe<ComponentGameActionFiltersInput>;
   pagination?: InputMaybe<PaginationArg>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -199,6 +211,7 @@ export type CharacterSheetFiltersInput = {
   currentHp?: InputMaybe<IntFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
   experience?: InputMaybe<IntFilterInput>;
+  features?: InputMaybe<ComponentGameFeatureFiltersInput>;
   inventory?: InputMaybe<ComponentGameInventoryItemFiltersInput>;
   level?: InputMaybe<IntFilterInput>;
   maxHp?: InputMaybe<IntFilterInput>;
@@ -210,8 +223,9 @@ export type CharacterSheetFiltersInput = {
   publishedAt?: InputMaybe<DateTimeFilterInput>;
   race?: InputMaybe<RaceFiltersInput>;
   room?: InputMaybe<RoomFiltersInput>;
-  speed?: InputMaybe<JsonFilterInput>;
+  spellbook?: InputMaybe<ComponentGameSpellbookFiltersInput>;
   stats?: InputMaybe<ComponentGameStatsFiltersInput>;
+  structuredActions?: InputMaybe<ComponentGameActionFiltersInput>;
   type?: InputMaybe<StringFilterInput>;
   updatedAt?: InputMaybe<DateTimeFilterInput>;
 };
@@ -223,6 +237,7 @@ export type CharacterSheetInput = {
   class?: InputMaybe<Scalars['ID']['input']>;
   currentHp?: InputMaybe<Scalars['Int']['input']>;
   experience?: InputMaybe<Scalars['Int']['input']>;
+  features?: InputMaybe<Array<InputMaybe<ComponentGameFeatureInput>>>;
   inventory?: InputMaybe<Array<InputMaybe<ComponentGameInventoryItemInput>>>;
   level?: InputMaybe<Scalars['Int']['input']>;
   maxHp?: InputMaybe<Scalars['Int']['input']>;
@@ -232,8 +247,9 @@ export type CharacterSheetInput = {
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
   race?: InputMaybe<Scalars['ID']['input']>;
   room?: InputMaybe<Scalars['ID']['input']>;
-  speed?: InputMaybe<Scalars['JSON']['input']>;
+  spellbook?: InputMaybe<ComponentGameSpellbookInput>;
   stats?: InputMaybe<ComponentGameStatsInput>;
+  structuredActions?: InputMaybe<Array<InputMaybe<ComponentGameActionInput>>>;
   type?: InputMaybe<Enum_Charactersheet_Type>;
 };
 
@@ -349,6 +365,103 @@ export type ClassRelationResponseCollection = {
   nodes: Array<Class>;
 };
 
+export type ComponentGameAction = {
+  __typename?: 'ComponentGameAction';
+  area?: Maybe<ComponentGameAreaEffect>;
+  damage?: Maybe<Array<Maybe<ComponentGameDamageDice>>>;
+  description?: Maybe<Scalars['String']['output']>;
+  duration?: Maybe<Enum_Componentgameaction_Duration>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  reach?: Maybe<Scalars['Int']['output']>;
+  save?: Maybe<ComponentGameSaveDc>;
+  toHit?: Maybe<Scalars['Int']['output']>;
+  type?: Maybe<Enum_Componentgameaction_Type>;
+};
+
+
+export type ComponentGameActionDamageArgs = {
+  filters?: InputMaybe<ComponentGameDamageDiceFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type ComponentGameActionFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameActionFiltersInput>>>;
+  area?: InputMaybe<ComponentGameAreaEffectFiltersInput>;
+  damage?: InputMaybe<ComponentGameDamageDiceFiltersInput>;
+  description?: InputMaybe<StringFilterInput>;
+  duration?: InputMaybe<StringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
+  not?: InputMaybe<ComponentGameActionFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameActionFiltersInput>>>;
+  reach?: InputMaybe<IntFilterInput>;
+  save?: InputMaybe<ComponentGameSaveDcFiltersInput>;
+  toHit?: InputMaybe<IntFilterInput>;
+  type?: InputMaybe<StringFilterInput>;
+};
+
+export type ComponentGameActionInput = {
+  area?: InputMaybe<ComponentGameAreaEffectInput>;
+  damage?: InputMaybe<Array<InputMaybe<ComponentGameDamageDiceInput>>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  duration?: InputMaybe<Enum_Componentgameaction_Duration>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  reach?: InputMaybe<Scalars['Int']['input']>;
+  save?: InputMaybe<ComponentGameSaveDcInput>;
+  toHit?: InputMaybe<Scalars['Int']['input']>;
+  type?: InputMaybe<Enum_Componentgameaction_Type>;
+};
+
+export type ComponentGameAreaEffect = {
+  __typename?: 'ComponentGameAreaEffect';
+  id: Scalars['ID']['output'];
+  shape: Enum_Componentgameareaeffect_Shape;
+  size: Scalars['Int']['output'];
+  width?: Maybe<Scalars['Int']['output']>;
+};
+
+export type ComponentGameAreaEffectFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameAreaEffectFiltersInput>>>;
+  not?: InputMaybe<ComponentGameAreaEffectFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameAreaEffectFiltersInput>>>;
+  shape?: InputMaybe<StringFilterInput>;
+  size?: InputMaybe<IntFilterInput>;
+  width?: InputMaybe<IntFilterInput>;
+};
+
+export type ComponentGameAreaEffectInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  shape?: InputMaybe<Enum_Componentgameareaeffect_Shape>;
+  size?: InputMaybe<Scalars['Int']['input']>;
+  width?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ComponentGameDamageDice = {
+  __typename?: 'ComponentGameDamageDice';
+  bonus?: Maybe<Scalars['Int']['output']>;
+  dice: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  type?: Maybe<Scalars['String']['output']>;
+};
+
+export type ComponentGameDamageDiceFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameDamageDiceFiltersInput>>>;
+  bonus?: InputMaybe<IntFilterInput>;
+  dice?: InputMaybe<StringFilterInput>;
+  not?: InputMaybe<ComponentGameDamageDiceFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameDamageDiceFiltersInput>>>;
+  type?: InputMaybe<StringFilterInput>;
+};
+
+export type ComponentGameDamageDiceInput = {
+  bonus?: InputMaybe<Scalars['Int']['input']>;
+  dice?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ComponentGameDmStyle = {
   __typename?: 'ComponentGameDmStyle';
   customDirectives?: Maybe<Scalars['String']['output']>;
@@ -380,6 +493,36 @@ export type ComponentGameDmStyleInput = {
   narrative?: InputMaybe<Scalars['Int']['input']>;
   specialMode?: InputMaybe<Scalars['String']['input']>;
   verbosity?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ComponentGameFeature = {
+  __typename?: 'ComponentGameFeature';
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  source?: Maybe<Enum_Componentgamefeature_Source>;
+  usage_max?: Maybe<Scalars['Int']['output']>;
+  usage_per?: Maybe<Enum_Componentgamefeature_Usage_Per>;
+};
+
+export type ComponentGameFeatureFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameFeatureFiltersInput>>>;
+  description?: InputMaybe<StringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
+  not?: InputMaybe<ComponentGameFeatureFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameFeatureFiltersInput>>>;
+  source?: InputMaybe<StringFilterInput>;
+  usage_max?: InputMaybe<IntFilterInput>;
+  usage_per?: InputMaybe<StringFilterInput>;
+};
+
+export type ComponentGameFeatureInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Enum_Componentgamefeature_Source>;
+  usage_max?: InputMaybe<Scalars['Int']['input']>;
+  usage_per?: InputMaybe<Enum_Componentgamefeature_Usage_Per>;
 };
 
 export type ComponentGameInventoryItem = {
@@ -475,53 +618,176 @@ export type ComponentGamePositionInput = {
   z?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type ComponentGameSaveDc = {
+  __typename?: 'ComponentGameSaveDc';
+  dc: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  stat: Enum_Componentgamesavedc_Stat;
+  success_type?: Maybe<Enum_Componentgamesavedc_Success_Type>;
+};
+
+export type ComponentGameSaveDcFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameSaveDcFiltersInput>>>;
+  dc?: InputMaybe<IntFilterInput>;
+  not?: InputMaybe<ComponentGameSaveDcFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameSaveDcFiltersInput>>>;
+  stat?: InputMaybe<StringFilterInput>;
+  success_type?: InputMaybe<StringFilterInput>;
+};
+
+export type ComponentGameSaveDcInput = {
+  dc?: InputMaybe<Scalars['Int']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  stat?: InputMaybe<Enum_Componentgamesavedc_Stat>;
+  success_type?: InputMaybe<Enum_Componentgamesavedc_Success_Type>;
+};
+
+export type ComponentGameSpellbook = {
+  __typename?: 'ComponentGameSpellbook';
+  id: Scalars['ID']['output'];
+  knownSpells: Array<Maybe<Spell>>;
+  knownSpells_connection?: Maybe<SpellRelationResponseCollection>;
+  preparedSpells: Array<Maybe<Spell>>;
+  preparedSpells_connection?: Maybe<SpellRelationResponseCollection>;
+  spellAttackBonus?: Maybe<Scalars['Int']['output']>;
+  spellSaveDc?: Maybe<Scalars['Int']['output']>;
+  spellcastingAbility?: Maybe<Enum_Componentgamespellbook_Spellcastingability>;
+};
+
+
+export type ComponentGameSpellbookKnownSpellsArgs = {
+  filters?: InputMaybe<SpellFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type ComponentGameSpellbookKnownSpells_ConnectionArgs = {
+  filters?: InputMaybe<SpellFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type ComponentGameSpellbookPreparedSpellsArgs = {
+  filters?: InputMaybe<SpellFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type ComponentGameSpellbookPreparedSpells_ConnectionArgs = {
+  filters?: InputMaybe<SpellFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type ComponentGameSpellbookFiltersInput = {
+  and?: InputMaybe<Array<InputMaybe<ComponentGameSpellbookFiltersInput>>>;
+  knownSpells?: InputMaybe<SpellFiltersInput>;
+  not?: InputMaybe<ComponentGameSpellbookFiltersInput>;
+  or?: InputMaybe<Array<InputMaybe<ComponentGameSpellbookFiltersInput>>>;
+  preparedSpells?: InputMaybe<SpellFiltersInput>;
+  spellAttackBonus?: InputMaybe<IntFilterInput>;
+  spellSaveDc?: InputMaybe<IntFilterInput>;
+  spellcastingAbility?: InputMaybe<StringFilterInput>;
+};
+
+export type ComponentGameSpellbookInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  knownSpells?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  preparedSpells?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  spellAttackBonus?: InputMaybe<Scalars['Int']['input']>;
+  spellSaveDc?: InputMaybe<Scalars['Int']['input']>;
+  spellcastingAbility?: InputMaybe<Enum_Componentgamespellbook_Spellcastingability>;
+};
+
 export type ComponentGameStats = {
   __typename?: 'ComponentGameStats';
+  blindsight?: Maybe<Scalars['Int']['output']>;
   burrowSpeed?: Maybe<Scalars['Int']['output']>;
   charisma?: Maybe<Scalars['Int']['output']>;
   climbSpeed?: Maybe<Scalars['Int']['output']>;
   constitution?: Maybe<Scalars['Int']['output']>;
+  darkvision?: Maybe<Scalars['Int']['output']>;
   dexterity?: Maybe<Scalars['Int']['output']>;
   flySpeed?: Maybe<Scalars['Int']['output']>;
   hover?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   intelligence?: Maybe<Scalars['Int']['output']>;
+  languages: Array<Maybe<Language>>;
+  languages_connection?: Maybe<LanguageRelationResponseCollection>;
+  passivePerception?: Maybe<Scalars['Int']['output']>;
+  saves?: Maybe<Scalars['JSON']['output']>;
+  skills?: Maybe<Scalars['JSON']['output']>;
   strength?: Maybe<Scalars['Int']['output']>;
   swimSpeed?: Maybe<Scalars['Int']['output']>;
+  tremorsense?: Maybe<Scalars['Int']['output']>;
+  truesight?: Maybe<Scalars['Int']['output']>;
   walkSpeed?: Maybe<Scalars['Int']['output']>;
   wisdom?: Maybe<Scalars['Int']['output']>;
 };
 
+
+export type ComponentGameStatsLanguagesArgs = {
+  filters?: InputMaybe<LanguageFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type ComponentGameStatsLanguages_ConnectionArgs = {
+  filters?: InputMaybe<LanguageFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 export type ComponentGameStatsFiltersInput = {
   and?: InputMaybe<Array<InputMaybe<ComponentGameStatsFiltersInput>>>;
+  blindsight?: InputMaybe<IntFilterInput>;
   burrowSpeed?: InputMaybe<IntFilterInput>;
   charisma?: InputMaybe<IntFilterInput>;
   climbSpeed?: InputMaybe<IntFilterInput>;
   constitution?: InputMaybe<IntFilterInput>;
+  darkvision?: InputMaybe<IntFilterInput>;
   dexterity?: InputMaybe<IntFilterInput>;
   flySpeed?: InputMaybe<IntFilterInput>;
   hover?: InputMaybe<BooleanFilterInput>;
   intelligence?: InputMaybe<IntFilterInput>;
+  languages?: InputMaybe<LanguageFiltersInput>;
   not?: InputMaybe<ComponentGameStatsFiltersInput>;
   or?: InputMaybe<Array<InputMaybe<ComponentGameStatsFiltersInput>>>;
+  passivePerception?: InputMaybe<IntFilterInput>;
+  saves?: InputMaybe<JsonFilterInput>;
+  skills?: InputMaybe<JsonFilterInput>;
   strength?: InputMaybe<IntFilterInput>;
   swimSpeed?: InputMaybe<IntFilterInput>;
+  tremorsense?: InputMaybe<IntFilterInput>;
+  truesight?: InputMaybe<IntFilterInput>;
   walkSpeed?: InputMaybe<IntFilterInput>;
   wisdom?: InputMaybe<IntFilterInput>;
 };
 
 export type ComponentGameStatsInput = {
+  blindsight?: InputMaybe<Scalars['Int']['input']>;
   burrowSpeed?: InputMaybe<Scalars['Int']['input']>;
   charisma?: InputMaybe<Scalars['Int']['input']>;
   climbSpeed?: InputMaybe<Scalars['Int']['input']>;
   constitution?: InputMaybe<Scalars['Int']['input']>;
+  darkvision?: InputMaybe<Scalars['Int']['input']>;
   dexterity?: InputMaybe<Scalars['Int']['input']>;
   flySpeed?: InputMaybe<Scalars['Int']['input']>;
   hover?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   intelligence?: InputMaybe<Scalars['Int']['input']>;
+  languages?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
+  passivePerception?: InputMaybe<Scalars['Int']['input']>;
+  saves?: InputMaybe<Scalars['JSON']['input']>;
+  skills?: InputMaybe<Scalars['JSON']['input']>;
   strength?: InputMaybe<Scalars['Int']['input']>;
   swimSpeed?: InputMaybe<Scalars['Int']['input']>;
+  tremorsense?: InputMaybe<Scalars['Int']['input']>;
+  truesight?: InputMaybe<Scalars['Int']['input']>;
   walkSpeed?: InputMaybe<Scalars['Int']['input']>;
   wisdom?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -686,6 +952,52 @@ export enum Enum_Charactersheet_Type {
   Player = 'player'
 }
 
+export enum Enum_Componentgameaction_Duration {
+  Concentration = 'concentration',
+  EightHours = 'eight_hours',
+  Instantaneous = 'instantaneous',
+  OneHour = 'one_hour',
+  OneMinute = 'one_minute',
+  Special = 'special',
+  TenMinutes = 'ten_minutes',
+  TwentyFourHours = 'twenty_four_hours',
+  UntilDispelled = 'until_dispelled'
+}
+
+export enum Enum_Componentgameaction_Type {
+  Melee = 'melee',
+  Ranged = 'ranged',
+  Spell = 'spell',
+  Utility = 'utility'
+}
+
+export enum Enum_Componentgameareaeffect_Shape {
+  Circle = 'circle',
+  Cone = 'cone',
+  Cube = 'cube',
+  Cylinder = 'cylinder',
+  Line = 'line',
+  Sphere = 'sphere'
+}
+
+export enum Enum_Componentgamefeature_Source {
+  Class = 'class',
+  Feat = 'feat',
+  Item = 'item',
+  Monster = 'monster',
+  Other = 'other',
+  Race = 'race'
+}
+
+export enum Enum_Componentgamefeature_Usage_Per {
+  Dawn = 'dawn',
+  Day = 'day',
+  Dusk = 'dusk',
+  LongRest = 'long_rest',
+  Other = 'other',
+  ShortRest = 'short_rest'
+}
+
 export enum Enum_Componentgameinventoryitem_Slot {
   Accessory = 'accessory',
   Armor = 'armor',
@@ -699,6 +1011,27 @@ export enum Enum_Componentgameinventoryitem_Slot {
   OffHand = 'off_hand',
   Ring_1 = 'ring_1',
   Ring_2 = 'ring_2'
+}
+
+export enum Enum_Componentgamesavedc_Stat {
+  Cha = 'cha',
+  Con = 'con',
+  Dex = 'dex',
+  Int = 'int',
+  Str = 'str',
+  Wis = 'wis'
+}
+
+export enum Enum_Componentgamesavedc_Success_Type {
+  Half = 'half',
+  None = 'none',
+  Other = 'other'
+}
+
+export enum Enum_Componentgamespellbook_Spellcastingability {
+  Charisma = 'charisma',
+  Intelligence = 'intelligence',
+  Wisdom = 'wisdom'
 }
 
 export enum Enum_Dmsetting_Adventurelength {
@@ -1163,7 +1496,7 @@ export type GameEventRelationResponseCollection = {
   nodes: Array<GameEvent>;
 };
 
-export type GenericMorph = Character | CharacterSheet | Class | ComponentGameDmStyle | ComponentGameInventoryItem | ComponentGamePlayer | ComponentGamePosition | ComponentGameStats | DamageType | DmSetting | Equipment | EquipmentCategory | Feature | GameEvent | I18NLocale | KnowledgeSnippet | KnowledgeSource | Language | MagicItem | MagicSchool | Message | Monster | Proficiency | Prompt | Race | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Room | Spell | Subclass | TimeFrame | Trait | Turn | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser | WeaponProperty | World;
+export type GenericMorph = Character | CharacterSheet | Class | ComponentGameAction | ComponentGameAreaEffect | ComponentGameDamageDice | ComponentGameDmStyle | ComponentGameFeature | ComponentGameInventoryItem | ComponentGamePlayer | ComponentGamePosition | ComponentGameSaveDc | ComponentGameSpellbook | ComponentGameStats | DamageType | DmSetting | Equipment | EquipmentCategory | Feature | GameEvent | I18NLocale | KnowledgeSnippet | KnowledgeSource | Language | MagicItem | MagicSchool | Message | Monster | Proficiency | Prompt | Race | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Room | Spell | Subclass | TimeFrame | Trait | Turn | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser | WeaponProperty | World;
 
 export type I18NLocale = {
   __typename?: 'I18NLocale';
@@ -1660,6 +1993,7 @@ export type Monster = {
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   description?: Maybe<Scalars['String']['output']>;
   documentId: Scalars['ID']['output'];
+  features?: Maybe<Array<Maybe<ComponentGameFeature>>>;
   hit_dice?: Maybe<Scalars['String']['output']>;
   hp?: Maybe<Scalars['Int']['output']>;
   image?: Maybe<UploadFile>;
@@ -1675,11 +2009,18 @@ export type Monster = {
   size?: Maybe<Enum_Monster_Size>;
   slug: Scalars['String']['output'];
   special_abilities?: Maybe<Scalars['JSON']['output']>;
-  speed?: Maybe<Scalars['JSON']['output']>;
   stats?: Maybe<ComponentGameStats>;
+  structuredActions?: Maybe<Array<Maybe<ComponentGameAction>>>;
   type?: Maybe<Scalars['String']['output']>;
   updatedAt?: Maybe<Scalars['DateTime']['output']>;
   xp?: Maybe<Scalars['Int']['output']>;
+};
+
+
+export type MonsterFeaturesArgs = {
+  filters?: InputMaybe<ComponentGameFeatureFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 
@@ -1692,6 +2033,13 @@ export type MonsterLocalizationsArgs = {
 
 export type MonsterLocalizations_ConnectionArgs = {
   filters?: InputMaybe<MonsterFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type MonsterStructuredActionsArgs = {
+  filters?: InputMaybe<ComponentGameActionFiltersInput>;
   pagination?: InputMaybe<PaginationArg>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -1711,6 +2059,7 @@ export type MonsterFiltersInput = {
   createdAt?: InputMaybe<DateTimeFilterInput>;
   description?: InputMaybe<StringFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
+  features?: InputMaybe<ComponentGameFeatureFiltersInput>;
   hit_dice?: InputMaybe<StringFilterInput>;
   hp?: InputMaybe<IntFilterInput>;
   languages?: InputMaybe<StringFilterInput>;
@@ -1726,8 +2075,8 @@ export type MonsterFiltersInput = {
   size?: InputMaybe<StringFilterInput>;
   slug?: InputMaybe<StringFilterInput>;
   special_abilities?: InputMaybe<JsonFilterInput>;
-  speed?: InputMaybe<JsonFilterInput>;
   stats?: InputMaybe<ComponentGameStatsFiltersInput>;
+  structuredActions?: InputMaybe<ComponentGameActionFiltersInput>;
   type?: InputMaybe<StringFilterInput>;
   updatedAt?: InputMaybe<DateTimeFilterInput>;
   xp?: InputMaybe<IntFilterInput>;
@@ -1739,6 +2088,7 @@ export type MonsterInput = {
   alignment?: InputMaybe<Scalars['String']['input']>;
   challenge_rating?: InputMaybe<Scalars['Float']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  features?: InputMaybe<Array<InputMaybe<ComponentGameFeatureInput>>>;
   hit_dice?: InputMaybe<Scalars['String']['input']>;
   hp?: InputMaybe<Scalars['Int']['input']>;
   image?: InputMaybe<Scalars['ID']['input']>;
@@ -1751,8 +2101,8 @@ export type MonsterInput = {
   size?: InputMaybe<Enum_Monster_Size>;
   slug?: InputMaybe<Scalars['String']['input']>;
   special_abilities?: InputMaybe<Scalars['JSON']['input']>;
-  speed?: InputMaybe<Scalars['JSON']['input']>;
   stats?: InputMaybe<ComponentGameStatsInput>;
+  structuredActions?: InputMaybe<Array<InputMaybe<ComponentGameActionInput>>>;
   type?: InputMaybe<Scalars['String']['input']>;
   xp?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -5001,7 +5351,6 @@ export type GetSkillsQuery = { __typename?: 'Query', skills?: Array<{ __typename
 export type GetRacesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
- 
 export type GetRacesQuery = { __typename?: 'Query', races: Array<{ __typename?: 'Race', documentId: string, name: string, description?: string | null, speed?: any | null, size?: Enum_Race_Size | null } | null> };
 
 export type GetClassesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -5052,7 +5401,6 @@ export type GetMonstersQuery = { __typename?: 'Query', monsters: Array<{ __typen
 export type GetSpellsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
- 
 export type GetSpellsQuery = { __typename?: 'Query', spells: Array<{ __typename?: 'Spell', documentId: string, name: string, level?: number | null, school?: string | null, casting_time?: string | null, range?: string | null, components?: any | null, duration?: string | null, is_ritual?: boolean | null, description?: string | null } | null> };
 
 export type GetFeaturesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -5087,7 +5435,6 @@ export type JoinRoomMutationVariables = Exact<{
 }>;
 
 
- 
 export type JoinRoomMutation = { __typename?: 'Mutation', joinRoom?: { __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, action?: string | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, portrait?: { __typename?: 'UploadFile', url: string } | null, upperBody?: { __typename?: 'UploadFile', url: string } | null, fullBody?: { __typename?: 'UploadFile', url: string } | null, baseStats?: { __typename?: 'ComponentGameStats', strength?: number | null, dexterity?: number | null, constitution?: number | null, intelligence?: number | null, wisdom?: number | null, charisma?: number | null } | null } | null } | null> | null, world?: { __typename?: 'World', name?: string | null, description?: string | null, seed?: string | null, language?: string | null, chunkSize?: number | null, detail?: number | null, fogRadius?: number | null, globalScale?: number | null, seaLevel?: number | null, elevationScale?: number | null, roughness?: number | null, moistureScale?: number | null, temperatureOffset?: number | null, roadDensity?: number | null, structureChance?: number | null, structureSpacing?: number | null, structureSizeAvg?: number | null, worldSize?: Enum_World_Worldsize | null, worldType?: string | null, worldBackground?: string | null } | null, dmSettings?: { __typename?: 'DmSetting', adventureLength?: Enum_Dmsetting_Adventurelength | null, difficulty?: Enum_Dmsetting_Difficulty | null, theme?: string | null, setting?: string | null, tone?: string | null, playerCount?: number | null, startingLevel?: number | null, attributePointBudget?: number | null, dmSystemPrompt?: string | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null } | null } | null };
 
 export type UpdateRoomMutationVariables = Exact<{
@@ -5104,7 +5451,6 @@ export type GenerateWorldMutationVariables = Exact<{
 }>;
 
 
- 
 export type GenerateWorldMutation = { __typename?: 'Mutation', generateWorld?: any | null };
 
 export type AddCharacterMutationVariables = Exact<{
@@ -5113,7 +5459,6 @@ export type AddCharacterMutationVariables = Exact<{
 }>;
 
 
- 
 export type AddCharacterMutation = { __typename?: 'Mutation', addCharacter?: any | null };
 
 export type StartGameMutationVariables = Exact<{
@@ -5123,7 +5468,6 @@ export type StartGameMutationVariables = Exact<{
 }>;
 
 
- 
 export type StartGameMutation = { __typename?: 'Mutation', startGame?: any | null };
 
 export type SubmitActionMutationVariables = Exact<{
@@ -5133,7 +5477,6 @@ export type SubmitActionMutationVariables = Exact<{
 }>;
 
 
- 
 export type SubmitActionMutation = { __typename?: 'Mutation', submitAction?: any | null };
 
 export type GenerateAvatarPortraitMutationVariables = Exact<{
@@ -5142,7 +5485,6 @@ export type GenerateAvatarPortraitMutationVariables = Exact<{
 }>;
 
 
- 
 export type GenerateAvatarPortraitMutation = { __typename?: 'Mutation', generateAvatarPortrait?: any | null };
 
 export type GenerateAvatarUpperBodyMutationVariables = Exact<{
@@ -5152,7 +5494,6 @@ export type GenerateAvatarUpperBodyMutationVariables = Exact<{
 }>;
 
 
- 
 export type GenerateAvatarUpperBodyMutation = { __typename?: 'Mutation', generateAvatarUpperBody?: any | null };
 
 export type GenerateAvatarFullBodyMutationVariables = Exact<{
@@ -5163,7 +5504,6 @@ export type GenerateAvatarFullBodyMutationVariables = Exact<{
 }>;
 
 
- 
 export type GenerateAvatarFullBodyMutation = { __typename?: 'Mutation', generateAvatarFullBody?: any | null };
 
 export type SpawnCreatureMutationVariables = Exact<{
@@ -5172,7 +5512,6 @@ export type SpawnCreatureMutationVariables = Exact<{
 }>;
 
 
- 
 export type SpawnCreatureMutation = { __typename?: 'Mutation', spawnCreature?: any | null };
 
 export type GenerateTerrainChunkMutationVariables = Exact<{
@@ -5183,7 +5522,6 @@ export type GenerateTerrainChunkMutationVariables = Exact<{
 }>;
 
 
- 
 export type GenerateTerrainChunkMutation = { __typename?: 'Mutation', generateTerrainChunk?: any | null };
 
 export type CreateCharacterSheetMutationVariables = Exact<{
@@ -5198,7 +5536,6 @@ export type GetRoomQueryVariables = Exact<{
 }>;
 
 
- 
 export type GetRoomQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, phase?: Enum_Room_Phase | null, character_sheets: Array<{ __typename?: 'CharacterSheet', documentId: string, name?: string | null, type?: Enum_Charactersheet_Type | null, currentHp?: number | null, maxHp?: number | null, position?: { __typename?: 'ComponentGamePosition', x?: number | null, y?: number | null, z?: number | null } | null, stats?: { __typename?: 'ComponentGameStats', walkSpeed?: number | null, flySpeed?: number | null, swimSpeed?: number | null, climbSpeed?: number | null, burrowSpeed?: number | null, hover?: boolean | null } | null } | null>, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, name?: string | null, isReady?: boolean | null, isOnline?: boolean | null, joinedAt?: any | null, action?: string | null, user?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, backstory?: string | null, portrait?: { __typename?: 'UploadFile', url: string } | null, upperBody?: { __typename?: 'UploadFile', url: string } | null, fullBody?: { __typename?: 'UploadFile', url: string } | null, baseStats?: { __typename?: 'ComponentGameStats', strength?: number | null, dexterity?: number | null, constitution?: number | null, intelligence?: number | null, wisdom?: number | null, charisma?: number | null } | null } | null } | null> | null, world?: { __typename?: 'World', documentId: string, name?: string | null, description?: string | null, history?: string | null, worldBackground?: string | null, seed?: string | null, language?: string | null, chunkSize?: number | null, detail?: number | null, fogRadius?: number | null, globalScale?: number | null, seaLevel?: number | null, elevationScale?: number | null, roughness?: number | null, moistureScale?: number | null, temperatureOffset?: number | null, roadDensity?: number | null, structureChance?: number | null, structureSpacing?: number | null, structureSizeAvg?: number | null, worldSize?: Enum_World_Worldsize | null, worldType?: string | null } | null, dmSettings?: { __typename?: 'DmSetting', documentId: string, adventureLength?: Enum_Dmsetting_Adventurelength | null, difficulty?: Enum_Dmsetting_Difficulty | null, theme?: string | null, setting?: string | null, tone?: string | null, playerCount?: number | null, startingLevel?: number | null, attributePointBudget?: number | null, dmSystemPrompt?: string | null, dmStyle?: { __typename?: 'ComponentGameDmStyle', verbosity?: number | null, detail?: number | null, engagement?: number | null, narrative?: number | null, specialMode?: string | null, customDirectives?: string | null } | null } | null, messages: Array<{ __typename?: 'Message', documentId: string, content: string, senderName?: string | null, senderType?: Enum_Message_Sendertype | null, timestamp?: any | null, turn?: { __typename?: 'Turn', documentId: string, turnNumber: number } | null } | null>, turns: Array<{ __typename?: 'Turn', documentId: string, turnNumber: number, narrative?: string | null, status?: Enum_Turn_Status | null, type?: Enum_Turn_Type | null, characterSnapshots?: any | null, actions?: any | null, createdAt?: any | null } | null>, timeFrames: Array<{ __typename?: 'TimeFrame', documentId: string, turnNumber: number, timestamp: any, gameState: any } | null>, owner?: { __typename?: 'UsersPermissionsUser', documentId: string, username: string } | null } | null> };
 
 export type ListRoomsQueryVariables = Exact<{
@@ -5206,7 +5543,6 @@ export type ListRoomsQueryVariables = Exact<{
 }>;
 
 
- 
 export type ListRoomsQuery = { __typename?: 'Query', rooms: Array<{ __typename?: 'Room', documentId: string, roomId?: string | null, code?: string | null, createdAt?: any | null, phase?: Enum_Room_Phase | null, dmSettings?: { __typename?: 'DmSetting', theme?: string | null, setting?: string | null, difficulty?: Enum_Dmsetting_Difficulty | null } | null, character_sheets: Array<{ __typename?: 'CharacterSheet', documentId: string } | null>, players?: Array<{ __typename?: 'ComponentGamePlayer', id: string, user?: { __typename?: 'UsersPermissionsUser', documentId: string } | null, character?: { __typename?: 'Character', documentId: string, name: string, race?: { __typename?: 'Race', name: string } | null, class?: { __typename?: 'Class', name: string } | null } | null } | null> | null } | null> };
 
 export type ListCharactersQueryVariables = Exact<{ [key: string]: never; }>;
@@ -5372,7 +5708,6 @@ export type ExplorerGetRacesQueryVariables = Exact<{
 }>;
 
 
- 
 export type ExplorerGetRacesQuery = { __typename?: 'Query', races_connection?: { __typename?: 'RaceEntityResponseCollection', nodes: Array<{ __typename?: 'Race', documentId: string, slug: string, name: string, description?: string | null, size?: Enum_Race_Size | null, speed?: any | null, image?: { __typename?: 'UploadFile', url: string, alternativeText?: string | null } | null }>, pageInfo: (
       { __typename?: 'Pagination' }
       & { ' $fragmentRefs'?: { 'PaginationFragmentFragment': PaginationFragmentFragment } }

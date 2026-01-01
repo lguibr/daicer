@@ -108,13 +108,15 @@ export function getConditionModifiers(sheet: CharacterSheet): ConditionModifier 
     const key = Object.keys(CONDITION_REGISTRY).find((k) => k.toLowerCase() === cond.name.toLowerCase());
     if (key) {
       const mod = CONDITION_REGISTRY[key];
-      if (mod.grantAdvantageToAttacker) result.grantAdvantageToAttacker = true;
-      if (mod.grantDisadvantageToAttacker) result.grantDisadvantageToAttacker = true;
-      if (mod.hasDisadvantageOnAttack) result.hasDisadvantageOnAttack = true;
-      if (mod.hasAdvantageOnAttack) result.hasAdvantageOnAttack = true;
-      if (mod.speedZero) result.speedZero = true;
-      if (mod.autoCritReceived) result.autoCritReceived = true;
-      if (mod.autoFailStrDexSaves) result.autoFailStrDexSaves = true;
+      if (mod) {
+        if (mod.grantAdvantageToAttacker) result.grantAdvantageToAttacker = true;
+        if (mod.grantDisadvantageToAttacker) result.grantDisadvantageToAttacker = true;
+        if (mod.hasDisadvantageOnAttack) result.hasDisadvantageOnAttack = true;
+        if (mod.hasAdvantageOnAttack) result.hasAdvantageOnAttack = true;
+        if (mod.speedZero) result.speedZero = true;
+        if (mod.autoCritReceived) result.autoCritReceived = true;
+        if (mod.autoFailStrDexSaves) result.autoFailStrDexSaves = true;
+      }
     }
   }
 

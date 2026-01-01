@@ -119,6 +119,44 @@ export function Combobox({
     setOpen(false);
   };
 
+  function renderItems(items: ComboboxOption[]) {
+    return items.map((option) => {
+      const isSelected = option.value === value;
+      return (
+        <CommandItem
+          key={option.value}
+          value={option.value}
+          disabled={option.disabled}
+          onSelect={(currentValue) => {
+            handleSelect(currentValue);
+          }}
+          className={cn(
+            'rounded-2xl border border-transparent bg-midnight-900/20 text-sm text-shadow-100 transition hover:border-aurora-300/30 hover:bg-midnight-900/40',
+            isSelected && 'border-aurora-300/40 bg-aurora-400/15 text-aurora-50'
+          )}
+        >
+          {option.icon && <span className="text-aurora-200">{option.icon}</span>}
+          <div className="flex min-w-0 flex-col text-left">
+            <span className="truncate font-semibold uppercase tracking-[0.22em]">{option.label}</span>
+            {option.description && <span className="truncate text-xs text-shadow-300">{option.description}</span>}
+          </div>
+          {option.badge && (
+            <span className="ml-auto rounded-full border border-aurora-300/30 bg-midnight-950/60 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.18em] text-aurora-100">
+              {option.badge}
+            </span>
+          )}
+          {option.shortcut && <CommandShortcut className="ml-3">{option.shortcut}</CommandShortcut>}
+          <CheckIcon
+            className={cn(
+              'ml-auto h-4 w-4 text-aurora-200 transition-opacity',
+              isSelected ? 'opacity-100' : 'opacity-0'
+            )}
+          />
+        </CommandItem>
+      );
+    });
+  }
+
   const displayContent = renderDisplay ? (
     renderDisplay(selectedOption)
   ) : (
@@ -186,44 +224,6 @@ export function Combobox({
       </Popover>
     </div>
   );
-
-  function renderItems(items: ComboboxOption[]) {
-    return items.map((option) => {
-      const isSelected = option.value === value;
-      return (
-        <CommandItem
-          key={option.value}
-          value={option.value}
-          disabled={option.disabled}
-          onSelect={(currentValue) => {
-            handleSelect(currentValue);
-          }}
-          className={cn(
-            'rounded-2xl border border-transparent bg-midnight-900/20 text-sm text-shadow-100 transition hover:border-aurora-300/30 hover:bg-midnight-900/40',
-            isSelected && 'border-aurora-300/40 bg-aurora-400/15 text-aurora-50'
-          )}
-        >
-          {option.icon && <span className="text-aurora-200">{option.icon}</span>}
-          <div className="flex min-w-0 flex-col text-left">
-            <span className="truncate font-semibold uppercase tracking-[0.22em]">{option.label}</span>
-            {option.description && <span className="truncate text-xs text-shadow-300">{option.description}</span>}
-          </div>
-          {option.badge && (
-            <span className="ml-auto rounded-full border border-aurora-300/30 bg-midnight-950/60 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.18em] text-aurora-100">
-              {option.badge}
-            </span>
-          )}
-          {option.shortcut && <CommandShortcut className="ml-3">{option.shortcut}</CommandShortcut>}
-          <CheckIcon
-            className={cn(
-              'ml-auto h-4 w-4 text-aurora-200 transition-opacity',
-              isSelected ? 'opacity-100' : 'opacity-0'
-            )}
-          />
-        </CommandItem>
-      );
-    });
-  }
 }
 
 Combobox.displayName = 'Combobox';

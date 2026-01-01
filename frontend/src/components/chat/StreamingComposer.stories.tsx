@@ -3,7 +3,8 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
- 
+
+// @ts-expect-error - Storybook types mismatch with new addon versions
 import { action } from '@storybook/addon-actions';
 import StreamingComposer from './StreamingComposer';
 

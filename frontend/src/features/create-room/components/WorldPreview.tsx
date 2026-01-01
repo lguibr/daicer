@@ -76,6 +76,7 @@ export function WorldPreview({ config, className }: WorldPreviewProps) {
         <div className="bg-midnight-900/80 backdrop-blur border border-midnight-700 rounded-lg p-1.5 flex flex-col gap-2 shadow-xl">
           <div className="flex flex-col items-center gap-1">
             <button
+              type="button"
               onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
               className="w-6 h-6 flex items-center justify-center text-shadow-200 hover:text-white hover:bg-midnight-700 rounded transition-colors text-xs font-bold"
             >
@@ -83,6 +84,7 @@ export function WorldPreview({ config, className }: WorldPreviewProps) {
             </button>
             <span className="text-[9px] font-mono text-aurora-400">{Math.round(zoom * 100)}%</span>
             <button
+              type="button"
               onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
               className="w-6 h-6 flex items-center justify-center text-shadow-200 hover:text-white hover:bg-midnight-700 rounded transition-colors text-xs font-bold"
             >
@@ -98,6 +100,7 @@ export function WorldPreview({ config, className }: WorldPreviewProps) {
           <span className="text-[10px] text-shadow-400 uppercase tracking-wider mr-2">Layer</span>
           {[-1, 0, 1].map((z) => (
             <button
+              type="button"
               key={z}
               onClick={() => setViewZ(z)}
               className={cn(

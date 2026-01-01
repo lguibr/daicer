@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Player, CharacterSheet, EntityAction, EntityFeature } from '@daicer/engine';
+import type { Player, CharacterSheet, ActionDefinition, EntityFeature } from '@daicer/engine';
 import { Swords, Sparkles, Scroll, Shield } from 'lucide-react';
 import {
   PaperBackground,
@@ -17,9 +17,9 @@ interface CharacterSheetPanelProps {
 }
 
 // Helper Action Card
-function ActionCard({ action }: { action: EntityAction }) {
+function ActionCard({ action }: { action: ActionDefinition }) {
   const isSpell = action.type === 'spell';
-  const isMelee = action.type === 'melee';
+  const isMelee = action.type === 'melee_attack';
 
   return (
     <div className="flex flex-col gap-1 p-3 border border-shadow-800/20 bg-shadow-50/50 rounded-sm hover:bg-shadow-100/50 transition-colors cursor-pointer group">
@@ -35,11 +35,11 @@ function ActionCard({ action }: { action: EntityAction }) {
 
       <div className="text-sm font-serif text-shadow-800">
         <div className="flex gap-3">
-          {action.toHit !== undefined && <span className="font-bold">+{action.toHit} to Hit</span>}
-          {action.damage && action.damage.length > 0 && (
+          {'toHit' in action && action.toHit !== undefined && <span className="font-bold">+{action.toHit} to Hit</span>}
+          {'damage' in action && action.damage && action.damage.length > 0 && (
             <span>{action.damage.map((d) => `${d.dice}+${d.bonus} ${d.type}`).join(', ')}</span>
           )}
-          {action.save && (
+          {'save' in action && action.save && (
             <span>
               DC {action.save.dc} {action.save.stat} Save
             </span>
@@ -128,7 +128,7 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
           {/* Proficiencies */}
           <div className="mt-auto">
             <h3 className={paperStyles.header}>Proficiencies</h3>
-            <p className="text-sm leading-relaxed text-shadow-800">{character.proficienciesAndLanguages || '—'}</p>
+            <p className="text-sm leading-relaxed text-shadow-800">No data</p>
           </div>
         </div>
 
@@ -217,8 +217,8 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                       value={
                         typeof character.speed === 'number'
                           ? character.speed
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          : (character.speed as any)?.walkSpeed || 30
+                          : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (character.speed as any)?.walk || 30
                       }
                       big
                     />
@@ -258,17 +258,6 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                   {/* Structured Actions from Phase 1 */}
                   {character.structuredActions &&
                     character.structuredActions.map((action, i) => <ActionCard key={i} action={action} />)}
-
-                  {/* Fallback for legacy simple attacks array if no structured actions yet */}
-                  {(!character.structuredActions || character.structuredActions.length === 0) &&
-                    character.attacks &&
-                    character.attacks.map((attack, i) => (
-                      <div key={i} className="p-3 border border-shadow-800/20 bg-shadow-50/50 rounded-sm opacity-60">
-                        <span className="font-bold">{attack.name}</span>{' '}
-                        <span className="text-sm">({attack.bonus})</span>
-                        <div className="text-xs italic">Legacy Attack Format</div>
-                      </div>
-                    ))}
                 </div>
               </div>
 
@@ -279,17 +268,7 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                     <h3 className={paperStyles.header}>Features & Traits</h3>
                     <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-shadow-300">
                       {Array.isArray(character.features) && character.features.length > 0 ? (
-                        typeof character.features[0] === 'string' ? (
-                          // Legacy String Array
-                          (character.features as string[]).map((f, i) => (
-                            <p key={i} className="text-sm mb-1">
-                              {f}
-                            </p>
-                          ))
-                        ) : (
-                          // New EntityFeature Array
-                          (character.features as EntityFeature[]).map((f, i) => <FeatureItem key={i} feature={f} />)
-                        )
+                        (character.features as EntityFeature[]).map((f, i) => <FeatureItem key={i} feature={f} />)
                       ) : (
                         // String or Empty
                         <div className="text-sm font-serif leading-relaxed whitespace-pre-line text-shadow-900">
@@ -304,7 +283,9 @@ export default function CharacterSheetPanel({ player, onClose }: CharacterSheetP
                   <div className="border-2 border-shadow-800/20 p-4 h-full bg-shadow-50/20 rounded-sm">
                     <h3 className={paperStyles.header}>Equipment</h3>
                     <div className="text-sm font-serif leading-relaxed whitespace-pre-line text-shadow-900">
-                      {character.equipmentDescription || 'See Inventory Tab'}
+                      {character.equipment && character.equipment.length > 0
+                        ? `${character.equipment.length} items (See Spellbook tab for eventual full inventory)`
+                        : 'No equipment'}
                     </div>
                     {/* Render Inventory items if needed here */}
                   </div>

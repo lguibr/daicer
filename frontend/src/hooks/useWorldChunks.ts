@@ -145,7 +145,7 @@ export function useWorldChunks({
         batches.push(newChunks.slice(i, i + MAX_BATCH_SIZE));
       }
 
-      console.log(`[WorldChunks] Requesting ${newChunks.length} chunks in ${batches.length} batch(es)`);
+      console.info(`[WorldChunks] Requesting ${newChunks.length} chunks in ${batches.length} batch(es)`);
 
       // Send batches sequentially with slight delay to avoid overwhelming server
       batches.forEach((batch, batchIndex) => {

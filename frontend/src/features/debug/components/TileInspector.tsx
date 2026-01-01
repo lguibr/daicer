@@ -3,13 +3,31 @@ import type { Coordinates } from '../utils/types';
 
 interface TileInspectorProps {
   coords: Coordinates | null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tileData: any | null;
   isReachable: boolean;
   distance: number | null;
 }
 
-export const TileInspector: React.FC<TileInspectorProps> = ({ coords, tileData, isReachable, distance }) => {
+function InfoBox({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700">
+      <div className="text-[10px] text-neutral-500 uppercase">{label}</div>
+      <div className={`font-mono font-bold capitalize ${color}`}>{value?.replace('_', ' ')}</div>
+    </div>
+  );
+}
+
+function StatusBox({ label, status }: { label: string; status: boolean }) {
+  return (
+    <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700 flex justify-between items-center">
+      <span className="text-[10px] text-neutral-500 uppercase">{label}</span>
+      <span className={status ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{status ? 'YES' : 'NO'}</span>
+    </div>
+  );
+}
+
+export function TileInspector({ coords, tileData, isReachable, distance }: TileInspectorProps) {
   if (!coords || !tileData) {
     return (
       <div className="p-4 bg-neutral-800 rounded border border-neutral-700 text-neutral-500 text-xs italic text-center">
@@ -45,24 +63,6 @@ export const TileInspector: React.FC<TileInspectorProps> = ({ coords, tileData, 
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-function InfoBox({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700">
-      <div className="text-[10px] text-neutral-500 uppercase">{label}</div>
-      <div className={`font-mono font-bold capitalize ${color}`}>{value?.replace('_', ' ')}</div>
-    </div>
-  );
-}
-
-function StatusBox({ label, status }: { label: string; status: boolean }) {
-  return (
-    <div className="bg-neutral-900 p-1.5 rounded border border-neutral-700 flex justify-between items-center">
-      <span className="text-[10px] text-neutral-500 uppercase">{label}</span>
-      <span className={status ? 'text-green-500 font-bold' : 'text-red-500 font-bold'}>{status ? 'YES' : 'NO'}</span>
     </div>
   );
 }

@@ -30,7 +30,6 @@ export interface AttackResult {
   verdict: string; // "Hit!", "Miss", "Critical Hit!"
   trace: ExecutionTrace;
 }
-import { ExecutionTrace } from '../types'; // Import at top needed, simpler to just use type if imported
 
 // ============================================================================
 // Helpers
@@ -335,9 +334,6 @@ export function resolveGrapple(attacker: CharacterSheet, target: CharacterSheet)
   // Check if exists, else fallback to Str Mod.
   // Attributes fallback to 10 if missing to avoid NaN.
   const strScore = attacker.attributes.Strength ?? 10;
-  const dexScore = attacker.attributes.Dexterity ?? 10;
-
-  const athMod = attacker.skills?.athletics ?? calculateModifier(strScore);
 
   // Check if exists, else fallback to Str Mod.
   const atkModVal = attacker.skills['athletics'] ?? calculateModifier(strScore);

@@ -19,6 +19,6 @@ export interface DerivationContext {
   equipment: Equipment[];
   hitDie?: number; // e.g., 8, 10, 12
   race?: {
-    speed?: number | { walkSpeed: number; [key: string]: number };
+    speed?: number | { walk: number; [key: string]: number };
   };
 }

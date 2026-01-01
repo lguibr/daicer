@@ -11,8 +11,8 @@ export function extractFaceNormalsFromDie(dieType: DieType): Map<number, THREE.V
 
   try {
     die = createDie(dieType, '#ffffff');
-  } catch (error) {
-    // In test environment or when canvas is unavailable, return empty map
+  } catch (err) {
+    console.warn('Failed to save calibration:', err); // In test environment or when canvas is unavailable, return empty map
     return new Map();
   }
 
@@ -98,7 +98,7 @@ export function calibrateDieRotations(dieType: DieType): Record<number, { x: num
  */
 export function generateAllCalibrations(): Record<DieType, Record<number, { x: number; y: number; z: number }>> {
   const allDieTypes: DieType[] = [2, 4, 6, 8, 10, 12, 20];
- 
+
   const calibrations: any = {};
 
   allDieTypes.forEach((dieType) => {

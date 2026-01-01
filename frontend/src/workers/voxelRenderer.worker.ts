@@ -54,7 +54,7 @@ function initScene(canvas: OffscreenCanvas, width: number, height: number) {
   directionalLight.position.set(10, 10, 5);
   scene.add(directionalLight);
 
-  console.log('[VoxelWorker] Scene initialized');
+  console.info('[VoxelWorker] Scene initialized');
 }
 
 /**
@@ -115,7 +115,7 @@ function createVoxelModel(voxels: Array<{ x: number; y: number; z: number; color
   model.position.sub(center);
 
   scene.add(model);
-  console.log(`[VoxelWorker] Created model with ${voxels.length} voxels`);
+  console.info(`[VoxelWorker] Created model with ${voxels.length} voxels`);
 }
 
 /**
@@ -197,7 +197,7 @@ function dispose() {
   scene = null;
   camera = null;
 
-  console.log('[VoxelWorker] Resources disposed');
+  console.info('[VoxelWorker] Resources disposed');
 }
 
 // Message handler

@@ -65,7 +65,7 @@ export const handlePlayerReady =
         try {
           const decoded = await jwtService.verify(token);
           userId = decoded.id;
-        } catch (_e) {
+        } catch {
           // Token verification failed
         }
       }

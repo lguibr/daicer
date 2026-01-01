@@ -245,15 +245,15 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
                     </h2>
                     <div className="flex gap-2 items-center text-midnight-300">
                       <Badge variant="outline" className="border-midnight-500 text-midnight-300">
-                        {'sheet' in selectedEntity
-                          ? selectedEntity.sheet?.race || selectedEntity.sheet?.characterClass
-                          : selectedEntity.character?.race || selectedEntity.character?.characterClass}
+                        {'role' in selectedEntity
+                          ? selectedEntity.character?.race || selectedEntity.character?.characterClass
+                          : selectedEntity.sheet?.race || selectedEntity.sheet?.characterClass}
                       </Badge>
                       <span>
                         Level{' '}
-                        {'sheet' in selectedEntity
-                          ? selectedEntity.sheet?.level || selectedEntity.sheet?.challenge || 1
-                          : selectedEntity.character?.level || 1}
+                        {'role' in selectedEntity
+                          ? selectedEntity.character?.level || 1
+                          : selectedEntity.sheet?.level || 1}
                       </span>
                     </div>
                   </div>
@@ -262,10 +262,13 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
                       HP:{' '}
                       {'hp' in selectedEntity
                         ? `${selectedEntity.hp}/${selectedEntity.maxHp}`
-                        : `${selectedEntity.character?.hp || '?'}/${selectedEntity.character?.maxHp || '?'}`}
+                        : `${(selectedEntity as Player).character?.hp || '?'}/${(selectedEntity as Player).character?.maxHp || '?'}`}
                     </div>
                     <div className="text-sm text-midnight-400">
-                      AC: {'ac' in selectedEntity ? selectedEntity.ac : selectedEntity.character?.armorClass || '?'}
+                      AC:{' '}
+                      {'ac' in selectedEntity
+                        ? selectedEntity.ac
+                        : (selectedEntity as Player).character?.armorClass || '?'}
                     </div>
                   </div>
                 </div>
@@ -273,9 +276,7 @@ export function EntityListModal({ isOpen, onClose, creatures, players = [], room
 
               {/* Content */}
               <ScrollArea className="flex-1 p-6">
-                <SheetView
-                  sheet={'sheet' in selectedEntity ? selectedEntity.sheet : selectedEntity.character || undefined}
-                />
+                <SheetView sheet={'role' in selectedEntity ? selectedEntity.character : selectedEntity.sheet} />
               </ScrollArea>
             </div>
           ) : (
@@ -307,7 +308,7 @@ function SheetView({ sheet }: SheetViewProps) {
             <div className="flex flex-wrap gap-2 text-sm text-white">
               {typeof sheet.speed === 'object' && sheet.speed !== null ? (
                 Object.entries(sheet.speed).map(([mode, val]) => {
-                  const label = mode === 'walkSpeed' ? 'Walk' : mode.replace('Speed', '');
+                  const label = mode === 'walk' ? 'Walk' : mode.replace('Speed', '');
                   if ((val as number) > 0 || (typeof val === 'boolean' && val)) {
                     return (
                       <div
@@ -378,11 +379,11 @@ function SheetView({ sheet }: SheetViewProps) {
                   <span className="font-bold text-white">{action.name}</span>
                   <div className="text-sm">
                     <span className="text-aurora-300 font-mono mr-2">
-                      {action.toHit ? `+${action.toHit}` : '+0'} to hit
+                      {'toHit' in action && action.toHit ? `+${action.toHit}` : '+0'} to hit
                     </span>
                     <span className="text-midnight-300">
-                      {action.damage && action.damage.length > 0
-                        ? `${action.damage[0].dice} ${action.damage[0].type}`
+                      {'damage' in action && action.damage && action.damage.length > 0
+                        ? `${action.damage[0]?.dice} ${action.damage[0]?.type}`
                         : 'Effect'}
                     </span>
                   </div>

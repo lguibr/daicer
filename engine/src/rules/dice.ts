@@ -23,10 +23,14 @@ export interface DiceResult {
  */
 export function parseDiceString(str: string): DiceRollDefinition {
   const clean = str.replace(/\s/g, '').toLowerCase();
-  const [dicePart, bonusPart] = clean.split('+');
-  const [countStr, sidesStr] = dicePart.split('d');
+  const split = clean.split('+');
+  const dicePart = split[0] ?? '';
+  const bonusPart = split[1];
+  const parts = dicePart.split('d');
+  const countStr = parts[0] ?? '1';
+  const sidesStr = parts[1] ?? '0';
 
-  const count = countStr ? parseInt(countStr, 10) : 1;
+  const count = parseInt(countStr, 10);
   const sides = parseInt(sidesStr, 10);
   const bonus = bonusPart ? parseInt(bonusPart, 10) : 0;
 

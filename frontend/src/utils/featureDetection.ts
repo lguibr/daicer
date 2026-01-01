@@ -64,7 +64,7 @@ export const getRecommendedRenderingMode = (): 'worker' | 'main-thread' => {
  * Log browser capabilities for debugging
  */
 export const logBrowserCapabilities = (): void => {
-  console.log('[FeatureDetection] Browser Capabilities:', {
+  console.info('[FeatureDetection] Browser Capabilities:', {
     offscreenCanvas: supportsOffscreenCanvas(),
     webglInWorkers: supportsWebGLInWorkers(),
     isSafari: isSafari(),

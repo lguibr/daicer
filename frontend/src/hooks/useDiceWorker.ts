@@ -18,6 +18,8 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isWorkerActiveRef = useRef(false);
 
+  const [isWorkerActive, setIsWorkerActive] = useState(false);
+
   /**
    * Initialize worker with canvas
    */
@@ -48,13 +50,14 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
       if (success) {
         workerRef.current = worker;
         isWorkerActiveRef.current = true;
+        setIsWorkerActive(true);
 
         // Start animation if auto-animate is enabled
         if (autoAnimate) {
           worker.postMessage({ type: 'start-animation' });
         }
 
-        console.log('[useDiceWorker] Worker initialized successfully');
+        console.info('[useDiceWorker] Worker initialized successfully');
         return true;
       }
 
@@ -62,7 +65,7 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
       return false;
     },
 
-    [options.onRollComplete, options.autoAnimate]
+    [onRollComplete, autoAnimate]
   );
 
   /**
@@ -148,7 +151,8 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
         workerRef.current.terminate();
         workerRef.current = null;
         isWorkerActiveRef.current = false;
-        console.log('[useDiceWorker] Worker terminated');
+        setIsWorkerActive(false);
+        console.info('[useDiceWorker] Worker terminated');
       }
     },
     []
@@ -161,6 +165,6 @@ export function useDiceWorker(options: UseDiceWorkerOptions = {}) {
     stopAnimation,
     rollDice,
     resize,
-    isWorkerActive: isWorkerActiveRef.current,
+    isWorkerActive,
   };
 }

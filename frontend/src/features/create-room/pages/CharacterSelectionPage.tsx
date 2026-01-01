@@ -44,7 +44,7 @@ export default function CharacterSelectionPage() {
 
     setLoading(true);
     try {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const character = characters.find((c: any) => c.documentId === selectedCharacterId);
       if (!character) throw new Error('Character not found');
 
@@ -88,7 +88,7 @@ export default function CharacterSelectionPage() {
     }
   };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCharacterCreated = async (characterData: any) => {
     setLoading(true);
     try {
@@ -115,7 +115,7 @@ export default function CharacterSelectionPage() {
         variables: {
           data: payload,
         },
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       })) as { data: any };
 
       if (!res?.createCharacterSheet?.documentId) {
@@ -171,8 +171,7 @@ export default function CharacterSelectionPage() {
             </Card>
 
             {/* Character List */}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            {characters.map((char: any) => (
+            {characters.map((char) => (
               <Card
                 key={char.documentId}
                 className={`
@@ -215,8 +214,7 @@ export default function CharacterSelectionPage() {
         <div className="sticky bottom-6 mt-auto bg-midnight-950/90 backdrop-blur border border-midnight-800 p-4 rounded-2xl flex justify-between items-center shadow-2xl">
           <div className="flex items-center gap-2 text-sm text-shadow-400">
             <Info className="w-4 h-4" />
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            <span>Selected: {characters.find((c: any) => c.documentId === selectedCharacterId)?.name || 'None'}</span>
+            <span>Selected: {characters.find((c) => c.documentId === selectedCharacterId)?.name || 'None'}</span>
           </div>
 
           <Button

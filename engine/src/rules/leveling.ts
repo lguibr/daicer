@@ -1,5 +1,5 @@
 import { CharacterSheet } from '../types';
-import { calculateModifier } from './dnd5e';
+import { calculateModifier, calculateProficiencyBonus } from './dnd5e';
 
 export const XP_TABLE = [
   0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000,
@@ -11,10 +11,6 @@ export function getLevelFromXP(xp: number): number {
     if (xp >= XP_TABLE[i]) return i + 1;
   }
   return 1;
-}
-
-export function calculateProficiencyBonus(level: number): number {
-  return Math.ceil(level / 4) + 1;
 }
 
 /**
@@ -60,7 +56,7 @@ export function levelUp(sheet: CharacterSheet): CharacterSheet {
   const hitDieStr = sheet.hitDice.die || '1d8';
   // "1d8" -> split 'd' -> ["1", "8"]
   const parts = hitDieStr.split('d');
-  const sides = parseInt(parts[1] || parts[0]) || 8;
+  const sides = parseInt(parts[1] ?? parts[0] ?? '8') || 8;
   const avg = Math.floor(sides / 2) + 1;
   const conScore = sheet.attributes.Constitution ?? 10;
   const conMod = calculateModifier(conScore);

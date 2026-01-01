@@ -155,7 +155,7 @@ export default function useSocket(roomId?: string, userId?: string) {
           },
           onPlayerReadyUpdated: (data) => {
             // Update player ready status
-            console.log('🔔 Received player:ready_updated:', data);
+            console.info('🔔 Received player:ready_updated:', data);
             setState((prev) => ({
               ...prev,
               players: prev.players.map((p) => (p.userId === data.userId ? { ...p, isReady: data.isReady } : p)),
@@ -223,7 +223,7 @@ export default function useSocket(roomId?: string, userId?: string) {
             });
           },
           onGameEvents: (data) => {
-            console.log('⚡ Received Game Events:', data.events);
+            console.info('⚡ Received Game Events:', data.events);
             setState((prev) => ({
               ...prev,
               gameEvents: [...prev.gameEvents, ...data.events],

@@ -1,5 +1,4 @@
 import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
-import { TaskType } from '@google/generative-ai'; // Optional if we need task types, but LangChain handles it
 
 /**
  * Service for generating vector embeddings using Google Gemini via LangChain.
@@ -18,7 +17,6 @@ export class EmbeddingService {
     this.embeddings = new GoogleGenerativeAIEmbeddings({
       model: this.modelName,
       apiKey: apiKey,
-      // taskType: TaskType.RETRIEVAL_DOCUMENT, // Optional: helpful for some models
     });
   }
 

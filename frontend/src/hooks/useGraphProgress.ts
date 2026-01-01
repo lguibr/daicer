@@ -9,7 +9,7 @@ import { auth } from '../services/firebase';
 
 // Simple logger for SSE events
 const logger = {
-  debug: (message: string, data?: Record<string, unknown>) => console.log(`[DEBUG] ${message}`, data || ''),
+  debug: (message: string, data?: Record<string, unknown>) => console.info(`[DEBUG] ${message}`, data || ''),
   info: (message: string, data?: Record<string, unknown>) => console.info(`[INFO] ${message}`, data || ''),
   error: (message: string, data?: Record<string, unknown>) => console.error(`[ERROR] ${message}`, data || ''),
 };

@@ -242,18 +242,18 @@ export function DiceRollAnimation({
 
     stateRef.current = { scene, camera, renderer, axes, dice: [] };
 
-    const handleResize = () => {
+    const handleResize = (entries: ResizeObserverEntry[]) => {
       if (!mountElement || !stateRef.current) return;
       const { camera: currentCamera, renderer: currentRenderer } = stateRef.current;
-      const width = mountElement.clientWidth || CONTAINER_SIZE_MAP[size] || 280;
-      const height = mountElement.clientHeight || CONTAINER_SIZE_MAP[size] || 280;
+      const entry = entries[0];
+      const { width: containerWidth, height: containerHeight } = entry.contentRect;
 
-      // Skip resize if dimensions are invalid
-      if (width === 0 || height === 0) return;
+      // Skip resize if dimensions are invalid or zero
+      if (containerWidth === 0 || containerHeight === 0) return;
 
-      currentCamera.aspect = width / height;
+      currentRenderer.setSize(containerWidth, containerHeight, false);
+      currentCamera.aspect = containerWidth / containerHeight;
       currentCamera.updateProjectionMatrix();
-      currentRenderer.setSize(width, height, false);
     };
 
     const animate = () => {

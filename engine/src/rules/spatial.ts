@@ -11,7 +11,7 @@ export type CollisionCheck = (point: Point3D) => boolean;
  */
 export function hasLineOfSight(start: Point3D, end: Point3D, isBlocked: CollisionCheck): boolean {
   let { x: x0, y: y0, z: z0 } = start;
-  let { x: x1, y: y1, z: z1 } = end;
+  const { x: x1, y: y1, z: z1 } = end;
 
   const dx = Math.abs(x1 - x0);
   const dy = Math.abs(y1 - y0);

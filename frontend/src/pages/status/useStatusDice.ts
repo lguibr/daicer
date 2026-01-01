@@ -66,7 +66,8 @@ export function useStatusDice(targetValue: string | number, options?: UseStatusD
   const [phase, setPhase] = useState<StatusDicePhase>('loading');
 
   useEffect(() => {
-    setPhase('loading');
+    // Use timeout to avoid sync set state
+    setTimeout(() => setPhase('loading'), 0);
     const timer = setTimeout(() => {
       setPhase('revealing');
     }, revealDelayMs);

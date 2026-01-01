@@ -166,6 +166,7 @@ export function CampaignWizard({
 
   // Initial State
   const [settings, setSettings] = useState<WorldSettings>({
+    // eslint-disable-next-line react-hooks/purity
     seed: `daicer-${Math.random().toString(36).substring(7)}`,
     worldType: 'terra',
     worldSize: 'small',

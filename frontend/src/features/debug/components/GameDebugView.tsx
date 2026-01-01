@@ -49,54 +49,6 @@ interface GameDebugViewProps {
   roomId: string;
 }
 
-export function GameDebugView({ roomId }: GameDebugViewProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [room, setRoom] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch Room Data (History & TimeFrames) manually to avoid @apollo/client import issues
-  useEffect(() => {
-    let mounted = true;
-    const fetchRoom = async () => {
-      try {
-        const r = await getRoomState(roomId);
-        if (mounted) {
-          setRoom(r);
-          setLoading(false);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        if (mounted) {
-          setError(err.message);
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchRoom();
-
-    // Poll every 5s
-    const interval = setInterval(fetchRoom, 15000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [roomId]);
-
-  // const room = data?.rooms?.[0]; // Removed
-
-  if (loading) return <div className="text-white p-10">Loading Room...</div>;
-  if (error) return <div className="text-red-500 p-10">Error loading room: {error}</div>;
-  if (!room) return <div className="text-yellow-500 p-10">Room not found (ID: {roomId})</div>;
-
-  return (
-    <TimeFrameProvider room={room}>
-      <GameDebugInner roomId={roomId} room={room} />
-    </TimeFrameProvider>
-  );
-}
-
 // ... (existing imports)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,7 +100,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
         }))
       );
     }
-  }, [socketCreatures, currentTimeFrame, isLive]);
+  }, [socketCreatures, currentTimeFrame, isLive, room]);
 
   // Entity Selection State
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
@@ -198,12 +150,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
 
   // Socket Integration
   useEffect(() => {
-    if (!socket) return;
     // ... socket logic ...
-    // Here we might receive new messages. Ideally we add them to the list.
-    // But if we are polling or using live data, we need to handle "Live" vs "Snapshotted" mode.
-    // If !isLive, we should ignore new socket messages in the UI (or show "New messages available" indicator).
-    // For now, let's just append if isLive.
   }, [socket, isLive]);
 
   // Socket Integration Hook
@@ -300,7 +247,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
       }
     }
     return visible;
-  }, [activeEntity?.position, activeEntity?.visionRadius]);
+  }, [activeEntity]);
 
   // Chunk Provider for Renderer
   const chunkProvider = useMemo(
@@ -377,10 +324,10 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
         if (!finalStep) return;
 
         setEntities((prev) => prev.map((e) => (e.id === activeEntityId ? { ...e, pendingPath: validPath } : e)));
-        console.log(`Planned partial move (${finalStep.cost.toFixed(1)} / ${maxDist} tiles)`);
+        console.info(`Planned partial move (${finalStep.cost.toFixed(1)} / ${maxDist} tiles)`);
       } else {
         setEntities((prev) => prev.map((e) => (e.id === activeEntityId ? { ...e, pendingPath: path } : e)));
-        console.log(`Planned move (${totalCost.toFixed(1)} tiles)`);
+        console.info(`Planned move (${totalCost.toFixed(1)} tiles)`);
       }
     });
   };
@@ -466,6 +413,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
           <div className="p-3 bg-midnight-900 border-b border-midnight-800 font-bold text-xs uppercase tracking-wider text-shadow-300 flex justify-between items-center">
             <div className="flex gap-4">
               <button
+                type="button"
                 onClick={() => setActiveTab('inspector')}
                 className={clsx(
                   'transition-colors',
@@ -475,6 +423,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
                 INSPECTOR
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('tools')}
                 className={clsx(
                   'transition-colors',
@@ -532,7 +481,12 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               </div>
             ) : (
               <div className="absolute inset-0">
-                <AgentToolPalette roomId={roomId} entities={entities} />
+                <AgentToolPalette
+                  onCommand={handleGodModeCommand}
+                  activeEntity={activeEntity}
+                  activeLocation={activeLocation}
+                  roomEntities={entities}
+                />
               </div>
             )}
           </div>
@@ -554,6 +508,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
             <div className="pointer-events-auto bg-midnight-900/90 backdrop-blur border border-midnight-700 rounded-lg p-2 shadow-xl flex flex-col gap-2">
               <div className="flex flex-col items-center gap-1">
                 <button
+                  type="button"
                   className="h-6 w-6 flex items-center justify-center text-shadow-300 hover:text-white"
                   onClick={() => setZoom((z) => Math.min(3, z + 0.1))}
                 >
@@ -561,6 +516,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
                 </button>
                 <span className="text-[9px] font-mono text-shadow-300">{Math.round(zoom * 100)}%</span>
                 <button
+                  type="button"
                   className="h-6 w-6 flex items-center justify-center text-shadow-300 hover:text-white"
                   onClick={() => setZoom((z) => Math.max(0.1, z - 0.1))}
                 >
@@ -576,6 +532,7 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
               <span className="text-[10px] text-shadow-400 uppercase mr-2 font-bold">Z-Link</span>
               {[-1, 0, 1].map((z) => (
                 <button
+                  type="button"
                   key={z}
                   onClick={() => setViewZ(z)}
                   className={clsx(
@@ -640,5 +597,54 @@ function GameDebugInner({ roomId, room }: { roomId: string; room: any }) {
       {/* 1. TIME CONTROLS (Bottom, Full Width) */}
       <TimeControls />
     </div>
+  );
+}
+
+// Moved to bottom to satisfy no-use-before-define
+export function GameDebugView({ roomId }: GameDebugViewProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [room, setRoom] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch Room Data (History & TimeFrames) manually to avoid @apollo/client import issues
+  useEffect(() => {
+    let mounted = true;
+    const fetchRoom = async () => {
+      try {
+        const r = await getRoomState(roomId);
+        if (mounted) {
+          setRoom(r);
+          setLoading(false);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        if (mounted) {
+          setError(err.message);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchRoom();
+
+    // Poll every 5s
+    const interval = setInterval(fetchRoom, 15000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [roomId]);
+
+  // const room = data?.rooms?.[0]; // Removed
+
+  if (loading) return <div className="text-white p-10">Loading Room...</div>;
+  if (error) return <div className="text-red-500 p-10">Error loading room: {error}</div>;
+  if (!room) return <div className="text-yellow-500 p-10">Room not found (ID: {roomId})</div>;
+
+  return (
+    <TimeFrameProvider room={room}>
+      <GameDebugInner roomId={roomId} room={room} />
+    </TimeFrameProvider>
   );
 }

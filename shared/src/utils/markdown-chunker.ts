@@ -13,8 +13,6 @@ export function chunkMarkdown(content: string): KnowledgeChunk[] {
   const lines = content.split('\n');
   const chunks: KnowledgeChunk[] = [];
 
-  console.log('[MarkdownChunker] v2: STRICT H1 SPLIT MODE ACTIVE');
-
   let currentTitle = 'Introduction';
   let currentLevel = 0;
   let currentBuffer: string[] = [];

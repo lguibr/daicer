@@ -191,6 +191,7 @@ export interface Entity {
   // Visuals
   color: string;
   visionRadius: number;
+  sheet?: CharacterSheet; // Link to detailed sheet
 }
 
 export interface RoomMembership {
@@ -236,6 +237,8 @@ import {
   CastSpellCommandSchema,
   InteractCommandSchema,
   EndTurnCommandSchema,
+  LongRestCommandSchema,
+  ModifyTerrainCommandSchema,
 } from '../schemas';
 
 export type Command = z.infer<typeof CommandSchema>;
@@ -245,6 +248,8 @@ export type SkillCheckCommand = z.infer<typeof SkillCheckCommandSchema>;
 export type CastSpellCommand = z.infer<typeof CastSpellCommandSchema>;
 export type InteractCommand = z.infer<typeof InteractCommandSchema>;
 export type EndTurnCommand = z.infer<typeof EndTurnCommandSchema>;
+export type LongRestCommand = z.infer<typeof LongRestCommandSchema>;
+export type ModifyTerrainCommand = z.infer<typeof ModifyTerrainCommandSchema>;
 
 export * from './engine';
 export * from '../rules/actions';
@@ -254,3 +259,19 @@ export * from '../rules/magic';
 export * from '../rules/resting';
 export * from '../rules/leveling';
 export * from '../rules/conditions';
+
+// === Tracing ===
+
+export interface ExecutionStep {
+  type: string;
+  description: string;
+  base?: number;
+  modifiers?: { source: string; value: number }[];
+  total?: number;
+  diceNotation?: string;
+  rolls?: number[];
+  outcome?: string;
+  targetValue?: number;
+}
+
+export type ExecutionTrace = ExecutionStep[];

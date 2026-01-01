@@ -282,7 +282,7 @@ export const InNavbar: Story = {
   render: () => (
     <div className="w-full min-h-[100px] bg-midnight-400/80 border-b border-midnight-500/70 backdrop-blur-xl p-4">
       <div className="flex items-center gap-4">
-        <Logo size="md" onClick={() => console.log('Navigate to home')} />
+        <Logo size="md" onClick={() => console.info('Navigate to home')} />
         <span className="text-aurora-100 font-display text-xl tracking-[0.24em]">DAIcer</span>
       </div>
     </div>

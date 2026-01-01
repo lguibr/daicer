@@ -83,10 +83,54 @@ interface SocketEvents {
     metadata?: Record<string, unknown>;
     timestamp: number;
   }) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onEntitiesUpdate?: (data: { entities: any[] }) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onGameEvents?: (data: { events: any[] }) => void;
+  onEntitiesUpdate?: (data: { entities: unknown[] }) => void;
+  onGameEvents?: (data: { events: unknown[] }) => void;
+  onGameEvents?: (data: { events: unknown[] }) => void;
+}
+
+/**
+ * Helper to register events
+ */
+function registerSocketEvents(s: Socket<ServerToClientEvents, ClientToServerEvents>, events: SocketEvents) {
+  if (events.onConnect) s.on('connect', events.onConnect);
+  if (events.onError) s.on('connect_error', (err) => events.onError?.({ message: err.message }));
+  if (events.onDisconnect) s.on('disconnect', events.onDisconnect);
+
+  if (events.onGameState) s.on('game:state', events.onGameState);
+  if (events.onRoomUpdated) s.on('room:updated', events.onRoomUpdated);
+  if (events.onPlayerJoined) s.on('player:joined', events.onPlayerJoined);
+  if (events.onPlayerLeft) s.on('player:left', events.onPlayerLeft);
+  if (events.onPlayerCreated) s.on('player:created', events.onPlayerCreated);
+  if (events.onPlayerReadyUpdated) s.on('player:ready_updated', events.onPlayerReadyUpdated);
+  if (events.onAllReady) s.on('room:all_ready', events.onAllReady);
+  if (events.onPhaseChanged) s.on('room:phase_changed', events.onPhaseChanged);
+  if (events.onTurnProcessing) s.on('turn:processing', events.onTurnProcessing);
+  if (events.onTurnComplete) s.on('turn:complete', events.onTurnComplete);
+  if (events.onToolCalls) s.on('tool:calls', events.onToolCalls);
+  if (events.onMessageNew) s.on('message:new', events.onMessageNew);
+  if (events.onGameStart) s.on('game:start', events.onGameStart);
+
+  // Streaming events
+  if (events.onStreamStart) s.on('message:stream:start', events.onStreamStart);
+  if (events.onStreamChunk) s.on('message:stream:chunk', events.onStreamChunk);
+  if (events.onStreamEnd) s.on('message:stream:end', events.onStreamEnd);
+  if (events.onStreamError) s.on('message:stream:error', events.onStreamError);
+  if (events.onStreamAborted) s.on('message:stream:aborted', events.onStreamAborted);
+
+  // Presence events
+  if (events.onPresenceUpdate) s.on('presence:update', events.onPresenceUpdate);
+
+  // Entities update (God Mode / Narrator)
+  if (events.onEntitiesUpdate) s.on('entities:update', events.onEntitiesUpdate);
+
+  // Unified LLM Stream
+  if (events.onLLMStreamEvent) s.on('llm:stream:event', events.onLLMStreamEvent);
+
+  // Game Events (Trace)
+  // @ts-expect-error Types are not fully aligned
+  if (events.onGameEvents) s.on('game:events', events.onGameEvents);
+
+  return s;
 }
 
 /**
@@ -137,50 +181,6 @@ export async function initSocket(
 }
 
 /**
- * Helper to register events
- */
-function registerSocketEvents(s: Socket<ServerToClientEvents, ClientToServerEvents>, events: SocketEvents) {
-  if (events.onConnect) s.on('connect', events.onConnect);
-  if (events.onError) s.on('connect_error', (err) => events.onError?.({ message: err.message }));
-  if (events.onDisconnect) s.on('disconnect', events.onDisconnect);
-
-  if (events.onGameState) s.on('game:state', events.onGameState);
-  if (events.onRoomUpdated) s.on('room:updated', events.onRoomUpdated);
-  if (events.onPlayerJoined) s.on('player:joined', events.onPlayerJoined);
-  if (events.onPlayerLeft) s.on('player:left', events.onPlayerLeft);
-  if (events.onPlayerCreated) s.on('player:created', events.onPlayerCreated);
-  if (events.onPlayerReadyUpdated) s.on('player:ready_updated', events.onPlayerReadyUpdated);
-  if (events.onAllReady) s.on('room:all_ready', events.onAllReady);
-  if (events.onPhaseChanged) s.on('room:phase_changed', events.onPhaseChanged);
-  if (events.onTurnProcessing) s.on('turn:processing', events.onTurnProcessing);
-  if (events.onTurnComplete) s.on('turn:complete', events.onTurnComplete);
-  if (events.onToolCalls) s.on('tool:calls', events.onToolCalls);
-  if (events.onMessageNew) s.on('message:new', events.onMessageNew);
-  if (events.onGameStart) s.on('game:start', events.onGameStart);
-
-  // Streaming events
-  if (events.onStreamStart) s.on('message:stream:start', events.onStreamStart);
-  if (events.onStreamChunk) s.on('message:stream:chunk', events.onStreamChunk);
-  if (events.onStreamEnd) s.on('message:stream:end', events.onStreamEnd);
-  if (events.onStreamError) s.on('message:stream:error', events.onStreamError);
-  if (events.onStreamAborted) s.on('message:stream:aborted', events.onStreamAborted);
-
-  // Presence events
-  if (events.onPresenceUpdate) s.on('presence:update', events.onPresenceUpdate);
-
-  // Entities update (God Mode / Narrator)
-  if (events.onEntitiesUpdate) s.on('entities:update', events.onEntitiesUpdate);
-
-  // Unified LLM Stream
-  if (events.onLLMStreamEvent) s.on('llm:stream:event', events.onLLMStreamEvent);
-
-  // Game Events (Trace)
-  if (events.onGameEvents) s.on('game:events', events.onGameEvents);
-
-  return s;
-}
-
-/**
  * Get current socket instance
  * @returns Socket or null
  */
@@ -219,7 +219,7 @@ export function setReady(roomId: string, ready: boolean): void {
     return;
   }
   // Allow emitting even if disconnected - Socket.IO will buffer
-  console.log('✅ Emitting player:ready', { roomId, isReady: ready });
+  console.info('✅ Emitting player:ready', { roomId, isReady: ready });
   socket.emit('player:ready', { roomId, isReady: ready });
 }
 
@@ -241,7 +241,7 @@ export function submitAction(roomId: string, action: string): void {
  * @param language - Language code
  */
 export function processTurn(roomId: string, language = 'en'): void {
-  console.log('[Socket Service] processTurn called', {
+  console.info('[Socket Service] processTurn called', {
     roomId,
     language,
     socketExists: !!socket,

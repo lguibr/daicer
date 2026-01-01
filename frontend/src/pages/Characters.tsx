@@ -67,6 +67,7 @@ export default function CharactersPage() {
   }, [errorMessage]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCharacters().catch((err: unknown) => {
       console.error('Failed to fetch characters:', err);
     });

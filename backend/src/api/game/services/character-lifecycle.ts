@@ -23,11 +23,11 @@ export default ({ strapi }) => ({
 
   async addCharacter(
     roomId: string,
-    characterData: Record<string, any>,
+    characterData: Record<string, unknown>,
     user: { documentId: string; id: string; username: string }
   ) {
     // 1. Fetch Room with populated players
-     
+
     const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }];
     if (!isNaN(Number(roomId))) {
       filters.push({ id: Number(roomId) });
@@ -49,7 +49,10 @@ export default ({ strapi }) => ({
 
     // 2. Process Avatar Uploads
     const avatarSlots = ['portrait', 'upperBody', 'fullBody'];
-    const processedAvatarPreview = { ...characterData.avatarPreview };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const processedAvatarPreview: Record<string, any> = {
+      ...((characterData.avatarPreview as Record<string, unknown>) || {}),
+    };
 
     if (processedAvatarPreview) {
       for (const slot of avatarSlots) {
@@ -126,7 +129,7 @@ export default ({ strapi }) => ({
         }
       }
 
-      const rawStats = characterData.baseStats || characterData.attributes || {};
+      const rawStats = (characterData.baseStats || characterData.attributes || {}) as Record<string, any>;
       const baseStats = {
         strength: Number(rawStats.Strength || rawStats.strength || 10),
         dexterity: Number(rawStats.Dexterity || rawStats.dexterity || 10),
@@ -213,7 +216,7 @@ export default ({ strapi }) => ({
       character: createdCharacter.documentId, // Keep global link for reference
       characterSheet: createdSheet.documentId, // The Active Sheet
       isReady: false,
-      name: characterData.name,
+      name: characterData.name as string,
     };
 
     await strapi.documents('api::room.room').update({
@@ -232,8 +235,7 @@ export default ({ strapi }) => ({
     mainContext: string,
     language: Language = 'en',
     settings?: WorldSettings,
-    streamId?: string,
-    targetUserId?: string
+    streamId?: string
   ): Promise<string> {
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {
@@ -286,7 +288,7 @@ Focus on their internal state, their unique perception, and their immediate surr
       systemPrompt = formatPrompt(systemPrompt, { worldDescription, mainContext });
     }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const defaultUser = `Generate a personalized opening for ${character.name} (${character.race} ${character.characterClass || (character as any).class?.name || 'Unknown Class'}).
 Synchronize with the Main Context.
 Describe sensory details, internal state, and prepare for reaction.
@@ -305,7 +307,7 @@ Start with ### Through ${character.name}'s Eyes`;
       });
     }
 
-    return generateText(systemPrompt, userPrompt, language, { metadata: { streamId, targetUserId } });
+    return generateText(systemPrompt, userPrompt, language, { metadata: { streamId } });
   },
 
   async generateMainOpening(
@@ -313,8 +315,7 @@ Start with ### Through ${character.name}'s Eyes`;
     players: Player[],
     language: Language = 'en',
     settings?: WorldSettings,
-    streamId?: string,
-    targetUserId?: string
+    streamId?: string
   ): Promise<string> {
     let dynamicStyleInstructions = 'Standard DM Style';
     if (settings?.dmStyle) {

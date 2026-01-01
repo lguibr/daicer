@@ -67,7 +67,7 @@ export default function WorldConfigPage() {
       }
     } catch (err) {
       console.error(err);
-      alert(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error(`Failed to create room: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setIsSubmitting(false);
     }
   };
@@ -107,12 +107,13 @@ export default function WorldConfigPage() {
 
       <div className="flex justify-between pt-4 border-t border-midnight-800">
         <button
+          type="button"
           onClick={() => navigate({ pathname: '/create/dm-settings', search: location.search })}
           className="btn-secondary min-w-[150px]"
         >
           Back
         </button>
-        <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary min-w-[200px]">
+        <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="btn-primary min-w-[200px]">
           Forging World
         </button>
       </div>

@@ -27,7 +27,7 @@ type ScaleLevel = number;
 
 export default function DmSettingsPage() {
   const { settings, updateSetting, updateDMStyle } = useWizard();
-  const { t } = useI18n();
+  const { language } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,7 +39,7 @@ export default function DmSettingsPage() {
         label: VERBOSITY_FALLBACK[key]?.label ?? '',
         description: VERBOSITY_FALLBACK[key]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const detailMarks = useMemo<SliderMark[]>(
@@ -49,7 +49,7 @@ export default function DmSettingsPage() {
         label: DETAIL_FALLBACK[key]?.label ?? '',
         description: DETAIL_FALLBACK[key]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const engagementMarks = useMemo<SliderMark[]>(
@@ -59,7 +59,7 @@ export default function DmSettingsPage() {
         label: ENGAGEMENT_FALLBACK[key]?.label ?? '',
         description: ENGAGEMENT_FALLBACK[key]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const narrativeMarks = useMemo<SliderMark[]>(
@@ -69,7 +69,7 @@ export default function DmSettingsPage() {
         label: NARRATIVE_FALLBACK[key]?.label ?? '',
         description: NARRATIVE_FALLBACK[key]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const specialModeOptions = useMemo(
@@ -79,7 +79,7 @@ export default function DmSettingsPage() {
         label: SPECIAL_MODE_FALLBACK[key]?.label ?? key,
         description: SPECIAL_MODE_FALLBACK[key]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const adventureLengthOptions = useMemo(
@@ -90,7 +90,7 @@ export default function DmSettingsPage() {
         detail: ADVENTURE_LENGTH_FALLBACK[value]?.detail ?? '',
         description: ADVENTURE_LENGTH_FALLBACK[value]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const difficultyOptions = useMemo(
@@ -101,7 +101,7 @@ export default function DmSettingsPage() {
         detail: DIFFICULTY_FALLBACK[value]?.detail ?? '',
         description: DIFFICULTY_FALLBACK[value]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   const worldSizeOptions = useMemo(
@@ -112,7 +112,7 @@ export default function DmSettingsPage() {
         detail: WORLD_SIZE_FALLBACK[value]?.detail ?? '',
         description: WORLD_SIZE_FALLBACK[value]?.description ?? '',
       })),
-    [t]
+    []
   );
 
   // Derived Indices
@@ -219,8 +219,11 @@ export default function DmSettingsPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">Theme *</label>
+            <label htmlFor="theme" className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+              Theme *
+            </label>
             <input
+              id="theme"
               type="text"
               value={settings.theme}
               onChange={(e) => updateSetting('theme', e.target.value)}
@@ -229,8 +232,11 @@ export default function DmSettingsPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">Tone *</label>
+            <label htmlFor="tone" className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+              Tone *
+            </label>
             <input
+              id="tone"
               type="text"
               value={settings.tone}
               onChange={(e) => updateSetting('tone', e.target.value)}
@@ -240,8 +246,11 @@ export default function DmSettingsPage() {
           </div>
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">Primary Setting *</label>
+          <label htmlFor="setting" className="text-xs font-semibold uppercase tracking-[0.35em] text-shadow-400">
+            Primary Setting *
+          </label>
           <input
+            id="setting"
             type="text"
             value={settings.setting}
             onChange={(e) => updateSetting('setting', e.target.value)}
@@ -277,6 +286,7 @@ export default function DmSettingsPage() {
 
       <div className="flex justify-end pt-4">
         <button
+          type="button"
           onClick={() => navigate({ pathname: '/create/world-generation', search: location.search })}
           disabled={!isValid}
           className="btn-primary min-w-[170px]"

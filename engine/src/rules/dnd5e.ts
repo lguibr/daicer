@@ -37,12 +37,16 @@ export function createCharacterSnapshot(sheet: CharacterSheet | Partial<Characte
   // since backend sometimes populates loosely.
 
   return {
-    hp: (sheet as any).currentHp ?? 10,
-    maxHp: (sheet as any).maxHp ?? 10,
-    stats: (sheet as any).stats || {},
-    inventory: (sheet as any).inventory || [],
-    level: (sheet as any).level ?? 1,
-    experience: (sheet as any).experience ?? 0,
-    position: (sheet as any).position || { x: 0, y: 0, z: 0 },
+    hp: ((sheet as Record<string, unknown>).currentHp as number) ?? 10,
+    maxHp: ((sheet as Record<string, unknown>).maxHp as number) ?? 10,
+    stats: ((sheet as Record<string, unknown>).stats as Record<string, number>) || {},
+    inventory: ((sheet as Record<string, unknown>).inventory as Record<string, unknown>[]) || [],
+    level: ((sheet as Record<string, unknown>).level as number) ?? 1,
+    experience: ((sheet as Record<string, unknown>).experience as number) ?? 0,
+    position: ((sheet as Record<string, unknown>).position as { x: number; y: number; z: number }) || {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
   };
 }

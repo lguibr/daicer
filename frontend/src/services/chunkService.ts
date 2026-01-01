@@ -83,7 +83,7 @@ export async function fetchChunk(
   }
 
   // 2. Generate on-demand via API
-  console.log(`Cache miss for chunk (${chunkX}, ${chunkY}, ${chunkZ}), generating...`);
+  console.info(`Cache miss for chunk (${chunkX}, ${chunkY}, ${chunkZ}), generating...`);
   const generated = await generateChunkViaAPI(roomId, chunkX, chunkY, chunkZ);
   chunkCache.set(key, generated);
   return generated;

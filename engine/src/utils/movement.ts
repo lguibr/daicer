@@ -24,11 +24,11 @@ export const getMovementModes = (speed: Speed | undefined | null): SpeedCapabili
   }
 
   return {
-    walk: speed.walkSpeed ?? 0,
-    fly: speed.flySpeed,
-    swim: speed.swimSpeed,
-    climb: speed.climbSpeed,
-    burrow: speed.burrowSpeed,
+    walk: speed.walk ?? 0,
+    fly: speed.fly,
+    swim: speed.swim,
+    climb: speed.climb,
+    burrow: speed.burrow,
     hover: speed.hover,
   };
 };

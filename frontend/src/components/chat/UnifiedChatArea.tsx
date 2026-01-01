@@ -24,6 +24,7 @@ import { MentionDropdown } from './MentionDropdown';
 import DiceRollCard from './DiceRollCard';
 import ToolCallCard from './ToolCallCard';
 import TraceEventCard from './TraceEventCard';
+import { ChatActionToolbar } from './ChatActionToolbar';
 
 // Shared interfaces
 export interface UnifiedChatProps {
@@ -62,10 +63,13 @@ export function UnifiedChatArea({
   ...props
 }: UnifiedChatProps & {
   hideHeader?: boolean;
-  activeCommand?: { label: string; name: string };
+  activeCommand?: { label: string; name: string; prefix?: string; id?: string };
   onClearCommand?: () => void;
+  onCommandSelect?: (cmd: { prefix: string; id: string; name: string; label: string }) => void;
   activeLocation?: { label: string; x: number; y: number; z: number };
   onClearLocation?: () => void;
+  activeEntity?: { id: string; name: string };
+  showTools?: boolean;
 }) {
   // Start of body
   const { t } = useI18n();
@@ -170,6 +174,13 @@ export function UnifiedChatArea({
         <div className="p-3 border-b border-aurora-500/20 bg-midnight-900 flex items-center gap-2 shadow-sm z-10 shrink-0">
           <Sparkles className="w-4 h-4 text-aurora-400" />
           <h3 className="text-xs font-bold text-aurora-300 uppercase tracking-wider">God Mode Interface</h3>
+        </div>
+      )}
+
+      {/* Tools Toolbar */}
+      {props.showTools && props.onCommandSelect && (
+        <div className="bg-midnight-900/80 border-b border-midnight-800 p-2 z-10">
+          <ChatActionToolbar onCommandSelect={props.onCommandSelect} activeEntity={props.activeEntity} />
         </div>
       )}
 
@@ -293,7 +304,7 @@ export function UnifiedChatArea({
                         {/* Dice Rolls */}
                         {msg.diceRolls?.length > 0 && (
                           <div className="mt-4 space-y-3">
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             {msg.diceRolls.map((roll: any, i: number) => (
                               <DiceRollCard key={`${msg.id}-dice-${i}`} roll={roll} animate />
                             ))}
@@ -303,7 +314,7 @@ export function UnifiedChatArea({
                         {/* Tool Calls */}
                         {msg.toolCalls?.length > 0 && (
                           <div className="mt-4 space-y-3">
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             {msg.toolCalls.map((tc: any, i: number) => (
                               <ToolCallCard key={`${msg.id}-tool-${i}`} toolCall={tc} status="complete" />
                             ))}

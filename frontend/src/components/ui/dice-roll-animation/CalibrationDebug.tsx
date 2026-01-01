@@ -20,11 +20,11 @@ export function CalibrationDebug() {
         results[`d${dieType}`] = rotations;
       });
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCalibrations(results);
 
       // Check if calibrations are valid (not all zeros)
       const hasValidCalibrations = Object.values(results).some((rotations) =>
- 
         Object.values(rotations).some((rot: any) => rot.x !== 0 || rot.y !== 0 || rot.z !== 0)
       );
 

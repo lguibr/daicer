@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 import type { Language } from '@daicer/engine';
@@ -267,10 +267,12 @@ export function DiceLoader({
     return Array.from(FALLBACK_MESSAGES.en);
   }, [language, t]);
 
-  const randomLocalizedMessage = useMemo(() => {
+  const [randomLocalizedMessage, setRandomLocalizedMessage] = useState('');
+
+  useEffect(() => {
     const options = localizedMessages.length > 0 ? localizedMessages : Array.from(FALLBACK_MESSAGES.en);
     const index = Math.floor(Math.random() * options.length);
-    return options[index];
+    setRandomLocalizedMessage(options[index]);
   }, [localizedMessages]);
 
   const displayedMessage = showMessage ? (message ?? randomLocalizedMessage) : undefined;

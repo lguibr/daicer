@@ -26,8 +26,21 @@ export function RoomSelection({ onSelect, onCreate }: RoomSelectionProps) {
     );
   }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rooms = (data as any)?.rooms || [];
+  interface Room {
+    documentId: string;
+    roomId?: string;
+    code?: string;
+    dmSettings?: {
+      theme?: string;
+      difficulty?: string;
+    };
+    players?: unknown[];
+    character_sheets?: unknown[];
+    createdAt?: string;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rooms = ((data as any)?.rooms as Room[]) || [];
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-500">
@@ -54,9 +67,7 @@ export function RoomSelection({ onSelect, onCreate }: RoomSelectionProps) {
           <h3 className="text-lg font-bold text-shadow-200">Create New Room</h3>
           <p className="text-sm text-muted-foreground text-center mt-2">Start a fresh campaign with custom settings</p>
         </div>
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        {rooms.map((room: any) => (
+        {rooms.map((room) => (
           <Card
             key={room.documentId}
             className="group hover:border-aurora-500/50 transition-all cursor-pointer bg-midnight-900 border-midnight-800 overflow-hidden"

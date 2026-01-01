@@ -27,7 +27,7 @@ export default function DebugPage() {
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
 
   // World Config State for the 'world' stage
-  const [worldConfig, setWorldConfig] = useState<WorldConfig>({
+  const [worldConfig, setWorldConfig] = useState<WorldConfig>(() => ({
     seed: `new-campaign-${Math.random().toString(36).substring(7)}`,
     chunkSize: 32,
     globalScale: 0.01,
@@ -42,7 +42,7 @@ export default function DebugPage() {
     structureSizeAvg: 10,
     roadDensity: 0.5,
     fogRadius: 10,
-  });
+  }));
 
   // Handlers
   const handleRoomSelect = (roomId: string) => {

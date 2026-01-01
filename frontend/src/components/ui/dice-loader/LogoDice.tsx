@@ -57,7 +57,7 @@ export function LogoDice({
   const animationFrameRef = useRef<number | undefined>(undefined);
   const stateRef = useRef<ThreeState | null>(null);
   const [phase, setPhase] = useState<AnimationPhase>('spinning');
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const canvasStyle: CSSProperties = {
     width: `${CONTAINER_SIZE_MAP[size]}px`,
@@ -100,6 +100,7 @@ export function LogoDice({
     }
 
     stateRef.current = { scene, camera, renderer };
+    startTimeRef.current = Date.now();
     startTimeRef.current = Date.now();
 
     const die = createDie('20-ai', color, visualStyle);

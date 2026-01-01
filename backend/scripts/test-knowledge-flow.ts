@@ -1,5 +1,5 @@
+/* eslint-disable no-console */
 import { chunkMarkdown } from '@daicer/shared';
-// @ts-ignore
 import { embeddingService } from '../src/services/embedding-service';
 
 async function main() {

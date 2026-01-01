@@ -69,6 +69,28 @@ export const EndTurnCommandSchema = BaseCommandSchema.extend({
   }),
 });
 
+export const LongRestCommandSchema = BaseCommandSchema.extend({
+  type: z.literal('LONG_REST'),
+  payload: z.object({
+    actorId: z.string(), // Party leader or area? Maybe just list of actors or single actor triggering it.
+    // Agent tool uses payload directly. Let's assume actorId.
+    // tool-registry simply passes payload.
+    // Let's make payload flexible or minimal.
+    duration: z.number().optional(),
+  }),
+});
+
+export const ModifyTerrainCommandSchema = BaseCommandSchema.extend({
+  type: z.literal('MODIFY_TERRAIN'),
+  payload: z
+    .object({
+      position: CoordinatesSchema.optional(),
+      blockType: z.string().optional(),
+      action: z.enum(['set', 'remove', 'fill']).optional(),
+    })
+    .passthrough(), // Allow flexible payload for voxel engine
+});
+
 // === Union of All Commands ===
 
 export const CommandSchema = z.union([
@@ -77,7 +99,10 @@ export const CommandSchema = z.union([
   SkillCheckCommandSchema,
   CastSpellCommandSchema,
   InteractCommandSchema,
+  InteractCommandSchema,
   EndTurnCommandSchema,
+  LongRestCommandSchema,
+  ModifyTerrainCommandSchema,
 ]);
 
 // Helper to infer discriminated union type

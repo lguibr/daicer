@@ -1,5 +1,9 @@
-import { CharacterSheet, roll, DiceResult, rollDie } from '../types';
+import { z } from 'zod';
+import { CharacterSheetSchema } from '../schemas/character';
+import { rollDie } from './dice';
 import { calculateModifier } from './dnd5e';
+
+type CharacterSheet = z.infer<typeof CharacterSheetSchema>;
 
 export interface RestResult {
   hpHealed: number;
@@ -22,7 +26,7 @@ export function shortRest(sheet: CharacterSheet, hitDiceToSpend: number): RestRe
   // 1. Spend Hit Dice
   const conScore = sheet.attributes.Constitution ?? 10;
   const conMod = calculateModifier(conScore);
-  const maxHitDice = sheet.hitDice.total;
+
   let currentHitDice = sheet.hitDice.current;
 
   // Dice Parsing: "1d8" -> sides=8
@@ -99,7 +103,7 @@ export function shortRest(sheet: CharacterSheet, hitDiceToSpend: number): RestRe
   // Or check class name?
   if (sheet.characterClass.toLowerCase().includes('warlock')) {
     if (sheet.spellbook && sheet.spellbook.slots) {
-      sheet.spellbook.slots.forEach((s) => {
+      sheet.spellbook.slots.forEach((_s) => {
         // Pact Magic slots usually have a MAX level, and all are same level.
         // Logic is complex. Skipping Warlock short rest slots for MVP unless genericized.
       });

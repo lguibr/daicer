@@ -1,3 +1,5 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { getStrapiClient } from './utils/strapi-client';
 
 async function migrateUnifiedSpeeds() {

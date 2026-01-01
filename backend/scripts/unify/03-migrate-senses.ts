@@ -56,14 +56,11 @@ async function main() {
       };
 
       for (const [jsonKey, statKey] of Object.entries(visionMap)) {
-        // @ts-ignore
         const rawVal = monster.senses[jsonKey];
         const dist = parseDistance(rawVal);
 
         if (dist !== null) {
-          // @ts-ignore
           if (currentStats[statKey] !== dist) {
-            // @ts-ignore
             changes[statKey] = dist;
             hasChanges = true;
           }

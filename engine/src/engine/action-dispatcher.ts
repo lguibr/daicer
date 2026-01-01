@@ -1,5 +1,15 @@
-import { Command, MoveCommand, AttackCommand, SkillCheckCommand, CastSpellCommand, InteractCommand } from '../types';
+import {
+  Command,
+  MoveCommand,
+  AttackCommand,
+  SkillCheckCommand,
+  CastSpellCommand,
+  InteractCommand,
+  LongRestCommand,
+  ModifyTerrainCommand,
+} from '../types';
 import { GameState, ActionResult } from '../types/engine';
+import { ActionType } from '../rules/actions';
 import { Alea } from '../voxel/utils/math';
 import { resolveAttack } from '../rules/combat';
 import { findPath } from '../rules/spatial';
@@ -25,16 +35,20 @@ export class ActionDispatcher {
         return this.handleCastSpell(state, command as CastSpellCommand);
       case 'INTERACT':
         return this.handleInteract(state, command as InteractCommand);
-      // @ts-ignore
+      case 'LONG_REST':
+        return this.handleLongRest(state, command as LongRestCommand);
+      case 'MODIFY_TERRAIN':
+        return this.handleModifyTerrain(state, command as ModifyTerrainCommand);
+      // @ts-expect-error - ROLL_SAVE is not in standard Command union yet
       case 'ROLL_SAVE':
         // Reuse Skill Check logic or simplified version
         return this.handleSkillCheck(state, {
-          ...(command as any),
+          ...(command as object),
           type: 'SKILL_CHECK',
           payload: {
-            // @ts-ignore
+            // @ts-expect-error - Inference on payload union is tricky here
             actorId: command.payload.actorId || command.payload.targetId, // Adapt payload
-            // @ts-ignore
+            // @ts-expect-error - stat property might be missing on some payloads
             attribute: command.payload.stat,
             difficultyClass: 10,
           },
@@ -71,8 +85,8 @@ export class ActionDispatcher {
     };
 
     // If Room Config exists, use Terrain Generator for walls
-    if (state.room && (state.room as any).config) {
-      const config = (state.room as any).config as WorldConfig;
+    if (state.room && (state.room as { config?: WorldConfig }).config) {
+      const config = (state.room as { config: WorldConfig }).config;
       // We create a generator on the fly - assumption: seed is stable.
       // Note: This might be slow for massive batch moves, but fine for turn-based 1 action.
       const generator = new TerrainGenerator(config);
@@ -143,7 +157,6 @@ export class ActionDispatcher {
       return { success: false, message: 'No movement possible (blocked or 0 distance)', events: [] };
     }
 
-    // @ts-ignore
     entity.position = finalPos;
 
     return {
@@ -188,7 +201,7 @@ export class ActionDispatcher {
 
     // We need to find the action ID. Engine expects actionId.
     // Allow payload to optionally send full intent? For now, we reconstruct.
-    let actionId: string = weaponId;
+    let actionId: string | undefined = weaponId;
     if (!actionId && actor.sheet.structuredActions.length > 0) {
       actionId = actor.sheet.structuredActions[0].id;
     }
@@ -206,7 +219,7 @@ export class ActionDispatcher {
       const result = resolveAttack(
         actor.sheet,
         target.sheet,
-        { type: 'attack', actionId }, // Fallback type check inside resolveAttack will validate. Actually resolveAttack checks type match against definition.
+        { type: ActionType.Attack, actionId, targetId }, // Fallback type check inside resolveAttack will validate. Actually resolveAttack checks type match against definition.
         rng
       );
 
@@ -241,8 +254,8 @@ export class ActionDispatcher {
         ],
         newStateDiff: { entities: state.entities }, // Fully dirty for now
       };
-    } catch (e: any) {
-      return { success: false, message: e.message, events: [] };
+    } catch (e) {
+      return { success: false, message: (e as Error).message || 'Unknown error', events: [] };
     }
   }
 
@@ -270,8 +283,8 @@ export class ActionDispatcher {
     // TODO: Skill ID check (requires skill mapping in Entity)
 
     // 2. Roll (Adv/Dis)
-    let roll1 = Math.floor(this.rng.next() * 20) + 1;
-    let roll2 = Math.floor(this.rng.next() * 20) + 1;
+    const roll1 = Math.floor(this.rng.next() * 20) + 1;
+    const roll2 = Math.floor(this.rng.next() * 20) + 1;
     let finalRoll = roll1;
 
     if (advantage && !disadvantage) {
@@ -310,7 +323,6 @@ export class ActionDispatcher {
   }
 
   private handleCastSpell(_state: GameState, command: CastSpellCommand): ActionResult {
-    // @ts-ignore
     const { actorId, spellId, targetId } = command.payload;
     return {
       success: true,
@@ -327,7 +339,6 @@ export class ActionDispatcher {
   }
 
   private handleInteract(_state: GameState, command: InteractCommand): ActionResult {
-    // @ts-ignore
     const { actorId, targetId, interactionType } = command.payload;
     return {
       success: true,
@@ -336,6 +347,44 @@ export class ActionDispatcher {
         {
           type: 'OBJECT_INTERACTION',
           payload: { actorId, targetId, interactionType },
+          timestamp: Date.now(),
+        },
+      ],
+      newStateDiff: {},
+    };
+  }
+
+  private handleLongRest(state: GameState, command: LongRestCommand): ActionResult {
+    const { actorId, duration } = command.payload;
+    const actorsToHeal = state.entities.filter((e) => e.type === 'player' || e.type === 'npc');
+    for (const actor of actorsToHeal) {
+      if (actor.sheet) {
+        actor.sheet.hp = actor.sheet.maxHp;
+        actor.hp = actor.maxHp;
+      }
+    }
+    return {
+      success: true,
+      message: `Long rest completed${duration ? ` (${duration}h)` : ''}`,
+      events: [
+        {
+          type: 'LONG_REST_COMPLETED',
+          payload: { actorId, duration, healedCount: actorsToHeal.length },
+          timestamp: Date.now(),
+        },
+      ],
+      newStateDiff: { entities: state.entities },
+    };
+  }
+
+  private handleModifyTerrain(state: GameState, command: ModifyTerrainCommand): ActionResult {
+    return {
+      success: true,
+      message: 'Terrain modification queued',
+      events: [
+        {
+          type: 'TERRAIN_MODIFIED',
+          payload: command.payload,
           timestamp: Date.now(),
         },
       ],

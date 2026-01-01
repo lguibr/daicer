@@ -1,9 +1,5 @@
 import { UnifiedChatArea } from '@/components/chat/UnifiedChatArea';
-
-// import { useRef } from 'react';
-import { useEntitySearch } from '@/hooks/useEntitySearch';
 import { useState } from 'react';
-import { GodModePalette } from './GodModePalette';
 
 export interface GodModeMessage {
   id: string;
@@ -36,17 +32,14 @@ export function GodModeChat({
   onInputChange,
   activeLocation,
   onClearLocation,
-  entities,
   activeEntity,
   events = [],
 }: GodModeChatProps) {
-  const { search, results, loading } = useEntitySearch();
-
   // Merge Messages & Events
   const displayItems = [
     ...messages,
-    ...events.map((e) => ({
-      id: `event-${e.timestamp}-${Math.random()}`,
+    ...events.map((e, index) => ({
+      id: `event-${e.timestamp}-${index}`,
       role: 'system',
       sender: 'Engine',
       content: '', // No text content
@@ -63,62 +56,8 @@ export function GodModeChat({
     label: string;
   } | null>(null);
 
-  const handlePaletteAction = (action: string) => {
-    // Parse the raw action to extract ID/Name if it matches our detailed format
-    // Format 1: summon_entity(id="...")
-    // Format 2: cast_spell(id="...")
-    // Format 3: move_entity @Name (legacy/fallback)
-
-    // const idMatch = action.match(/\(id="([^"]+)"\)/);
-    // const prefixMatch = action.match(/^([a-z_]+)/);
-
-    // We need the Name for the label. The Palette action string doesn't include name cleanly unless we change Palette.
-    // Ideally GodModePalette should pass the *Object*, not just the string.
-    // But for now, let's parse or just append if it's complicate.
-
-    // Actually, to implement the "Tag" feature properly, we should refactor GodModePalette to pass the *data* not just the string.
-    // BUT since I can't easily change the signature of `onAction` in one go without breaking props interface logic maybe...
-    // Wait, GodModePalette is local to this feature.
-    // I can assume the `action` string is just what gets sent.
-
-    // Let's modify handlePaletteAction to accept an object OR string,
-    // OR we just rely on parsing the string if we are careful.
-    // But I don't have the NAME in the `summon_entity(id="...")` string.
-
-    // Let's pass the raw text for now, but to get the TAG UI,
-    // I will refactor GodModePalette to pass meaningful metadata.
-
-    // For this step, I will just append the text as before, BUT I'll initiate the refactor in the next step.
-    // Actually, the user wants the TAG UI NOW.
-    // So I need to change GodModePalette to pass { action: string, label: string } or similar.
-
-    const newValue = inputValue ? `${inputValue} ${action}` : action;
-    onInputChange(newValue);
-  };
-
-  // WAIT - I need to modify GodModeChat to support the `activeCommand` prop first.
-  // And GodModePalette needs to pass this info.
-
-  // Re-implementing GodModeChat to support `activeCommand` prop on UnifiedChatArea
-  // (UnifiedChatArea will be updated in next step to accept `activeCommand`)
-
   return (
     <div className="flex flex-col h-full">
-      <div className="p-2 border-b border-midnight-800 bg-midnight-950">
-        <GodModePalette
-          onAction={handlePaletteAction}
-          onSearch={search}
-          searchResults={results}
-          isLoading={loading}
-          entities={entities}
-          activeEntity={activeEntity}
-          // NEW: Callback for structured command
-          onCommandSelect={(cmd) => {
-            setActiveCommand(cmd);
-            onInputChange(''); // Clear input for the args part
-          }}
-        />
-      </div>
       <div className="flex-1 overflow-hidden">
         <UnifiedChatArea
           messages={displayItems}
@@ -156,10 +95,15 @@ export function GodModeChat({
           mode="debug"
           hideInput={false}
           hideHeader
-          activeCommand={activeCommand}
+          activeCommand={activeCommand || undefined}
           onClearCommand={() => setActiveCommand(null)}
+          onCommandSelect={(cmd) => {
+            setActiveCommand(cmd);
+            onInputChange('');
+          }}
           activeLocation={activeLocation || undefined}
           onClearLocation={onClearLocation}
+          activeEntity={activeEntity}
         />
       </div>
     </div>

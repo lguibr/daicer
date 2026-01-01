@@ -31,7 +31,7 @@ export async function loadChunk(
   const worldY = chunkY * chunkSize;
 
   try {
-    console.log(`[ChunkLoader] Loading chunk ${chunkX},${chunkY} (mode: ${mode})`);
+    console.info(`[ChunkLoader] Loading chunk ${chunkX},${chunkY} (mode: ${mode})`);
 
     // GRAPHQL API FETCH (game mode)
     // We use standard Strapi GraphQL mutation for chunk generation/fetching

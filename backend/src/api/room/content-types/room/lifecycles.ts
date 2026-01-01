@@ -4,7 +4,7 @@ const generator = new RoomRuneGenerator();
 
 export default {
   async afterCreate(event) {
-    const { result, params } = event;
+    const { result } = event;
 
     // Strapi v5: result might use documentId, but the numeric id is often still available on the object
     // or we might need to fetch it if not present.
