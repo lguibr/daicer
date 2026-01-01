@@ -21,19 +21,21 @@ export const searchMonstersTool = (context: StrapiContext) =>
           filters.type = { $containsi: type };
         }
 
-        const monsters = await strapi.documents('api::monster.monster').findMany({
           filters,
-          limit: 5,
+          populate: ['stats'],
         });
 
         if (!monsters || monsters.length === 0) {
           return `No monsters found matching "${query}".`;
         }
 
-        return (monsters as Record<string, any>[])
+        return monsters
           .map((m) => {
-            const stats = m.stats ? JSON.stringify(m.stats) : 'N/A';
-            return `### ${m.name} (${m.size} ${m.type}, CR ${m.challenge_rating})\n- HP: ${m.hp}\n- AC: ${m.armor_class}\n- Speed: ${JSON.stringify(m.speed)}\n- Stats: ${stats}\n`;
+            // Stats is mapped to component or json - need to verify schema. Assuming json "stats" attribute exists or individual fields.
+            // contentTypes.d.ts will reveal. If "stats" is missing, we use explicit fields.
+            const stats = `STR ${m.stats?.strength || 10} DEX ${m.stats?.dexterity || 10} CON ${m.stats?.constitution || 10} INT ${m.stats?.intelligence || 10} WIS ${m.stats?.wisdom || 10} CHA ${m.stats?.charisma || 10}`;
+
+            return `### ${m.name} (${m.size} ${m.type}, CR ${m.challenge_rating})\n- HP: ${m.hp}\n- AC: ${m.ac}\n- Speed: ${JSON.stringify(m.speed)}\n- Stats: ${stats}\n`;
           })
           .join('\n---\n');
       },

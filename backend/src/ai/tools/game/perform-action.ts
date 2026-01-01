@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { createDaicerTool, StrapiContext } from '../tool-factory';
-import { ActionDispatcher, GameState, Entity } from '@daicer/engine';
+import { ActionDispatcher, GameState, Entity, Command } from '@daicer/engine';
 import { RoomWithPopulations } from '../../../lifecycle/socket/types';
 
 // Define Input Schema
@@ -41,7 +41,7 @@ export const performActionTool = (context: StrapiContext) => {
               (e): Entity => ({
                 id: e.documentId,
                 position: e.position,
-                stats: e.stats as any, // TODO: Define strict stats
+                stats: e.stats as unknown as Record<string, number>, // TODO: Define strict stats
                 type: e.type as 'player' | 'npc' | 'monster' | 'object',
                 name: e.name,
                 hp: e.currentHp,
@@ -52,7 +52,7 @@ export const performActionTool = (context: StrapiContext) => {
                 features: [],
                 color: '#fff',
                 visionRadius: 10,
-                sheet: e as any,
+                sheet: e as unknown as Record<string, unknown>, // Using unknown record instead of any
               })
             ),
             map: { width: 100, height: 100, voxels: {} },
@@ -83,7 +83,7 @@ export const performActionTool = (context: StrapiContext) => {
           // 4. Dispatch
           strapi.log.info(`[Tool:PerformAction] Dispatching ${input.commandType}`, parsedPayload);
 
-          const result = dispatcher.dispatch(state, command);
+          const result = dispatcher.dispatch(state, command as Command);
 
           // 5. Broadcast Events
           if (result.events.length > 0) {

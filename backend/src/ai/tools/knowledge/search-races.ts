@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { createDaicerTool, StrapiContext } from '../tool-factory';
-import { Race } from '@daicer/shared';
 
 const searchRacesSchema = z.object({
   query: z.string().describe('The name of the race to search for.'),
@@ -24,10 +23,10 @@ export const searchRacesTool = (context: StrapiContext) =>
           return `No races found matching "${query}".`;
         }
 
-        return (races as unknown as Race[])
+        return races
           .map((r) => {
             const traits = r.traits ? r.traits.map((t) => t.name).join(', ') : 'None';
-            return `### ${r.name}\n- Speed: ${JSON.stringify(r.speed)}\n- Size: ${r.size}\n- Traits: ${traits}\n- Description: ${r.desc}\n`;
+            return `### ${r.name}\n- Speed: ${JSON.stringify(r.speed)}\n- Size: ${r.size}\n- Traits: ${traits}\n- Description: ${r.description}\n`;
           })
           .join('\n---\n');
       },

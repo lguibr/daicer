@@ -56,11 +56,10 @@ export const getMapImageTool = (context: StrapiContext) =>
         if (!chunk) throw new Error('Failed to load map chunk.');
 
         // Map sheets to creatures
-        // Map sheets to creatures
         const creatures = (room.character_sheets || []).map((cs) => ({
           id: cs.documentId,
           name: cs.name,
-          type: cs.type,
+          type: (cs.type || 'monster') as 'player' | 'npc' | 'monster' | 'object',
           position: cs.position,
           stats: cs.stats,
           // Map 'currentHp' to 'hp' as per Creature interface

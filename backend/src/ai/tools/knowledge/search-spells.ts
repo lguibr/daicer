@@ -30,9 +30,9 @@ export const searchSpellsTool = (context: StrapiContext) =>
           return `No spells found matching "${query}".`;
         }
 
-        return (spells as Record<string, any>[])
+        return spells
           .map((s) => {
-            return `### ${s.name} (Level ${s.level} ${s.school})\n- Range: ${s.range}\n- Components: ${s.components}\n- Duration: ${s.duration}\n- Description: ${s.desc}\n`;
+            return `### ${s.name} (Level ${s.level} ${s.school})\n- Range: ${s.range}\n- Components: ${s.components}\n- Duration: ${s.duration}\n- Description: ${s.description}\n`;
           })
           .join('\n---\n');
       },

@@ -16,16 +16,20 @@ export const searchClassesTool = (context: StrapiContext) =>
         const classes = await strapi.documents('api::class.class').findMany({
           filters: { name: { $containsi: query } },
           limit: 5,
-          populate: ['features'] as any, // Cast because 'features' may be component or relation not fully typed in string literal union yet
+          populate: ['proficiencies'],
         });
 
         if (!classes || classes.length === 0) {
           return `No classes found matching "${query}".`;
         }
 
-        return (classes as Record<string, any>[])
+        return classes;
+        return classes
           .map((c) => {
-            return `### ${c.name} (Hit Die: ${c.hit_die})\n- Proficiencies: ${c.proficiencies}\n- Features: ${JSON.stringify(c.features)}\n`;
+            const profs =
+              (c as { proficiencies?: { name: string }[] }).proficiencies?.map((p) => p.name).join(', ') || 'None';
+            // Features are not strictly related to Class in schema currently, omitting.
+            return `### ${c.name} (Hit Die: ${c.hit_die})\n- Proficiencies: ${profs}\n`;
           })
           .join('\n---\n');
       },
