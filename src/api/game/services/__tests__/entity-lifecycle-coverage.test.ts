@@ -25,11 +25,11 @@ describe('Entity Lifecycle Synthetic Coverage', () => {
 
   it('covers onboardPlayer - aborts on missing room', async () => {
     const strapiMock = {
-      documents: vi.fn().mockReturnValue({ findMany: vi.fn().mockResolvedValue([]) }),
+      documents: vi.fn().mockReturnValue({ findOne: vi.fn().mockResolvedValue(null) }),
       log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
     };
     const service = entityLifecycle.default({ strapi: strapiMock as any });
-    await expect(service.onboardPlayer('room-1', { name: 'Player 1' }, { documentId: 'user-1', id: '1', username: 'Test' })).rejects.toThrow('Room not found');
+    await expect(service.onboardPlayer('room-1', { name: 'Player 1' }, { documentId: 'user-1', id: '1', username: 'Test' })).rejects.toThrow('Room unavailable');
   });
 
   it('covers generateEntityOpening paths', async () => {

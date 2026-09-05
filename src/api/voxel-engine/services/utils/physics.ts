@@ -3,48 +3,49 @@
  * Keep documentation synchronized with code at all times.
  */
 import { Coordinates, BlockType, Chunk } from '@daicer/engine/types';
-import { CHUNK_SIZE } from '@/api/voxel-engine/services/utils/constants';
-// Re-shim PHYSICS_CONSTANTS if it was removed or use local constant
-const PHYSICS_CONSTANTS = { CHUNK_SIZE };
 import { WorldGenerator } from '@/api/voxel-engine/services/world-generator-logic';
 
 export class PhysicsEngine {
-  private generator: WorldGenerator;
+  private generator: Pick<WorldGenerator, 'chunkSize' | 'getChunk'>;
 
-  constructor(generator: WorldGenerator) {
+  constructor(generator: Pick<WorldGenerator, 'chunkSize' | 'getChunk'>) {
     this.generator = generator;
   }
 
+  private validPosition(pos: Coordinates): boolean {
+    return (
+      Number.isSafeInteger(pos.x) && Number.isSafeInteger(pos.y) && Number.isInteger(pos.z) && pos.z >= -3 && pos.z <= 3
+    );
+  }
+
   public async isWalkable(pos: Coordinates): Promise<boolean> {
-    const chunkX = Math.floor(pos.x / PHYSICS_CONSTANTS.CHUNK_SIZE);
-    const chunkY = Math.floor(pos.y / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    if (!this.validPosition(pos)) return false;
+    const chunkX = Math.floor(pos.x / this.generator.chunkSize);
+    const chunkY = Math.floor(pos.y / this.generator.chunkSize);
     const chunk = await this.generator.getChunk(chunkX, chunkY);
 
-    const localX =
-      ((pos.x % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
-    const localY =
-      ((pos.y % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
-    const zIndex = pos.z + 3;
+    const localX = ((pos.x % this.generator.chunkSize) + this.generator.chunkSize) % this.generator.chunkSize;
+    const localY = ((pos.y % this.generator.chunkSize) + this.generator.chunkSize) % this.generator.chunkSize;
+    const zIndex = pos.z - chunk.minZ;
 
     if (zIndex < 0 || zIndex > 6) return false;
 
-    return chunk.tiles[zIndex][localY][localX].isWalkable;
+    return chunk.tiles[zIndex]?.[localY]?.[localX]?.isWalkable ?? false;
   }
 
   /**
    * Check if position contains stairs
    */
   public async checkStaircase(pos: Coordinates): Promise<'up' | 'down' | null> {
-    const chunkX = Math.floor(pos.x / PHYSICS_CONSTANTS.CHUNK_SIZE);
-    const chunkY = Math.floor(pos.y / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    if (!this.validPosition(pos)) return null;
+    const chunkX = Math.floor(pos.x / this.generator.chunkSize);
+    const chunkY = Math.floor(pos.y / this.generator.chunkSize);
     const chunk = await this.generator.getChunk(chunkX, chunkY);
-    const localX =
-      ((pos.x % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
-    const localY =
-      ((pos.y % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
-    const zIndex = pos.z + 3;
+    const localX = ((pos.x % this.generator.chunkSize) + this.generator.chunkSize) % this.generator.chunkSize;
+    const localY = ((pos.y % this.generator.chunkSize) + this.generator.chunkSize) % this.generator.chunkSize;
+    const zIndex = pos.z - chunk.minZ;
 
-    const block = chunk.tiles[zIndex][localY][localX].block;
+    const block = chunk.tiles[zIndex]?.[localY]?.[localX]?.block;
     if (block === BlockType.STAIRS_UP) return 'up';
     if (block === BlockType.STAIRS_DOWN) return 'down';
     return null;
@@ -56,16 +57,17 @@ export class PhysicsEngine {
    */
   public async calculateFieldOfView(origin: Coordinates, radius: number): Promise<Set<string>> {
     const visiblePoints = new Set<string>();
-    visiblePoints.add(`${origin.x},${origin.y}`);
+    if (!this.validPosition(origin) || !Number.isInteger(radius) || radius < 0 || radius > 128) return visiblePoints;
+    visiblePoints.add(`${origin.x},${origin.y},${origin.z}`);
 
     // We need to preload chunks for the area to convert isBlocking to sync or handle async inside algorithm
     // Shadowcasting is recursive/iterative. Making the callback async is hard.
     // Better strategy: Identify all chunks needed for radius, preload them, then run algo synchronously using a local cache.
 
-    const minChunkX = Math.floor((origin.x - radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
-    const maxChunkX = Math.floor((origin.x + radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
-    const minChunkY = Math.floor((origin.y - radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
-    const maxChunkY = Math.floor((origin.y + radius) / PHYSICS_CONSTANTS.CHUNK_SIZE);
+    const minChunkX = Math.floor((origin.x - radius) / this.generator.chunkSize);
+    const maxChunkX = Math.floor((origin.x + radius) / this.generator.chunkSize);
+    const minChunkY = Math.floor((origin.y - radius) / this.generator.chunkSize);
+    const maxChunkY = Math.floor((origin.y + radius) / this.generator.chunkSize);
 
     const chunkCache = new Map<string, Chunk>();
     const promises = [];
@@ -78,15 +80,15 @@ export class PhysicsEngine {
     await Promise.all(promises);
 
     const isBlocking = (x: number, y: number) => {
-      const chunkX = Math.floor(x / PHYSICS_CONSTANTS.CHUNK_SIZE);
-      const chunkY = Math.floor(y / PHYSICS_CONSTANTS.CHUNK_SIZE);
+      const chunkX = Math.floor(x / this.generator.chunkSize);
+      const chunkY = Math.floor(y / this.generator.chunkSize);
       const chunk = chunkCache.get(`${chunkX},${chunkY}`);
-      const lx = ((x % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
-      const ly = ((y % PHYSICS_CONSTANTS.CHUNK_SIZE) + PHYSICS_CONSTANTS.CHUNK_SIZE) % PHYSICS_CONSTANTS.CHUNK_SIZE;
-      const zIndex = origin.z + 3;
+      const lx = ((x % this.generator.chunkSize) + this.generator.chunkSize) % this.generator.chunkSize;
+      const ly = ((y % this.generator.chunkSize) + this.generator.chunkSize) % this.generator.chunkSize;
+      const zIndex = origin.z - (chunk?.minZ ?? -3);
       // If chunk is not ready (shouldn't happen with sync gen), treat as blocking
       if (!chunk) return true;
-      return !chunk.tiles[zIndex][ly][lx].isTransparent;
+      return !chunk.tiles[zIndex]?.[ly]?.[lx]?.isTransparent;
     };
 
     // Transform octants
@@ -129,7 +131,7 @@ export class PhysicsEngine {
 
             // Distance check (Euclidean-ish circle)
             if (deltaX * deltaX + deltaY * deltaY <= radius * radius) {
-              visiblePoints.add(`${currentX},${currentY}`);
+              visiblePoints.add(`${currentX},${currentY},${origin.z}`);
             }
 
             if (blocked) {
@@ -163,6 +165,7 @@ export class PhysicsEngine {
    * A* Pathfinding
    */
   public async findPath(start: Coordinates, end: Coordinates): Promise<Coordinates[] | null> {
+    if (!this.validPosition(start) || !this.validPosition(end) || start.z !== end.z) return null;
     const h = (a: Coordinates, b: Coordinates) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     const k = (p: Coordinates) => `${p.x},${p.y},${p.z}`;
 

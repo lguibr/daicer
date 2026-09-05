@@ -8,7 +8,7 @@ const extractResolvers = (mockStrapi: unknown) => {
     capturedResolvers = config.resolvers;
   });
 
-  (mockStrapi as any).plugin = () => ({ service: () => ({ use }) });
+  (mockStrapi as any).plugin = () => ({ service: () => ({ use, shadowCRUD: () => ({ disable: vi.fn(), disableMutations: vi.fn(), field: () => ({ disable: vi.fn() }) }) }) });
   registerGraphQLExtension(mockStrapi);
   return capturedResolvers;
 };
@@ -148,50 +148,9 @@ describe('GraphQL Queries & Resolvers', () => {
     });
   });
 
-  describe('Room.messages', () => {
-    // Use dynamic lookups to avoid "undefined" error at compile time if structure differs
-    const resolveMessages = async (p: unknown, a: unknown, c: unknown) => resolvers.Room.messages(p, a, c);
-
-    it('should filter by room and recipient', async () => {
-      const context = { state: { user: { documentId: 'u1' } } };
-      await resolveMessages({ documentId: 'r1' }, {}, context);
-
-      expect(defaultMockFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filters: expect.objectContaining({
-            room: { documentId: 'r1' },
-            $or: [{ recipient: { $null: true } }, { recipient: { documentId: 'u1' } }],
-          }),
-        })
-      );
-    });
-
-    it('should only show public messages if no user', async () => {
-      const context = { state: { user: null } };
-      await resolveMessages({ documentId: 'r1' }, {}, context);
-
-      expect(defaultMockFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filters: expect.objectContaining({
-            $or: [{ recipient: { $null: true } }],
-          }),
-        })
-      );
-    });
-  });
-
-  describe('Room.turns', () => {
-    const resolveTurns = async (p: unknown, a: unknown) => resolvers.Room.turns(p, a);
-
-    it('should fetch recent turns', async () => {
-      await resolveTurns({ documentId: 'r1' }, {});
-      expect(defaultMockFindMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filters: { room: { documentId: 'r1' } },
-          limit: 5,
-          sort: 'turnNumber:desc',
-        })
-      );
-    });
+  it('does not register raw Room message or turn relation resolvers', () => {
+    expect(resolvers.Room).toBeUndefined();
+    expect(resolvers.Query.gameMessages).toBeTypeOf('function');
+    expect(() => resolvers.Query.getTimeFrame()).toThrow('Raw game history');
   });
 });

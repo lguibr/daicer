@@ -112,7 +112,11 @@ export default ({ strapi }) => ({
   },
 
   async addPlayerEntity(roomId: string, characterData: unknown, user: unknown) {
-    return strapi.service('api::game.entity-lifecycle').addPlayerEntity(roomId, characterData, user);
+    return strapi.service('api::game.entity-lifecycle').onboardPlayer(roomId, characterData, user);
+  },
+
+  async addCharacter(roomId: string, characterData: unknown, user: unknown) {
+    return strapi.service('api::game.entity-lifecycle').onboardPlayer(roomId, characterData, user);
   },
 
   async submitAction(roomId: string, action: string, user: unknown, mode?: 'debug' | 'game', direct?: boolean) {

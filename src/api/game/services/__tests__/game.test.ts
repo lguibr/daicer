@@ -9,7 +9,7 @@ const mockTurnProcessing = { processTurn: vi.fn(), submitAction: vi.fn(), execut
 const mockEntityLifecycle = {
   generateEntityOpening: vi.fn(),
   generateMainOpening: vi.fn(),
-  addPlayerEntity: vi.fn(),
+  onboardPlayer: vi.fn(),
   createSnapshot: vi.fn(),
 };
 const mockVoxelEngine = { getChunk: vi.fn() };
@@ -89,9 +89,13 @@ describe('Game Service', () => {
       );
     });
 
-    it('addPlayerEntity delegates to entity-lifecycle', async () => {
-      await service.addPlayerEntity('r1', {}, {});
-      expect(mockEntityLifecycle.addPlayerEntity).toHaveBeenCalled();
+    it.each(['addPlayerEntity', 'addCharacter'])('%s delegates to canonical onboarding', async (method) => {
+      const character = { documentId: 'blueprint-1' };
+      const user = { id: 7 };
+      const sheet = { documentId: 'sheet-1' };
+      mockEntityLifecycle.onboardPlayer.mockResolvedValueOnce(sheet);
+      await expect(service[method]('r1', character, user)).resolves.toBe(sheet);
+      expect(mockEntityLifecycle.onboardPlayer).toHaveBeenCalledExactlyOnceWith('r1', character, user);
     });
 
     it('submitAction delegates to turn-processing', async () => {

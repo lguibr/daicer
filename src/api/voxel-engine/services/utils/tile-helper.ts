@@ -4,11 +4,12 @@
  */
 import { Alea } from '@/api/voxel-engine/src/utils/math';
 import { Tile, BiomeType, BlockType, ZLevel } from '@daicer/engine/types';
-import { CHUNK_SIZE } from '@/api/voxel-engine/services/utils/constants';
 
 export class TileHelper {
-  static createTile(x: number, y: number, z: ZLevel, block: BlockType, biome: BiomeType, rng: Alea): Tile {
-    const isTransparent = (
+  /** Apply the same block policy to generation, structures and persisted edits. */
+  static applyBlock(tile: Tile, block: string): void {
+    tile.block = block;
+    tile.isTransparent = (
       [
         BlockType.AIR,
         BlockType.WATER,
@@ -24,9 +25,9 @@ export class TileHelper {
         BlockType.STAIRS_UP,
         BlockType.STAIRS_DOWN,
       ] as BlockType[]
-    ).includes(block);
+    ).includes(block as BlockType);
 
-    const isWalkable = (
+    tile.isWalkable = (
       [
         BlockType.FLOOR_WOOD,
         BlockType.FLOOR_STONE,
@@ -39,20 +40,16 @@ export class TileHelper {
         BlockType.STAIRS_DOWN,
         BlockType.WATER,
       ] as BlockType[]
-    ).includes(block);
-
-    return {
-      x,
-      y,
-      z,
-      block,
-      biome,
-      isWalkable,
-      isTransparent,
-      variant: rng.next(),
-    };
+    ).includes(block as BlockType);
   }
 
+  static createTile(x: number, y: number, z: ZLevel, block: BlockType, biome: BiomeType, rng: Alea): Tile {
+    const tile = { x, y, z, block, biome, isWalkable: false, isTransparent: false, variant: rng.next() };
+    this.applyBlock(tile, block);
+    return tile;
+  }
+
+  /** cx/cy are world offsets, not chunk indices. */
   static setBlock(
     tiles: Tile[][][],
     cx: number,
@@ -64,20 +61,7 @@ export class TileHelper {
   ): void {
     const lx = wx - cx;
     const ly = wy - cy;
-    const lz = z + 3; // Map -3..3 to 0..6
-    if (lx >= 0 && lx < CHUNK_SIZE && ly >= 0 && ly < CHUNK_SIZE && lz >= 0 && lz <= 6) {
-      const t = tiles[lz][ly][lx];
-      t.block = block;
-      t.isWalkable = (
-        [
-          BlockType.FLOOR_STONE,
-          BlockType.FLOOR_WOOD,
-          BlockType.STAIRS_UP,
-          BlockType.STAIRS_DOWN,
-          BlockType.DOOR,
-        ] as BlockType[]
-      ).includes(block);
-      t.isTransparent = t.isWalkable;
-    }
+    const tile = tiles[z + 3]?.[ly]?.[lx];
+    if (tile) this.applyBlock(tile, block);
   }
 }

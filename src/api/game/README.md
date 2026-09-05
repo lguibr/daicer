@@ -1,92 +1,17 @@
-# Game API (`backend/src/api/game`)
+# Player lifecycle services
 
-The **Game API** is the central orchestrator for the gameplay session. It ties together the **Voxel Engine**, **[LLM Narrator](../narrator/README.md)**, and **Player State** to advance the game.
+The typed player contract is in `src/lifecycle/graphql/game-contract.ts`.
+`room-lifecycle` owns atomic lobby transitions and request receipts; `room-access`
+owns authenticated, allowlisted viewer DTOs. Canonical room IDs are document IDs.
+Onboarding uses `entity-lifecycle.onboardPlayer`; it validates membership before
+uploads or writes, hydrates existing Entity blueprints, and links room-specific
+EntitySheets. Readiness is distinct from turn submission. Conditional room
+revision updates precede component replacement within the same transaction.
 
-Unlike strict CRUD endpoints, this module focuses on **processes**—handling the flow of turns, actions, and events.
+The public GraphQL extension now registers the typed RoomView contract and delegates lobby mutations to the protected services. Legacy direct executors and raw history endpoints fail closed. Raw game models and reverse GraphQL relations are disabled; content REST writes and populated responses are unavailable outside authentication. Pure catalog queries remain available. Start, submit and resolve enter the dedicated TurnPipeline methods, which delegate to turn-lifecycle. Full HTTP and persistence acceptance is a separate check from standalone SDL validation.
 
-## 🏗 Architecture
+Turn integration runs in `turn-lifecycle.ts`, through TurnPipeline. New players and character changes are accepted only in the lobby; existing members may reconnect at any phase. The owner starts and resolves simultaneous turns. It starts at completed turn 0 / collecting turn 1; submissions use separate request IDs and never toggle lobby readiness. Resolution waits for every roster member and runs in lexicographic sheet-ID order, with movement and one action refreshed for the next round. This is a milestone ordering rule, not initiative combat. Exact before/after state, next collecting state, ordered commands, rules, loaded terrain, outcomes and RNG continuation are archived in Turn metadata; same-number TimeFrame and sheet/room projections commit together. Kernel events are not forced into the incompatible legacy GameEvent enum. Turn summary stays unset to avoid its embedding/knowledge-copy hook. Public turn completion and private outcomes use Message records.
 
-The module acts as a facade, delegating specific logic to specialized services while maintaining the overall game loop.
+Basic actions require explicit supported weapon attack definitions; spells, saving throws, area effects, delayed/multiple damage instances, fixed-damage unarmed attacks and temporary HP are not coerced into basic-v1. Existing blueprints/records remain. Characters with no compatible action can move or pass. Terrain comes from actual versioned world chunks with their stored 16/32 or other supported size. Proposal generation runs outside the mechanics transaction; network failures do not consume a turn. Intent is saved privately as proposing before model work. Unusable responses and provider errors become needs_revision. After a 120-second interruption window, gameView projects recoverable revision feedback; a fresh request ID can replace the expired token and late responses cannot overwrite it. The same completed proposal request ID does not invoke the model again; a crash after a provider response can still require a paid retry, so exactly-once provider billing is not promised. No provider calls were made during offline verification.
 
-| Service | Responsibility |
-| `game.ts` | **Entry Point**. Orchestrates high-level flows like `startGame` and `processTurn`. |
-| `turn-processing.ts` | **The Core Loop**. Handles both LLM-driven narrative turns and Deterministic (Engine) physical turns. |
-| `character-lifecycle.ts` | **Entity Management**. Creating characters, generating snapshots, and handling introductory vignettes. |
-| `world-generation.ts` | **Setup**. Interfaces with the Voxel Engine to create the initial world state. |
-| `spawn-service.ts` | **Spawning**. Handles the dynamic addition of monsters and NPCs to the Room. |
-
-## 🧩 Orchestration
-
-### Rooms & State
-
-The `Room` entity serves as the container for the session. The Game API does not own the `Room` data but heavily manipulates it, updating:
-
-- **Phase**: (`setup` -> `game`)
-- **Players**: State, actions, and readiness.
-- **Creatures**: Spawning and health updates.
-
-### Turns & TimeFrames
-
-The Game API drives the **linear history** of the game by creating `Turn` entities.
-
-1. **Player Actions**: Players submit actions via `submitAction`.
-2. **Processing**: `processTurn` is called (either manually or via trigger).
-3. **Turn Creation**: A new `Turn` entity is created, containing:
-   - **Narrative**: The LLM's description of events.
-   - **Snapshots**: A frozen state of all characters (HP, Position, Stats).
-   - **Metadata**: Engine results or LLM reasoning.
-
-> **Note**: These `Turn` entities are the source of truth for **[TimeFrames](../time-frame/README.md)**. While this module doesn't manipulate `TimeFrame` entities directly, its `Turn` outputs are what the TimeFrame system uses to reconstruct the state at any point in history.
-
-### The Engine (Deterministic vs LLM)
-
-The module manages a hybrid loop:
-
-- **LLM Turns**: The "Soul". Interprets player intent, generates rolled results (narratively), and advances the story.
-  - _Triggered by:_ Chat events, roleplay actions.
-- **Deterministic Turns**: The "Body". Executes physics, movement, and strict rule enforcement via the Voxel Engine.
-  - _Triggered by:_ Movement requests (`executeEngineAction`), grid updates.
-
-## 📡 Global vs. Local Events
-
-The Game API uses the `StreamManager` to broadcast real-time state changes to connected clients over **[Socket.IO](../../lifecycle/socket/README.md)**.
-
-### Global Events (Room-Wide)
-
-Updates that affect the shared world state or game phase.
-
-- `game:start`: The session has begun. Includes the main opening message.
-- `turn:processing`: The system is calculating the next turn (shows loading indicators).
-- `turn:complete`: A turn has finished. Payload includes the new `Turn` ID, narrative, and snapshots.
-- `game:update`: General updates to player lists (e.g., someone clicked "Ready").
-
-### Local/Specific Events
-
-Updates targeting entity visualization or specific message streams.
-
-- `message:new`: A new chat message (Narration, Dialogue) has been added.
-- `entities:update`: High-frequency updates for entity positions and stats (often from Deterministic turns).
-
-## 🚀 Key Workflows
-
-### 1. Game Start
-
-`startGame(roomId)`
-
-1. Fetches the Room and Players.
-2. Generates the **Main Opening** (LLM).
-3. Creates **Character Sheets** for all players.
-4. Generates **Character Openings** (Vignettes).
-5. Creates the initial `Turn (0)` (Game Start).
-6. Broadcasts `game:start`.
-
-### 2. Processing a Turn
-
-`processTurn(roomId, args...)`
-
-1. Broadcasts `turn:processing`.
-2. Aggregates context (Messages, Actions, World State).
-3. Calls LLM to resolve the outcome.
-4. Creates `Turn` and `Message` entities.
-5. Clears player actions.
-6. Broadcasts `turn:complete` and `message:new`.
+Legacy `game.ts`, `turn-processing.ts` and `TurnPipeline.processTurn` remain for internal compatibility. They are not the public player lifecycle. Socket broadcasting, paid introductory narration and expanded combat are not part of this milestone. The client refreshes the protected viewer projection after mutations and on its single poll loop.

@@ -42,6 +42,9 @@ interface ResolvedAction {
   name: string;
   type?: string;
   attack?: { bonus: number };
+  toHit?: number;
+  range_config?: { type: string; distance?: number };
+  damage_instances?: Array<{ effect_type: string; dice_count: number; dice_value: number; flat_bonus?: number; damage_type?: string }>;
   effects?: Array<{ type: string; dice?: string; subtype?: string }>;
   save?: { attribute?: string; stat?: string; dc: number };
   range?: string | { value: number; type?: string };
@@ -77,8 +80,9 @@ interface PopulatedSheet {
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
-   * Derives runtime values (Stats, AC, Actions) from the raw EntitySheet data and persists the updates.
-   * This ensures that changes to base stats or equipment are instantly reflected in gameplay mechanics.
+   * Derives cached skills, saves and action descriptions from the raw EntitySheet data and persists the updates.
+   * Does not rewrite HP, temporary HP, AC, maximum HP or position from a potentially stale read.
+   * The command adapter must validate supported action mechanics separately.
    *
    * @param sheetId - The documentId of the EntitySheet to update.
    */
@@ -103,16 +107,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
             },
           },
         },
-        spellbook: {
-          populate: {
-            spells: {
-              populate: {
-                school: true,
-              },
-            },
-          },
-        },
-        actions: true,
+        actions: { populate: ['range_config', 'damage_instances', 'save'] },
         features: true,
         traits: true,
         conditions: true,
@@ -153,7 +148,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       },
       hp: sheet.currentHp ?? sheet.maxHp ?? 10,
       maxHp: sheet.maxHp ?? 10,
-      armorClass: sheet.ac || 10, // Mapped from 'ac'
+      armorClass: sheet.ac ?? 10, // Mapped from 'ac'
       speed:
         typeof sheet.speed === 'number'
           ? sheet.speed
@@ -227,13 +222,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       (sheet.actions || []).map((action: ResolvedAction) => ({
         name: action.name,
         type: determineActionType(action),
-        toHit: action.attack?.bonus || 0,
-        damageDice: action.effects?.find((e) => e.type === 'damage')?.dice || '',
-        damageBonus: action.attack?.bonus || 0,
-        damageType: action.effects?.find((e) => e.type === 'damage')?.subtype || 'physical',
+        toHit: action.toHit ?? action.attack?.bonus ?? 0,
+        damageDice: damageDice(action),
+        damageBonus: action.damage_instances?.find((e) => e.effect_type === 'Damage')?.flat_bonus ?? 0,
+        damageType: action.damage_instances?.find((e) => e.effect_type === 'Damage')?.damage_type ?? action.effects?.find((e) => e.type === 'damage')?.subtype ?? 'physical',
         saveAbility: action.save?.attribute || action.save?.stat,
         saveDc: action.save?.dc,
-        range: typeof action.range === 'string' ? 0 : action.range?.value || 0,
+        range: action.range_config?.type === 'Touch' ? 5 : action.range_config?.type === 'Ranged (Feet)' ? action.range_config.distance ?? 0 : typeof action.range === 'object' ? action.range.value ?? 0 : 0,
         description: action.description || '',
         resourceCost: typeof action.cost === 'string' ? action.cost : action.cost?.type,
       })) || [];
@@ -256,15 +251,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     await strapi.documents('api::entity-sheet.entity-sheet').update({
       documentId: sheetId,
       data: {
-        currentHp: entity.hp,
-        maxHp: entity.maxHp,
-        ac: entity.armorClass,
-
         computedWeight, // Persist calculated weight
 
-        tempHp: 0, // Default or tracking? Entity doesn't have tempHp in interface yet?
-        initiativeBonus: stats.initiativeBonus || EntityDeriver.calculateModifier(stats.dexterity),
-        passivePerception: stats.passivePerception || 10 + EntityDeriver.calculateModifier(stats.wisdom),
+        initiativeBonus: stats.initiativeBonus ?? EntityDeriver.calculateModifier(stats.dexterity),
+        passivePerception: stats.passivePerception ?? 10 + EntityDeriver.calculateModifier(stats.wisdom),
 
         computedSkills,
         computedSaves,
@@ -276,8 +266,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 });
 
 function determineActionType(action: { type?: string; range?: string | { type?: string } }): string {
-  if (action.type) return action.type;
+  if (action.type && ['melee', 'ranged', 'spell', 'utility'].includes(action.type)) return action.type;
   if (typeof action.range === 'object' && action.range?.type === 'melee') return 'melee';
   if (typeof action.range === 'object' && action.range?.type === 'ranged') return 'ranged';
   return 'utility';
+}
+
+function damageDice(action: ResolvedAction): string {
+  const damage = action.damage_instances?.find((entry) => entry.effect_type === 'Damage');
+  return damage ? `${damage.dice_count}d${damage.dice_value}` : action.effects?.find((entry) => entry.type === 'damage')?.dice ?? '';
 }

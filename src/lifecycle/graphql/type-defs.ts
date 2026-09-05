@@ -1,3 +1,5 @@
+import { gameContractExtension } from './game-contract';
+
 export const typeDefs = `
   type Ability {
     id: ID!
@@ -33,14 +35,6 @@ export const typeDefs = `
     documentId: ID!
     name: String!
     description: String
-  }
-
-  type GameView {
-    room: Room
-    activeTurn: Turn
-    myself: EntitySheet
-    visibleEntities: [EntitySheet]
-    messages: [Message]
   }
 
   input ChunkRequestInput {
@@ -108,10 +102,6 @@ export const typeDefs = `
     damage: String
   }
 
-  extend type EntitySheet {
-    availableActions: [RuntimeAction]
-  }
-
   type AgentLog {
     id: ID!
     type: String!
@@ -131,7 +121,6 @@ export const typeDefs = `
     conditions: [GameCondition]
     getWorldTime(roomId: ID!): WorldTime
     voxelPreview(chunks: [ChunkRequestInput]!, config: WorldConfigInput!): [VoxelChunk]!
-    gameView(roomId: ID!): GameView
     getTimeFrame(id: ID!): JSON
   }
 
@@ -144,11 +133,7 @@ export const typeDefs = `
   extend type Mutation {
     generateWorld(roomId: ID!, language: String): JSON
     processTurn(roomId: ID!, messages: JSON, language: String): JSON
-    createRoom(data: JSON): Room
-    joinRoom(code: String!): Room
     addCharacter(roomId: ID!, character: JSON): JSON
-    startGame(roomId: ID!, language: String, streamId: String): JSON
-    submitAction(roomId: ID!, action: String!, mode: String): JSON
     spawnCreature(roomId: ID!, creature: JSON): JSON
     generateAvatarPortrait(payload: JSON!, referenceImage: String): JSON
     generateAvatarUpperBody(payload: JSON!, portrait: JSON!, referenceImage: String): JSON
@@ -158,4 +143,4 @@ export const typeDefs = `
     executeTool(roomId: ID!, command: String!): JSON
     submitAgentAnswer(questionId: ID!, answer: String!): JSON
   }
-`;
+` + gameContractExtension;

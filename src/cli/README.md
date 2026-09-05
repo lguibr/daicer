@@ -158,6 +158,19 @@ yarn cli schema -t api::item.item --json
 
 ## 🛠️ Troubleshooting
 
+### Automated checks
+
+`yarn test:cli` runs bounded subprocess checks for offline status, filesystem
+schema discovery and invalid exploration input. It also checks exploration's
+document-count contract with a mocked Strapi bootstrap boundary. These checks do
+not require a running server, compiled application or database. Process errors
+and missing JSON framing fail the checks rather than being swallowed.
+
+Actual standalone `explore` startup remains an environment integration check: it
+loads the compiled application and connects to the configured PostgreSQL database.
+The mocked bootstrap rejection test covers the command handler only; it does not
+certify how a real Strapi startup failure exits or formats its error.
+
 - **`fetch failed`**: The backend is not running. Run `yarn develop` in the backend workspace.
 - **`403 Forbidden`**: Your `STRAPI_AUDIT_TOKEN` is missing or invalid in `.env`.
 - **`SyntaxError` in Filters**: Ensure your `--filters` JSON is valid and properly escaped. Use single quotes for the argument wrapper: `'{"foo": "bar"}'`.

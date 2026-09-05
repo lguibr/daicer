@@ -1,40 +1,20 @@
-/**
- * ⚠️ DOCUMENTATION MANDATE: Update JSDoc & README with ANY change.
- * Keep documentation synchronized with code at all times.
- */
-import { Chunk, WorldConfig, BlockType } from '@daicer/engine/types';
-import { ChunkManager } from '@/api/voxel-engine/services/chunk-manager';
+/** World-aware terrain service. See ../README.md for caller migration and preview semantics. */
+import type { WorldConfig } from '@daicer/engine/types';
+import { ChunkManager, type VoxelEdit } from './chunk-manager';
 
 export default () => ({
-  /**
-   * Retrieves a generated 16x16 Chunk.
-   * Delegates to the Singleton ChunkManager.
-   */
-  async getChunk(x: number, y: number, config: WorldConfig, worldId?: string): Promise<Chunk> {
+  /** The application resolves and authorizes worldId before this call. */
+  getChunk(x: number, y: number, config: WorldConfig, worldId: string) {
     return ChunkManager.getInstance().getChunk(x, y, config, worldId);
   },
-
-  async editVoxel(
-    chunkX: number,
-    chunkY: number,
-    voxelX: number,
-    voxelY: number,
-    voxelZ: number,
-    newType: BlockType, // Strapi services types are loose, but we leverage internally
-    reason?: string,
-    worldId?: string,
-    metadata?: Record<string, unknown>
-  ) {
-    return ChunkManager.getInstance().editVoxel(
-      chunkX,
-      chunkY,
-      voxelX,
-      voxelY,
-      voxelZ,
-      newType,
-      worldId,
-      reason,
-      metadata
-    );
+  /** Editor-only pure generation; never overlays gameplay persistence. */
+  getPreviewChunk(x: number, y: number, config: WorldConfig) {
+    return ChunkManager.getInstance().getPreviewChunk(x, y, config);
+  },
+  getTileAt(x: number, y: number, z: number, config: WorldConfig, worldId: string) {
+    return ChunkManager.getInstance().getTileAt(x, y, z, config, worldId);
+  },
+  editVoxel(request: VoxelEdit) {
+    return ChunkManager.getInstance().editVoxel(request);
   },
 });

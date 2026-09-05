@@ -27,6 +27,7 @@ export default [
   },
   'strapi::poweredBy',
   'strapi::query',
+  'global::game-boundary',
   {
     name: 'strapi::body',
     config: {

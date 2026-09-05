@@ -7,6 +7,8 @@ import { getPrompt, formatPrompt } from '@/utils/prompt';
 import { uploadBase64Image } from '@/utils/upload';
 import { createCharacterSnapshot, formatDmInstruction, EntityDeriver } from '@/api/game/src/engine';
 import type { WorldSettings, Player, EntitySheet, Language } from '@/api/game/src/engine';
+import { documentId, gameError, PLAYER_BLUEPRINT_TYPES, requireLobby, requireRoom } from './room-access';
+import { playerData } from './room-lifecycle';
 
 // Helper to format DM style
 
@@ -32,6 +34,8 @@ interface StrapiItem {
 interface StrapiEquipmentEntry {
   isEquipped: boolean;
   item: StrapiItem;
+  quantity?: number;
+  slot?: string;
 }
 
 interface StrapiCharacter {
@@ -44,10 +48,12 @@ interface StrapiCharacter {
   backstory?: string;
   background?: string;
   equipment?: StrapiEquipmentEntry[];
+  inventory?: StrapiEquipmentEntry[];
+  actions?: { documentId: string }[];
 }
 
 interface OnboardPlayerData {
-  name: string;
+  name?: string;
   documentId?: string;
   race?: string;
   class?: string;
@@ -112,26 +118,15 @@ export default ({ strapi }) => ({
     entityData: OnboardPlayerData,
     user: { documentId: string; id: string; username: string }
   ) {
-    // 1. Fetch Room with populated players
-    const filters: Record<string, unknown>[] = [{ documentId: roomId }, { roomId: roomId }];
-    if (!isNaN(Number(roomId))) {
-      filters.push({ id: Number(roomId) });
-    }
-
-    const rooms = await strapi.documents('api::room.room').findMany({
-      filters: { $or: filters },
-      populate: ['players', 'players.user', 'players.character', 'players.characterSheet'],
-    });
-
-    if (!rooms || rooms.length === 0) {
-      throw new Error('Room not found');
-    }
-    const room = rooms[0] as {
-      players: Player[];
-      documentId: string;
-      config: unknown;
-    };
+    // Authorize before uploads, blueprint creation, or sheet writes.
+    const { room, player, userId } = await requireRoom(strapi, roomId, user);
+    requireLobby(room);
     const players = room.players || [];
+    const playerIndex = players.findIndex((entry) => documentId(entry.user) === userId);
+    const previousSheet = player.characterSheet;
+    if (previousSheet && (documentId(previousSheet.owner) !== userId || documentId(previousSheet.room) !== roomId)) {
+      gameError('FORBIDDEN', 'Character ownership is inconsistent.');
+    }
 
     // 2. Process Avatar Uploads
     const avatarSlots = ['portrait', 'upperBody', 'fullBody'];
@@ -175,13 +170,12 @@ export default ({ strapi }) => ({
       // Validate it exists
       const existing = await strapi.documents('api::entity.entity').findOne({
         documentId: entityData.documentId,
+        populate: { stats: true, race: true, actions: true, classes: { populate: ['class'] }, inventory: { populate: { item: { populate: { equipment_data: { populate: ['damage_type', 'properties'] } } } } } },
       });
-
-      if (existing) {
-        strapi.log.info(`Linking player to existing entity: ${existing.name} (${existing.documentId})`);
-        createdEntity = existing;
-      } else {
-        strapi.log.warn(`Linked entity ${entityData.documentId} not found, falling back to creation.`);
+      if (!existing || !PLAYER_BLUEPRINT_TYPES.includes(existing.type)) gameError('INVALID_INPUT', 'Playable blueprint unavailable.');
+      createdEntity = existing;
+      if (documentId(previousSheet?.entity) === existing.documentId) {
+        return { entity: existing, entitySheet: previousSheet, player };
       }
     }
 
@@ -247,17 +241,24 @@ export default ({ strapi }) => ({
     // 4. Create Entity Sheet (The Gameplay Instance)
     const rawStats = (createdEntity.stats as Record<string, number>) || {};
     const attributes = {
-      strength: rawStats.strength || 10,
-      dexterity: rawStats.dexterity || 10,
-      constitution: rawStats.constitution || 10,
-      intelligence: rawStats.intelligence || 10,
-      wisdom: rawStats.wisdom || 10,
-      charisma: rawStats.charisma || 10,
+      strength: rawStats.strength ?? 10,
+      dexterity: rawStats.dexterity ?? 10,
+      constitution: rawStats.constitution ?? 10,
+      intelligence: rawStats.intelligence ?? 10,
+      wisdom: rawStats.wisdom ?? 10,
+      charisma: rawStats.charisma ?? 10,
     };
 
-    const equipmentForDeriver = ((createdEntity.equipment as StrapiEquipmentEntry[]) || [])
+    const inventory = createdEntity.inventory || createdEntity.equipment || [];
+    const equipmentForDeriver = inventory
       .filter((entry) => entry.isEquipped && entry.item)
-      .map((entry) => ({ ...entry.item, name: entry.item.name }));
+      .map((entry) => ({
+        ...entry.item,
+        ...(entry.item.equipment_data as Record<string, unknown> ?? {}),
+        name: entry.item.name,
+        equipment_category: (entry.item.equipment_category as { slug: string }) ?? { slug: String(entry.item.type ?? 'loot') },
+        isEquipped: true,
+      }));
 
     const derived = EntityDeriver.derive({
       stats: attributes,
@@ -271,63 +272,49 @@ export default ({ strapi }) => ({
       level: 1,
       equipment: equipmentForDeriver,
       race: {
-        speed: entityData._raceSpeed as number,
+        speed: typeof createdEntity.race === 'object' ? createdEntity.race.speed : entityData._raceSpeed,
       },
     });
 
     const sheetData = {
       name: createdEntity.name,
       type: 'player',
-      class: createdEntity.classes?.[0]?.class,
-      race: createdEntity.race,
+      class: documentId(createdEntity.classes?.[0]?.class),
+      race: documentId(createdEntity.race),
       level: derived.level,
       experience: 0,
 
-      stats: createdEntity.stats,
+      stats: attributes,
+      actions: (createdEntity.actions ?? []).map((action) => action.documentId),
       currentHp: derived.hp,
       maxHp: derived.maxHp,
       ac: derived.ac,
-      speed: derived.speed.walk,
-      attributes: createdEntity.stats,
       // appearance: createdEntity.appearance,
       backstory: typeof createdEntity.background === 'string' ? createdEntity.background : '', // Handle Rich Text conversion if needed
-      inventory: createdEntity.equipment || [],
+      inventory: inventory.filter((entry) => documentId(entry.item)).map((entry) => ({
+        item: documentId(entry.item), quantity: entry.quantity ?? 1,
+        slot: entry.slot, isEquipped: !!entry.isEquipped,
+      })),
       position: { x: 0, y: 0, z: 0 },
       entity: createdEntity.documentId, // Link to Entity Blueprint
       owner: user.documentId, // Link Owner logic here
       room: room.documentId,
-      structuredActions: derived.structuredActions?.map((action) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, ...rest } = action;
-        return rest;
-      }),
     };
-
-    const createdSheet = await strapi.documents('api::entity-sheet.entity-sheet').create({
-      data: sheetData,
-      status: 'published',
-    });
+    const sheets = strapi.documents('api::entity-sheet.entity-sheet');
+    const createdSheet = documentId(previousSheet)
+      ? await sheets.update({ documentId: documentId(previousSheet), data: sheetData })
+      : await sheets.create({ data: sheetData, status: 'published' });
 
     strapi.log.info(`Created EntitySheet ${createdSheet.documentId} for Room ${roomId}`);
 
     // 5. Update Room Player Component
-    console.log('DEBUG: players', JSON.stringify(players, null, 2));
-    console.log('DEBUG: user', JSON.stringify(user, null, 2));
-    const playerIndex = players.findIndex(
-      (p: Player) => p.user?.documentId === user.documentId || p.user?.id === user.id
-    );
-
-    if (playerIndex === -1) {
-      throw new Error('User is not a player in this room');
-    }
-
-    const updatedPlayers = [...players] as Record<string, unknown>[];
+    const updatedPlayers = players.map(playerData);
     updatedPlayers[playerIndex] = {
-      ...players[playerIndex],
-      // character: createdEntity.documentId, // REMOVE THIS relation if we deleted it from Room Player Schema
+      ...updatedPlayers[playerIndex],
+      character: createdEntity.documentId,
       characterSheet: createdSheet.documentId,
       isReady: false,
-      name: entityData.name as string,
+      name: createdEntity.name,
     };
 
     await strapi.documents('api::room.room').update({

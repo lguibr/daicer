@@ -10,7 +10,7 @@
 import { WorldGenerator } from '@/api/voxel-engine/services/world-generator-logic';
 import { PhysicsEngine } from '@/api/voxel-engine/services/utils/physics';
 import { MapMovePayloadSchema, SpawnEntityPayloadSchema } from '@/shared';
-import { DEFAULT_WORLD_CONFIG } from '@/api/game/src/engine';
+import { normalizeWorldConfig } from '@/api/world/utils/world-config';
 import type { Coordinates } from '@/shared';
 
 // ... (existing helper types)
@@ -27,14 +27,10 @@ const getWorldGenerator = async (strapi: Core.Strapi, roomDocumentId: string) =>
 
   if (!room) throw new Error('Room not found');
 
-  const world = (room as unknown as RoomWithWorld).world || {};
+  const world = (room as unknown as { world?: { documentId: string; seed?: string } }).world;
+  if (!world?.documentId) throw new Error('Room world is missing');
+  return new WorldGenerator(normalizeWorldConfig(world), world.documentId);
 
-  const config = {
-    ...DEFAULT_WORLD_CONFIG,
-    seed: ((room as unknown as RoomWithWorld).code as string) || (world.seed as string) || 'default_seed',
-  };
-
-  return new WorldGenerator(config);
 };
 
 // Replaced factories.createCoreService with standard factory for type safety
