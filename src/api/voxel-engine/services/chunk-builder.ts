@@ -8,6 +8,9 @@ import { WorldAtlas } from '@daicer/engine/world/world-atlas';
 import { CivilizationGenerator } from '@/api/voxel-engine/services/generators/civilization-generator';
 import { FloraGenerator } from '@/api/voxel-engine/services/generators/flora-generator';
 
+import { normalizeWorldConfig } from '@/api/world/utils/world-config';
+import { TileHelper } from './utils/tile-helper';
+
 export class ChunkBuilder {
   private terrainGen: TerrainGenerator;
   private civGen: CivilizationGenerator;
@@ -15,14 +18,14 @@ export class ChunkBuilder {
   private config: WorldConfig;
 
   constructor(config: WorldConfig) {
-    this.config = config;
-    this.atlas = new WorldAtlas(config);
-    this.terrainGen = new TerrainGenerator(config, this.atlas);
-    this.civGen = new CivilizationGenerator(config, this.atlas);
+    this.config = normalizeWorldConfig(config);
+    this.atlas = new WorldAtlas(this.config);
+    this.terrainGen = new TerrainGenerator(this.config, this.atlas);
+    this.civGen = new CivilizationGenerator(this.config, this.atlas);
   }
 
   /**
-   * Orchestrates the generation of a complete 16x16x7 Chunk.
+   * Orchestrates the generation of a complete configured-size, seven-layer chunk.
    * Pipeline: Terrain -> Flora -> Civilization (Roads/Structures).
    *
    * @param chunkX - Chunk X coordinate.
@@ -43,6 +46,9 @@ export class ChunkBuilder {
     // 3. Civilization (Roads & Structures)
     // Civilization generator clears vegetation for roads/buildings
     this.civGen.apply(chunkX, chunkY, tiles, worldOffsetX, worldOffsetY);
+
+    // Road and structure painters may assign blocks directly. Final flags are authoritative.
+    for (const plane of tiles) for (const row of plane) for (const tile of row) TileHelper.applyBlock(tile, tile.block);
 
     return {
       x: chunkX,

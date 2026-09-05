@@ -1,79 +1,40 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import lifecycle from '@/api/world/content-types/world/lifecycles';
-
-// Mock Global Strapi
-const mockVoxelService = {
-  getChunk: vi.fn(),
-};
-
-declare let strapi: any;
-
-global.strapi = {
-  service: vi.fn(() => mockVoxelService),
-  log: {
-    info: vi.fn(),
-    error: vi.fn(),
-  },
-} as any;
-
-describe('World Lifecycles', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+const getChunk = vi.fn();
+const error = vi.fn();
+beforeEach(() => {
+  vi.clearAllMocks();
+  getChunk.mockResolvedValue({});
+  vi.stubGlobal('strapi', { service: vi.fn(() => ({ getChunk })), log: { info: vi.fn(), error } });
+});
+describe('World lifecycle cache warming', () => {
+  it('uses the document id and authoritative config for the complete starting area', async () => {
+    await lifecycle.afterCreate({ result: { documentId: 'world-a', seed: 'a', chunkSize: 16, startingRadius: 1 } });
+    expect(getChunk).toHaveBeenCalledTimes(9);
+    expect(getChunk).toHaveBeenCalledWith(-1, -1, expect.objectContaining({ seed: 'a', chunkSize: 16 }), 'world-a');
+    expect(getChunk).toHaveBeenCalledWith(1, 1, expect.anything(), 'world-a');
   });
-
-  it('should pre-generate chunks after create', async () => {
-    const event = {
-      result: {
-        id: 1,
-        documentId: 'doc-1',
-        seed: 'test-seed',
-        startingRadius: 1, // Small radius for testing (3x3 = 9 calls)
-      },
-    };
-
-    mockVoxelService.getChunk.mockResolvedValue({});
-
-    await lifecycle.afterCreate(event);
-
-    expect(strapi.service).toHaveBeenCalledWith('api::voxel-engine.voxel-engine');
-
-    // Radius 1: -1 to 1 => 3x3 grid
-    expect(mockVoxelService.getChunk).toHaveBeenCalledTimes(9);
-
-    // Verify specific calls
-    expect(mockVoxelService.getChunk).toHaveBeenCalledWith(0, 0, expect.any(Object), 'doc-1');
-  });
-
-  it('should handle chunk generation errors', async () => {
-    const event = {
-      result: { id: 1, documentId: 'doc-1', startingRadius: 0 },
-    };
-
-    mockVoxelService.getChunk.mockRejectedValue(new Error('Chunk Error'));
-
-    await lifecycle.afterCreate(event);
-
-    expect(strapi.log.error).toHaveBeenCalled();
-  });
-
-  it('should use default config values if missing in result', async () => {
-    const event = {
-      result: {
-        id: 1,
-        // No config fields
-      },
-    };
-
-    await lifecycle.afterCreate(event);
-
-    expect(mockVoxelService.getChunk).toHaveBeenCalledWith(
-      expect.any(Number),
-      expect.any(Number),
-      expect.objectContaining({
-        seed: 'default',
-        chunkSize: 16,
-      }),
-      1 // Fallback ID
+  it('preserves zero settings and a zero starting radius', async () => {
+    await lifecycle.afterCreate({
+      result: { documentId: 'world-a', startingRadius: 0, roadDensity: 0, structureChance: 0, fogRadius: 0 },
+    });
+    expect(getChunk).toHaveBeenCalledTimes(1);
+    expect(getChunk).toHaveBeenCalledWith(
+      0,
+      0,
+      expect.objectContaining({ chunkSize: 32, roadDensity: 0, structureChance: 0, fogRadius: 0 }),
+      'world-a'
     );
+  });
+  it('never substitutes a numeric id when document identity is absent', async () => {
+    await lifecycle.afterCreate({ result: { id: 1 } });
+    expect(getChunk).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalled();
+  });
+  it('reports failed warming without claiming completion or retrying unscoped', async () => {
+    getChunk.mockRejectedValue(new Error('unavailable'));
+    await lifecycle.afterCreate({ result: { documentId: 'world-a', startingRadius: 1 } });
+    expect(getChunk).toHaveBeenCalledTimes(1);
+    expect(error).toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@
  * Keep documentation synchronized with code at all times.
  */
 import { Tile, BlockType } from '@daicer/engine/types';
+import { TileHelper } from '@/api/voxel-engine/services/utils/tile-helper';
 import { StructureInfo } from '@daicer/engine/types';
 
 export class StructureRenderer {
@@ -49,11 +50,7 @@ export class StructureRenderer {
     if (lx >= 0 && lx < limitX && ly >= 0 && ly < limitY && lz >= 0 && lz <= 6) {
       if (tiles[lz] && tiles[lz][ly] && tiles[lz][ly][lx]) {
         const t = tiles[lz][ly][lx];
-        t.block = block;
-        t.isWalkable = (
-          [BlockType.FLOOR_STONE, BlockType.FLOOR_WOOD, BlockType.STAIRS_UP, BlockType.STAIRS_DOWN] as BlockType[]
-        ).includes(block);
-        t.isTransparent = t.isWalkable;
+        TileHelper.applyBlock(t, block);
       }
     }
   }

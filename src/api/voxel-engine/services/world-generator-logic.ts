@@ -1,21 +1,21 @@
-/**
- * ⚠️ DOCUMENTATION MANDATE: Update JSDoc & README with ANY change.
- * Keep documentation synchronized with code at all times.
- */
-import { Chunk, WorldConfig } from '@daicer/engine/types';
-import { ChunkManager } from '@/api/voxel-engine/services/chunk-manager';
+/** A world-bound adapter for voxel physics; pure previews use the explicit preview service. */
+import type { WorldConfig } from '@daicer/engine/types';
+import { ChunkManager } from './chunk-manager';
+import { normalizeWorldConfig, requireWorldId } from '@/api/world/utils/world-config';
 
 export class WorldGenerator {
-  private config: WorldConfig;
-
-  constructor(config: WorldConfig) {
-    this.config = config;
+  private readonly config: WorldConfig;
+  constructor(
+    config: WorldConfig,
+    private readonly worldId: string
+  ) {
+    requireWorldId(worldId);
+    this.config = normalizeWorldConfig(config);
   }
-
-  /**
-   * Public interface for generating a single chunk based on world config.
-   */
-  public async getChunk(chunkX: number, chunkY: number): Promise<Chunk> {
-    return ChunkManager.getInstance().getChunk(chunkX, chunkY, this.config);
+  get chunkSize(): number {
+    return this.config.chunkSize;
+  }
+  getChunk(x: number, y: number) {
+    return ChunkManager.getInstance().getChunk(x, y, this.config, this.worldId);
   }
 }

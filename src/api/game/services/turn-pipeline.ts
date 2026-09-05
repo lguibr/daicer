@@ -48,8 +48,19 @@ interface Player {
 // Internal helper for text parsing - Removed unused parseTextAction
 
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
+  /** Authenticated player operations share one durable deterministic lifecycle. */
+  async startGame(input, user) {
+    return strapi.service('api::game.turn-lifecycle').startGame(input, user);
+  },
+  async submitAction(input, user) {
+    return strapi.service('api::game.turn-lifecycle').submitAction(input, user);
+  },
+  async resolveTurn(input, user) {
+    return strapi.service('api::game.turn-lifecycle').resolveTurn(input, user);
+  },
+
   /**
-   * Orchestrates the complete Turn Lifecycle ("Sandwich" Architecture).
+   * Retained legacy pipeline for internal callers, outside the player API.
    * Intent -> Resolution -> Persistence -> Narration -> Broadcast.
    * Uses lock services to prevent race conditions.
    *

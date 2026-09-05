@@ -164,109 +164,80 @@ describe('Entity Lifecycle Service', () => {
   });
 
   describe('onboardPlayer', () => {
-    it('should create entity and sheet', async () => {
-      // 1. Room Fetch
-      mockFindMany.mockResolvedValueOnce([
-        {
-          documentId: 'r1',
-          players: [{ user: { documentId: 'u1', id: 'u1' } }],
-        },
-      ]);
-      mockFindOne.mockResolvedValue(null); // Entity check (if used)
+    const user = { documentId: 'u1', id: '1', username: 'Player' };
+    const room = { documentId: 'r1', phase: 'lobby', players: [{ user: { documentId: 'u1' }, name: 'Player' }] };
 
-      // 2. Race Lookup
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'race1', name: 'Human' }]);
-      // 3. Class Lookup
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'class1', name: 'Fighter' }]);
-
-      // Create Entity then Sheet
-      mockCreate.mockResolvedValue({ documentId: 'newId', name: 'N', stats: {} });
-
-      await service.onboardPlayer(
-        'r1',
-        { name: 'Hero', race: 'Human', class: 'Fighter' },
-        { documentId: 'u1', id: 'u1', username: 'U1' }
-      );
-
-      expect(mockCreate).toHaveBeenCalledTimes(2);
-      expect(mockUpdate).toHaveBeenCalled();
+    it('rejects nonmembers before uploads or creates', async () => {
+      mockFindOne.mockResolvedValue({ ...room, players: [] });
+      await expect(service.onboardPlayer('r1', { name: 'Hero', avatarPreview: { portrait: { data: 'abc' } } }, user))
+        .rejects.toMatchObject({ extensions: { code: 'ROOM_UNAVAILABLE' } });
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(mockUploadBase64Image).not.toHaveBeenCalled();
     });
 
-    it('should handle avatar upload failure gracefully', async () => {
-      mockUploadBase64Image.mockRejectedValue(new Error('Upload failed'));
-      // Mock findMany for room - WITH PLAYER
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'r1', players: [{ user: { documentId: 'u1' } }] }]);
-      // Mock findOne (entity not found)
-      mockFindOne.mockResolvedValue(null);
-      // Mock race/class
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'race1' }]);
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'class1' }]);
-      mockCreate.mockResolvedValue({ documentId: 'newId', stats: {} });
-
-      const result = await service.onboardPlayer(
-        'r1',
-        {
-          name: 'Player',
-          avatarPreview: { portrait: { data: 'abc', mimeType: 'image/png' } },
-        },
-        { documentId: 'u1', id: 'u1', username: 'U' }
-      );
-
-      expect(result.entity).toBeDefined();
-      expect(mockLogError).toHaveBeenCalled();
+    it('rejects a missing linked blueprint rather than creating a substitute', async () => {
+      mockFindOne.mockResolvedValueOnce(room).mockResolvedValueOnce(null);
+      await expect(service.onboardPlayer('r1', { documentId: 'missing' }, user))
+        .rejects.toMatchObject({ extensions: { code: 'INVALID_INPUT' } });
+      expect(mockCreate).not.toHaveBeenCalled();
     });
 
-    it('should handle missing race and class data gracefully', async () => {
-      // Mock findMany for room - WITH PLAYER
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'r1', players: [{ user: { documentId: 'u1' } }] }]);
-      mockFindOne.mockResolvedValue(null);
-      // Return empty for race/class
-      mockFindMany.mockResolvedValueOnce([]); // No race
-      mockFindMany.mockResolvedValueOnce([]); // No class
-      mockCreate.mockResolvedValue({ documentId: 'newId', stats: {}, classes: [] });
-
-      const result = await service.onboardPlayer(
-        'r1',
-        { name: 'Player', race: 'NonExistent', class: 'NonExistent' },
-        { documentId: 'u1' }
-      );
-      expect(result.entity.race).toBeUndefined();
-      expect(result.entity.classes).toEqual([]);
+    it('hydrates a blueprint and copies components without their primary keys', async () => {
+      mockFindOne.mockResolvedValueOnce(room).mockResolvedValueOnce({
+        documentId: 'blueprint', type: 'Player', name: 'Ranger', stats: { id: 99, strength: 0 },
+        race: { documentId: 'race', speed: 25 }, classes: [],
+        inventory: [{ id: 88, item: { documentId: 'item', id: 77, name: 'Bow' }, quantity: 1, isEquipped: true }],
+      });
+      mockCreate.mockResolvedValue({ documentId: 'sheet' });
+      const result = await service.onboardPlayer('r1', { documentId: 'blueprint' }, user);
+      const sheet = mockCreate.mock.calls[0][0].data;
+      expect(sheet.entity).toBe('blueprint');
+      expect(sheet.owner).toBe('u1');
+      expect(sheet.room).toBe('r1');
+      expect(sheet.stats).toMatchObject({ strength: 0 });
+      expect(sheet.stats).not.toHaveProperty('id');
+      expect(sheet.inventory).toEqual([{ item: 'item', quantity: 1, isEquipped: true, slot: undefined }]);
+      expect(sheet).not.toHaveProperty('structuredActions');
+      expect(result.player.characterSheet).toBe('sheet');
+      expect(result.player.character).toBe('blueprint');
+      expect(result.player.isReady).toBe(false);
     });
 
-    it('should throw error if player not in room', async () => {
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'r1', players: [] }]); // Room with NO players
-      mockFindOne.mockResolvedValue(null);
-      mockFindMany.mockResolvedValueOnce([]);
-      mockFindMany.mockResolvedValueOnce([]);
-      mockCreate.mockResolvedValue({ documentId: 'newId', stats: {} });
-
-      await expect(service.onboardPlayer('r1', { name: 'Player' }, { documentId: 'u1' })).rejects.toThrow(
-        'User is not a player'
-      );
+    it('uses equipped armor data with the real derivation implementation', async () => {
+      const { EntityDeriver } = await import('@daicer/engine/derivation');
+      mockDerive.mockImplementation((input) => EntityDeriver.derive(input));
+      mockFindOne.mockResolvedValueOnce(room).mockResolvedValueOnce({
+        documentId: 'blueprint', type: 'Player', name: 'Guard', stats: { dexterity: 10 },
+        inventory: [{ isEquipped: true, item: { documentId: 'armor', name: 'Armor', type: 'armor', equipment_data: { armor_class_base: 16, armor_class_dex_bonus: false } } }],
+      });
+      mockCreate.mockResolvedValue({ documentId: 'sheet' });
+      await service.onboardPlayer('r1', { documentId: 'blueprint' }, user);
+      expect(mockCreate.mock.calls[0][0].data.ac).toBe(16);
+      expect(mockDerive.mock.calls[0][0].equipment[0].isEquipped).toBe(true);
     });
 
-    it('should link to existing entity if documentId provided', async () => {
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'r1', players: [{ user: { documentId: 'u1' } }] }]);
-      mockFindOne.mockResolvedValue({ documentId: 'e1', name: 'Existing', stats: {}, classes: [] });
-      // Mock Create for Sheet
-      mockCreate.mockResolvedValue({ documentId: 'sheet1' });
-
-      const result = await service.onboardPlayer('r1', { name: 'Player', documentId: 'e1' }, { documentId: 'u1' });
-      expect(result.entity.documentId).toBe('e1');
+    it('does not instantiate again when the selected blueprint is unchanged', async () => {
+      const prior = { documentId: 'sheet', owner: { documentId: 'u1' }, room: { documentId: 'r1' }, entity: { documentId: 'blueprint' } };
+      mockFindOne.mockResolvedValueOnce({ ...room, players: [{ ...room.players[0], characterSheet: prior }] })
+        .mockResolvedValueOnce({ documentId: 'blueprint', type: 'Player', name: 'Ranger' });
+      const result = await service.onboardPlayer('r1', { documentId: 'blueprint' }, user);
+      expect(result.entitySheet.documentId).toBe('sheet');
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
 
-    it('should fallback to creation if linked entity not found', async () => {
-      mockFindMany.mockResolvedValueOnce([{ documentId: 'r1', players: [{ user: { documentId: 'u1' } }] }]);
-      mockFindOne.mockResolvedValue(null);
-      // Race/Class defaults
-      mockFindMany.mockResolvedValueOnce([]);
-      mockFindMany.mockResolvedValueOnce([]);
-      mockCreate.mockResolvedValue({ documentId: 'newId', name: 'Player', stats: {} });
+    it('rejects selecting a nonplayer entity', async () => {
+      mockFindOne.mockResolvedValueOnce(room).mockResolvedValueOnce({ documentId: 'monster', type: 'Monster' });
+      await expect(service.onboardPlayer('r1', { documentId: 'monster' }, user))
+        .rejects.toMatchObject({ extensions: { code: 'INVALID_INPUT' } });
+      expect(mockCreate).not.toHaveBeenCalled();
+    });
 
-      const result = await service.onboardPlayer('r1', { name: 'Player', documentId: 'e1' }, { documentId: 'u1' });
-      expect(result.entity.documentId).toBe('newId');
-      expect(mockLogWarn).toHaveBeenCalled();
+    it('preserves downstream sheet lifecycle failures', async () => {
+      mockFindOne.mockResolvedValueOnce(room).mockResolvedValueOnce({ documentId: 'blueprint', type: 'Player', name: 'Ranger', stats: {} });
+      mockCreate.mockRejectedValue(new Error('sheet lifecycle failed'));
+      await expect(service.onboardPlayer('r1', { documentId: 'blueprint' }, user)).rejects.toThrow('sheet lifecycle failed');
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 });

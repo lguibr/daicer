@@ -14,6 +14,17 @@ vi.mock('@strapi/strapi', () => ({
 import turnPipelineFactory from '@/api/game/services/turn-pipeline';
 
 describe('Turn Pipeline Service', () => {
+  it.each(['startGame', 'submitAction', 'resolveTurn'])('routes %s through the authenticated durable lifecycle', async (method) => {
+    const input = { requestId: 'request', roomId: 'room', turnNumber: 1 };
+    const user = { documentId: 'viewer' };
+    const operation = vi.fn().mockResolvedValue({ status: 'complete' });
+    const strapi = { service: vi.fn(() => ({ [method]: operation })) };
+    const pipeline = turnPipelineFactory({ strapi: strapi as any });
+    expect(await pipeline[method](input, user)).toEqual({ status: 'complete' });
+    expect(strapi.service).toHaveBeenCalledWith('api::game.turn-lifecycle');
+    expect(operation).toHaveBeenCalledExactlyOnceWith(input, user);
+  });
+
   let turnPipeline: any;
   let mockStrapi: any;
   let mockLockService: any;

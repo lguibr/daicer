@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import actionEngineFactory from '@/api/game/services/action-engine';
 
+const editVoxel = vi.hoisted(() => vi.fn());
+vi.mock('@/api/voxel-engine/services/chunk-manager', () => ({ ChunkManager: { getInstance: () => ({ editVoxel }) } }));
+
 // Mock dependencies
 vi.mock('@daicer/engine/rules/spatial', () => ({
   findPath: vi.fn(),
@@ -142,6 +145,7 @@ describe('Action Engine', () => {
             position: { x: 0, y: 0, z: 0 },
             room: { config: {} },
           });
+        if (documentId === 'room-1') return Promise.resolve({ world: { documentId: 'world-doc', seed: 'seed', chunkSize: 32 } });
         return Promise.resolve(null);
       });
 
@@ -160,6 +164,13 @@ describe('Action Engine', () => {
 
       // Check drop loot called
       expect(mockInventoryService.dropAll).toHaveBeenCalledWith('t1');
+      expect(editVoxel).toHaveBeenCalledWith(expect.objectContaining({ worldId: 'world-doc', config: expect.objectContaining({ chunkSize: 32 }), chunkX: 0, chunkY: 0, voxelX: 0, voxelY: 0, voxelZ: 0, metadata: expect.objectContaining({ type: 'death_marker' }) }));
+      editVoxel.mockClear();
+      const prior = mockFindOne.getMockImplementation();
+      mockFindOne.mockImplementation((args) => args.documentId === 'room-1' ? Promise.resolve({ world: null }) : prior(args));
+      await engine.resolveAttack(cmd, 'room-1');
+      expect(editVoxel).not.toHaveBeenCalled();
+      vi.restoreAllMocks();
     });
   });
 

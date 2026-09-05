@@ -1,13 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PhysicsEngine } from '@/api/voxel-engine/services/utils/physics';
 import { BlockType } from '@daicer/engine/types';
-import type { WorldGenerator } from '@/api/voxel-engine/services/utils/world-generator-logic';
+import type { WorldGenerator } from '@/api/voxel-engine/services/world-generator-logic';
 import type { Chunk, Tile } from '@daicer/engine/types';
-
-// Mock Constants
-vi.mock('../constants', () => ({
-  CHUNK_SIZE: 10,
-}));
 
 // Helper to create a basic mock chunk
 const createMockChunk = (defaultWalkable = true, defaultTransparent = true, defaultBlock = BlockType.AIR): Chunk => {
@@ -27,16 +22,17 @@ const createMockChunk = (defaultWalkable = true, defaultTransparent = true, defa
     }
     tiles.push(plane);
   }
-  return { tiles } as Chunk;
+  return { tiles, size: 10, minZ: -3, maxZ: 3 } as Chunk;
 };
 
 describe('PhysicsEngine', () => {
   let physics: PhysicsEngine;
-  let mockGenerator: { getChunk: any };
+  let mockGenerator: { getChunk: any; chunkSize: number };
 
   beforeEach(() => {
     mockGenerator = {
       getChunk: vi.fn(),
+      chunkSize: 10,
     };
     physics = new PhysicsEngine(mockGenerator as unknown as WorldGenerator);
   });
@@ -66,6 +62,27 @@ describe('PhysicsEngine', () => {
       const result = await physics.isWalkable({ x: 5, y: 5, z: 100 });
       expect(result).toBe(false);
     });
+  });
+
+  it.each([16, 32])('reads negative positions using configured size %i', (size) => {
+    mockGenerator.chunkSize = size;
+    const row = Array.from({ length: size }, () => ({ block: BlockType.GRASS, isWalkable: true, isTransparent: true }));
+    const chunk = {
+      size,
+      minZ: -3,
+      maxZ: 3,
+      tiles: Array.from({ length: 7 }, () => Array.from({ length: size }, () => row)),
+    };
+    mockGenerator.getChunk.mockResolvedValue(chunk);
+    return physics.isWalkable({ x: -1, y: -1, z: 3 }).then((result) => {
+      expect(result).toBe(true);
+      expect(mockGenerator.getChunk).toHaveBeenCalledWith(-1, -1);
+    });
+  });
+
+  it('does not return a path on another z layer', async () => {
+    expect(await physics.findPath({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 1 })).toBeNull();
+    expect(mockGenerator.getChunk).not.toHaveBeenCalled();
   });
 
   describe('checkStaircase', () => {
@@ -105,7 +122,7 @@ describe('PhysicsEngine', () => {
       mockGenerator.getChunk.mockResolvedValue(mockChunk);
 
       const result = await physics.calculateFieldOfView({ x: 5, y: 5, z: 0 }, 1);
-      expect(result.has('5,5')).toBe(true);
+      expect(result.has('5,5,0')).toBe(true);
     });
 
     it('should iterate radius without crashing', async () => {
@@ -128,8 +145,8 @@ describe('PhysicsEngine', () => {
 
       const result = await physics.calculateFieldOfView({ x: 5, y: 5, z: 0 }, 3);
 
-      expect(result.has('5,5')).toBe(true);
-      expect(result.has('5,6')).toBe(true); // Wall itself is usually visible
+      expect(result.has('5,5,0')).toBe(true);
+      expect(result.has('5,6,0')).toBe(true); // Wall itself is usually visible
       // Tile behind wall (5,7) should be shadowed if algo is correct
       // Note: Shadowcasting is tricky to exact assert without precise knowing the implementation variant.
       // But we verify it runs.

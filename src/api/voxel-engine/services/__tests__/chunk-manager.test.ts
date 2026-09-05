@@ -1,234 +1,271 @@
-/* eslint-disable */
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChunkManager } from '@/api/voxel-engine/services/chunk-manager';
-import { BlockType } from '@daicer/engine/types';
+import { BlockType, type WorldConfig } from '@daicer/engine/types';
 
-// Mock Worker Threads
-const mockWorker = {
-  on: vi.fn(),
-  postMessage: vi.fn(),
-  terminate: vi.fn(),
-};
+const transport = vi.hoisted(() => ({ workers: [] as any[], fail: false, hold: false, tasks: [] as any[] }));
+vi.mock('worker_threads', () => ({
+  Worker: class {
+    handlers: Record<string, (message: any) => void> = {};
+    constructor() {
+      transport.workers.push(this);
+    }
+    on(event: string, fn: (message: any) => void) {
+      this.handlers[event] = fn;
+    }
+    postMessage(task: any) {
+      transport.tasks.push(task);
+      if (transport.hold) return;
+      queueMicrotask(() => {
+        if (transport.fail) return this.handlers.message({ id: task.id, success: false, error: 'generation failed' });
+        const size = task.config.chunkSize;
+        this.handlers.message({
+          id: task.id,
+          success: true,
+          result: {
+            x: task.chunkX,
+            y: task.chunkY,
+            size,
+            minZ: -3,
+            maxZ: 3,
+            seed: task.config.seed,
+            tiles: Array.from({ length: 7 }, (_, z) =>
+              Array.from({ length: size }, (_, y) =>
+                Array.from({ length: size }, (_, x) => ({
+                  x: task.chunkX * size + x,
+                  y: task.chunkY * size + y,
+                  z: z - 3,
+                  block: task.config.seaLevel === 1 ? 'water' : 'grass',
+                  biome: 'plains',
+                  isWalkable: true,
+                  isTransparent: true,
+                }))
+              )
+            ),
+          },
+        });
+      });
+    }
+  },
+}));
+const config = {
+  seed: 'identical-seed',
+  chunkSize: 16,
+  globalScale: 0.02,
+  seaLevel: 0,
+  elevationScale: 0.5,
+  roughness: 0.5,
+  detail: 4,
+  moistureScale: 0.015,
+  temperatureOffset: 0,
+  structureChance: 0,
+  structureSpacing: 3,
+  structureSizeAvg: 10,
+  roadDensity: 0,
+  fogRadius: 10,
+} satisfies WorldConfig;
 
-vi.mock('worker_threads', () => {
-  return {
-    Worker: class {
-      constructor() {
-        return mockWorker;
-      }
-    },
-  };
-});
-
-// Mock path to avoid process.cwd issues in test env if needed
-vi.mock('path', async () => {
-  const actual = await vi.importActual('path');
-  return {
-    ...(actual as any),
-    resolve: (...args: string[]) => args.join('/'),
-  };
-});
-
-describe('ChunkManager', () => {
+describe('World isolation with mocked worker and in-memory persistence', () => {
   let manager: ChunkManager;
-  let mockStrapi: any;
-  let mockQuery: any;
-  let mockDocuments: any;
-
+  let rows: any[];
+  let findMany: ReturnType<typeof vi.fn>;
+  let create: ReturnType<typeof vi.fn>;
+  const marker = (world: string, block = 'wall_wood', id = 1) => ({
+    id,
+    documentId: `edit-${id}`,
+    world,
+    timestamp: String(id),
+    chunkX: 0,
+    chunkY: 0,
+    voxelX: 1,
+    voxelY: 1,
+    voxelZ: 0,
+    newType: block,
+  });
+  const read = (world = 'world-a', cfg = config, x = 0, y = 0) => manager.getChunk(x, y, cfg, world);
+  const edit = (overrides: Record<string, unknown> = {}) =>
+    manager.editVoxel({
+      worldId: 'world-a',
+      config,
+      chunkX: 0,
+      chunkY: 0,
+      voxelX: 1,
+      voxelY: 1,
+      voxelZ: 0,
+      newType: BlockType.WALL_STONE,
+      ...overrides,
+    });
   beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Reset Singleton
-    (ChunkManager as any).instance = null;
-
-    mockQuery = {
-      create: vi.fn(),
-    };
-    mockDocuments = {
-      findMany: vi.fn(),
-      create: vi.fn(),
-    };
-
-    mockStrapi = {
-      db: { query: vi.fn(() => mockQuery) },
-      documents: vi.fn(() => mockDocuments),
-    };
-    (global as any).strapi = mockStrapi;
-
+    (ChunkManager as any).instance = undefined;
+    transport.workers.length = 0;
+    transport.tasks.length = 0;
+    transport.fail = false;
+    transport.hold = false;
+    rows = [];
+    findMany = vi.fn(async ({ filters, start = 0, limit = rows.length }: any) =>
+      rows
+        .filter(
+          (r) => r.world === filters.world?.documentId && r.chunkX === filters.chunkX && r.chunkY === filters.chunkY
+        )
+        .sort((a, b) =>
+          BigInt(a.timestamp) < BigInt(b.timestamp) ? -1 : BigInt(a.timestamp) > BigInt(b.timestamp) ? 1 : a.id - b.id
+        )
+        .slice(start, start + limit)
+    );
+    create = vi.fn(async ({ data }: any) => {
+      const row = { ...data, id: rows.length + 1, documentId: `edit-${rows.length + 1}` };
+      rows.push(row);
+      return row;
+    });
+    vi.stubGlobal('strapi', { documents: vi.fn(() => ({ findMany, create })) });
     manager = ChunkManager.getInstance();
   });
-
-  it('should be a singleton', () => {
-    const instance2 = ChunkManager.getInstance();
-    expect(manager).toBe(instance2);
+  it('isolates cold, warm, concurrent and eviction/reload reads with identical seeds', async () => {
+    rows.push(marker('world-a'));
+    const [a, b] = await Promise.all([read('world-a'), read('world-b')]);
+    expect(a.tiles[3][1][1].block).toBe('wall_wood');
+    expect(b.tiles[3][1][1].block).toBe('grass');
+    for (const world of ['world-b', 'world-a', 'world-b'])
+      expect((await read(world)).tiles[3][1][1].block).toBe(world === 'world-a' ? 'wall_wood' : 'grass');
+    for (let x = 1; x <= 202; x++) await read('world-a', config, x);
+    expect((await read('world-a')).tiles[3][1][1].block).toBe('wall_wood');
+    expect((await read('world-b')).tiles[3][1][1].block).toBe('grass');
+    expect(transport.tasks.filter((t) => t.chunkX === 0)).toHaveLength(4);
+    expect(findMany.mock.calls.every(([q]) => q.filters.world.documentId)).toBe(true);
+  });
+  it('coalesces concurrent misses without exposing incomplete overlays', async () => {
+    let release!: (rows: any[]) => void;
+    findMany.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        })
+    );
+    const first = read();
+    await vi.waitFor(() => expect(findMany).toHaveBeenCalledTimes(1));
+    let finished = false;
+    const second = read().then((c) => {
+      finished = true;
+      return c;
+    });
+    await Promise.resolve();
+    expect(finished).toBe(false);
+    release([marker('world-a')]);
+    expect((await first).tiles[3][1][1].block).toBe('wall_wood');
+    expect((await second).tiles[3][1][1].block).toBe('wall_wood');
+    expect(transport.tasks).toHaveLength(1);
+  });
+  it('keys configuration and returns independent snapshots', async () => {
+    const a = await read();
+    const b = await read('world-a', { ...config, seaLevel: 1 });
+    expect(b.tiles[3][1][1].block).toBe('water');
+    expect(b.configHash).not.toBe(a.configHash);
+    expect(a.worldId).toBe('world-a');
+    expect(a.generatorVersion).toBeTruthy();
+    a.tiles[3][1][1].block = 'corruption';
+    expect((await read()).tiles[3][1][1].block).toBe('grass');
+  });
+  it('rejects absent identity and offers a separate pure preview', async () => {
+    await expect(manager.getChunk(0, 0, config, undefined as any)).rejects.toThrow(/world/i);
+    expect((await manager.getPreviewChunk(0, 0, config)).tiles[3][1][1].block).toBe('grass');
+    expect(findMany).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
+  it('replays all pages in numeric timestamp and id order', async () => {
+    for (let i = 1; i <= 520; i++) rows.push(marker('world-a', 'stone', i));
+    rows.push({ ...marker('world-a', 'wall_wood', 521), timestamp: '9007199254740993' });
+    rows.push({ ...marker('world-a', 'grass', 522), timestamp: '9007199254740992' });
+    rows.push({ ...marker('world-a', 'door', 523), timestamp: '9007199254740993' });
+    expect((await read()).tiles[3][1][1]).toMatchObject({ block: 'door', isWalkable: true, isTransparent: true });
+    expect(findMany.mock.calls.length).toBeGreaterThan(1);
+    expect(findMany.mock.calls[0][0].sort).toEqual([{ timestamp: 'asc' }, { id: 'asc' }]);
+  });
+  it('preserves the current block for metadata-only edits and isolates other worlds', async () => {
+    rows.push(marker('world-a', 'stone'));
+    const before = await read();
+    await read('world-b');
+    await edit({ newType: undefined, metadata: { marker: 'here' } });
+    expect(create.mock.calls[0][0].data).toMatchObject({ newType: 'stone', previousType: 'stone', world: 'world-a' });
+    const after = await read();
+    expect(after.tiles[3][1][1]).toMatchObject({
+      block: 'stone',
+      metadata: { marker: 'here' },
+      isWalkable: false,
+      isTransparent: false,
+    });
+    expect(after.revision).not.toBe(before.revision);
+    expect((await read('world-b')).tiles[3][1][1].block).toBe('grass');
+  });
+  it('rejects metadata that cannot survive JSON persistence', async () => {
+    await expect(edit({ metadata: { invalid: Infinity } })).rejects.toThrow(/JSON/);
+    await expect(edit({ metadata: { invalid: new Date() } })).rejects.toThrow(/JSON/);
+    expect(create).not.toHaveBeenCalled();
   });
 
-  describe('getChunk', () => {
-    it('should fetch chunk via worker and cache it', async () => {
-      const config = { seed: 'test-seed', chunkSize: 16 } as any;
-      const mockChunk = { x: 0, y: 0, tiles: [] };
-
-      // Setup Worker response
-      mockWorker.postMessage.mockImplementation(({ id }) => {
-        const handler = mockWorker.on.mock.calls.find((call) => call[0] === 'message')[1];
-        handler({ id, success: true, result: mockChunk, seed: 'test-seed' });
-      });
-
-      const chunk = await manager.getChunk(0, 0, config);
-      expect(chunk).toEqual(mockChunk);
-
-      // Verify caching
-      mockWorker.postMessage.mockClear();
-      const cached = await manager.getChunk(0, 0, config);
-      expect(cached).toEqual(mockChunk);
-      expect(mockWorker.postMessage).not.toHaveBeenCalled();
-    });
-
-    it('should handle worker errors', async () => {
-      const config = { seed: 'test-seed' } as any;
-      mockWorker.postMessage.mockImplementation(({ id }) => {
-        const handler = mockWorker.on.mock.calls.find((call) => call[0] === 'message')[1];
-        handler({ id, success: false, error: 'Worker Failed' });
-      });
-
-      await expect(manager.getChunk(0, 0, config)).rejects.toThrow('Worker Failed');
-    });
-
-    it('should handle worker crash event', async () => {
-      const config = { seed: 'test-seed' } as any;
-      // We trigger error on worker
-      mockWorker.postMessage.mockImplementation(({ id }) => {
-        // Trigger global error handler
-        const handler = mockWorker.on.mock.calls.find((call) => call[0] === 'error')[1];
-        handler(new Error('Worker Crash'));
-      });
-
-      await expect(manager.getChunk(0, 0, config)).rejects.toThrow('Worker Crash');
-    });
-
-    it('should apply persisted changes on top of generated chunk', async () => {
-      const config = { seed: 'persist-seed' } as any;
-      // Deep copyable structure
-      const tiles = Array.from({ length: 7 }, () =>
-        Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ block: BlockType.AIR })))
-      );
-      const mockChunk = { x: 0, y: 0, tiles };
-
-      // Mock persistence fetch
-      const changes = [
-        {
-          chunkX: 0,
-          chunkY: 0,
-          voxelX: 0,
-          voxelY: 0,
-          voxelZ: 0, // zIndex 3
-          newType: BlockType.FLOOR_STONE,
-          metadata: { meta: 'persisted' },
-        },
-      ];
-      mockDocuments.findMany.mockResolvedValue(changes);
-
-      // Worker returns base chunk
-      mockWorker.postMessage.mockImplementation(({ id }) => {
-        const handler = mockWorker.on.mock.calls.find((call) => call[0] === 'message')[1];
-        // Return deep copy to ensure isolation
-        handler({ id, success: true, result: JSON.parse(JSON.stringify(mockChunk)), seed: 'persist-seed' });
-      });
-
-      const chunk = await manager.getChunk(0, 0, config, 'world-1');
-
-      expect(chunk.tiles[3][0][0].block).toBe(BlockType.FLOOR_STONE);
-      expect(chunk.tiles[3][0][0].metadata).toEqual({ meta: 'persisted' });
-    });
+  it('keeps content revisions stable after metadata key reordering and cache eviction', async () => {
+    rows.push({ ...marker('world-a'), metadata: { z: { b: 2, a: 1 }, a: 3 } });
+    const first = await read();
+    rows[0].metadata = { a: 3, z: { a: 1, b: 2 } };
+    for (let x = 1; x <= 201; x++) await read('world-a', config, x);
+    expect((await read()).revision).toBe(first.revision);
   });
 
-  describe('applyVoxelChanges', () => {
-    it('should verify bounds and apply changes', () => {
-      const tiles = Array.from({ length: 7 }, () =>
-        Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ block: BlockType.AIR })))
-      );
-      const chunk = { x: 0, y: 0, tiles } as any;
-
-      const changes = [
-        // Valid
-        { chunkX: 0, chunkY: 0, voxelX: 5, voxelY: 5, voxelZ: 0, newType: BlockType.FLOOR_WOOD },
-        // Invalid Bounds
-        { chunkX: 0, chunkY: 0, voxelX: 20, voxelY: 5, voxelZ: 0, newType: BlockType.BEDROCK },
-        { chunkX: 0, chunkY: 0, voxelX: 5, voxelY: 5, voxelZ: 10, newType: BlockType.BEDROCK },
-      ];
-
-      manager.applyVoxelChanges(chunk, changes);
-
-      expect(chunk.tiles[3][5][5].block).toBe(BlockType.FLOOR_WOOD);
-      // Should stay defaults (implicitly tested by not crashing or polluting)
-    });
+  it('does not mutate cached state on failed writes', async () => {
+    const before = await read();
+    create.mockRejectedValueOnce(new Error('write failed'));
+    await expect(edit()).rejects.toThrow('write failed');
+    expect(await read()).toEqual(before);
   });
-
-  describe('editVoxel', () => {
-    it('should persist change and update cache', async () => {
-      const chunkX = 1,
-        chunkY = 1;
-      const tiles = Array.from({ length: 7 }, () =>
-        Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ block: BlockType.AIR })))
-      );
-      const chunk = { x: chunkX, y: chunkY, tiles } as any;
-      (manager as any).addToCache(chunkX, chunkY, 'seed', chunk);
-
-      await manager.editVoxel(chunkX, chunkY, 0, 0, 0, BlockType.GRASS, 'world-1', 'player');
-
-      expect(mockDocuments.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            chunkX,
-            chunkY,
-            voxelX: 0,
-            voxelY: 0,
-            voxelZ: 0,
-            newType: BlockType.GRASS,
-            world: 'world-1',
-          }),
-        })
-      );
-
-      expect(chunk.tiles[3][0][0].block).toBe(BlockType.GRASS);
+  it('does not cache generated base terrain when replay fails', async () => {
+    findMany.mockRejectedValueOnce(new Error('read failed'));
+    await expect(read()).rejects.toThrow('read failed');
+    rows.push(marker('world-a'));
+    expect((await read()).tiles[3][1][1].block).toBe('wall_wood');
+    expect(transport.tasks).toHaveLength(2);
+  });
+  it('serializes concurrent edits and invalidates all world/chunk config variants', async () => {
+    await read();
+    await read('world-a', { ...config, seaLevel: 1 });
+    await read('world-b');
+    await Promise.all([edit({ metadata: { one: 1 } }), edit({ newType: undefined, metadata: { two: 2 } })]);
+    expect(create.mock.calls[1][0].data.newType).toBe('wall_stone');
+    expect((await read('world-a', { ...config, seaLevel: 1 })).tiles[3][1][1]).toMatchObject({
+      block: 'wall_stone',
+      metadata: { one: 1, two: 2 },
     });
-
-    it('should fail over to dirt if type undefined and not in cache', async () => {
-      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      // No cache (cleared in beforeEach by new instance)
-      await manager.editVoxel(99, 99, 0, 0, 0, undefined, 'world-1');
-
-      expect(spy).toHaveBeenCalled();
-      expect(mockDocuments.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            newType: 'dirt',
-          }),
-        })
-      );
+    expect((await read('world-b')).tiles[3][1][1].block).toBe('grass');
+  });
+  it.each([16, 32])('edits boundaries and maps negative coordinates for size %i', async (size) => {
+    const cfg = { ...config, chunkSize: size };
+    await edit({ config: cfg, chunkX: -1, chunkY: -1, voxelX: size - 1, voxelY: size - 1, voxelZ: -3 });
+    expect(await manager.getTileAt(-1, -1, -3, cfg, 'world-a')).toMatchObject({
+      x: -1,
+      y: -1,
+      z: -3,
+      block: 'wall_stone',
+      isWalkable: false,
     });
-
-    it('should resolve type from cache if undefined in request', async () => {
-      const chunkX = 2,
-        chunkY = 2;
-      const tiles = Array.from({ length: 7 }, () =>
-        Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ block: BlockType.STONE })))
-      );
-      const chunk = { x: chunkX, y: chunkY, tiles } as any;
-      (manager as any).addToCache(chunkX, chunkY, 'seed', chunk);
-
-      // Request update with NO type (metadata only usually, but here checking type resolution)
-      await manager.editVoxel(chunkX, chunkY, 0, 0, 0, undefined, 'world-1', 'meta-upd');
-
-      expect(mockDocuments.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            newType: BlockType.STONE, // Solved from cache
-          }),
-        })
-      );
-    });
+    await edit({ config: cfg, voxelX: size - 1, voxelY: size - 1, voxelZ: 3 });
+    expect((await manager.getTileAt(size - 1, size - 1, 3, cfg, 'world-a')).block).toBe('wall_stone');
+  });
+  it.each([{ worldId: '' }, { chunkX: NaN }, { voxelX: 16 }, { voxelY: -1 }, { voxelZ: 4 }, { voxelZ: 0.5 }])(
+    'rejects invalid edits before persistence: %j',
+    async (override) => {
+      await expect(edit(override)).rejects.toThrow();
+      expect(create).not.toHaveBeenCalled();
+    }
+  );
+  it('releases pending operations on worker failure/exit and can retry', async () => {
+    transport.fail = true;
+    await expect(read()).rejects.toThrow('generation failed');
+    transport.fail = false;
+    transport.hold = true;
+    const pending = read();
+    await vi.waitFor(() => expect(transport.tasks).toHaveLength(2));
+    const rejected = expect(pending).rejects.toThrow(/exit/i);
+    transport.workers[0].handlers.exit(1);
+    await rejected;
+    transport.hold = false;
+    expect((await read()).worldId).toBe('world-a');
+    expect(transport.workers).toHaveLength(2);
   });
 });

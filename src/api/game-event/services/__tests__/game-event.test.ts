@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { WorldGenerator } from '@/api/voxel-engine/services/world-generator-logic';
 import gameEventFactory from '@/api/game-event/services/game-event';
 
 // Mock Dependencies
@@ -95,6 +96,11 @@ describe('Game Event Service', () => {
   });
 
   describe('validateMove', () => {
+    it('fails closed when the room has no world identity', async () => {
+      strapi.documents.mockReturnValue({ findOne: vi.fn().mockResolvedValue({ documentId: 'room', code: 'not-world', world: { seed: 's' } }) });
+      await expect(service.validateMove('room', { x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 })).rejects.toThrow('Room world is missing');
+      expect(WorldGenerator).not.toHaveBeenCalled();
+    });
     it('should return valid:false for invalid schema', async () => {
       const result = await service.validateMove('doc-1', { x: 'bad' } as any, { x: 1, y: 1, z: 0 });
       expect(result.valid).toBe(false);
@@ -102,7 +108,7 @@ describe('Game Event Service', () => {
     });
 
     it('should return valid:false if blocked by entity', async () => {
-      const mockRoomWithWorld = { documentId: 'doc-1', world: { seed: 'abc' } };
+      const mockRoomWithWorld = { documentId: 'doc-1', world: { documentId: 'world-doc', seed: 'abc', chunkSize: 32, seaLevel: 0 } };
       const mockEvents = [{ type: 'SPAWN_ENTITY', payload: { entityId: 'mob-1', position: { x: 10, y: 10, z: 0 } } }];
 
       const findOneRoomMock = vi.fn().mockResolvedValue(mockRoomWithWorld);
@@ -123,7 +129,7 @@ describe('Game Event Service', () => {
     });
 
     it('should return valid:true if physics says yes and no collision', async () => {
-      const mockRoomWithWorld = { documentId: 'doc-1', world: { seed: 'abc' } };
+      const mockRoomWithWorld = { documentId: 'doc-1', world: { documentId: 'world-doc', seed: 'abc', chunkSize: 32, seaLevel: 0 } };
       strapi.documents.mockImplementation((uid: string) => {
         if (uid === 'api::room.room') return { findOne: vi.fn().mockResolvedValue(mockRoomWithWorld) };
         if (uid === 'api::game-event.game-event') return { findMany: vi.fn().mockResolvedValue([]) };
@@ -135,10 +141,11 @@ describe('Game Event Service', () => {
       const result = await service.validateMove('doc-1', { x: 0, y: 0, z: 0 }, { x: 5, y: 5, z: 0 });
 
       expect(result.valid).toBe(true);
+      expect(WorldGenerator).toHaveBeenCalledWith(expect.objectContaining({ seed: 'abc', chunkSize: 32, seaLevel: 0 }), 'world-doc');
     });
 
     it('should return valid:false if physics says no', async () => {
-      const mockRoomWithWorld = { documentId: 'doc-1', world: { seed: 'abc' } };
+      const mockRoomWithWorld = { documentId: 'doc-1', world: { documentId: 'world-doc', seed: 'abc', chunkSize: 32, seaLevel: 0 } };
       strapi.documents.mockImplementation((uid: string) => {
         if (uid === 'api::room.room') return { findOne: vi.fn().mockResolvedValue(mockRoomWithWorld) };
         if (uid === 'api::game-event.game-event') return { findMany: vi.fn().mockResolvedValue([]) };
@@ -183,7 +190,7 @@ describe('Game Event Service', () => {
 
   describe('inspectTerrain', () => {
     it('should return terrain info', async () => {
-      const mockRoomWithWorld = { documentId: 'doc-1', world: { seed: 'abc' } };
+      const mockRoomWithWorld = { documentId: 'doc-1', world: { documentId: 'world-doc', seed: 'abc', chunkSize: 32, seaLevel: 0 } };
 
       strapi.documents.mockReturnValue({
         findOne: vi.fn().mockResolvedValue(mockRoomWithWorld),
@@ -207,7 +214,7 @@ describe('Game Event Service', () => {
     });
 
     it('should return void if no tile', async () => {
-      const mockRoomWithWorld = { documentId: 'doc-1', world: { seed: 'abc' } };
+      const mockRoomWithWorld = { documentId: 'doc-1', world: { documentId: 'world-doc', seed: 'abc', chunkSize: 32, seaLevel: 0 } };
       strapi.documents.mockReturnValue({
         findOne: vi.fn().mockResolvedValue(mockRoomWithWorld),
       });

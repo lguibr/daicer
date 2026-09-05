@@ -1,0 +1,13 @@
+{
+  "kind": "collectionType",
+  "collectionName": "game_operations",
+  "info": { "singularName": "game-operation", "pluralName": "game-operations", "displayName": "Game Operation" },
+  "options": { "draftAndPublish": false },
+  "attributes": {
+    "key": { "type": "string", "required": true, "unique": true, "private": true },
+    "requestHash": { "type": "string", "required": true, "private": true },
+    "status": { "type": "enumeration", "enum": ["running", "complete", "failed"], "required": true },
+    "result": { "type": "json", "private": true },
+    "room": { "type": "relation", "relation": "manyToOne", "target": "api::room.room" }
+  }
+}

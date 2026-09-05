@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import sheetSchema from '@/api/entity-sheet/content-types/entity-sheet/schema.json';
 import entityDerivationFactory from '@/api/game/services/entity-derivation';
 
 // Mock Strapi
@@ -27,13 +28,18 @@ describe('Entity Derivation Service', () => {
       { slug: 'athletics', name: 'Athletics' },
       { slug: 'save_dexterity', name: 'Dexterity Save' },
     ],
+    currentHp: 0,
+    tempHp: 7,
+    position: { x: 2, y: 3, z: 0 },
     actions: [
       {
         name: 'Sword',
         type: 'melee',
-        attack: { bonus: 5 },
-        effects: [{ type: 'damage', dice: '1d6', subtype: 'slashing' }],
+        toHit: 5,
+        range_config: { type: 'Touch' },
+        damage_instances: [{ effect_type: 'Damage', dice_count: 1, dice_value: 6, flat_bonus: 2, damage_type: 'Slashing' }],
       },
+      { name: 'Special', type: 'ability' },
     ],
   };
 
@@ -49,6 +55,9 @@ describe('Entity Derivation Service', () => {
     await service.deriveAndPersist('sheet-1');
 
     expect(updateMock).toHaveBeenCalled();
+    const populate = (strapi.documents('api::entity-sheet.entity-sheet').findOne as any).mock.calls[0][0].populate;
+    for (const key of Object.keys(populate)) expect(sheetSchema.attributes).toHaveProperty(key);
+    expect(populate).not.toHaveProperty('spellbook');
     const callArg = updateMock.mock.calls[0][0].data;
 
     // Verify Skills
@@ -75,5 +84,9 @@ describe('Entity Derivation Service', () => {
     const sword = callArg.computedActions[0];
     expect(sword.toHit).toBe(5);
     expect(sword.damageDice).toBe('1d6');
+    expect(sword.damageBonus).toBe(2);
+    expect(sword.range).toBe(5);
+    expect(callArg.computedActions[1].type).toBe('utility');
+    for (const field of ['currentHp', 'tempHp', 'position', 'maxHp', 'ac']) expect(callArg).not.toHaveProperty(field);
   });
 });

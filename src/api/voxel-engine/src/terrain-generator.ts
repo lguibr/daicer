@@ -1,18 +1,17 @@
 import { Alea, FastNoise } from '@/api/voxel-engine/src/utils/math';
 import { Tile, BlockType, BiomeType, ZLevel, WorldConfig } from '@daicer/engine/types';
 import { WorldAtlas } from '@daicer/engine/world';
+import { TileHelper } from '@/api/voxel-engine/services/utils/tile-helper';
 
 export class TerrainGenerator {
   private noiseElevation: FastNoise;
   private noiseMoisture: FastNoise;
-  private rng: Alea;
   public config: WorldConfig;
   private atlas?: WorldAtlas;
 
   constructor(config: WorldConfig, atlas?: WorldAtlas) {
-    this.config = config;
+    this.config = { ...config };
     this.atlas = atlas;
-    this.rng = new Alea(config.seed);
     this.noiseElevation = new FastNoise(config.seed + '_elev');
     this.noiseMoisture = new FastNoise(config.seed + '_moist');
   }
@@ -42,12 +41,15 @@ export class TerrainGenerator {
         const nx = wx * this.config.globalScale;
         const ny = wy * this.config.globalScale;
 
-        let elev = this.noiseElevation.fbm(
-          nx * this.config.elevationScale,
-          ny * this.config.elevationScale,
-          Math.floor(this.config.detail),
-          this.config.roughness
-        );
+        let elev =
+          this.config.detail < 1
+            ? 0
+            : this.noiseElevation.fbm(
+                nx * this.config.elevationScale,
+                ny * this.config.elevationScale,
+                Math.floor(this.config.detail),
+                this.config.roughness
+              );
         let moist = this.noiseMoisture.fbm(nx * this.config.moistureScale, ny * this.config.moistureScale, 2);
 
         // FLATTEN TERRAIN IF INSIDE STRUCTURE
@@ -67,7 +69,8 @@ export class TerrainGenerator {
         // Z<0 (Underground)
         for (let zIndex = 2; zIndex >= 0; zIndex--) {
           const realZ = (zIndex - 3) as ZLevel;
-          const block = realZ === -3 && this.rng.next() > 0.5 ? BlockType.BEDROCK : BlockType.STONE;
+          const block =
+            realZ === -3 && this.randomAt(wx, wy, realZ, 'bedrock') > 0.5 ? BlockType.BEDROCK : BlockType.STONE;
           tiles[zIndex]![y]![x] = this.createTile(wx, wy, realZ, block, biome, elev, moist);
         }
 
@@ -84,12 +87,15 @@ export class TerrainGenerator {
   public getTileAt(x: number, y: number, z: ZLevel): Tile {
     const nx = x * this.config.globalScale;
     const ny = y * this.config.globalScale;
-    let elev = this.noiseElevation.fbm(
-      nx * this.config.elevationScale,
-      ny * this.config.elevationScale,
-      Math.floor(this.config.detail),
-      this.config.roughness
-    );
+    let elev =
+      this.config.detail < 1
+        ? 0
+        : this.noiseElevation.fbm(
+            nx * this.config.elevationScale,
+            ny * this.config.elevationScale,
+            Math.floor(this.config.detail),
+            this.config.roughness
+          );
     let moist = this.noiseMoisture.fbm(nx * this.config.moistureScale, ny * this.config.moistureScale, 2);
 
     // Check Macro Structure
@@ -107,7 +113,7 @@ export class TerrainGenerator {
     if (z === 0) {
       block = surfaceBlock;
     } else if (z < 0) {
-      block = z === -3 && this.rng.next() > 0.5 ? BlockType.BEDROCK : BlockType.STONE;
+      block = z === -3 && this.randomAt(x, y, z, 'bedrock') > 0.5 ? BlockType.BEDROCK : BlockType.STONE;
     } else {
       block = BlockType.AIR;
     }
@@ -151,6 +157,11 @@ export class TerrainGenerator {
     return { biome: BiomeType.tundra, surfaceBlock: BlockType.SNOW };
   }
 
+  /** Coordinate-addressed streams make point/chunk reads independent of call history. */
+  private randomAt(x: number, y: number, z: number, purpose: string): number {
+    return new Alea(JSON.stringify([this.config.seed, x, y, z, purpose])).next();
+  }
+
   private createTile(
     x: number,
     y: number,
@@ -160,40 +171,20 @@ export class TerrainGenerator {
     elevation: number,
     moisture: number
   ): Tile {
-    const isTransparent = (
-      [
-        BlockType.AIR,
-        BlockType.WATER,
-        BlockType.DOOR,
-        BlockType.GRASS,
-        BlockType.DIRT,
-        BlockType.SAND,
-        BlockType.SNOW,
-        BlockType.FLOOR_WOOD,
-        BlockType.FLOOR_STONE,
-        BlockType.TREE_LEAVES,
-        BlockType.CACTUS,
-        BlockType.STAIRS_UP,
-        BlockType.STAIRS_DOWN,
-      ] as BlockType[]
-    ).includes(block);
-
-    const isWalkable = (
-      [
-        BlockType.FLOOR_WOOD,
-        BlockType.FLOOR_STONE,
-        BlockType.GRASS,
-        BlockType.DIRT,
-        BlockType.SAND,
-        BlockType.SNOW,
-        BlockType.DOOR,
-        BlockType.STAIRS_UP,
-        BlockType.STAIRS_DOWN,
-        BlockType.WATER,
-      ] as BlockType[]
-    ).includes(block);
-
-    return { x, y, z, block, biome, isWalkable, isTransparent, variant: this.rng.next(), elevation, moisture };
+    const tile: Tile = {
+      x,
+      y,
+      z,
+      block,
+      biome,
+      isWalkable: false,
+      isTransparent: false,
+      variant: this.randomAt(x, y, z, 'variant'),
+      elevation,
+      moisture,
+    };
+    TileHelper.applyBlock(tile, block);
+    return tile;
   }
 }
 export function createUnifiedTerrainGenerator(seed: string, params: Partial<WorldConfig> = {}) {

@@ -3,6 +3,7 @@
  * Keep documentation synchronized with code at all times.
  */
 import { BlockType, Tile } from '@daicer/engine/types';
+import { TileHelper } from '@/api/voxel-engine/services/utils/tile-helper';
 import { Alea } from '@/api/voxel-engine/src/utils/math';
 
 export class FloraGenerator {
@@ -15,8 +16,8 @@ export class FloraGenerator {
     z: number,
     block: BlockType
   ) {
-    const lx = wx - cx * 16;
-    const ly = wy - cy * 16;
+    const lx = wx - cx * (tiles[0]?.[0]?.length ?? 0);
+    const ly = wy - cy * (tiles[0]?.length ?? 0);
     const lz = z + 3;
     if (
       tiles.length > 0 &&
@@ -30,11 +31,7 @@ export class FloraGenerator {
       lz < tiles.length
     ) {
       const t = tiles[lz][ly][lx];
-      t.block = block;
-      t.isWalkable = (
-        [BlockType.FLOOR_STONE, BlockType.FLOOR_WOOD, BlockType.STAIRS_UP, BlockType.STAIRS_DOWN] as BlockType[]
-      ).includes(block);
-      t.isTransparent = t.isWalkable;
+      TileHelper.applyBlock(t, block);
     }
   }
 

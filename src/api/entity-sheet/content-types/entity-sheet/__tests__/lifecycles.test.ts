@@ -1,139 +1,69 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import lifecycles from '@/api/entity-sheet/content-types/entity-sheet/lifecycles';
 
-// Validate exports from lifecycles if default
-const { beforeCreate, beforeUpdate, afterCreate, _afterUpdate } = lifecycles;
-
-// Mock dependencies
-vi.mock('@/services/mechanics/feature-hydrator', () => ({
-  FeatureHydrator: { hydrateFeatures: vi.fn().mockReturnValue(['feat1']) },
-}));
-
-vi.mock('@/api/game/src/engine', () => ({
-  EntityDeriver: {
-    derive: vi.fn().mockReturnValue({
-      hp: 20,
-      maxHp: 20,
-      ac: 15,
-      speed: { walk: 30 },
-      structuredActions: [],
-    }),
-  },
-  Equipment: {},
-}));
-
-describe('EntitySheet Lifecycles', () => {
-  let _mockStart: any;
-
+describe('EntitySheet lifecycle derivation', () => {
+  let derive: ReturnType<typeof vi.fn>;
+  const event = () => ({ params: { data: { stats: {} } }, result: { documentId: 'sheet-1' } });
   beforeEach(() => {
-    (global as any).strapi = {
-      service: vi.fn().mockReturnValue({ deriveAndPersist: vi.fn() }),
-      documents: vi.fn().mockReturnValue({
-        findOne: vi.fn(),
-        findFirst: vi.fn(), // Used for equipment lookup
-      }),
-      log: { error: vi.fn() },
-    };
+    derive = vi.fn().mockResolvedValue(undefined);
+    (global as any).strapi = { service: vi.fn(() => ({ deriveAndPersist: derive })), log: { error: vi.fn() } };
   });
-
-  describe('beforeCreate', () => {
-    it('should validate inventory slots', async () => {
-      const validData = {
-        inventory: [
-          { item: 'Sword', slot: 'main_hand', isEquipped: true },
-          { item: 'Shield', slot: 'off_hand', isEquipped: true },
-        ],
-      };
-      const event = { params: { data: validData } } as any;
-
-      await beforeCreate(event);
-      // Should not throw
-    });
-
-    it('should throw on duplicate slots', async () => {
-      const invalidData = {
-        inventory: [
-          { item: 'Sword', slot: 'main_hand', isEquipped: true },
-          { item: 'Axe', slot: 'main_hand', isEquipped: true },
-        ],
-      };
-      const event = { params: { data: invalidData } } as any;
-
-      await expect(beforeCreate(event)).rejects.toThrow('more than one item equipped in the main_hand slot');
-    });
+  it('validates duplicate inventory slots before writes', async () => {
+    const data = { inventory: [{ item: 'sword', slot: 'main_hand' }, { item: 'axe', slot: 'main_hand' }] };
+    await expect(lifecycles.beforeCreate({ params: { data } })).rejects.toThrow('more than one item');
+    await expect(lifecycles.beforeUpdate({ params: { data } })).rejects.toThrow('more than one item');
   });
-
-  describe('beforeUpdate', () => {
-    it('should update derived data if stats change', async () => {
-      const event = {
-        params: {
-          where: { documentId: 'doc-1' },
-          data: { stats: { strength: 18 } }, // triggers update
-        },
-      } as any;
-
-      const mockCurrent = {
-        id: 1,
-        level: 1,
-        stats: { strength: 10 },
-        inventory: [],
-        race: { speed: 30 },
-      };
-
-      ((global as any).strapi.documents('api::entity-sheet.entity-sheet').findOne as any).mockResolvedValue(
-        mockCurrent
-      );
-
-      await beforeUpdate(event);
-
-      // Verify derivation result applied to data
-      expect(event.params.data.maxHp).toBe(20);
-      expect(event.params.data.armorClass).toBe(15);
-    });
-
-    it('should resolve equipment references', async () => {
-      const event = {
-        params: {
-          where: { documentId: 'doc-1' },
-          data: {
-            // Simulate adding an item by name string, which triggers lookup
-            inventory: [{ item: 'Epic Sword', isEquipped: true, slot: 'main_hand' }],
-          },
-        },
-      } as any;
-
-      const mockCurrent = { id: 1, stats: {}, inventory: [] };
-      ((global as any).strapi.documents('api::entity-sheet.entity-sheet').findOne as any).mockResolvedValue(
-        mockCurrent
-      );
-
-      // Mock equipment findFirst
-      ((global as any).strapi.documents('api::equipment.equipment').findFirst as any).mockResolvedValue({
-        name: 'Epic Sword',
-        damage: 10,
-      });
-
-      await beforeUpdate(event);
-
-      // Deriver should have been called (mock check implicitly through result application, but we trust the mock setup)
-      expect(event.params.data.maxHp).toBe(20);
-    });
+  it('does not inject unsupported derived fields into source writes', async () => {
+    const input = event();
+    await lifecycles.beforeUpdate(input);
+    expect(input.params.data).toEqual({ stats: {} });
+    expect(derive).not.toHaveBeenCalled();
   });
-
-  describe('afterCreate/afterUpdate', () => {
-    it('should trigger active state derivation', async () => {
-      const event = { result: { documentId: 'doc-1' } } as any;
-      await afterCreate(event);
-      expect(strapi.service).toHaveBeenCalledWith('api::game.active-state-service');
-    });
-
-    it('should handle errors in derivation', async () => {
-      const event = { result: { documentId: 'doc-1' } } as any;
-      (strapi.service as any).mockReturnValue({
-        deriveAndPersist: vi.fn().mockRejectedValue(new Error('Derive Fail')),
-      });
-
-      await expect(afterCreate(event)).rejects.toThrow('ActiveState Derivation Failed');
-    });
+  it.each([
+    { inventory: [{ item: 'sword', slot: 'main_hand' }, { item: 'shield', slot: 'off_hand' }] },
+    { inventory: [{ item: 'potion', slot: 'backpack' }, { item: 'scroll', slot: 'backpack' }] },
+  ])('accepts valid inventory without changing the source write: %j', async (data) => {
+    const input = { params: { data } };
+    const original = structuredClone(input);
+    await expect(lifecycles.beforeCreate(input)).resolves.toBeUndefined();
+    await expect(lifecycles.beforeUpdate(input)).resolves.toBeUndefined();
+    expect(input).toEqual(original);
+    expect(derive).not.toHaveBeenCalled();
+  });
+  it('rejects inventory with an unsupported slot', async () => {
+    const input = { params: { data: { inventory: [{ item: 'sword', slot: 'unknown' }] } } };
+    await expect(lifecycles.beforeCreate(input)).rejects.toThrow('Invalid Inventory Structure');
+    await expect(lifecycles.beforeUpdate(input)).rejects.toThrow('Invalid Inventory Structure');
+  });
+  it('derives changed class and level from the persisted sheet after the source write', async () => {
+    const input = { params: { data: { class: 'new-class', level: 2 } }, result: { documentId: 'sheet-2' } };
+    const original = structuredClone(input);
+    await lifecycles.beforeUpdate(input);
+    expect(derive).not.toHaveBeenCalled();
+    await lifecycles.afterUpdate(input);
+    expect(derive).toHaveBeenCalledExactlyOnceWith('sheet-2');
+    expect(input).toEqual(original);
+  });
+  it('calls the existing derivation service and suppresses nested updates', async () => {
+    derive.mockImplementation(() => lifecycles.afterUpdate(event()));
+    await lifecycles.afterCreate(event());
+    expect(strapi.service).toHaveBeenCalledWith('api::game.entity-derivation');
+    expect(derive).toHaveBeenCalledTimes(1);
+  });
+  it('does not suppress independent concurrent requests for the same sheet', async () => {
+    await Promise.all([lifecycles.afterCreate(event()), lifecycles.afterCreate(event())]);
+    expect(derive).toHaveBeenCalledTimes(2);
+  });
+  it('propagates failures and clears recursion context', async () => {
+    derive.mockRejectedValueOnce(new Error('broken'));
+    await expect(lifecycles.afterCreate(event())).rejects.toThrow('EntitySheet derivation failed');
+    await lifecycles.afterCreate(event());
+    expect(derive).toHaveBeenCalledTimes(2);
+  });
+  it('ignores derived or mechanical-only writes', async () => {
+    for (const data of [{ currentHp: 0 }, { tempHp: 5 }, { position: { x: 1, y: 2, z: 0 } }, { computedActions: [] }, { maxHp: 20, ac: 15 }]) {
+      await lifecycles.afterUpdate({ params: { data }, result: { documentId: 'sheet-1' } });
+    }
+    expect(derive).not.toHaveBeenCalled();
   });
 });

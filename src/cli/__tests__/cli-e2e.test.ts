@@ -1,88 +1,91 @@
-import { describe, it, expect } from 'vitest';
-import { execSync } from 'child_process';
-import path from 'path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { exploreCommand, runExplore } from '@/cli/commands/explore';
+import { getStrapi, stopStrapi } from '@/cli/utils/bootstrap';
+import { ui } from '@/cli/utils/ui';
 
-const CLI_CMD = 'yarn --silent cli';
-// Ensure we are in backend root
+vi.mock('@/cli/utils/bootstrap', () => ({ getStrapi: vi.fn(), stopStrapi: vi.fn() }));
+vi.mock('@/cli/utils/ui', () => ({ ui: { json: vi.fn() } }));
+
 const CWD = path.resolve(__dirname, '../../..');
 
-describe('CLI E2E (Standalone)', () => {
-  it('should report status online', () => {
-    // This command still hits the API port, so it relies on 'yarn develop' running OR just checks port?
-    // Wait, status command implementation: fetch(rootUrl, method: HEAD).
-    // If backend is NOT running, this returns offline.
-    // The user's request was about "separated backend instance".
-    // The CLI *runs* separately.
-    // If we run this test in CI/Dev, is the server running?
-    // If not, status might be offline.
-    // Let's run 'schema --list --json' which is purely local (headless) and DB based.
-    // That proves the "Separated Backend Instance" works even if server is down.
+function runCli(args: string[]) {
+  const result = spawnSync(process.execPath, [
+    '-r', require.resolve('ts-node/register/transpile-only'),
+    '-r', require.resolve('tsconfig-paths/register'),
+    path.join(CWD, 'src/cli/index.ts'), ...args,
+  ], {
+    cwd: CWD,
+    encoding: 'utf8',
+    timeout: 15000,
+    env: { ...process.env, STRAPI_URL: 'http://127.0.0.1:1/api' },
+  });
+  expect(result.error).toBeUndefined();
+  return result;
+}
 
-    // We'll skip status for now or assert it returns valid JSON at least.
+function extractJSON(output: string): unknown {
+  const startMarker = '__JSON_START__';
+  const endMarker = '__JSON_END__';
+  const start = output.indexOf(startMarker);
+  const end = output.indexOf(endMarker, start + startMarker.length);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  return JSON.parse(output.slice(start + startMarker.length, end).trim());
+}
 
-    try {
-      const output = execSync(`${CLI_CMD} status --json`, { cwd: CWD, encoding: 'utf-8' });
-      // Helper to find JSON in potential noise
-      const json = extractJSON(output);
-      expect(json).toHaveProperty('status');
-      // Could be online or offline, but must be valid JSON
-    } catch {
-      // if command fails unrelated to logic
-    }
+describe('CLI subprocess contracts without a running backend', () => {
+  it('reports a failed connection as framed offline JSON', { timeout: 20000 }, () => {
+    const result = runCli(['status', '--json']);
+    expect(result.status).toBe(0);
+    expect(extractJSON(result.stdout)).toMatchObject({ status: 'offline', error: expect.any(String) });
   });
 
-  it('should explore characters (headless mode)', { timeout: 60000 }, () => {
-    // This ensures the Headless Strapi boots and connects to DB
-    const start = Date.now();
-    // Use 'plugin::users-permissions.user' as it is always present
-    const output = execSync(`${CLI_CMD} explore --type plugin::users-permissions.user --action count --json`, {
-      cwd: CWD,
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore'], // ignore stderr (spinner noise if any leaks)
+  it('lists actual schemas without booting Strapi', { timeout: 20000 }, () => {
+    const result = runCli(['schema', '--list', '--json']);
+    expect(result.status).toBe(0);
+    expect(extractJSON(result.stdout)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ uid: 'plugin::users-permissions.user' }),
+      expect.objectContaining({ uid: 'api::entity-sheet.entity-sheet' }),
+    ]));
+  });
+
+  it('rejects an explore request without a type before database startup', { timeout: 20000 }, () => {
+    const result = runCli(['explore', '--json']);
+    expect(result.status).toBe(1);
+    expect(extractJSON(result.stdout)).toMatchObject({
+      meta: { success: false, error: expect.stringContaining('--type') }, data: null,
     });
+  });
+});
 
-    console.log(`CLI Explore took ${Date.now() - start}ms`);
+describe('CLI explore contract with a mocked Strapi bootstrap boundary', () => {
+  beforeEach(() => vi.clearAllMocks());
 
-    const json = extractJSON(output);
-    expect(json.meta.action).toBe('count');
-    expect(typeof json.data).toBe('number');
+  it('counts through the document API with the supplied filters and shuts down', async () => {
+    const count = vi.fn().mockResolvedValue(3);
+    const documents = vi.fn(() => ({ count }));
+    vi.mocked(getStrapi).mockResolvedValue({ documents });
+    const filters = { name: { $contains: 'guard' } };
+
+    await runExplore({ type: 'api::entity-sheet.entity-sheet', action: 'count', filters: JSON.stringify(filters), json: true });
+
+    expect(documents).toHaveBeenCalledExactlyOnceWith('api::entity-sheet.entity-sheet');
+    expect(count).toHaveBeenCalledExactlyOnceWith({ filters });
+    expect(ui.json).toHaveBeenCalledExactlyOnceWith({
+      meta: { type: 'api::entity-sheet.entity-sheet', action: 'count', filters }, data: 3,
+    });
+    expect(stopStrapi).toHaveBeenCalledTimes(1);
   });
 
-  it('should list schemas (headless mode)', () => {
-    const output = execSync(`${CLI_CMD} schema --list --json`, { cwd: CWD, encoding: 'utf-8' });
-    const json = extractJSON(output);
-    expect(Array.isArray(json)).toBe(true);
-    expect(json.length).toBeGreaterThan(0);
-    const char = json.find((t: any) => t.uid === 'plugin::users-permissions.user');
-    expect(char).toBeDefined();
+  it('reports a rejected bootstrap dependency through the command handler', async () => {
+    vi.mocked(getStrapi).mockRejectedValueOnce(new Error('fixture unavailable'));
+    await expect(exploreCommand.parseAsync([
+      '--type', 'api::entity-sheet.entity-sheet', '--action', 'count', '--json',
+    ], { from: 'user' })).rejects.toThrow('fixture unavailable');
+    expect(ui.json).toHaveBeenCalledExactlyOnceWith({
+      meta: { success: false, error: 'fixture unavailable' }, data: null,
+    });
   });
-
-  function extractJSON(output: string): any {
-    const startMarker = '__JSON_START__';
-    const endMarker = '__JSON_END__';
-
-    const startIndex = output.indexOf(startMarker);
-    const endIndex = output.indexOf(endMarker);
-
-    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-      const jsonStr = output.substring(startIndex + startMarker.length, endIndex).trim();
-      try {
-        return JSON.parse(jsonStr);
-      } catch (e) {
-        throw new Error(`Failed to parse framed JSON: ${e.message}\nRaw: ${jsonStr.substring(0, 100)}...`);
-      }
-    }
-
-    // Fallback: Try regex if markers are missing (legacy check)
-    // But since we control the source, markers SHOULD be there.
-    // If we receive output from a version without markers, we fail.
-    // Output often contains logs, so "finding JSON" heuristically is flaky.
-
-    // Debug info
-    // console.log('Raw Output:', output);
-
-    throw new Error(
-      `Could not find JSON framing markers in output. Start: ${startIndex}, End: ${endIndex}, Length: ${output.length}. First 200 chars: ${output.substring(0, 200)}`
-    );
-  }
 });

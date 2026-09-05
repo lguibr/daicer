@@ -2,6 +2,14 @@
  * Alea PRNG for deterministic generation.
  * A pseudo-random number generator that is seeded to provide consistent results for the same seed.
  */
+export interface AleaState {
+  algorithm: 'alea-v1';
+  s0: number;
+  s1: number;
+  s2: number;
+  c: number;
+}
+
 export class Alea {
   private s0: number = 0;
   private s1: number = 0;
@@ -10,6 +18,31 @@ export class Alea {
 
   constructor(seed: string) {
     this.seed(seed);
+  }
+
+  /** Restore an exact continuation without changing existing seeded sequences. */
+  static fromState(state: AleaState): Alea {
+    if (
+      !state ||
+      state.algorithm !== 'alea-v1' ||
+      ![state.s0, state.s1, state.s2].every((value) => Number.isFinite(value) && value >= 0 && value < 1) ||
+      !Number.isInteger(state.c) ||
+      state.c < 0 ||
+      state.c > 2091639
+    ) {
+      throw new Error('Invalid Alea state');
+    }
+    const rng = new Alea('');
+    rng.s0 = state.s0;
+    rng.s1 = state.s1;
+    rng.s2 = state.s2;
+    rng.c = state.c;
+    return rng;
+  }
+
+  /** Return detached JSON-safe state; callers may persist it with mechanical events. */
+  snapshot(): AleaState {
+    return { algorithm: 'alea-v1', s0: this.s0, s1: this.s1, s2: this.s2, c: this.c };
   }
 
   private mash(data: string | number): number {

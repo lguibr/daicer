@@ -1,3 +1,4 @@
+import { normalizeWorldConfig } from '@/api/world/utils/world-config';
 /**
  * ⚠️ DOCUMENTATION MANDATE: Update JSDoc & README with ANY change.
  * Keep documentation synchronized with code at all times.
@@ -446,8 +447,10 @@ export default ({ strapi }) => ({
           const module = await import('../../voxel-engine/services/chunk-manager');
           const { ChunkManager } = module;
           const cm = ChunkManager.getInstance();
-          const worldConfig = (target.room?.config as WorldConfig) || { chunkSize: 16 };
-          const chunkSize = worldConfig.chunkSize || 16;
+          const room = await strapi.documents('api::room.room').findOne({ documentId: roomId, populate: ['world'] });
+          if (!room?.world?.documentId) throw new Error('Room world is missing');
+          const worldConfig = normalizeWorldConfig(room.world);
+          const chunkSize = worldConfig.chunkSize;
 
           const px = Math.round(target.position?.x || 0);
           const py = Math.round(target.position?.y || 0);
@@ -458,10 +461,9 @@ export default ({ strapi }) => ({
           const lx = ((px % chunkSize) + chunkSize) % chunkSize;
           const ly = ((py % chunkSize) + chunkSize) % chunkSize;
 
-          await cm.editVoxel(cx, cy, lx, ly, pz, undefined, roomId, 'Entity Death', {
-            type: 'death_marker',
-            victim: (target as { name?: string }).name || 'Entity',
-          });
+          await cm.editVoxel({ worldId: room.world.documentId, config: worldConfig, chunkX: cx, chunkY: cy, voxelX: lx, voxelY: ly, voxelZ: pz, reason: 'Entity Death', metadata: {
+            type: 'death_marker', victim: (target as { name?: string }).name || 'Entity',
+          } });
         } catch (e) {
           console.warn('[ActionEngine] Death side-effects failed', e);
         }

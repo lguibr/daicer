@@ -12,6 +12,10 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "revision": {
+      "type": "integer",
+      "default": 0
+    },
     "roomId": {
       "type": "uid",
       "unique": true

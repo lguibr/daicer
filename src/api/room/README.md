@@ -41,3 +41,11 @@ The Room API is primarily accessed via GraphQL for fetching state, and via Socke
 - **Upstream**: Relies on `user-permissions` (Owner), `character-sheet` (Actors).
 - **Downstream**: Used by `socket` lifecycle for real-time updates.
 - **Internal**: Uses `utils/llm` for AI resolution.
+# Player contract integration
+
+New player lifecycle operations use `api::game.room-lifecycle` and authenticated
+viewer reads use `api::game.room-access`. `revision` is a conditional-write counter;
+legacy null values are handled without bulk migration. Existing join codes remain
+unchanged. Room `documentId`, World `documentId`, Entity blueprint IDs, and
+EntitySheet instance IDs must not be interchanged. See the authoritative contract
+in `src/lifecycle/graphql/GAME_CONTRACT.md`.
